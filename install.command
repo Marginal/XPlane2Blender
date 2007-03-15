@@ -25,13 +25,16 @@ DIRS=$($LS -dump | awk 'match($2, "/blender.app") { print $2 "/Contents/MacOS/.b
 FILES="../Bpymenus
 helpXPlane.py
 uvCopyPaste.py
+uvFixupACF.py
 uvResize.py
 XPlaneExport.py
 XPlaneExport.pyc
 XPlaneExport7.py
 XPlaneExport8.py
+XPlaneExportCSL.py
 XPlaneExportBodies.py
 XPlaneImport.py
+XPlaneImport.pyc
 XPlaneImportPlane.py
 XPlaneImportBodies.py
 XPlaneUtils.py
@@ -54,10 +57,12 @@ done
 # Files to install
 FILES="helpXPlane.py
 uvCopyPaste.py
+uvFixupACF.py
 uvResize.py
 XPlaneExport.py
 XPlaneExport7.py
 XPlaneExport8.py
+XPlaneExportCSL.py
 XPlaneImport.py
 XPlaneImportPlane.py
 XPlaneUtils.py

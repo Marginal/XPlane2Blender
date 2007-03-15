@@ -35,7 +35,7 @@ import sys
 from math import sqrt, sin, cos
 import Blender
 from Blender import Types, Image
-from Blender.Mathutils import Vector, Euler
+from Blender.Mathutils import Matrix, Vector, Euler
 
 class Vertex:
     LIMIT=0.001	# max distance between vertices for them to be merged
@@ -238,3 +238,13 @@ def findTex(basefile, texture, subdirs):
                     pass
     return None
 
+
+# Matrix.rotationPart() scaled to be unit size for normals and axis
+def MatrixrotationOnly(mm, object):
+    sx=1/abs(object.SizeX)
+    sy=1/abs(object.SizeY)
+    sz=1/abs(object.SizeZ)
+    return Matrix([mm[0][0]*sx, mm[0][1]*sx, mm[0][2]*sx, 0],
+                  [mm[1][0]*sy, mm[1][1]*sy, mm[1][2]*sy, 0],
+                  [mm[2][0]*sz, mm[2][1]*sz, mm[2][2]*sz, 0],
+                  [0,0,0,1])

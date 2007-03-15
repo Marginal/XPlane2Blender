@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.19"
+__version__ = "2.20"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -23,7 +23,7 @@ Limitations:<br>
 #------------------------------------------------------------------------
 # X-Plane importer for blender 2.34 or above
 #
-# Copyright (c) 2004 Jonathan Harris
+# Copyright (c) 2004,2005 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -158,6 +158,10 @@ Limitations:<br>
 #
 # 2006-01-05 v2.16
 #  - Fix for relative and v8 texture paths.
+#
+# 2006-04-18 v2.20
+#  - Now imports successive LODs into different layers, irrespective
+#    of LOD range.
 #
 
 import sys
@@ -350,7 +354,7 @@ class Mesh:
         return 0
 
     #------------------------------------------------------------------------
-    def doimport(self,scene,image,filename):
+    def doimport(self,scene,image,filename,subroutine):
         
         panel=None
         
@@ -362,18 +366,19 @@ class Mesh:
         if self.anim:
             centre=self.anim
         else:
-            n=0
             centre=Vertex(0,0,0)
-            for f in self.faces:
-                for vertex in f.v:
-                    n+=1
-                    centre.x+=vertex.x
-                    centre.y+=vertex.y
-                    centre.z+=vertex.z
-            assert n, "Mesh %s has no vertices" % self.name
-            centre.x=round(centre.x/n,1)
-            centre.y=round(centre.y/n,1)
-            centre.z=round(centre.z/n,1)
+            if not subroutine:
+                n=0
+                for f in self.faces:
+                    for vertex in f.v:
+                        n+=1
+                        centre.x+=vertex.x
+                        centre.y+=vertex.y
+                        centre.z+=vertex.z
+                assert n, "Mesh %s has no vertices" % self.name
+                centre.x=round(centre.x/n,1)
+                centre.y=round(centre.y/n,1)
+                centre.z=round(centre.z/n,1)
         
         for f in self.faces:
             face=NMesh.Face()
@@ -447,6 +452,8 @@ class OBJimport:
 
     #------------------------------------------------------------------------
     def __init__(self, filename, subroutine=False):
+        self.subroutine=subroutine
+        
         #--- public you can change these ---
         self.verbose=1	# level of verbosity in console: 1-some,2-chat,3-debug
         self.merge=1	# merge primitives into meshes: 0-no,1-abut,2-force
@@ -515,10 +522,10 @@ class OBJimport:
         self.file.seek(0,2)
         self.filelen=self.file.tell()
         self.file.seek(0)
-        Window.DrawProgressBar(0, "Opening ...")
+        if not self.subroutine: Window.DrawProgressBar(0, "Opening ...")
         self.readHeader()
         ob=self.readObjects()
-        Window.DrawProgressBar(1, "Finished")
+        if not self.subroutine: Window.DrawProgressBar(1, "Finished")
         if self.verbose:
             print "Finished - imported %s primitives\n" % self.nprim
         #print "%s CPU time\n" % (time.clock()-clock)
@@ -590,8 +597,9 @@ class OBJimport:
             else:
                 break
         input=c
-        Window.DrawProgressBar(float(pos)*0.5/self.filelen,
-                               "Importing %s%% ..." % (pos*50/self.filelen))
+        if not self.subroutine:
+            Window.DrawProgressBar(float(pos)*0.5/self.filelen,
+                                   "Importing %s%% ..." %(pos*50/self.filelen))
         while 1:
             pos=self.file.tell()
             c=self.file.read(1)
@@ -830,7 +838,8 @@ class OBJimport:
                     # write meshes
                     self.mergeMeshes()
                     for mesh in self.curmesh:
-                        last=mesh.doimport(scene,self.image,self.filename)
+                        last=mesh.doimport(scene,self.image,self.filename,
+                                           self.subroutine)
                     return last
 
                 elif t==Token.VLIGHT:
@@ -906,7 +915,7 @@ class OBJimport:
                     self.off.insert(0, self.off[0])	# cumulative
                     
                 elif t==Token.ANIM_END:
-                    if not len(self.off):
+                    if not len(self.anim):
                         raise ParseError(ParseError.MISC,
                                          'ANIM_END with no matching ANIM_BEGIN')
                     self.anim.pop(0)
@@ -918,7 +927,7 @@ class OBJimport:
                     v1=self.getFloat()
                     v2=self.getFloat()
                     dataref=self.getInput()
-                    if dataref.find('/')!=-1:
+                    if '/' in dataref:
                         dataref=dataref[:dataref.find('/')+1]
                     self.off[0]=self.off[0]+p1
 
@@ -970,12 +979,7 @@ class OBJimport:
                     self.getFloat()
                     if not self.lod:
                         print "Info:\tMultiple Levels Of Detail found"
-                    if x>=3999:
-                        self.lod=3
-                    elif x>=999:
-                        self.lod=2
-                    else:
-                        self.lod=1
+                    self.lod+=1
                     # Reset attributes
                     self.hard=False
                     self.twoside=False
@@ -1000,8 +1004,8 @@ class OBJimport:
                     print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
                     if t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
                         n=4
-                    elif t in [Token.AMBIENT_RGB, Token.SPECULAR_RGB,
-                               Token.EMISSION_RGB]:
+                    elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
+                               Token.SPECULAR_RGB, Token.EMISSION_RGB]:
                         n=3
                     elif t in [Token.SHINY_RAT, Token.SLUNG_LOAD_WEIGHT]:
                         n=1
@@ -1021,7 +1025,8 @@ class OBJimport:
                     # write meshes
                     self.mergeMeshes()
                     for mesh in self.curmesh:
-                        last=mesh.doimport(scene,self.image,self.filename)
+                        last=mesh.doimport(scene,self.image,self.filename,
+                                           self.subroutine)
                     return last
                 
                 elif t==Token.LIGHT:
@@ -1154,12 +1159,7 @@ class OBJimport:
                     self.getCR()
                     if not self.lod:
                         print "Info:\tMultiple Levels Of Detail found"
-                    if x>=3999:
-                        self.lod=3
-                    elif x>=999:
-                        self.lod=2
-                    else:
-                        self.lod=1
+                    self.lod+=1
                     # Reset attributes
                     self.twoside=False
                     self.flat=False
@@ -1178,8 +1178,10 @@ class OBJimport:
                     elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
                                Token.SPECULAR_RGB, Token.EMISSION_RGB]:
                         n=3
-                    elif t in [Token.SHINY_RAT]:
+                    elif t in [Token.SHINY_RAT, Token.SLUNG_LOAD_WEIGHT]:
                         n=1
+                    elif t in [Token.BLEND, Token.NO_BLEND]:
+                        n=0
                     else:
                         raise ParseError(ParseError.TOKEN, Token.NAMES[t])
 
@@ -1196,7 +1198,8 @@ class OBJimport:
                     self.mergeMeshes()
                     Blender.Window.WaitCursor(1)
                     for mesh in self.curmesh:
-                        last=mesh.doimport(scene,self.image,self.filename)
+                        last=mesh.doimport(scene,self.image,self.filename,
+                                           self.subroutine)
                     return last
     
                 elif t==Token.LIGHT:
@@ -1271,13 +1274,26 @@ class OBJimport:
 
     #------------------------------------------------------------------------
     def addLamp(self, scene, v, c):
-        if c[0]==9.9 and c[1]==9.9 and c[2]==9.9:
+        if c[0]==1.1 and c[1]==1.1 and c[2]==1.1:
+            c[0]=1
+            c[1]=c[2]=0
+            name="Nav Left"
+        elif c[0]==2.2 and c[1]==2.2 and c[2]==2.2:
+            c[1]=1
+            c[0]=c[2]=0
+            name="Nav Right"
+        if ((c[0]==9.9 and c[1]==9.9 and c[2]==9.9) or
+            (c[0]==3.3 and c[1]==3.3 and c[2]==3.3)):
             c[0]=1
             c[1]=c[2]=0
             name="Pulse"
-        elif c[0]==9.8 and c[1]==9.8 and c[2]==9.8:
+        elif ((c[0]==9.8 and c[1]==9.8 and c[2]==9.8) or
+              (c[0]==4.4 and c[1]==4.4 and c[2]==4.4)):
             c[0]=c[1]=c[2]=1
             name="Strobe"
+        elif c[0]==5.5 and c[1]==5.5 and c[2]==5.5:
+            c[0]=c[1]=c[2]=1
+            name="Landing"
         elif c[0]==9.7 and c[1]==9.7 and c[2]==9.7:
             c[0]=c[1]=1
             c[2]=0
@@ -1520,7 +1536,9 @@ class OBJimport:
         m=len(self.curmesh)-2
         while m>=0:
             n=float(m)/len(self.curmesh)
-            Window.DrawProgressBar(1-n/2,"Merging %s%% ..." % (100-int(50*n)))
+            if not self.subroutine:
+                Window.DrawProgressBar(1-n/2,"Merging %s%% ..." % (
+                    100-int(50*n)))
 
             # optimisation: take a copy of m's faces to prevent comparing any
             # newly merged faces multiple times
@@ -1581,4 +1599,4 @@ def file_callback (filename):
 # main routine
 #------------------------------------------------------------------------
 
-Blender.Window.FileSelector(file_callback,"IMPORT .OBJ")
+Blender.Window.FileSelector(file_callback,"Import OBJ")

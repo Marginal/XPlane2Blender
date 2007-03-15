@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.19"
+__version__ = "2.20"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -24,7 +24,7 @@ Limitations:<br>
 #------------------------------------------------------------------------
 # X-Plane exporter for blender 2.40 or above
 #
-# Copyright (c) 2004,2005 Jonathan Harris
+# Copyright (c) 2004,2005,2006 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -76,6 +76,12 @@ Limitations:<br>
 # 2006-02-24 v2.18
 #  - Import datarefs from DataRefs.txt. Add checking of type and arrayness.
 #
+# 2006-04-16 v2.20
+#  - Translation fix for animations nested >=3 deep.
+#  - Emit unit rotation vector even when Armature is scaled.
+#  - Fix face direction when object negatively scaled.
+#  - Fix face normal to be unit length when object is scaled.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -98,7 +104,7 @@ from os.path import exists, join
 import Blender
 from Blender import NMesh, Lamp, Image, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, MatMultVec, Vector, Quaternion, Euler
-from XPlaneUtils import Vertex, UV
+from XPlaneUtils import Vertex, UV, MatrixrotationOnly
 from XPlaneExport import *
 #import time
 
@@ -174,7 +180,7 @@ datarefs={}
 #------------------------------------------------------------------------
 #-- OBJexport --
 #------------------------------------------------------------------------
-class OBJexport:
+class OBJexport8:
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -372,6 +378,8 @@ class OBJexport:
         for j in range(n-(n%10), n):
             self.file.write("IDX\t%d\n" % indices[j])
 
+        self.file.write("\nATTR_no_blend\n")
+
         # Geometry Commands
         n=0
         for layer in lseq:
@@ -524,8 +532,12 @@ class OBJexport:
         
         (anim, mm)=self.makeAnim(object)
         hasanim=not anim.equals(Anim(None))
-        nm=mm.rotationPart()
-        nm.resize4x4()
+        nm=MatrixrotationOnly(mm, object)
+        # Vertex order, taking into account negative scaling
+        if object.SizeX*object.SizeY*object.SizeZ<0:
+            seq=[[],[],[],[0,1,2],[0,1,2,3]]
+        else:
+            seq=[[],[],[],[2,1,0],[3,2,1,0]]
 
         if self.verbose:
             print "Info:\tExporting Mesh \"%s\"" % object.name
@@ -533,7 +545,8 @@ class OBJexport:
         if self.debug:
             print "Mesh \"%s\" %s faces" % (object.name, len(nmesh.faces))
 
-        # Optimisation: Children of animations might be dupes - ~10% vertices
+        # Optimisation: Children of animations might be dupes. This test only
+        # looks for exact duplicates, but this can reduce vertex count by ~10%.
         twosideerr=0
         harderr=0
         degenerr=0
@@ -546,7 +559,7 @@ class OBJexport:
                 if not n in [3,4]:
                     pass
                 elif not (f.mode & NMesh.FaceModes.INVISIBLE):
-                    for i in range(n-1,-1,-1):
+                    for i in seq[n]:
                         nmv=f.v[i]
                         vertex=Vertex(nmv[0], nmv[1], nmv[2], mm)
                         if not f.smooth:
@@ -561,7 +574,7 @@ class OBJexport:
 
                         j=0
                         while j<len(animcands):
-                            if not vt.equals(self.vt[self.tris[animcands[j]+trino].i[n-1-i]], fudge):
+                            if not vt.equals(self.vt[self.tris[animcands[j]+trino].i[seq[n][i]]], fudge):
                                 animcands.pop(j)	# no longer a candidate
                             else:
                                 j=j+1
@@ -651,7 +664,7 @@ class OBJexport:
                     face.flags|=Prim.HARD
                     harderr=harderr+1
 
-                for i in range(n-1,-1,-1):
+                for i in seq[n]:
                     nmv=f.v[i]
                     vertex=Vertex(nmv[0], nmv[1], nmv[2], mm)
                     if not f.smooth:
@@ -721,14 +734,14 @@ class OBJexport:
             a=a.anim
 
         Blender.Set('curframe', 1)
-        #mm=Matrix(child.getMatrix('localspace')) doesn't work in 2.40a1&2
+        #mm=Matrix(child.getMatrix('localspace')) doesn't work in 2.40alpha
         mm=child.getMatrix('worldspace')
         
         for a in al:
             # Hack!
             # We need the position of the child in bone space - ie
             # rest position relative to bone root.
-            # child.getMatrix('localspace') doesn't return this in 2.40a1&2.
+            # child.getMatrix('localspace') doesn't return this in 2.40.
             # So un-apply animation from child's worldspace in frame 1:
             #  - get child in worldspace in frame 1 (mm)
             #  - translate so centre of rotation is at origin (-bone root)
@@ -815,20 +828,26 @@ class OBJexport:
                 self.anim=i
                 if not (self.anim.t[0].equals(Vertex(0,0,0)) and
                         self.anim.t[1].equals(Vertex(0,0,0))):
-                    self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
-                        self.anim.ins(), self.anim.t[0], self.anim.t[1],
-                        self.anim.v[0], self.anim.v[1], self.anim.dataref))
+                    if self.anim.t[0].equals(self.anim.t[1]):
+                        # save a potential accessor callback
+                        self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
+                            self.anim.ins(), self.anim.t[0], self.anim.t[1],
+                            0, 0, 'no_ref'))
+                    else:
+                        self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
+                            self.anim.ins(), self.anim.t[0], self.anim.t[1],
+                            self.anim.v[0], self.anim.v[1], self.anim.dataref))
                 if len(self.anim.r)==1:
-                    self.file.write("%sANIM_rotate\t%s\t%7.2f %7.2f\t%s %s\t%s\n" % (
+                    self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n" % (
                         self.anim.ins(), self.anim.r[0],
                         self.anim.a[0], self.anim.a[1],
                         self.anim.v[0], self.anim.v[1], self.anim.dataref))
                 elif len(self.anim.r)==2:
-                    self.file.write("%sANIM_rotate\t%s\t%7.2f %7.2f\t%s %s\t%s\n" % (
+                    self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n" % (
                         self.anim.ins(), self.anim.r[0],
                         self.anim.a[0], 0,
                         self.anim.v[0], self.anim.v[1], self.anim.dataref))
-                    self.file.write("%sANIM_rotate\t%s\t%7.2f %7.2f\t%s %s\t%s\n" % (
+                    self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n" % (
                         self.anim.ins(), self.anim.r[1],
                         0, self.anim.a[1],
                         self.anim.v[0], self.anim.v[1], self.anim.dataref))
@@ -967,7 +986,7 @@ class Anim:
 
         if not (object.getAction() and
                 object.getAction().getAllChannelIpos().has_key(bone.name)):
-            print 'Warn:\tYou haven\'t defined any keys for bone "%s" in armature "%s".' % (bone.name, object.name)
+            print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this animation.' % (bone.name, object.name)
             if bone.parent:
                 foo=Anim(child, bone.parent)
                 self.dataref=foo.dataref
@@ -1001,10 +1020,9 @@ class Anim:
                 #crashes print "\t%s" % bone.matrix['BONESPACE'].translationPart()
                 print "arm\t%s" % bone.matrix['ARMATURESPACE'].rotationPart().toEuler()
                 print "\t%s" % bone.matrix['ARMATURESPACE'].translationPart()
-                #print "head\t%s" % bone.head
-                #print "tail\t%s" % bone.tail
-                #print "rot\t%s" % bone.quat.toEuler()
-                #print "loc\t%s" % bone.loc
+                print "head\t%s" % bone.head
+                print "tail\t%s" % bone.tail
+                print "roll\t%s" % bone.roll
                 print ipo
                 q = Quaternion([ipo.getCurveCurval('QuatW'),
                                 ipo.getCurveCurval('QuatX'),
@@ -1022,8 +1040,8 @@ class Anim:
         else:
             self.anim=Anim(None)
     
-        # Useful info in Blender 2.40a1&2:
-        # child.getMatrix('localspace') - inconsistent - not useful
+        # Useful info in Blender 2.40:
+        # child.getMatrix('localspace') - rot & trans rel to arm pre pose
         # child.getMatrix('worldspace') - rot & trans post pose
         # armature.getMatrix('local/worldspace') - abs position pre pose
         # bone.getRestMatrix('bonespace') - broken
@@ -1039,12 +1057,9 @@ class Anim:
         for frame in [1,2]:            
             Blender.Set('curframe', frame)
             mm=Matrix(object.getMatrix('worldspace'))
-            rm=mm.rotationPart()
-            rm.resize4x4()
-            if bone.parent:
-                # Child offset should be relative to parent
-                mm=rm
-
+            # mm.rotationPart() scaled to be unit size for rotation axis
+            rm=MatrixrotationOnly(mm, object)
+            
             if (ipo.getCurve('LocX') and
                 ipo.getCurve('LocY') and
                 ipo.getCurve('LocZ')):
@@ -1053,9 +1068,15 @@ class Anim:
                             ipo.getCurveCurval('LocZ')])
             else:
                 t = Vector(0,0,0)
-            
-            self.t.append(Vertex(t*bone.matrix['ARMATURESPACE'].rotationPart()+
-                                 bone.matrix['ARMATURESPACE'].translationPart(),mm))
+
+            t=Vertex(t*bone.matrix['ARMATURESPACE'].rotationPart()+
+                     bone.matrix['ARMATURESPACE'].translationPart(),mm)
+            # Child offset should be relative to parent
+            anim=self.anim
+            while not anim.equals(Anim(None)):
+                t=t-anim.t[frame-1]
+                anim=anim.anim
+            self.t.append(t)
 
             if (ipo.getCurve('QuatW') and
                 ipo.getCurve('QuatX') and
@@ -1160,7 +1181,7 @@ else:
         else:
             raise ExportError("Missing DataRefs.txt file. Please re-install.")
         
-        obj=OBJexport(baseFileName+'.obj')
+        obj=OBJexport8(baseFileName+'.obj')
         scene = Blender.Scene.getCurrent()
         obj.export(scene)
     except ExportError, e:

@@ -1,24 +1,22 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: ' X-Plane v7 Object (.obj)'
+Name: ' X-Plane CSL Object (.obj)'
 Blender: 240
 Group: 'Export'
-Tooltip: 'Export to X-Plane v7 format object (.obj)'
+Tooltip: 'Export to X-Plane CSL format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
 __version__ = "2.20"
 __bpydoc__ = """\
-This script exports scenery created in Blender to X-Plane v7 .obj
-format for placement with World-Maker.
+This script exports scenery created in Blender to X-Plane CSL .obj
+format for use with XSquawkbox.
 
 Limitations:<br>
-  * Only Lamps and Meshes (including "lines") are exported.<br>
+  * Only Lamps and Meshes are exported.<br>
   * All faces must share a single texture (this is a limitation of<br>
-    the X-Plane .obj file format) apart from cockpit panel faces<br>
-    which can additionally use the cockpit panel texture. Multiple<br>
-    textures are not automagically merged into one file during the<br>
-    export.
+    the X-Plane .obj file format). Multiple textures are not<br>
+    automagically merged into one file during the export.
 """
 
 #------------------------------------------------------------------------
@@ -54,7 +52,6 @@ Limitations:<br>
 import Blender
 from XPlaneExport import OBJexport7, ExportError
 
-
 #------------------------------------------------------------------------
 if Blender.Window.EditMode():
     Blender.Draw.PupMenu("Please exit Edit Mode first.")
@@ -64,7 +61,7 @@ else:
     if l!=-1:
         baseFileName=baseFileName[:l]
 
-    obj=OBJexport7(baseFileName+'.obj', __version__, False)
+    obj=OBJexport7(baseFileName+'.obj', __version__, True)
     scene = Blender.Scene.getCurrent()
     try:
         obj.export(scene)

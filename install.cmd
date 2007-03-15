@@ -4,7 +4,7 @@
 echo Installing Blender scripts . . .
 
 rem Old files
-set FILES=..\Bpymenus helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport.pyc XPlaneExport7.py XPlaneExport8.py XPlaneExportBodies.py XPlaneImport.py XPlaneImportPlane.py XPlaneImportBodies.py XPlaneUtils.py XPlaneUtils.pyc XPlaneACF.py XPlaneACF.pyc XPlane2Blender.html XPlaneImportPlane.html XPlaneReadme.txt DataRefs.txt
+set FILES=..\Bpymenus helpXPlane.py uvCopyPaste.py uvFixupACF.py uvResize.py XPlaneExport.py XPlaneExport.pyc XPlaneExport7.py XPlaneExport8.py XPlaneExportCSL.py XPlaneExportBodies.py XPlaneImport.py XPlaneImport.pyc XPlaneImportPlane.py XPlaneImportBodies.py XPlaneUtils.py XPlaneUtils.pyc XPlaneACF.py XPlaneACF.pyc XPlane2Blender.html XPlaneImportPlane.html XPlaneReadme.txt DataRefs.txt
 
 set DIRS=
 if defined HOME set DIRS=%DIRS% "%HOME%\.blender\scripts"
@@ -50,7 +50,7 @@ echo Failed to find the correct location for the scripts !!!
 goto end
 
 :copy
-set FILES=helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneImport.py XPlaneImportPlane.py XPlaneUtils.py XPlane2Blender.html DataRefs.txt
+set FILES=helpXPlane.py uvCopyPaste.py uvFixupACF.py uvResize.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneExportCSL.py XPlaneImport.py XPlaneImportPlane.py XPlaneUtils.py XPlane2Blender.html DataRefs.txt
 for %%I in (%FILES%) do copy /v /y %%I "%DESTDIR%\" >nul:
 for %%I in (%FILES%) do if not exist "%DESTDIR%\%%I" goto copyfail
 echo.
