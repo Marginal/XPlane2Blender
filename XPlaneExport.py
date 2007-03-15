@@ -212,7 +212,7 @@ class Mesh:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=2.05
+    VERSION=2.06
 
     #------------------------------------------------------------------------
     def __init__(self, filename, fileformat):
@@ -222,7 +222,7 @@ class OBJexport:
         self.optimise=1	# whether to make strips, sort faces etc
         
         #--- class private don't touch ---
-        self.file=0
+        self.file=None
         self.filename=filename
         self.fileformat=fileformat
         self.iscockpit=((filename.lower().find("_cockpit.obj") != -1) or
