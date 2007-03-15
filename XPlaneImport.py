@@ -114,6 +114,9 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 # 2004-12-29 v1.86
 #  - Display WaitCursor during NMesh creation stage.
 #
+# 2004-12-29 v1.87
+#  - Don't set DoubleSided on Meshes since this doesn't do anything useful.
+#
 
 import sys
 import Blender
@@ -335,8 +338,8 @@ class Mesh:
         mesh=NMesh.New(self.name)
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
-        if self.flags&Mesh.DBLSIDED:
-            mesh.mode |= NMesh.Modes.TWOSIDED
+        #if self.flags&Mesh.DBLSIDED:
+        #    mesh.mode |= NMesh.Modes.TWOSIDED
 
         n=0
         centre=Vertex(0,0,0)
@@ -1024,8 +1027,8 @@ class OBJimport:
             faces.append(face)
             
         flags=0
-        if self.dblsided:
-            flags |= Mesh.DBLSIDED
+        #if self.dblsided:
+        #    flags |= Mesh.DBLSIDED
         if self.smooth:
             flags |= Mesh.SMOOTH
         if self.lod:
@@ -1095,8 +1098,8 @@ class OBJimport:
             faces.append(face)
 
         flags=0
-        if self.dblsided:
-            flags |= Mesh.DBLSIDED
+        #if self.dblsided:
+        #    flags |= Mesh.DBLSIDED
         if self.smooth:
             flags |= Mesh.SMOOTH
         if self.lod:

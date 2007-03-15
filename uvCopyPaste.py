@@ -62,6 +62,8 @@ Tooltip: 'Copy selected texture to other faces'
 #  - More helpful error message when no object selected.
 #  - Don't try to copy texture to face with different number of vertices.
 #
+# 2004-12-29 v1.87
+#
 
 import Blender
 from Blender import Object, NMesh, Draw, BGL

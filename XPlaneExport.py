@@ -123,10 +123,13 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-12-29 v1.86
 #  - Removed residual support for exporting v6 format.
-#  - Work round X-Plane 8.00-8.03 limitation where "quad_cockpit" polys must
+#  - Work round X-Plane 8.00-8.03 limitation where quad_cockpit polys must
 #    start with the top-left vertex.
-#  - Check that "quad_cockpit" texture t < 768.
+#  - Check that quad_cockpit texture t < 768.
 #  - Work round X-Plane 7.6x bug where poly_os cannot be assumed to be 0.
+#
+# 2004-12-29 v1.87
+#  - Really fix quad_cockpit top-left vertex thing.
 #
 
 #
@@ -240,7 +243,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.86
+    VERSION=1.87
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -314,7 +317,7 @@ class OBJexport:
             systype="A"
         self.file.write("%s\n700\t// \nOBJ\t// \n\n" % systype)
         self.file.write("%s\t\t// Texture\n\n" % self.texture)
-        self.file.write("ATTR_poly_os 0\t\t// work round bug in v7.6x\n\n")
+        self.file.write("ATTR_poly_os 0\t\t//\n\n")
 
     #------------------------------------------------------------------------
     def getTexture (self, theObjects):
@@ -835,8 +838,9 @@ class OBJexport:
             # Note that this can be wrong for weirdly shaped textures.
             hyp=sys.maxint
             for i in range(n):
-                if (face.uv[i].s*face.uv[i].s +
-                    face.uv[i].t*face.uv[i].t < hyp):
+                j = face.uv[i].s*face.uv[i].s + face.uv[i].t*face.uv[i].t
+                if j < hyp:
+                    hyp = j
                     topleft=i
                             
             if (n==3):
