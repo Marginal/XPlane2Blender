@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.32"
+__version__ = "2.33"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -92,7 +92,7 @@ Limitations:<br>
 # 2006-07-30 v2.28
 #  - Light names taken from "name" property, if present.
 #  - Support for ANIM_show/hide.
-#  - Support for ANIM_hard <surface>.
+#  - Support for ATTR_hard <surface>.
 #  - Support for materials.
 #  - Add sorting by group name.
 #

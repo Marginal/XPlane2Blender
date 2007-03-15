@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.32"
+__version__ = "2.33"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -156,7 +156,7 @@ class ACFimport:
     THRESH3=7.0
 
     #------------------------------------------------------------------------
-    def __init__(self, filename, isscenery):
+    def __init__(self, filename, isscenery, relocate=False):
         self.debug=0	# 1: extra debug info in console. 2: also dump txt file
         self.isscenery=isscenery
         if self.isscenery:
@@ -179,12 +179,18 @@ class ACFimport:
                        [0.0, -self.scale, 0.0, 0.0],
                        [0.0, 0.0, -self.scale, 0.0],
                        [0.0, 0.0, 0.0,         1.0])
-        cur=Window.GetCursorPos()
-        self.cur=Vertex(cur[0], cur[1], cur[2])
         self.meshcache={}
         
-        # Hack! Just importing weapon
-        if self.acf.HEADER_version in [1,800]: return
+        cur=Window.GetCursorPos()
+        self.offset=Vertex(cur[0], cur[1], cur[2])
+        if self.acf.HEADER_version in [1,800]:
+            # Importing weapon
+            if relocate:
+                self.offset+=Vertex(0, -self.acf.cgY, -self.acf.cgZ, self.mm)
+            return	# Texture handled elsewhere
+        else:
+            if relocate:
+                self.offset+=Vertex(0, -self.acf.WB_cgY, -self.acf.WB_cgZ, self.mm)
 
         texfilename=self.filename[:self.filename.rindex('.')]+'_paint'
         for extension in ['.png', '.PNG', '.bmp', '.BMP']:	# PNG 1st in v8
@@ -227,7 +233,7 @@ class ACFimport:
 
         # Hack! Just importing weapon
         if self.acf.HEADER_version in [1,800]:
-            Window.DrawProgressBar(0.5, "Importing weapons ...")
+            Window.DrawProgressBar(0.5, "Importing weapon ...")
             self.doBody(basename(self.filename), 0)
             return
         
@@ -289,21 +295,21 @@ class ACFimport:
         if self.acf.VIEW_has_navlites:
             # uses values computed during wings
             self.addLamp("airplane_nav_left",  1.0, 0.0, 0.0, # was Nav Left
-                         Vertex(-(self.navloc.x+0.05),
-                                self.navloc.y, self.navloc.z))
+                         self.offset+Vertex(-(self.navloc.x+0.05),
+                                            self.navloc.y, self.navloc.z))
             self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # was Strobe Left
-                         Vertex(-(self.navloc.x+0.05),
-                                self.navloc.y-0.1, self.navloc.z))
+                         self.offset+Vertex(-(self.navloc.x+0.05),
+                                            self.navloc.y-0.1, self.navloc.z))
             self.addLamp("airplane_nav_right", 0.0, 1.0, 0.0, # was Nav Right
-                         Vertex(self.navloc.x + 0.05,
-                                self.navloc.y, self.navloc.z))
+                         self.offset+Vertex(self.navloc.x + 0.05,
+                                            self.navloc.y, self.navloc.z))
             self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # wasStrobe Right
-                         Vertex(self.navloc.x + 0.05,
-                                self.navloc.y-0.1, self.navloc.z))
+                         self.offset+Vertex(self.navloc.x + 0.05,
+                                            self.navloc.y-0.1, self.navloc.z))
             if self.acf.HEADER_version<800:    # v7
                 self.addLamp("airplane_beacon", 1.0, 0.0, 0.0,# was Tail pulse or Nav Pulse
-                             Vertex(self.tailloc.x, self.tailloc.y,
-                                    self.tailloc.z + 0.05))
+                             self.offset+Vertex(self.tailloc.x, self.tailloc.y,
+                                                self.tailloc.z + 0.05))
 
                 
     #------------------------------------------------------------------------
@@ -334,7 +340,7 @@ class ACFimport:
         mm=TranslationMatrix((Vertex(part.part_x,
                                      part.part_y+self.acf.VTOL_vectarmY,
                                      part.part_z+self.acf.VTOL_vectarmZ,
-                                     self.mm)+self.cur).toVector(4))
+                                     self.mm)+self.offset).toVector(4))
         mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
         mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
         if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
@@ -390,7 +396,7 @@ class ACFimport:
         if not (part.part_eq and wing.semilen_SEG):
             return
         
-        centre=Vertex(part.part_x, part.part_y, part.part_z, self.mm)+self.cur
+        centre=Vertex(part.part_x, part.part_y, part.part_z, self.mm)
         
         tip=centre+Vertex(RotationMatrix(wing.lat_sign*wing.dihed1, 3, 'y') *
                           (RotationMatrix(wing.lat_sign*wing.sweep1, 3, 'z') *
@@ -476,7 +482,7 @@ class ACFimport:
             imagemkr=ACFimport.IMAGE2MKR
             image=self.image2
 
-        mm=TranslationMatrix(centre.toVector(4))
+        mm=TranslationMatrix((self.offset+centre).toVector(4))
         mm=RotationMatrix(-wing.lat_sign*wing.dihed1, 4, 'y')*mm
 
         # Re-use existing meshes
@@ -505,7 +511,7 @@ class ACFimport:
                         if not istip: continue
                         if p!=rootp:
                             (root, foo) = self.wingc[rootp]
-                            mm=TranslationMatrix(root.toVector(4))
+                            mm=TranslationMatrix((self.offset + root).toVector(4))
                     ob=self.addMesh(name+ACFimport.MARKERS[i]+imagemkr,
                                     meshes[i], ACFimport.LAYERS[i], mm)
                     if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
@@ -690,7 +696,7 @@ class ACFimport:
                 Vertex(0.0,   -self.acf.wing[rootp].Croot*self.scale*3/4, 0.0)]
             lv=[rv[3], rv[2], rv[1], rv[0]]
 
-            mm=TranslationMatrix(root.toVector(4))	# no rotation
+            mm=TranslationMatrix((self.offset + root).toVector(4))
 
 
         mesh=NMesh.New(name+ACFimport.LAYER3MKR+imagemkr)
@@ -726,18 +732,13 @@ class ACFimport:
             imagemkr=''
 
             if watt:
-                mm=TranslationMatrix((Vertex(watt.watt_x,
-                                             watt.watt_y,
-                                             watt.watt_z,
-                                             self.mm)+self.cur).toVector(4))
+                mm=TranslationMatrix((Vertex(watt.watt_x, watt.watt_y, watt.watt_z, self.mm)+
+                                      self.offset).toVector(4))
                 mm=self.rotate(watt.watt_con, False,
                                watt.watt_psi, watt.watt_the, watt.watt_phi)*mm
             else:
-                mm=TranslationMatrix(self.cur.toVector(4))
-            mm=TranslationMatrix(Vertex(-part.part_x,
-                                        -part.part_y,
-                                        -part.part_z,
-                                        self.mm).toVector(4))*mm
+                mm=TranslationMatrix(self.offset.toVector(4))
+            mm=TranslationMatrix(Vertex(-part.part_x, -part.part_y, -part.part_z, self.mm).toVector(4))*mm
             # Re-use existing meshes
             if wpnname in self.meshcache:
                 meshes=self.meshcache[wpnname]
@@ -768,16 +769,16 @@ class ACFimport:
                 a=RotationMatrix(gear.latE, 3, 'y')
                 a=RotationMatrix(-gear.lonE, 3, 'x')*a
                 mm=TranslationMatrix((Vertex(gear.gear_x,
-                                             gear.gear_y,
+                                             gear.gear_y, 
                                              gear.gear_z,
                                              self.mm)+
                                       Vertex(a * Vector([0,0,-gear.leg_len*self.scale]))+
-                                      self.cur).toVector(4))
+                                      self.offset).toVector(4))
             else:
                 mm=TranslationMatrix((Vertex(part.part_x,
                                              part.part_y,
                                              part.part_z,
-                                             self.mm)+self.cur).toVector(4))
+                                             self.mm)+self.offset).toVector(4))
             mm=self.rotate(part.patt_con, True,
                            part.part_psi, part.part_the, part.part_phi)*mm
 
@@ -983,7 +984,12 @@ class ACFimport:
         
         isblunt=0
         point1=0
-        length=v[0][0].y-v[sdim-1][0].y
+        miny=99999
+        maxy=-99999
+        for i in range(sdim):
+            if v[i][0].y > maxy: maxy=v[i][0].y
+            if v[i][0].y < miny: miny=v[i][0].y
+        length=maxy-miny
 
         for i in range(sdim/2,0,-1):
             if v[i][0].y>=v[i-1][0].y-blunt_front:
@@ -1150,8 +1156,10 @@ class ACFimport:
         name="Gear %s" % (p+1)
         if self.debug: print name
         
-        mm=TranslationMatrix((Vertex(gear.gear_x, gear.gear_y, gear.gear_z,
-                                     self.mm)+self.cur).toVector(4))
+        mm=TranslationMatrix((Vertex(gear.gear_x,
+                                     gear.gear_y,
+                                     gear.gear_z,
+                                     self.mm)+self.offset).toVector(4))
         mm=RotationMatrix(-gear.latE, 4, 'y')*mm
         mm=RotationMatrix(gear.lonE, 4, 'x')*mm
 
@@ -1262,10 +1270,12 @@ class ACFimport:
         # Don't want to rotate the tire itself. So find centre manually.
         a=RotationMatrix(gear.latE, 3, 'y')
         a=RotationMatrix(-gear.lonE, 3, 'x')*a
-        mm=TranslationMatrix((Vertex(gear.gear_x, gear.gear_y, gear.gear_z,
+        mm=TranslationMatrix((Vertex(gear.gear_x,
+                                     gear.gear_y,
+                                     gear.gear_z,
                                      self.mm)+
                               Vertex(a*Vector([0,0,-strutlen]))+
-                              self.cur).toVector(4))
+                              self.offset).toVector(4))
         mesh=NMesh.New(name+ACFimport.LAYER1MKR)
 
         if self.acf.HEADER_version<800:	# v7
@@ -1462,7 +1472,7 @@ class ACFimport:
                              DEFfmt.gear_door_attached]:
             return
 
-        mm=TranslationMatrix((Vertex(door.xyz,self.mm)+self.cur).toVector(4))
+        mm=TranslationMatrix((Vertex(door.xyz, self.mm)+self.offset).toVector(4))
         if p<DEFfmt.doorDIM:
             name="Door %s" % (p+1)
             mm=RotationMatrix(-door.axi_rot, 4, 'z')*mm
@@ -1510,14 +1520,13 @@ class ACFimport:
             mm=TranslationMatrix((Vertex(obj.obj_x,
                                          obj.obj_y,
                                          obj.obj_z,
-                                         self.mm)+
-                                  Vertex(a * Vector([0,0,-gear.leg_len*self.scale]))+
-                                  self.cur).toVector(4))
+                                         self.mm)+self.offset+
+                                  Vertex(a * Vector([0,0,-gear.leg_len*self.scale]))).toVector(4))
         else:
             mm=TranslationMatrix((Vertex(obj.obj_x,
                                          obj.obj_y,
                                          obj.obj_z,
-                                         self.mm)+self.cur).toVector(4))
+                                         self.mm)+self.offset).toVector(4))
         mm=self.rotate(obj.obj_con, False,
                        obj.obj_psi, obj.obj_the, obj.obj_phi)*mm
 
@@ -1557,11 +1566,14 @@ class ACFimport:
             gear=self.acf.gear[con-1]
             a=RotationMatrix(gear.latE, 3, 'y')
             a=RotationMatrix(-gear.lonE, 3, 'x')*a
-            centre=(Vertex(gear.gear_x, gear.gear_y, gear.gear_z, self.mm)+
+            centre=(Vertex(gear.gear_x,
+                           gear.gear_y,
+                           gear.gear_z, self.mm)+self.offset+
                     Vertex(a * Vector(eval("self.acf.VIEW_%s_xyz" % part)),
                            self.mm))
         else:
-            centre=Vertex(eval("self.acf.VIEW_%s_xyz" % part), self.mm)
+            centre=(self.offset +
+                    Vertex(eval("self.acf.VIEW_%s_xyz" % part), self.mm))
             
         self.addLamp(name, r, g, b, centre)
 
@@ -1620,8 +1632,7 @@ class ACFimport:
         ob.link(lamp)
         self.scene.link(ob)
         ob.Layer=ACFimport.LAYER1|ACFimport.LAYER2|ACFimport.LAYER3
-        cur=Window.GetCursorPos()
-        ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
+        ob.setLocation(centre.x, centre.y, centre.z)
 
 
     #------------------------------------------------------------------------
@@ -1632,7 +1643,6 @@ class ACFimport:
         ob.link(mesh)
         self.scene.link(ob)
         ob.Layer=layer
-        #ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         ob.setMatrix(mm)
         mesh.update(1)
         return ob
@@ -3967,11 +3977,13 @@ def quatmult(q1,q2):
 
         
 #------------------------------------------------------------------------
+relocate=False
+
 def file_callback (filename):
     print "Starting ACF import from " + filename
     Blender.Window.DrawProgressBar(0, "Opening ...")
     try:
-        acf=ACFimport(filename, 1)
+        acf=ACFimport(filename, True, relocate)
     except ParseError, e:
         Blender.Window.DrawProgressBar(1, "ERROR")
         print("ERROR:\t%s\n" % e.msg)
@@ -3987,4 +3999,10 @@ def file_callback (filename):
 # main routine
 #------------------------------------------------------------------------
 
-Blender.Window.FileSelector(file_callback,"Import ACF or WPN")
+opt=Blender.Draw.PupMenu("Cursor location:%t|Reference point (for cockpit & misc objects)|Centre of gravity (for CSLs & static scenery)")
+if opt==1:
+    relocate=False
+    Blender.Window.FileSelector(file_callback, "Import ACF or WPN")
+elif opt==2:
+    relocate=True
+    Blender.Window.FileSelector(file_callback, "Import ACF or WPN")
