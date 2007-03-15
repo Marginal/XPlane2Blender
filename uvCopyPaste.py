@@ -1,9 +1,24 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'Copy & Paste'
-Blender: 232
+Blender: 234
 Group: 'UV'
-Tooltip: 'Copy selected texture to other faces'
+Tooltip: 'Copy selected texture assignment to other faces'
+"""
+__author__ = "Jonathan Harris"
+__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__version__ = "2.00"
+__bpydoc__ = """\
+This script duplicates a face's texture assignment across many faces.
+
+Usage:<br>
+  * Select a mesh.<br>
+  * Enter UV Face Select mode.<br>
+  * Select the face who's texture assignment you want to duplicate.<br>
+  * Run this script from the UVs menu in the UV/Image Editor<br>
+    window.<br>
+  * Select the face(s) that you want to change.<br>
+  * Press the Copy button.<br>
 """
 #------------------------------------------------------------------------
 # UV Copy & Paste for blender 2.35 or above
@@ -152,7 +167,7 @@ def bevent (evt):
                 mesh.update()
                 
         Draw.Exit()
-        Blender.Redraw()
+        Blender.Window.Redraw(-1)
 
 
 # the function to handle input events
@@ -226,9 +241,6 @@ class StripError(Exception):
         self.msg = msg
 
 try:
-    if Blender.Get('version') < 234:
-        raise StripError("Requires Blender version 2.34 or later.")
-
     if Blender.Window.EditMode():
         raise StripError("Please enter UV Face Select mode first.")
     

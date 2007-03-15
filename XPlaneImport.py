@@ -1,9 +1,23 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane scenery (.obj)...'
-Blender: 232
+Name: 'X-Plane Object (.obj)...'
+Blender: 234
 Group: 'Import'
-Tooltip: 'Import an X-Plane scenery file (.obj)'
+Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
+"""
+__author__ = "Jonathan Harris"
+__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__version__ = "2.00"
+__bpydoc__ = """\
+This script imports X-Plane v6 and v7 .obj scenery files into Blender.
+
+Limitations:<br>
+  * smoke_black and smoke_white X-Plane primitives are ignored.<br>
+  * poly_os, ambient, difuse, specular, emission and shiny<br>
+    attributes are ignored.<br>
+  * Can't work out which faces have transparency. Transparent faces<br>
+    must be manually marked with the Alpha button in UV Face Select<br>
+    mode after import.<br>
 """
 #------------------------------------------------------------------------
 # X-Plane importer for blender 2.34 or above
@@ -116,10 +130,16 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 # 2005-01-15 v1.90
 #  - Add support for forcing all primitives into a single mesh.
 #
+# 2005-03-02 v2.00
+#  - Default to smooth.
+#  - Add support ATTR_reset.
+#  - Eliminate ".." from texture paths.
+#
 
 import sys
 import Blender
 from Blender import Object, NMesh, Lamp, Image, Material, Window
+from XPlaneUtils import Vertex, UV, Face
 #import time
 
 class ParseError(Exception):
@@ -156,11 +176,12 @@ class Token:
     NO_DEPTH	= 20
     DEPTH	= 21
     LOD		= 22
-    NO_CULL	= 23
-    NOCULL	= 24
-    CULL	= 25
-    POLY_OS	= 26
-    QUAD_COCKPIT= 27
+    RESET	= 23
+    NO_CULL	= 24
+    NOCULL	= 25
+    CULL	= 26
+    POLY_OS	= 27
+    QUAD_COCKPIT= 28
     END6	= 99
     NAMES = [
         "end",
@@ -186,6 +207,7 @@ class Token:
         "ATTR_no_depth",
         "ATTR_depth",
         "ATTR_LOD",
+        "ATTR_reset",
         # 7.40+
         "ATTR_no_cull",
         "ATTR_nocull",	# Also seen
@@ -195,91 +217,9 @@ class Token:
         "Quad_Cockpit"
         ]
 
-class Vertex:
-    LIMIT=0.001	# max distance between vertices for them to be merged
-    ROUND=3	# Precision for mesh centers
-    
-    def __init__(self, x, y, z):
-        self.x=x
-        self.y=y
-        self.z=z
-
-    def __str__(self):
-        return "%7.3f %7.3f %7.3f" % (self.x,self.y,self.z)
-    
-    def equals (self, v):
-        if ((abs(self.x-v.x) < Vertex.LIMIT) and
-            (abs(self.y-v.y) < Vertex.LIMIT) and
-            (abs(self.z-v.z) < Vertex.LIMIT)):
-            return 1
-        else:
-            return 0
-
-class UV:
-    LIMIT=0.008	# = 1 pixel in 128, 2 pixels in 256, etc
-    ROUND=4
-
-    def __init__(self, s, t):
-        self.s=s
-        self.t=t
-
-    def __str__(self):
-        return "%s %s" % (round(self.s,UV.ROUND), round(self.t,UV.ROUND))
-
-    def equals (self, uv):
-        if ((abs(self.s-uv.s) <= UV.LIMIT) and
-            (abs(self.t-uv.t) <= UV.LIMIT)):
-            return 1
-        else:
-            return 0
-
-class Face:
-    # Flags
-    HARD=1    
-    NO_DEPTH=2
-    DBLSIDED=4
-    COCKPIT=8
-
-    def __init__(self):
-        self.v=[]
-        self.uv=[]
-        self.flags=0
-
-    def __str__(self):
-        s="<"
-        for v in self.v:
-            s=s+("[%s]," % v)
-        return s[:-1]+">"
-    
-    def addVertex(self, v):
-        self.v.append(v)
-
-    def addUV(self, uv):
-        self.uv.append(uv)
-
-    def checkDuplicateVertices(self):
-        i=0
-        while i < len(self.v)-1:
-            j=i+1
-            while j < len(self.v):
-                if self.v[i].equals(self.v[j]) and self.uv[i].equals(self.uv[j]):
-                    self.v[i].x=round((self.v[i].x+self.v[j].x)/2,Vertex.ROUND)
-                    self.v[i].y=round((self.v[i].y+self.v[j].y)/2,Vertex.ROUND)
-                    self.v[i].z=round((self.v[i].z+self.v[j].z)/2,Vertex.ROUND)
-                    del self.v[j]
-                    self.uv[i].s=round((self.uv[i].s+self.uv[j].s)/2,UV.ROUND)
-                    self.uv[i].t=round((self.uv[i].t+self.uv[j].t)/2,UV.ROUND)
-                    del self.uv[j]
-                else:
-                    j=j+1
-            i=i+1
-        return len(self.v)
-
 class Mesh:
     # Flags
     LAYERMASK=7
-    DBLSIDED=8
-    SMOOTH=16
 
     def __init__(self, name, faces=[], flags=0):
         self.name=name
@@ -338,8 +278,6 @@ class Mesh:
         mesh=NMesh.New(self.name)
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
-        #if self.flags&Mesh.DBLSIDED:
-        #    mesh.mode |= NMesh.Modes.TWOSIDED
 
         n=0
         centre=Vertex(0,0,0)
@@ -361,11 +299,11 @@ class Mesh:
             #face.transp=NMesh.FaceTranspModes.ALPHA
             if not f.flags&Face.HARD:
                 face.mode |= NMesh.FaceModes.DYNAMIC
-            if f.flags&Face.NO_DEPTH:
-                face.mode |= NMesh.FaceModes.TILES
+            #if f.flags&Face.NO_DEPTH:
+            #    face.mode |= NMesh.FaceModes.TILES
             if f.flags&Face.DBLSIDED:
                 face.mode |= NMesh.FaceModes.TWOSIDE
-            if self.flags&Mesh.SMOOTH:
+            if f.flags&Face.SMOOTH:
                 face.smooth=1
 
             for v in f.v:
@@ -385,22 +323,21 @@ class Mesh:
             for uv in f.uv:
                 face.uv.append((uv.s, uv.t))
 
-            if f.flags&Face.COCKPIT:
+            if f.flags&Face.PANEL:
                 face.mode |= NMesh.FaceModes.TEX
                 face.transp=NMesh.FaceTranspModes.ALPHA
-                mesh.hasFaceUV(1)                
-                l = filename.rfind(Blender.sys.dirsep)
-                if l!=-1:
-                    for extension in [".bmp", ".png"]:
-                        cockpit=filename[:l+1]+"cockpit"+Blender.sys.dirsep+"-PANELS-"+Blender.sys.dirsep+"Panel"+extension
-                        try:
-                            file = open(cockpit, "rb")
-                        except IOError:
-                            pass
-                        else:
-                            file.close()
-                            face.image = Image.Load(cockpit)
-                            break
+                mesh.hasFaceUV(1)
+                if not self.panel:
+                    l = filename.rfind(Blender.sys.dirsep)
+                    if l!=-1:
+                        for extension in [".bmp", ".png"]:
+                            cockpit=filename[:l+1]+"cockpit"+Blender.sys.dirsep+"-PANELS-"+Blender.sys.dirsep+"Panel"+extension
+                            try:
+                                self.panel = Image.Load(cockpit)
+                                break
+                            except IOError:
+                                pass
+                face.image = self.panel
             elif image:
                 face.mode |= NMesh.FaceModes.TEX
                 face.image = image
@@ -438,7 +375,8 @@ class OBJimport:
         self.lineno=0		# for error reporting
         self.filelen=0		# for progress reports
         self.fileformat=0	# 6 or 7
-        self.image=0		# texture image, iff scenery has texture
+        self.image=None		# texture image, iff scenery has texture
+        self.panel=None		# texture image, iff cockpit with panel
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
         
@@ -448,7 +386,7 @@ class OBJimport:
         # flags controlling import
         self.comment=""
         self.lastcomment=""
-        self.smooth=0
+        self.smooth=1		# >=7.30 defaults to smoothed rendering
         self.no_depth=0
         self.dblsided=0
         self.lod=0
@@ -628,7 +566,7 @@ class OBJimport:
             pos = self.file.tell()
             c = self.file.read(1)
             if not c:
-                raise ParseError(HEADER)
+                raise ParseError(ParseError.HEADER)
             if c == "\r":
                 self.lineno += 1
             if not c in self.whitespace:
@@ -641,7 +579,7 @@ class OBJimport:
             pos = self.file.tell()
             c = self.file.read(1)
             if not c:
-                raise ParseError(HEADER)
+                raise ParseError(ParseError.HEADER)
             if c == "\r":
                 self.lineno += 1
             if c in ["\r", '/']:
@@ -664,46 +602,44 @@ class OBJimport:
             else:
                 basename+=tex[i]
 
-        l=self.filename.rfind(Blender.sys.dirsep)
-        if l==-1:
-            l=0
-        else:
-            l=l+1
-
-        p=".."+Blender.sys.dirsep
-        for extension in [".bmp", ".png"]:
-            for prefix in ["",
-                           p+"custom object textures"+Blender.sys.dirsep,
-                           p+p+"custom object textures"+Blender.sys.dirsep,
-                           p+p+p+"custom object textures"+Blender.sys.dirsep,
-                           p+"AutoGen textures"+Blender.sys.dirsep,
-                           p+p+"AutoGen textures"+Blender.sys.dirsep,
-                           p+p+p+"AutoGen textures"+Blender.sys.dirsep]:
-                texname=self.filename[:l]+prefix+basename+extension
-                try:
-                    file = open(texname, "rb")
-                except IOError:
-                    pass
+        for subdir in ["",
+                       "custom object textures"+Blender.sys.dirsep,
+                       "AutoGen textures"+Blender.sys.dirsep]:
+            texdir=self.filename
+            for p in range(3):
+                p=texdir[:-1].rfind(Blender.sys.dirsep)
+                if p!=-1:
+                    texdir=texdir[:p+1]
                 else:
-                    # Detect and fix up spaces in texture file name
-                    if basename.find(" ") != -1:
-                        newname=""
-                        for i in range(len(basename)):
-                            if basename[i]==" ":
-                                newname+="_"
-                            else:
-                                newname+=basename[i]
-                        newname=self.filename[:l]+prefix+newname+extension
-                        newfile=open(newname, "wb")
-                        newfile.write(file.read())
-                        newfile.close()
-                        texname=newname
-                        print "Info:\tCreated new texture file \"%s\"" %texname
-                    elif self.verbose:
-                        print "Info:\tUsing texture file \"%s\"" % texname
-                    file.close()
-                    self.image = Image.Load(texname)
-                    return
+                    break
+                
+                for extension in [".bmp", ".png"]:
+                    texname=texdir+subdir+basename+extension
+                    try:
+                        file = open(texname, "rb")
+                    except IOError:
+                        pass
+                    else:
+                        # Detect and fix up spaces in texture file name
+                        if basename.find(" ") != -1:
+                            newname=""
+                            for i in range(len(basename)):
+                                if basename[i]==" ":
+                                    newname+="_"
+                                else:
+                                    newname+=basename[i]
+                            newname=self.filename[:l]+prefix+newname+extension
+                            newfile=open(newname, "wb")
+                            newfile.write(file.read())
+                            newfile.close()
+                            texname=newname
+                            print "Info:\tCreated new texture file \"%s\"" % (
+                                texname)
+                        elif self.verbose:
+                            print "Info:\tUsing texture file \"%s\"" % texname
+                        file.close()
+                        self.image = Image.Load(texname)
+                        return
             
         self.image=0
         print "Warn:\tTexture file \"%s\" not found" % basename
@@ -830,6 +766,12 @@ class OBJimport:
                     else:
                         self.lod=1
                 
+                elif t==Token.RESET:
+                    # Not sure what gets reset
+                    self.smooth=1	# >=7.30 defaults to smoothed rendering
+                    self.no_depth=0
+                    self.dblsided=0
+
                 elif t==Token.CULL:
                     self.dblsided = 0
                 elif t in [Token.NO_CULL, Token.NOCULL]:
@@ -1051,6 +993,8 @@ class OBJimport:
             face.addUV(uv[f+1])
             face.addUV(uv[f])
 
+            if self.smooth:
+                face.flags |= Face.SMOOTH
             if self.no_depth:
                 face.flags |= Face.NO_DEPTH
             if self.dblsided:
@@ -1059,10 +1003,6 @@ class OBJimport:
             faces.append(face)
             
         flags=0
-        #if self.dblsided:
-        #    flags |= Mesh.DBLSIDED
-        if self.smooth:
-            flags |= Mesh.SMOOTH
         if self.lod:
             flags |= OBJimport.LAYER[self.lod]
 
@@ -1115,13 +1055,15 @@ class OBJimport:
             # in the way that textures are mapped to triangles. This is
             # unnecessary in v7 and screws up when we try to add the same
             # vertex twice. So manually remove extra vertices
-            if face.checkDuplicateVertices() < 3:
+            if face.removeDuplicateVertices() < 3:
                 continue
             
             if token==Token.QUAD_HARD:
                 face.flags |= Face.HARD
             if token==Token.QUAD_COCKPIT:
-                face.flags |= Face.COCKPIT
+                face.flags |= Face.PANEL
+            if self.smooth:
+                face.flags |= Face.SMOOTH
             if self.no_depth:
                 face.flags |= Face.NO_DEPTH
             if self.dblsided:
@@ -1130,10 +1072,6 @@ class OBJimport:
             faces.append(face)
 
         flags=0
-        #if self.dblsided:
-        #    flags |= Mesh.DBLSIDED
-        if self.smooth:
-            flags |= Mesh.SMOOTH
         if self.lod:
             flags |= OBJimport.LAYER[self.lod]
 
@@ -1233,9 +1171,4 @@ def file_callback (filename):
 # main routine
 #------------------------------------------------------------------------
 
-if Blender.Get('version') < 234:
-    msg="ERROR:\tRequires Blender version 2.34 or later."
-    print msg
-    Blender.Draw.PupMenu(msg)
-else:
-    Blender.Window.FileSelector(file_callback,"IMPORT .OBJ")
+Blender.Window.FileSelector(file_callback,"IMPORT .OBJ")
