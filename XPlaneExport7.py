@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v7 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.34"
+__version__ = "2.35"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v7 .obj
 format for placement with World-Maker.
@@ -32,7 +32,7 @@ Limitations:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-ShareAlike 2.5:
 #
 #   You are free:
 #     * to copy, distribute, display, and perform the work
@@ -47,28 +47,38 @@ Limitations:<br>
 #   terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
 #
 #
 
 import Blender
+from Blender import Draw, Window
 from XPlaneExport import OBJexport7, ExportError
 
-if Blender.Window.EditMode(): Blender.Window.EditMode(0)
+if Window.EditMode(): Window.EditMode(0)
 baseFileName=Blender.Get('filename')
 l = baseFileName.lower().rfind('.blend')
 if l!=-1:
     baseFileName=baseFileName[:l]
 
 obj=OBJexport7(baseFileName+'.obj', __version__, False)
-scene = Blender.Scene.getCurrent()
+scene = Blender.Scene.GetCurrent()
 try:
     obj.export(scene)
 except ExportError, e:
-    Blender.Window.WaitCursor(0)
-    Blender.Window.DrawProgressBar(0, 'ERROR')
+    Window.WaitCursor(0)
+    Window.DrawProgressBar(0, 'ERROR')
+    for o in scene.getChildren(): o.select(0)
+    if e.objs:
+        layers=[]
+        for o in e.objs:
+            o.select(1)
+            for layer in o.layers:
+                if layer<=3 and not layer in layers: layers.append(layer)
+        Window.ViewLayers(layers)
+        Window.RedrawAll()
     print "ERROR:\t%s\n" % e.msg
-    Blender.Draw.PupMenu("ERROR: %s" % e.msg)
-    Blender.Window.DrawProgressBar(1, 'ERROR')
-    if obj.file:
-        obj.file.close()
+    Draw.PupMenu("ERROR: %s" % e.msg)
+    Window.DrawProgressBar(1, 'ERROR')
+    if obj.file: obj.file.close()
+

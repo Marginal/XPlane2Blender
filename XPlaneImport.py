@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.34"
+__version__ = "2.35"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -185,6 +185,9 @@ Limitations:<br>
 #  - Goes faster (use new Mesh type) - requires 2.42.
 #  - Support for materials.
 #  - Imports fewer, larger meshes (for speed).
+#
+# 2007-02-26 v2.35
+#  - Animated objects correctly parented to bones (using Blender 2.43 & later).
 #
 
 import sys
@@ -371,7 +374,7 @@ class MyMesh:
         self.faces=[]
         self.surface=surface	# Hard surface type or None
         self.layers=layers	# LOD
-        self.anim=anim		# (armob,bonename)
+        self.anim=anim		# (armob,offset,bonename)
         self.mat=mat
         self.bmax=Vertex(-sys.maxint,-sys.maxint,-sys.maxint)
         self.bmin=Vertex( sys.maxint, sys.maxint, sys.maxint)
@@ -436,7 +439,11 @@ class MyMesh:
             
         centre=Vertex(0,0,0)
         if self.anim:
-            boneloc=Vertex(self.anim[0].getData().bones[self.anim[2]].head['ARMATURESPACE'])
+            print self.anim[0], self.anim[1], self.anim[2]
+            if self.anim[2]:
+                boneloc=Vertex(self.anim[0].getData().bones[self.anim[2]].head['ARMATURESPACE'])
+            else:	# Bone can be None if no_ref
+                boneloc=Vertex(0,0,0)
             centre=boneloc-self.anim[1]
         elif not subroutine:
             n=0
@@ -515,20 +522,23 @@ class MyMesh:
                            self.anim[0].LocY+boneloc.y,
                            self.anim[0].LocZ+boneloc.z)
             self.anim[0].makeParent([ob])
-            #ob.parentbonename=self.anim[2]
+            if self.anim[2] and 'makeParentBone' in dir(self.anim[0]):	# new in 2.43
+                print self.anim[0], ob, self.anim[2]
+                self.anim[0].makeParentBone([ob],self.anim[2])
         else:
             cur=Window.GetCursorPos()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         if self.surface:
             ob.addProperty('surface', self.surface)
-        if self.layers&MyMesh.LAYERMASK:
-            ob.Layer=(self.layers&MyMesh.LAYERMASK)
+        #if self.layers&MyMesh.LAYERMASK:
+        #    ob.Layer=(self.layers&MyMesh.LAYERMASK)
 
         mesh.sel=True
         mesh.remDoubles(Vertex.LIMIT)	# must be after linked to object
         mesh.sel=False
 
         scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
+        scene.update(1)
         return ob
 
 
@@ -623,14 +633,14 @@ class OBJimport:
         self.file.seek(0)
         if not self.subroutine:
             Window.DrawProgressBar(0, "Opening ...")
-            scene=Blender.Scene.getCurrent()
-            layers=scene.Layers
-            scene.Layers=7	# workaround for 2.42 - Blender bug #4696 ?
+            scene=Blender.Scene.GetCurrent()
+            #layers=scene.Layers
+            #scene.Layers=7	# workaround for 2.42 - Blender bug #4696 ?
         self.readHeader()
         ob=self.readObjects()
         if not self.subroutine:
             Window.DrawProgressBar(1, "Finished")
-            scene.Layers=layers
+            #scene.Layers=layers
         if self.verbose:
             print "Finished - imported %s primitives\n" % self.nprim
         #print "%s CPU time\n" % (time.clock()-clock)
@@ -962,7 +972,7 @@ class OBJimport:
             
     #------------------------------------------------------------------------
     def readObjects (self):
-        scene = Blender.Scene.getCurrent()
+        scene = Blender.Scene.GetCurrent()
 
         if self.fileformat==8:
             while 1:
@@ -993,7 +1003,8 @@ class OBJimport:
                                                "Adding %d%% ..." % (
                             90+(i*10.0)/len(self.curmesh)))
                         last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
-                    scene.update(1)	# update poses
+                    #scene.makeCurrent()	# Blender bug #4696
+                    #scene.update(1)	# update poses
                     return last
 
                 elif t==Token.VLIGHT:
@@ -1081,8 +1092,8 @@ class OBJimport:
                         self.arm.restPosition=True	# for easier parenting
                         self.armob.link(self.arm)
                         scene.link(self.armob)
-                        if self.layer:
-                            self.armob.Layer=OBJimport.LAYER[self.layer]
+                        #if self.layer:
+                        #    self.armob.Layer=OBJimport.LAYER[self.layer]
                         cur=Window.GetCursorPos()
                         self.armob.setLocation(cur[0], cur[1], cur[2])
                         self.action = Armature.NLA.NewAction()
@@ -1102,6 +1113,8 @@ class OBJimport:
                     self.bones.pop()
                     if not self.off:
                         # Back at top level
+                        print self.off, self.bones
+                        self.arm.restPosition=False
                         self.arm.update()
                         self.arm=None
                         self.armob=None
@@ -1127,7 +1140,8 @@ class OBJimport:
                             # not just a shift
                             name=dataref[-1]
                             if '[' in name: name=name[:name.index('[')]
-                            if len(dataref)>1 and not name in datarefs:
+                            if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
+                                # custom or ambiguous dataref
                                 self.armob.addProperty(name, '/'.join(dataref[:-1])+'/')
                             if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
                             if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
@@ -1662,18 +1676,22 @@ class OBJimport:
         if propname: ob.addProperty('name', propname)
         ob.link(lamp)
         scene.link(ob)
-        if self.layer:
-            ob.Layer=OBJimport.LAYER[self.layer]
+        #if self.layer:
+        #    ob.Layer=OBJimport.LAYER[self.layer]
         if self.armob:
-            boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+            if self.bones:
+                boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+            else:	# Bone can be None if no_ref
+                boneloc=Vertex(0,0,0)
             loc=Vertex(self.armob.loc)+boneloc-self.off[-1]+v
             ob.setLocation(loc.x, loc.y, loc.z)
             self.armob.makeParent([ob])
-            #ob.parentbonename=self.anim[2]
+            if 'makeParentBone' in dir(self.armob):	# new in 2.43
+                self.armob.makeParentBone([ob],self.bones[-1])
         else:
             cur=Window.GetCursorPos()
             ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
-        scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
+        #scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
         self.nprim+=1
         
     #------------------------------------------------------------------------
@@ -1684,7 +1702,10 @@ class OBJimport:
                 self.lineno, name)
 
         if self.armob:
-            boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+            if self.bones:
+                boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+            else:	# Bone can be None if no_ref
+                boneloc=Vertex(0,0,0)
             centre=boneloc-self.off[-1]
         else:
             centre=Vertex(round((v[0].x+v[1].x)/2,1),
@@ -1735,14 +1756,15 @@ class OBJimport:
         ob = Object.New("Mesh", name)
         ob.link(mesh)
         scene.link(ob)
-        if self.layer:
-            ob.Layer=OBJimport.LAYER[self.layer]
+        #if self.layer:
+        #    ob.Layer=OBJimport.LAYER[self.layer]
         if self.armob:
             ob.setLocation(self.armob.LocX+boneloc.x,
                            self.armob.LocY+boneloc.y,
                            self.armob.LocZ+boneloc.z)
             self.armob.makeParent([ob])
-            #ob.parentbonename=self.anim[2]
+            if 'makeParentBone' in dir(self.armob):	# new in 2.43
+                self.armob.makeParentBone([ob],self.bones[-1])
         else:
             cur=Window.GetCursorPos()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])

@@ -2,12 +2,12 @@
 """ Registration info for Blender menus:
 Name: 'Merge _paint and _paint2'
 Blender: 234
-Group: 'UV'
+Group: 'Image'
 Tooltip: 'Merge X-Plane plane_paint and plane_paint2 bitmaps'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.34"
+__version__ = "2.35"
 __bpydoc__ = """\
 This script fixes up an imported plane's texture assignments to use
 a single bitmap file.
@@ -32,7 +32,7 @@ Usage:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-ShareAlike 2.5:
 #
 #   You are free:
 #     * to copy, distribute, display, and perform the work
@@ -47,7 +47,7 @@ Usage:<br>
 #   terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
 #
 #
 # 2006-04-07 v2.20

@@ -9,7 +9,7 @@
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-ShareAlike 2.5:
 #
 #   You are free:
 #     * to copy, distribute, display, and perform the work
@@ -24,7 +24,7 @@
 #   terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
 #
 #
 # 2005-03-01 v2.00
@@ -278,6 +278,10 @@ def getDatarefs():
                     raise err
                 l=d[0].rfind('/')
                 if l==-1: raise err
+                ref=d[0][l+1:]
+                if ref in datarefs:
+                    datarefs[ref]=None			# ambiguous
+                    continue
                 n=1					# scalar by default
                 for c in ['int', 'float', 'double']:
                     if d[1].lower().startswith(c):
@@ -286,7 +290,7 @@ def getDatarefs():
                         break
                 else:
                     n=0					# not a usable dataref
-                datarefs[d[0][l+1:]]=(d[0][:l+1], n)
+                datarefs[ref]=(d[0][:l+1], n)
             break
     else:
         raise IOError(0, "Missing DataRefs.txt file. Please re-install.")

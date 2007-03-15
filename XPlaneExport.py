@@ -9,7 +9,7 @@
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-ShareAlike 2.5:
 #
 #   You are free:
 #     * to copy, distribute, display, and perform the work
@@ -24,7 +24,7 @@
 #   terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
 #
 #
 # 2004-02-01 v1.00
@@ -188,6 +188,9 @@
 # 2006-07-19 v2.25
 #  - Support for layer group, custom LOD ranges.
 #
+# 2007-02-26 v2.35
+#  - Select problematic objects on error.
+#
 
 import sys
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
@@ -198,8 +201,9 @@ from XPlaneUtils import Vertex, UV, Face
 
 
 class ExportError(Exception):
-    def __init__(self, msg):
+    def __init__(self, msg, objs=None):
         self.msg = msg
+        self.objs= objs
 
 
 #------------------------------------------------------------------------
@@ -231,7 +235,7 @@ def checkLayers (theObjects, onlylayer1):
 def getTexture (theObjects, layermask, iscockpit, iscsl, fileformat):
     texture=None
     havepanel=False
-    multierr=False
+    multierr=[]
     panelerr=False
     nobj=len(theObjects)
     texlist=[]
@@ -290,7 +294,7 @@ def getTexture (theObjects, layermask, iscockpit, iscsl, fileformat):
                         if face.image.name.lower().find("panel.")!=-1:
                             # Check that at least one panel texture is OK
                             if len(face.v)==3 and fileformat==7:
-                                raise ExportError("Only quads can use the instrument panel texture,\n\tbut tri using panel texture found in mesh \"%s\"." % object.name)
+                                raise ExportError("Only quads can use the instrument panel texture,\n\tbut I found tri(s) using the panel texture in \"%s\"." % object.name, [object])
                             if not havepanel:
                                 havepanel=True
                                 iscockpit=True
@@ -315,21 +319,22 @@ def getTexture (theObjects, layermask, iscockpit, iscsl, fileformat):
                                 texlist.append(str.lower(fixedfile))
                             else:
                                 if not multierr:
-                                    multierr=1
                                     print "Warn:\tMultiple texture files found:"
                                     print texture
+                                if not object in multierr:
+                                    multierr.append(object)
                                 if not str.lower(fixedfile) in texlist:
                                     texlist.append(str.lower(fixedfile))
                                     print fixedfile
         elif (iscockpit and objType == "Lamp"
               and object.getData().getType() == Lamp.Types.Lamp):
-            raise ExportError("Cockpit objects can't contain lights.")
+            raise ExportError("Cockpit objects can't contain lights.",[object])
                         
     if multierr:
-        raise ExportError("OBJ format supports one texture file, but multiple files found.")
+        raise ExportError("The OBJ format supports one texture file, but you've used multiple texture files; see the Console for a list of the files.", multierr)
                                 
     if panelerr:
-        raise ExportError("At least one instrument panel texture must be within 1024x768.")
+        raise ExportError("At least one face that uses the instrument panel texture must be within the top 768 lines of the panel texture.")
 
     if not texture:
         return (None, False, layermask, lod)
@@ -769,7 +774,7 @@ class OBJexport7:
                 
                 if f.mode & NMesh.FaceModes.TEX:
                     if len(f.uv)!=n:
-                        raise ExportError("Missing UV in mesh \"%s\"" % object.name)
+                        raise ExportError("Missing UV in mesh \"%s\"" % object.name, [object])
                     if f.transp == NMesh.FaceTranspModes.ALPHA:
                         face.flags|=Face.ALPHA
 

@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.34"
+__version__ = "2.35"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -34,7 +34,7 @@ Limitations:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-ShareAlike 2.5:
 #
 #   You are free:
 #     * to copy, distribute, display, and perform the work
@@ -49,7 +49,7 @@ Limitations:<br>
 #   terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
 #
 #
 # 2004-02-01 v1.00
@@ -125,6 +125,7 @@ Limitations:<br>
 #
 # 2006-12-21 v2.34
 #  - Add support for v8.60 format planes (no visible changes).
+#  - Handle wing incidence.
 #
 
 import sys
@@ -176,7 +177,7 @@ class ACFimport:
         else:
             self.filename=filename
         self.acf=ACF(self.filename, self.debug)
-        self.scene = Blender.Scene.getCurrent();
+        self.scene = Blender.Scene.GetCurrent();
         self.navloc = Vertex(0.0, 0.0, 0.0)
         self.tailloc = Vertex(0.0, 0.0, 0.0)
         self.wingc = {}
@@ -4022,7 +4023,6 @@ def file_callback (filename):
 #------------------------------------------------------------------------
 
 opt=Blender.Draw.PupMenu("Cursor location:%t|Reference point (for cockpit & misc objects)|Centre of gravity (for CSLs & static scenery)")
-print opt
 if opt==1:
     relocate=False
     Blender.Window.FileSelector(file_callback, "Import ACF or WPN")

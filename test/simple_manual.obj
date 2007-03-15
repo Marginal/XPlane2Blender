@@ -1,0 +1,45 @@
+I
+800
+OBJ
+
+TEXTURE		none
+POINT_COUNTS	12 0 0 18
+
+VT	   1.000    0.000    1.000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.000    0.000    1.000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.000    0.000   -1.000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.000    0.000   -1.000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.000    0.000    0.000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.000    0.000    0.000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.000    0.000   -2.000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.000    0.000   -2.000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.000    0.000    0.000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.000    0.000    0.000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.000    0.000   -2.000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.000    0.000   -2.000	 0.000  1.000  0.000	0.0    0.0   
+
+IDX10	0 1 2 0 2 3 8 9 10 8
+IDX	10
+IDX	11
+IDX	4
+IDX	5
+IDX	6
+IDX	4
+IDX	6
+IDX	7
+
+ATTR_no_cull
+ATTR_shade_flat
+TRIS	0 6
+ANIM_begin
+	ANIM_trans	0 0 -1	0 0 -1	0 1	sim/flightmodel/engine/ENGN_thro[0]
+	ANIM_rotate	-.5 .5 0	90 -90	0 1	sim/flightmodel/engine/ENGN_thro[0]
+	TRIS	6 6
+	ANIM_begin
+		ANIM_trans	0 0 -2	0 0 -2	0 1	sim/flightmodel/engine/ENGN_thro[1]
+		ANIM_rotate	-1 0 0	90 -90	0 1	sim/flightmodel/engine/ENGN_thro[1]
+		TRIS	12 6
+	ANIM_end
+ANIM_end
+
+# Built with Blender 2.39. Exported with XPlane2Blender 2.10c.

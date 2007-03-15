@@ -2,12 +2,12 @@
 """ Registration info for Blender menus:
 Name: 'Double bitmap size'
 Blender: 234
-Group: 'UV'
+Group: 'Image'
 Tooltip: 'Adjust textures to enlarged bitmap'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.34"
+__version__ = "2.35"
 __bpydoc__ = """\
 This script fixes up selected meshes' texture assignments after doubling
 the size of the bitmap file.
@@ -33,7 +33,7 @@ Usage:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-ShareAlike 2.5:
 #
 #   You are free:
 #     * to copy, distribute, display, and perform the work
@@ -48,7 +48,7 @@ Usage:<br>
 #   terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
 #
 #
 # 2005-03-02 v2.00

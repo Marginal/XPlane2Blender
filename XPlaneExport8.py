@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.34"
+__version__ = "2.35"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -32,7 +32,7 @@ Limitations:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-ShareAlike 2.5:
 #
 #   You are free:
 #     * to copy, distribute, display, and perform the work
@@ -47,7 +47,7 @@ Limitations:<br>
 #   terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
 #
 #
 # 2005-11-10 v2.10
@@ -110,6 +110,11 @@ Limitations:<br>
 #  - Fix for weird sim/weather datarefs.
 #  - ANIM_show/hide commands output in order found.
 #
+# 2007-02-26 v2.35
+#  - Select problematic objects on error.
+#  - Check for ambiguous dataref leaf names.
+#  - Check that dataref indices don't exceed length of array.
+#
 
 
 #
@@ -132,7 +137,7 @@ Limitations:<br>
 
 import sys
 import Blender
-from Blender import NMesh, Lamp, Image, Draw, Window
+from Blender import Armature, NMesh, Lamp, Image, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, MatMultVec, Vector, Quaternion, Euler
 from XPlaneUtils import Vertex, UV, MatrixrotationOnly, getDatarefs
 from XPlaneExport import *
@@ -371,7 +376,7 @@ class OBJexport8:
                     if prop.type in ['INT', 'FLOAT'] and prop.name.strip().startswith('group_'):
                         self.drawgroup=(prop.name.strip()[6:], int(prop.data))
                         if not self.drawgroup[0] in ['terrain', 'beaches', 'shoulders', 'taxiways', 'runways', 'markings', 'airports', 'roads', 'objects', 'light_objects', 'cars']:
-                            raise ExportError('Invalid drawing group "%s" in "%s"' % (self.drawgroup[0], object.name))
+                            raise ExportError('Invalid drawing group "%s" in "%s"' % (self.drawgroup[0], object.name), [object])
                     elif prop.type in ['INT', 'FLOAT', 'STRING'] and prop.name.strip()=='slung_load_weight':
                         self.slung=prop.data
             else:
@@ -658,7 +663,7 @@ class OBJexport8:
                         surface=prop.data.strip()
                         break
                     else:
-                        raise ExportError('Invalid surface "%s" for face in mesh "%s"' % (prop.data, object.name))
+                        raise ExportError('Invalid surface "%s" for face in mesh "%s"' % (prop.data, object.name), [object])
             else:
                 surface=True
 
@@ -721,7 +726,7 @@ class OBJexport8:
            
                         if f.mode & NMesh.FaceModes.TEX:
                             if len(f.uv)!=n:
-                                raise ExportError("Missing UV in mesh \"%s\"" % object.name)
+                                raise ExportError("Missing UV in mesh \"%s\"" % object.name, [object])
                             if f.transp == NMesh.FaceTranspModes.ALPHA:
                                 face.flags|=Prim.ALPHA
         
@@ -780,7 +785,7 @@ class OBJexport8:
    
                 if f.mode & NMesh.FaceModes.TEX:
                     if len(f.uv)!=n:
-                        raise ExportError('Missing UV for face in mesh "%s"' % object.name)
+                        raise ExportError('Missing UV for face in mesh "%s"' % object.name, [object])
                     if f.transp == NMesh.FaceTranspModes.ALPHA:
                         face.flags|=Prim.ALPHA
 
@@ -875,7 +880,7 @@ class OBJexport8:
             a=a.anim
 
         Blender.Set('curframe', 1)
-        #scene=Blender.Scene.getCurrent()
+        #scene=Blender.Scene.GetCurrent()
         #scene.update(1)
         #scene.makeCurrent()	# see Blender bug #4696
 
@@ -1076,7 +1081,7 @@ class Anim:
 
         if not child:
             return	# null
-        
+
         object=child.parent
         if not object or object.getType()!='Armature':
             return
@@ -1085,24 +1090,36 @@ class Anim:
             raise ExportError('Blender version 2.40 or later required for animation')
 
         if object.parent:
-            raise ExportError('Armature "%s" has a parent; this is not supported. Use multiple bones within a single armature to represent complex animations.' % object.name)
+            raise ExportError('Armature "%s" has a parent; this is not supported. Use multiple bones within a single armature to represent complex animations.' % object.name, [object])
                 
         if not bone:
-            bonename=child.getParentBoneName()        
-            if not bonename:
-                raise ExportError('%s "%s" has an armature as its parent. Parent "%s" to a bone instead.' % (child.getType(), child.name, child.name))
-
+            bonename=child.getParentBoneName()
+            if not bonename: raise ExportError('%s "%s" has an armature as its parent. Parent "%s" to a bone instead.' % (child.getType(), child.name, child.name), [child])
             bones=object.getData().bones
             if bonename in bones.keys():
                 bone=bones[bonename]
             else:
-                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Parent "%s" to an existing bone (or clear its parent).' % (child.getType(), child.name, bonename, child.name))
+                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Parent "%s" to an existing bone (or clear its parent).' % (child.getType(), child.name, bonename, child.name), [child])
 
         if bone.parent:
+            #print "bp", child, bone.parent
             self.anim=Anim(child, bone.parent)
+        elif False: # object.parent and object.parent.getType()=='Armature':
+            # child's parent armature is itself parented to an armature
+            bonename=object.getParentBoneName()
+            if not bonename: raise ExportError('Bone "%s" has an armature as its parent. Parent "%s" to another bone instead.' % (bone.name, bone.name), [child])
+            bones=object.parent.getData().bones
+            if bonename in bones.keys():
+                parentbone=bones[bonename]
+            else:
+                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Parent "%s" to an existing bone (or clear its parent).' % (child.getType(), child.name, bonename, child.name), [child])
+            #print "ob", object, parentbone
+            self.anim=Anim(object, parentbone)
         else:
             self.anim=Anim(None)
-            # Hide/show values if first bone
+
+        if not bone.parent:
+            # Hide/show values if grandfather bone
             vals={}
             for prop in object.getAllProperties():
                 propname=prop.name.strip()
@@ -1113,11 +1130,12 @@ class Anim:
                     (ref, v)=self.getdataref(object, propname[:propname.index(suffix)], suffix[:-2], int(digit))
                     if v: self.showhide.append((suffix[1:5],ref,v[0],v[1]))
 
+        #print "ac", object, bone.name, object.getAction(), object.getAction().getAllChannelIpos(), object.getAction().getAllChannelIpos().has_key(bone.name)
         if not (object.getAction() and
                 object.getAction().getAllChannelIpos().has_key(bone.name)):
             print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
 
-            if self.showhide and not bone.parent:
+            if self.showhide:
                 # Create a dummy animation to hold hide/show values
                 self.dataref='no_ref'	# mustn't eval to False
                 self.t=[Vertex(0,0,0),Vertex(0,0,0)]
@@ -1133,10 +1151,10 @@ class Anim:
                 self.dataref=None	# is null
             return
 
-        (self.dataref, self.v)=self.getdataref(object, bone.name, '')
+        (self.dataref, self.v)=self.getdataref(object, bone.name, '', 1)
         ipo=object.getAction().getAllChannelIpos()[bone.name]
 
-        scene=Blender.Scene.getCurrent()
+        scene=Blender.Scene.GetCurrent()
         if 0:	# debug
             for frame in [1,2]:            
                 Blender.Set('curframe', frame)
@@ -1243,7 +1261,7 @@ class Anim:
 
 
     #------------------------------------------------------------------------
-    def getdataref(self, object, name, suffix, first=1):
+    def getdataref(self, object, name, suffix, first):
         if not suffix:
             vals=[0,1]
             thing='bone'
@@ -1260,7 +1278,7 @@ class Anim:
             ref=name[:l].strip()
             idx=name[l+1:-1]
             if name[-1]!=']' or not idx or not idx.isdigit():
-                raise ExportError('Malformed dataref index "%s" in bone "%s" in armature "%s"' % (name[l:], name, object.name))
+                raise ExportError('Malformed dataref index "%s" in bone "%s" in armature "%s"' % (name[l:], name, object.name), [object])
             idx=int(idx)
             seq=[ref, name]
         else:
@@ -1269,31 +1287,36 @@ class Anim:
             seq=[ref]
 
         props=object.getAllProperties()
-        dataref=None
-        for tmpref in seq:
-            for prop in props:
-                if prop.name.strip()==tmpref:
-                    # custom dataref
-                    if prop.type=='STRING':
-                        path=prop.data.strip()
-                        if path and path[-1]!='/': path=path+'/'
-                        dataref=path+name
-                        break
-                    else:
-                        raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s".' % (ref, object.name))
 
-        if not dataref:
-            if ref in datarefs:
-                (path, n)=datarefs[ref]
-                if n==0:
-                    raise ExportError('Dataref %s (used in armature "%s") can\'t be used for animation.' % (path+ref, object.name))
-                elif n==1 and idx!=None:
-                    raise ExportError('Dataref %s (used in armature "%s") is not an array. Rename the %s to "%s".' % (path+ref, object.name, thing, ref))
-                elif n!=1 and idx==None:
-                    raise ExportError('Dataref %s (used in armature "%s") is an array. Rename the %s to "%s[0]" to use the first value, etc.' % (path+ref, object.name, thing, ref))
-                dataref=path+name
-            else:
-                raise ExportError('Unrecognised dataref "%s" for %s in armature "%s".' % (ref, thing, object.name))
+        if ref in datarefs and datarefs[ref]:
+            (path, n)=datarefs[ref]
+            dataref=path+name
+            if n==0:
+                raise ExportError('Dataref %s can\'t be used for animation.' % path+ref, [object])
+            elif n==1 and idx!=None:
+                raise ExportError('Dataref %s is not an array. Rename the %s to "%s".' % (path+ref, thing, ref), [object])
+            elif n!=1 and idx==None:
+                raise ExportError('Dataref %s is an array. Rename the %s to "%s[0]" to use the first value, etc.' % (path+ref, thing, ref), [object])
+            elif n!=1 and idx>=n:
+                raise ExportError('Dataref %s has usable values from [0] to [%d]; but you specified [%d].' % (path+ref, n-1, idx), [object])
+        else:
+            dataref=None
+            for tmpref in seq:
+                for prop in props:
+                    if prop.name.strip()==tmpref:
+                        # custom dataref
+                        if prop.type=='STRING':
+                            path=prop.data.strip()
+                            if path and path[-1]!='/': path=path+'/'
+                            dataref=path+name
+                        else:
+                            raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s".' % (ref, object.name), [object])
+                        break
+            if not dataref:
+                if ref in datarefs:
+                    raise ExportError('Dataref %s is ambiguous. Add a new string property named %s with the path name of the dataref that you want to use.' % (ref, ref), [object])
+                else:
+                    raise ExportError('Unrecognised dataref "%s" for %s in armature "%s".' % (ref, thing, object.name), [object])
             
         # dataref values v1 & v2
         for tmpref in seq:
@@ -1306,7 +1329,7 @@ class Anim:
                         elif prop.type=='FLOAT':
                             vals[val-first]=round(prop.data, Vertex.ROUND)
                         else:
-                            raise ExportError('Unsupported data type for "%s" in armature "%s".' % (valstr, object.name))
+                            raise ExportError('Unsupported data type for "%s" in armature "%s".' % (valstr, object.name), [object])
         if vals[0]==None or vals[1]==None: vals=None
         return (dataref, vals)
         
@@ -1361,21 +1384,28 @@ obj=None
 try:
     datarefs=getDatarefs()
     obj=OBJexport8(baseFileName+'.obj')
-    scene = Blender.Scene.getCurrent()
+    scene = Blender.Scene.GetCurrent()
     obj.export(scene)
 except ExportError, e:
     Blender.Window.WaitCursor(0)
     Blender.Window.DrawProgressBar(0, 'ERROR')
+    for o in scene.getChildren(): o.select(0)
+    if e.objs:
+        layers=[]
+        for o in e.objs:
+            o.select(1)
+            for layer in o.layers:
+                if layer<=3 and not layer in layers: layers.append(layer)
+        Window.ViewLayers(layers)
+        Window.RedrawAll()
     print "ERROR:\t%s\n" % e.msg
     Blender.Draw.PupMenu("ERROR: %s" % e.msg)
     Blender.Window.DrawProgressBar(1, 'ERROR')
-    if obj and obj.file:
-        obj.file.close()
+    if obj and obj.file: obj.file.close()
 except IOError, e:
     Blender.Window.WaitCursor(0)
     Blender.Window.DrawProgressBar(0, 'ERROR')
     print "ERROR:\t%s\n" % e.strerror
     Blender.Draw.PupMenu("ERROR: %s" % e.strerror)
     Blender.Window.DrawProgressBar(1, 'ERROR')
-    if obj and obj.file:
-        obj.file.close()
+    if obj and obj.file: obj.file.close()
