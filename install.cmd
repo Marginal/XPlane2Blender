@@ -32,7 +32,7 @@ echo Failed to find appropriate location for Blender scripts !!!
 goto end
 
 :copy
-set FILES=uvCopyPaste.py XPlane2Blender.html XPlaneExport.py XPlaneImport.py
+set FILES=uvCopyPaste.py XPlaneExport.py XPlaneImport.py
 for %%I in (%FILES%) do copy /v /y %%I "%DESTDIR%" >nul:
 for %%I in (%FILES%) do if not exist "%DESTDIR%%%I" goto copyfail
 echo Installation successful.

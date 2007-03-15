@@ -96,7 +96,7 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 #
 # 2004-10-17 v1.74
 #  - Warn if objects present in layers other than 1-3, suggested by
-#    Hervé Duchesne de Lamotte.
+#    Herve Duchesne de Lamotte.
 #
 # 2004-11-01 v1.80
 #  - Support for "quad_cockpit" using "Text" button.
@@ -120,8 +120,8 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 #
 # 2004-12-29 v1.86
 #  - Removed residual broken support for exporting v6 format.
-#  - Work round X-Plane 8.00-8.03 limitation where quad_cockpit polys must
-#    start with the top or bottom left vertex.
+#  - Work round X-Plane 8.x limitation where quad_cockpit polys must start
+#    with the top or bottom left vertex.
 #  - Check that quad_cockpit texture t < 768.
 #  - Work round X-Plane 7.6x bug where default poly_os level appears to be
 #    undefined. Problem appears fixed in v8.0x.
@@ -152,13 +152,17 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 # 2005-02-08 v1.91
 #  - Fixed nannying with panel textures < 1024
 #
+# 2005-04-07 v1.92
+#  - Fixed bug with panels present in layers 2&3.
+#  - Fixed hang with degenerate meshes in cockpits.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
 # them - it detects use of alpha and deletes wholly transparent polys, but
 # doesn't sort by Z-buffer order.
 #
-# Panel polygons must come last (at least in v8.00-8.04) for LIT textures to
+# Panel polygons must come last (at least in v8.x) for LIT textures to
 # work for non-panel ploygons. The last polygon in the file must not be a
 # quad_cockpit with texture outside 1024x768 else everything goes wierd.
 #
@@ -282,7 +286,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.91
+    VERSION=1.92
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -294,10 +298,10 @@ class OBJexport:
         #--- class private don't touch ---
         self.file=0
         self.filename=filename
-        self.dolayers=0
         self.iscockpit=((filename.lower().find("_cockpit.obj") != -1) or
                         (filename.lower().find("_cockpit_inn.obj") != -1) or
                         (filename.lower().find("_cockpit_out.obj") != -1))
+        self.layermask=1
         self.havepanel=0
         self.texture=""
         self.linewidth=0.1
@@ -348,11 +352,12 @@ class OBJexport:
     #------------------------------------------------------------------------
     def checkLayers (self, theObjects):
         for object in theObjects:
-            if not object.Layer & 7:
-                break
-        else:
-            return
-        print "Warn:\tObjects were found outside layers 1-3 and were not exported"
+            if not object.Layer&self.layermask:
+                if self.layermask==1:
+                    print "Warn:\tObjects were found outside layer 1 and were not exported"
+                else:
+                    print "Warn:\tObjects were found outside layers 1-3 and were not exported"
+                return
 
     #------------------------------------------------------------------------
     def writeHeader (self):
@@ -377,16 +382,18 @@ class OBJexport:
         for o in range (nobj-1,-1,-1):
             object=theObjects[o]
 
-            if not self.iscockpit:
+            if self.layermask==1 and not self.iscockpit:
                 if layers==0:
                     layers = object.Layer&7
-                elif (object.Layer&7 and layers^(object.Layer&7) and
-                      not self.dolayers):
-                    self.dolayers=1
+                elif object.Layer&7 and layers^(object.Layer&7):
+                    self.layermask=7
                     print "Info:\tMultiple Levels Of Detail found"
+
+            if not object.Layer&self.layermask:
+                continue
                 
             objType=object.getType()
-            if objType == "Mesh" and (object.Layer & 7):
+            if objType == "Mesh":
                 mesh=object.getData()
                 if mesh.hasFaceUV():
                     for face in mesh.faces:
@@ -396,9 +403,9 @@ class OBJexport:
                                 if not self.havepanel:
                                     self.havepanel=1
                                     self.iscockpit=1
-                                    self.dolayers=0
+                                    self.layermask=1
                                     panelerr=1
-                                if panelerr and object.Layer&1:
+                                if panelerr:
                                     for uv in face.uv:
                                         if (uv[0]<0.0  or uv[0]>1.0 or
                                             (1-uv[1])*face.image.size[1]>768
@@ -420,7 +427,7 @@ class OBJexport:
                                     if not str.lower(face.image.filename) in texlist:
                                         texlist.append(str.lower(face.image.filename))
                                         print "\t\"%s\"" % face.image.filename
-            elif (self.iscockpit and (object.Layer & 7) and objType == "Lamp"
+            elif (self.iscockpit and objType == "Lamp"
                   and object.getData().getType() == Lamp.Types.Lamp):
                 raise ExportError("Cockpit objects can't contain lights.")
                             
@@ -472,7 +479,7 @@ class OBJexport:
     #------------------------------------------------------------------------
     def writeObjects (self, theObjects):
 
-        if not self.dolayers:
+        if self.layermask==1:
             seq=[1]
         else:
             seq=[1,2,4]
@@ -523,16 +530,14 @@ class OBJexport:
                 panelsorted=0
                 i=0
                 while not panelsorted:
-                    if not faces[i]:
-                        continue
-
-                    for j in range(len(faces[i])):
-                        if faces[i][j].kosher:
-                            faces.append([faces[i][j]])
-                            verts.append([0])	# Verts not used for panels
-                            faces[i][j]=0	# Remove original face
-                            panelsorted=1
-                            break
+                    if faces[i]:
+                        for j in range(len(faces[i])):
+                            if faces[i][j].kosher:
+                                faces.append([faces[i][j]])
+                                verts.append([0])	# Verts not used
+                                faces[i][j]=0		# Remove original face
+                                panelsorted=1
+                                break
                     i=i+1
 
             # 2nd-4th pass: Output meshes
@@ -665,8 +670,8 @@ class OBJexport:
         for f in mesh.faces:
             n=len(f.v)
             if not n in [3,4]:
-                print "Warn:\tIgnoring %s-edged face in mesh \"%s\"" % (
-                    n, object.name)
+                print "Warn:\tIgnoring degenerate face in mesh \"%s\"" % (
+                        object.name)
             else:
                 face=Face(object.name)
                 
@@ -998,7 +1003,7 @@ class OBJexport:
 
     #------------------------------------------------------------------------
     def updateLayer(self,layer):
-        if not self.dolayers:
+        if self.layermask==1:
             return
         if layer==1:
             self.file.write("\nATTR_LOD 0 1000\t\t// Layer 1\n\n")
