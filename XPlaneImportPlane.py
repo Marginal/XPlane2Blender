@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.01"
+__version__ = "2.02"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes into Blender, so that
 they can be exported as X-Plane scenery.
@@ -82,6 +82,9 @@ Limitations:<br>
 #  - All bodies and weapons imported using correct texture.
 #  - Airfoil width read from .afl file.
 #
+# 2005-05-10 v2.02
+#  - Add '*' to mesh names for parts that use non-primary texture.
+#
 
 import sys
 import Blender
@@ -103,8 +106,12 @@ class ACFimport:
     LAYER1=1
     LAYER2=2
     LAYER3=4
+    LAYER1MKR=' H'
+    LAYER2MKR=' M'
+    LAYER3MKR=' L'
+    IMAGE2MKR='*'	# Marker for parts with non-primary texture
 
-    F2M=0.3048	# foot->metre constant
+    F2M=0.3048		# foot->metre constant
 
     # bodies smaller than this [m] skipped
     THRESH2=2.5
@@ -113,8 +120,12 @@ class ACFimport:
     #------------------------------------------------------------------------
     def __init__(self, filename):
         self.debug=0	# extra debug info in console. >=2:dump txt file
-        self.filename=filename
-        self.acf=DEFfile(filename, self.debug)
+        if Blender.sys.dirsep=='\\':
+            # Lowercase Windows drive lettter
+            self.filename=filename[0].lower()+filename[1:]
+        else:
+            self.filename=filename
+        self.acf=DEFfile(self.filename, self.debug)
         self.scene = Blender.Scene.getCurrent();
         self.navloc = Vertex(0.0, 0.0, 0.0)
         self.tailloc = Vertex(0.0, 0.0, 0.0)
@@ -128,7 +139,7 @@ class ACFimport:
         cur=Window.GetCursorPos()
         self.cur=Vertex(cur[0], cur[1], cur[2])
         
-        texfilename=filename[:filename.rindex('.')]+'_paint'
+        texfilename=self.filename[:self.filename.rindex('.')]+'_paint'
         for extension in [".bmp", ".png"]:
             try:
                 file = open(texfilename+extension, "rb")
@@ -241,7 +252,15 @@ class ACFimport:
             not wing.semilen_SEG):
             return
             
-        mesh=NMesh.New("Prop %s" % (p+1))
+        # texture
+        if part.part_tex==0:
+            imagemkr=ACFimport.LAYER1MKR
+            image=self.image
+        else:
+            imagemkr=ACFimport.LAYER1MKR+ACFimport.IMAGE2MKR
+            image=self.image2
+
+        mesh=NMesh.New("Prop %s%s" % ((p+1), imagemkr))
         mm=TranslationMatrix((Vertex(part.part_x,
                                      part.part_y+self.acf.VTOL_vectarmY,
                                      part.part_z+self.acf.VTOL_vectarmZ,
@@ -284,10 +303,10 @@ class ACFimport:
                 fv.append(Vertex(cos(a)*v1.x - sin(a)*v1.z,
                                  v1.y,
                                  sin(a)*v1.x + cos(a)*v1.z))
-            self.addFace(mesh, fv, ruv, self.image)
+            self.addFace(mesh, fv, ruv, image)
             self.addFace(mesh,
                          [fv[3], fv[2], fv[1], fv[0]],
-                         luv, self.image)
+                         luv, image)
 
         self.addMesh(mesh, ACFimport.LAYER1, mm)
 
@@ -367,8 +386,10 @@ class ACFimport:
 
         # texture
         if part.part_tex==0:
+            imagemkr=''
             image=self.image
         else:
+            imagemkr=ACFimport.IMAGE2MKR
             image=self.image2
 
         mm=TranslationMatrix(centre.Vector(4))
@@ -453,7 +474,7 @@ class ACFimport:
             twidth=wing.lat_sign*twidth
 
         # Layer 1
-        mesh=NMesh.New(name)
+        mesh=NMesh.New(name+ACFimport.LAYER1MKR+imagemkr)
 
         if iscrappy:
             # Not worth toggling culling just for this, so repeat the face
@@ -509,7 +530,7 @@ class ACFimport:
         if iscrappy:
             return
         
-        mesh=NMesh.New(name)
+        mesh=NMesh.New(name+ACFimport.LAYER2MKR+imagemkr)
         if orient!=1:
             self.addFace(mesh, rv, ruv, image)
         if orient!=-1:
@@ -542,7 +563,7 @@ class ACFimport:
             mm=TranslationMatrix(centre.Vector(4))	# no rotation
 
 
-        mesh=NMesh.New(name)
+        mesh=NMesh.New(name+ACFimport.LAYER3MKR+imagemkr)
         if orient!=1:
             self.addFace(mesh, rv, ruv, image)
         if orient!=-1:
@@ -567,7 +588,8 @@ class ACFimport:
             if l!=-1:
                 wpnname=wpnname[:l]
             image=findTex(self.filename, wpnname, ['Weapons'])
-            name="W%s %s" % (1-p, wpnname)
+            imagemkr=ACFimport.IMAGE2MKR
+            name="W%02d %s" % (1-p, wpnname)
             
             mm=TranslationMatrix((Vertex(watt.watt_x,
                                          watt.watt_y,
@@ -595,8 +617,10 @@ class ACFimport:
             if not part.part_eq:
                 return
             if part.part_tex==0:
+                imagemkr=''
                 image=self.image
             else:
+                imagemkr=ACFimport.IMAGE2MKR
                 image=self.image2
             
             if p in range(DEFfile.partFair1, DEFfile.partFair10+1):
@@ -836,6 +860,8 @@ class ACFimport:
                 # Max detail
                 jstep=1
                 seq=range(sdim)
+                mkr=ACFimport.LAYER1MKR+imagemkr
+
             elif layer==ACFimport.LAYER2:
                 # Don't do small bodies
                 if length<ACFimport.THRESH2:
@@ -852,6 +878,8 @@ class ACFimport:
                     seq=[0,point1,point2,point3,sdim-1]
                 else:
                     seq=[0,point2,point3,sdim-1]
+                mkr=ACFimport.LAYER2MKR+imagemkr
+                
             else:     # ACFimport.LAYER3
                 # Don't do small bodies
                 if length<ACFimport.THRESH3:
@@ -864,8 +892,9 @@ class ACFimport:
                     seq=[0,point1,point2,point3,sdim-1]
                 else:
                     seq=[0,point2,point3,sdim-1]
+                mkr=ACFimport.LAYER3MKR+imagemkr
 
-            mesh=NMesh.New(name)
+            mesh=NMesh.New(name+mkr)
 
             # Hack: do body from middle out to help export strip algorithm
             ir=range(len(seq)/2-1,len(seq)-1)
@@ -917,7 +946,7 @@ class ACFimport:
 
         
         # Strut
-        mesh=NMesh.New("%s strut" % name)
+        mesh=NMesh.New("%s strut%s" % (name, ACFimport.LAYER1MKR))
         strutradius=strutratio*gear.tire_radius*self.F2M
         strutlen=gear.leg_len*self.F2M
 
@@ -1019,7 +1048,7 @@ class ACFimport:
                                      self.mm)+
                               Vertex(MatMultVec(a,Vector([0,0,-strutlen])))+
                               self.cur).Vector(4))
-        mesh=NMesh.New(name)
+        mesh=NMesh.New(name+ACFimport.LAYER1MKR)
 
         if self.acf.HEADER_version<800:	# v7
             wheel=[UV(self.acf.GEAR_wheel_tire_s1[0],
@@ -1229,7 +1258,7 @@ class ACFimport:
         for j in [door.geo[0][0],door.geo[0][3],door.geo[3][3],door.geo[3][0]]:
             v.append(Vertex(j, self.mm))
 
-        mesh=NMesh.New(name)
+        mesh=NMesh.New(name+ACFimport.LAYER1MKR)
         self.addFace(mesh, v,
                      [UV(door.inn_s1,door.inn_t2),
                       UV(door.inn_s1,door.inn_t1),
@@ -1262,12 +1291,7 @@ class ACFimport:
     def addMesh(self, mesh, layer, mm):
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
-        if layer==ACFimport.LAYER1:
-            ob = Object.New("Mesh", mesh.name+" H")
-        elif layer==ACFimport.LAYER2:
-            ob = Object.New("Mesh", mesh.name+" M")
-        else:
-            ob = Object.New("Mesh", mesh.name+" L")
+        ob = Object.New("Mesh", mesh.name)
         ob.link(mesh)
         self.scene.link(ob)
         ob.Layer=layer

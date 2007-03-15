@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.01"
+__version__ = "2.02"
 __bpydoc__ = """\
 This script imports X-Plane v6 and v7 .obj scenery files into Blender.
 
@@ -369,7 +369,11 @@ class OBJimport:
         self.merge=1	# merge primitives into meshes: 0-no, 1-abut, 2-force
         
         #--- class private don't touch ---
-        self.filename=filename
+        if Blender.sys.dirsep=='\\':
+            # Lowercase Windows drive lettter
+            self.filename=filename[0].lower()+filename[1:]
+        else:
+            self.filename=filename
         self.linesemi=0.025
         self.lastpos=0		# for progress reporting
         self.lineno=0		# for error reporting

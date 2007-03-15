@@ -57,8 +57,7 @@ Blender tutorials</a>.</p>
 <p>Close Blender if you have it
 running.</p>
 <p>Extract the contents of the zip
-file to a new (temporary) folder.
-Open this folder. Then:</p>
+file to a new (temporary) folder. Open this folder. Then:</p>
 <table style="width: 100%; text-align: left;" border="0" cellpadding="2"
  cellspacing="2">
   <tbody>
@@ -110,11 +109,15 @@ future)</small>.<br>
     </tr>
   </tbody>
 </table>
-<p>(Re)start Blender. This file can be viewed by choosing <samp>Help
+<p>(Re)start Blender.</p>
+<p>This file can be viewed by
+choosing <samp>Help
 -&gt; X-Plane</samp> in Blender.</p>
-<p>On Mac OS, also run the "Console" application that comes with Mac OS
-X and which is found under "Utilities".</p>
-<p>You can now delete the temporary folder.</p>
+<p>On Mac OS, also run the
+"Console" application that comes with Mac OS X and which is found under
+"Utilities".</p>
+<p>You can now delete the
+temporary folder.</p>
 <h3>Importing scenery</h3>
 <p><samp>File
 -&gt; Import -&gt; X-Plane Object</samp></p>
@@ -142,9 +145,9 @@ meshes you want to merge and choose <samp>Space
 files and re-export them as a single
 file. But note that the X-Plane <code>.obj</code>
 scenery file format only supports the use of one texture bitmap, so
-you'll have
-to create a single larger texture bitmap file containg all required
-textures. Use <samp>UVs -&gt;
+you'll have to create a single larger texture bitmap file containg all
+required textures. Use <samp>UVs
+-&gt;
 Double bitmap size</samp>
 from the <samp>UV/Image Editor</samp>
 window to fix up texture mappings.</p>
@@ -160,17 +163,14 @@ to run.</small></p>
 <p>Select a <code>.acf</code>
 file. The plane is imported at the "3d
 Cursor" position. Any problems with the import will be reported in the
-Console
-window as lines starting "Warn" or "Error".</p>
+Console window as lines starting "Warn" or "Error".</p>
 <p>The script creates three
-versions of the plane in Blender, one in
-each of layers 1, 2 and 3, at three levels of detail. See <a
- href="#Level_Of_Detail">Level
+versions of the plane in Blender, one in each of layers 1, 2 and 3, at
+three levels of detail. See <a href="#Level_Of_Detail">Level
 of Detail</a> below.</p>
 <p>The imported plane needs some
 tweaking before you can export it as scenery; see <a
- href="#Tweaking_planes">Tweaking
-planes</a> below.</p>
+ href="#Tweaking_planes">Tweaking planes</a> below.</p>
 <h3>Exporting scenery / cockpits</h3>
 <p><samp>File
 -&gt; Export -&gt; X-Plane v7 Object</samp></p>
@@ -179,8 +179,7 @@ users report that <samp>X-Plane</samp>
 doesn't appear under <samp>File-&gt;Export</samp>
 on their machine. The script can also be run another way - open <code>XPlaneExport7.py</code>
 in a Blender text window. Hit <samp><b>Alt&nbsp;P</b></samp>
-to
-run.</small></p>
+to run.</small></p>
 <p>The output filename and
 location is the same as the current Blender
 filename, but with a <code>.obj</code>
@@ -280,10 +279,8 @@ control mapping of the texture bitmap to the face.</li>
 button indicates that the face is not
 "landable on" in X-Plane. Faces with 3 edges are never "landable on",
 irrespective of the state of this button. Making faces "landable on" is
-very expensive, so&nbsp;this button should normally be pressed.
-Unpress
-this button only for
-things like helicopter landing pads. <small>Note:
+very expensive, so this button should normally be pressed. Unpress this
+button only for things like helicopter landing pads. <small>Note:
 The meaning of this button was changed in v1.50. Use <a
  href="http://www.marginal.dsl.pipex.com/x-planescenery/collide.txt">
 this</a> script to turn the <samp>Collision</samp>
@@ -331,28 +328,28 @@ Click to set the plane's position.</li>
 <p>The main texture bitmap file is
 named <code><i>airplane</i>_paint</code>.
 Most planes also use textures from a second bitmap file named <code><i>airplane</i>_paint2</code>.
-If your imported plane uses weapons then they will also use
-one&nbsp;additional&nbsp; bitmap file for each weapon. However
-the
-X-Plane <code>.obj</code>
+If your imported plane uses weapons then each weapon will also use an
+additional bitmap file. However the X-Plane <code>.obj</code>
 scenery file format only supports the use of a single texture bitmap
-file. So for each mesh (ie wing, body and/or weapon) that uses textures
-from an additional&nbsp;bitmap file you'll have
-to:</p>
+file. Meshes that use textures from an additional bitmap file are
+imported with "<code>*</code>"
+after their name.</p>
+<p>Open an <samp>Outliner</samp>
+window, and for each listed mesh&nbsp;that has a name ending with "<code>*</code>",
+either:</p>
 <ul>
-  <li>Either delete the mesh,</li>
-  <li>Or copy the required
-textures to an unused area
-in <code><i>airplane</i>_paint</code>,
-and use the&nbsp;<samp>UV
-Image Editor</samp> window
-to&nbsp;map the new textures in&nbsp;<code><i>airplane</i>_paint</code>
-to the mesh's faces.</li>
 </ul>
-<p>Remember to do this for meshes
-in layers 2 and 3 as well as layer 1.</p>
-<p>Consider&nbsp;performance
-issues
+<ul>
+  <li>Delete the mesh,</li>
+  <li>Or copy the required
+textures to an unused area in <code><i>airplane</i>_paint</code>,
+and use the <samp>UV Image Editor</samp> window to map the new
+textures in <code><i>airplane</i>_paint</code>
+to the mesh's faces.</li>
+  <ul>
+  </ul>
+</ul>
+<p>Consider performance issues
 when the plane is rendered in X-Plane. Ask yourself the following
 questions:</p>
 <ul>
@@ -364,12 +361,8 @@ slows things down. One 1024x1024 texture uses 4MB of video memory. Some
 people are running X-Plane on computers with only 32MB of video memory,
 so one 1024x1024 texture at highest resolution uses 1/8th of it.
 Consider resizing the texture bitmap file in an image editor to 512x512
-or
-even
-256x256. Use <samp>Image
--&gt; Replace</samp> to use the
-new texture
-bitmap file.</li>
+or even 256x256. Use <samp>Image -&gt; Replace</samp> to use the new
+texture bitmap file.</li>
   <li>Does the model have hidden
 faces? X-Plane doesn't handle hidden faces in scenery objects very well
 and they also a cause a small performance hit. Look for things like
@@ -474,9 +467,8 @@ file.</p>
 import your plane into Blender to act as a reference and/or starting
 point for your cockpit. Delete any plane parts that you don't need in
 creating your cockpit - you only need to keep the fuselage itself plus
-any relevant Misc Bodies.&nbsp;After import, your cockpit uses the
-same texture
-file as your plane, ie <code><i>airplane</i>_paint</code>.
+any relevant Misc Bodies. After import, your cockpit uses the same
+texture file as your plane, ie <code><i>airplane</i>_paint</code>.
 Choose <samp>Image -&gt;
 Replace </samp> in a <samp>UV
 Image Editor</samp>
@@ -557,8 +549,8 @@ mode after import.</li>
 </ul>
 <h4>Import plane</h4>
 <ul>
-  <li>Cockpits
-are&nbsp;ignored. You can use <samp>File
+  <li>Cockpits are ignored. You
+can use <samp>File
 -&gt; Import -&gt; X-Plane Object</samp>
 to import cockpits.</li>
   <li>Planes (and their weapons)
@@ -595,7 +587,8 @@ etc.</p>
 <ul>
   <li>First, check that you are
 using the latest version of the scripts.</li>
-  <li>Try to send me the the <code>.obj</code>,&nbsp;<code>.acf</code>
+  <li>Try to send me the the <code>.obj</code>,
+    <code>.acf</code>
 or <code>.blend</code>
 file (where relevant) and the contents of the Console window. <small>(In
 Mac OS X, this is the "Console" program. In Windows this the window
@@ -605,7 +598,7 @@ titled "Blender" that looks like a Command Prompt).</small></li>
 <p>Copyright &copy; 2004, 2005
 <a href="mailto:Jonathan%20Harris%20%3Cx-plane@marginal.org.uk%3E">Jonathan
 Harris &lt;x-plane@marginal.org.uk&gt;</a>.<br>
-Version 2.00<br>
+Version 2.02<br>
 <a href="http://marginal.org.uk/x-planescenery/">
 http://marginal.org.uk/x-planescenery/</a></p>
 <p><!-- Creative Commons License -->

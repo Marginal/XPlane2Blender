@@ -206,7 +206,7 @@ class Mesh:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=2.01
+    VERSION=2.02
 
     #------------------------------------------------------------------------
     def __init__(self, filename, fileformat):
@@ -341,8 +341,8 @@ class OBJexport:
                                             fixedfile=f
                                             break
                             if Blender.sys.dirsep=='\\':
-                                # Capitalise Windows drive lettter
-                                fixedfile=fixedfile[0].upper()+fixedfile[1:]
+                                # Lowercase Windows drive lettter
+                                fixedfile=fixedfile[0].lower()+fixedfile[1:]
                             while fixedfile.find('..')!=-1:
                                 # Remove relative stuff
                                 r=fixedfile.rfind('..')
