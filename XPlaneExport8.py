@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.13"
+__version__ = "2.14"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -62,6 +62,9 @@ Limitations:<br>
 #  - Don't emit redundant ATTR_[no_]shade attributes.
 #  - Added optimisation to re-use points (but not indices) between animations.
 #
+# 2005-11-21 v2.14
+#  - Speeded up point re-use optimisation.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -97,8 +100,10 @@ class VT:
         return "%s\t%6.3f %6.3f %6.3f\t%s" % (self.v, self.n.x, self.n.y,
                                               self.n.z, self.uv)
             
-    def equals (self, b):
-        return (self.v.equals(b.v) and self.n.equals(b.n) and self.uv.equals(b.uv))
+    def equals (self, b, fudge=Vertex.LIMIT):
+        return (self.v.equals(b.v, fudge) and
+                self.n.equals(b.n, fudge) and
+                self.uv.equals(b.uv))
 
 class VLINE:
     def __init__(self, v, c):
@@ -192,6 +197,8 @@ class OBJexport:
         self.tris=[]
         self.lines=[]
         self.lights=[]
+
+        self.animcands=[]	# indices into tris of candidates for reuse
 
 
     #------------------------------------------------------------------------
@@ -317,6 +324,7 @@ class OBJexport:
                         counts.append(len(index))
                         indices.extend(index)
 
+        self.nprim=len(self.vt)+len(self.vline)+len(self.lights)
         self.file.write("POINT_COUNTS\t%d %d %d %d\n\n" % (len(self.vt),
                                                            len(self.vline),
                                                            len(self.lights),
@@ -371,7 +379,6 @@ class OBJexport:
                             self.updateAttr(0, 0, 1, 0, 0, layer, anim)
                             self.file.write("%sLIGHTS\t%d %d\n" %
                                             (anim.ins(), offset, count))
-                            self.nprim+=count
                             i=offset+count
                         else:
                             i=i+1
@@ -381,7 +388,6 @@ class OBJexport:
                         self.updateAttr(0, 0, 1, 0, 0, layer, anim)
                         self.file.write("%sLINES\t%d %d\n" %
                                         (anim.ins(), offsets[n], counts[n]))
-                        self.nprim+=1
                     n=n+1
 
                     # Tris
@@ -395,7 +401,6 @@ class OBJexport:
                                             layer, anim)
                             self.file.write("%sTRIS\t%d %d\n" %
                                             (anim.ins(), offsets[n],counts[n]))
-                            self.nprim+=counts[n]
                         n=n+1
 
         # Close animations
@@ -503,6 +508,7 @@ class OBJexport:
         nmesh=object.getData()
         
         (anim, mm)=self.makeAnim(object)
+        hasanim=not anim.equals(Anim(None))
         nm=mm.rotationPart()
         nm.resize4x4()
 
@@ -512,17 +518,100 @@ class OBJexport:
         if self.debug:
             print "Mesh \"%s\" %s faces" % (object.name, len(nmesh.faces))
 
-        # Build list of faces and vertices
+        # Optimisation: Children of animations might be dupes - ~10% vertices
         twosideerr=0
         harderr=0
-        vti = [[] for i in range(len(nmesh.verts))]	# indices into vt
+        degenerr=0
+        if hasanim:
+            animcands=list(self.animcands)	# List of candidate tris
+            trino=0
+            fudge=Vertex.LIMIT*2		# Be more lenient
+            for f in nmesh.faces:
+                n=len(f.v)
+                if not n in [3,4]:
+                    pass
+                elif not (f.mode & NMesh.FaceModes.INVISIBLE):
+                    for i in range(n-1,-1,-1):
+                        nmv=f.v[i]
+                        vertex=Vertex(nmv[0], nmv[1], nmv[2], mm)
+                        if not f.smooth:
+                            norm=Vertex(f.no, nm)
+                        else:
+                            norm=Vertex(nmv.no, nm)
+                        if f.mode & NMesh.FaceModes.TEX:
+                            uv=UV(f.uv[i][0], f.uv[i][1])
+                        else:	# File format requires something - using (0,0)
+                            uv=UV(0,0)
+                        vt=VT(vertex, norm, uv)
+
+                        j=0
+                        while j<len(animcands):
+                            if not vt.equals(self.vt[self.tris[animcands[j]+trino].i[n-1-i]], fudge):
+                                animcands.pop(j)	# no longer a candidate
+                            else:
+                                j=j+1
+
+                    if not len(animcands):
+                        break	# exhausted candidates
+                    trino+=1
+            else:
+                # Success - re-use tris starting at self.vt[animcands[0]]
+                trino=0
+                for f in nmesh.faces:
+                    n=len(f.v)
+                    if not n in [3,4]:
+                        degenerr+=1
+                    elif not (f.mode & NMesh.FaceModes.INVISIBLE):
+                        face=Prim()
+                        face.anim=anim
+                        face.layer=object.Layer
+           
+                        if f.mode & NMesh.FaceModes.TEX:
+                            if len(f.uv)!=n:
+                                raise ExportError("Missing UV in mesh \"%s\"" % object.name)
+                            if f.transp == NMesh.FaceTranspModes.ALPHA:
+                                face.flags|=Prim.ALPHA
         
+                        if f.mode & NMesh.FaceModes.TWOSIDE:
+                            face.flags|=Prim.TWOSIDE
+                            twosideerr=twosideerr+1
+        
+                        if not f.mode & NMesh.FaceModes.TILES:
+                            face.flags|=Prim.NPOLY
+                            
+                        if f.image and 'panel.' in f.image.name.lower():
+                            face.flags|=Prim.PANEL
+                        elif not (f.mode&NMesh.FaceModes.DYNAMIC or self.iscockpit):
+                            face.flags|=Prim.HARD
+                            harderr=harderr+1
+
+                        for i in range(n):
+                            face.i.append(self.tris[animcands[0]+trino].i[i])
+                            
+                        self.tris.append(face)
+                        trino+=1
+                
+                if degenerr and self.verbose:
+                    print "Info:\tIgnoring %s degenerate face(s) in mesh \"%s\"" % (degenerr, object.name)
+                if harderr:
+                    print "Info:\tFound %s hard face(s) in mesh \"%s\"" % (harderr, object.name)
+                if twosideerr:
+                    print "Info:\tFound %s two-sided face(s) in mesh \"%s\"" % (twosideerr, object.name)
+
+                return
+
+        # Either no animation, or no matching animation
+        twosideerr=0
+        harderr=0
+        degenerr=0
+        starttri=len(self.tris)
+        # Optimisation: Build list of faces and vertices
+        vti = [[] for i in range(len(nmesh.verts))]	# indices into vt
+
         for f in nmesh.faces:
             n=len(f.v)
             if not n in [3,4]:
-                if self.verbose:
-                    print "Warn:\tIgnoring degenerate face in mesh \"%s\"" % (
-                        object.name)
+                degenerr+=1
             elif not (f.mode & NMesh.FaceModes.INVISIBLE):
                 face=Prim()
                 face.anim=anim
@@ -562,40 +651,29 @@ class OBJexport:
 
                     # Does one already exist?
                     #for j in range(len(self.vt)):	# Search all meshes
-                    for j in vti[nmv.index]:		# Search only this mesh
+                    for j in vti[nmv.index]:		# Search this vertex
                         q=self.vt[j]
                         if vt.equals(q):
                             q.uv= (q.uv+ vt.uv)/2
                             face.i.append(j)
                             break
                     else:
-                        found=False
-                        null=Anim(None)
-                        # Search other animations
-                        if not anim.equals(null):
-                            for tri in self.tris:
-                                if not tri.anim.equals(null):
-                                    for j in tri.i:
-                                        q=self.vt[j]
-                                        if vt.equals(q):
-                                            q.uv= (q.uv+ vt.uv)/2
-                                            face.i.append(j)
-                                            found=True
-                                            break
-                                    else:
-                                        continue	# next face
-                                    break		# found
-                        # New
-                        if not found:
-                            j=len(self.vt)
-                            self.vt.append(vt)
-                            face.i.append(j)
-                            vti[nmv.index].append(j)
+                        j=len(self.vt)
+                        self.vt.append(vt)
+                        face.i.append(j)
+                        vti[nmv.index].append(j)
 
                 self.tris.append(face)
                 
                 #if self.debug: print face
 
+        if hasanim:
+            # Save tris for matching next
+            self.animcands.append(starttri)
+
+        if degenerr and self.verbose:
+            print "Info:\tIgnoring %s degenerate face(s) in mesh \"%s\"" % (
+                degenerr, object.name)
         if harderr:
             print "Info:\tFound %s hard face(s) in mesh \"%s\"" % (
                 harderr, object.name)
