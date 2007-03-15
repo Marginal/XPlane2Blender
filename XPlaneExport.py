@@ -103,7 +103,7 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 #
 # 2004-11-14 v1.81
 #  - Ignore use of "Text" button; cockpit panels now detected by texture name.
-#  - Cockpit panels must go last in file.
+#  - Panel ploygons must go last in file.
 #  - Prettified output slightly.
 #
 # 2004-11-22 v1.82
@@ -124,7 +124,7 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 #    start with the top or bottom left vertex.
 #  - Check that quad_cockpit texture t < 768.
 #  - Work round X-Plane 7.6x bug where default poly_os level appears to be
-#    undefined.
+#    undefined. Problem appears fixed in v8.0x.
 #
 # 2004-12-29 v1.87
 #  - Really fix quad_cockpit left vertex thing.
@@ -137,42 +137,55 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 #    closed or smoothed - helps with nose of imported aircraft.
 #  - Calculate quad orientation more accurately during strip generation -
 #    helps to smooth correctly the nose and tail of imported aircraft.
-#  - Remove sort on no_depth/TILES - it didn't do anything useful.
+#  - Remove sort on no_depth/TILES - it hasn't done anything useful since 1.62.
+#
+# 2005-01-09 v1.89
+#  - Faster strip creation algorithm - only looks in same mesh for strips.
+#  - Turn texture warnings into errors and raise before creating output file.
+#  - Relaxed restriction on quad_cockpit textures - only one has to be within
+#    1024x768.
+#  - Also recognise cockpit_inn and cockpit_out as cockpit objects.
 #
 
 #
-# X-Plane renders faces in scenery files mostly in the order that it finds
-# them - it detects use of Alpha but doesn't sort by Z-buffer order or do
-# anything intelligent at all.
+# X-Plane renders polygons in scenery files mostly in the order that it finds
+# them - it detects use of alpha and deletes wholly transparent polys, but
+# doesn't sort by Z-buffer order.
+#
+# Panel polygons must come last (at least in v8.00-8.04) for LIT textures to
+# work for non-panel ploygons. The last polygon in the file must not be a
+# quad_cockpit with texture outside 1024x768 else everything goes wierd.
+#
 # So we have to sort on export. The algorithm below isn't guaranteed to
 # produce the right result in all cases, but seems to work OK in practice:
 #
-#  1. Output texture file name.
-#  2. Output lights and lines in the order that they're found.
-#     Build up global vertex list and global face list.
-#  3. Output faces in the following order, joined into strips where possible.
-#      - normal (usually the fullest bucket)
-#      - alpha
-#      - panel
-#      - alpha + panel
-#      (Smooth, Hard and double-sided faces are mixed up with the other
-#       faces and are output in the order they're found).
+#  1. Output header and texture file name.
+#  2. For each layer:
+#     3. Output lights and lines in the order that they're found.
+#        Build up global vertex list and global face list.
+#     4. Output mesh faces in the following order, in strips where possible:
+#        - normal (usually the fullest bucket)
+#        - alpha
+#        - panel (with or without alpha)
+#        (Smooth, Hard and Two-sided faces are mixed up with the other faces
+#        and are output in the order they're found).
 #
 
 import sys
 import Blender
 from Blender import NMesh, Lamp, Draw, Window
 from math import sqrt
+#import time
 
 class ExportError(Exception):
-    def __init__(self, msg=""):
+    def __init__(self, msg):
         self.msg = msg
 
 class Vertex:
     LIMIT=0.001	# max distance between vertices for them to be merged = 1/4in
     ROUND=3	# Precision, AS ABOVE
     
-    def __init__(self, x, y, z, mm=0):
+    def __init__ (self, x, y, z, mm=0):
         self.faces=[]	# indices into face array
         if not mm:
             self.x=x
@@ -183,12 +196,18 @@ class Vertex:
             self.y=mm[0][2]*x + mm[1][2]*y + mm[2][2]*z + mm[3][2]
             self.z=-(mm[0][1]*x + mm[1][1]*y + mm[2][1]*z + mm[3][1])
             
-    def __str__(self):
+    def __str__ (self):
         return "%7.3f %7.3f %7.3f" % (
             round(self.x, Vertex.ROUND),
             round(self.y, Vertex.ROUND),
             round(self.z, Vertex.ROUND))
     
+    def __add__ (self, other):
+        return Vertex(self.x+other.x, self.y+other.y, self.z+other.z)
+        
+    def __sub__ (self, other):
+        return Vertex(self.x-other.x, self.y-other.y, self.z-other.z)
+        
     def equals (self, v, fudge=LIMIT):
         if ((abs(self.x-v.x) < fudge) and
             (abs(self.y-v.y) < fudge) and
@@ -197,28 +216,22 @@ class Vertex:
         else:
             return 0
 
-    def __add__ (self, other):
-        return Vertex(self.x+other.x, self.y+other.y, self.z+other.z)
-        
-    def __sub__ (self, other):
-        return Vertex(self.x-other.x, self.y-other.y, self.z-other.z)
-        
     def norm (self):
         hyp=sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
         return Vertex(self.x/hyp, self.y/hyp, self.z/hyp)
 
-    def addFace(self, v):
+    def addFace (self, v):
         self.faces.append(v)
 
 class UV:
     LIMIT=0.008	# = 1 pixel in 128, 2 pixels in 256, etc
     ROUND=4	# Precision
 
-    def __init__(self, s, t):
+    def __init__ (self, s, t):
         self.s=s
         self.t=t
 
-    def __str__(self):
+    def __str__ (self):
         return "%-6s %-6s" % (round(self.s,UV.ROUND), round(self.t,UV.ROUND))
 
     def equals (self, uv):
@@ -236,25 +249,25 @@ class Face:
     SMOOTH=8
     HARD=16
     PANEL=32
-    BUCKET=TILES|ALPHA|PANEL
+    BUCKET=ALPHA|PANEL
 
-    def __init__(self, name):
+    def __init__ (self, name):
         self.v=[]
         self.uv=[]
         self.flags=0
         self.name=name
 
     # for debug only
-    def __str__(self):
+    def __str__ (self):
         s="<"
         for v in self.v:
             s=s+("[%s]" % v)
         return s+">"
 
-    def addVertex(self, v):
+    def addVertex (self, v):
         self.v.append(v)
 
-    def addUV(self, uv):
+    def addUV (self, uv):
         self.uv.append(uv)
 
 
@@ -262,7 +275,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.88
+    VERSION=1.89
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -273,32 +286,35 @@ class OBJexport:
         #--- class private don't touch ---
         self.file=0
         self.filename=filename
+        self.dolayers=0
+        self.iscockpit=((filename.lower().find("_cockpit.obj") != -1) or
+                        (filename.lower().find("_cockpit_inn.obj") != -1) or
+                        (filename.lower().find("_cockpit_out.obj") != -1))
+        self.havepanel=0
         self.texture=""
         self.linewidth=0.1
-        self.nobj=0		# Number of X-Plane objects exported
-        self.iscockpit=(filename.lower().find("_cockpit.obj") != -1)
+        self.nprim=0		# Number of X-Plane primitives exported
 
         # flags controlling export
         self.tiles=0
         self.dblsided=0
-        self.smooth=-1		# Default appears indeterminate in 8.01/2
-
-        # stuff for exporting faces
-        self.faces=[]
-        self.verts=[]
+        self.smooth=-1		# >=7.30 defaults to smoothed, but be explicit
 
     #------------------------------------------------------------------------
     def export(self, scene):
-        print "Starting OBJ export to " + self.filename
-        if not self.checkFile():
-            return
-    
         theObjects = []
         theObjects = scene.getChildren()
 
-        Window.DrawProgressBar(0, "Examining textures")
+        print "Starting OBJ export to " + self.filename
         self.getTexture (theObjects)
         
+        if not self.checkFile():
+            return
+
+        #clock=time.clock()	# Processor time
+        Blender.Window.WaitCursor(1)
+        Window.DrawProgressBar(0, "Examining textures")
+
         self.file = open(self.filename, "w")
         self.writeHeader ()
         self.writeObjects (theObjects)
@@ -306,7 +322,8 @@ class OBJexport:
         self.file.close ()
         
         Window.DrawProgressBar(1, "Finished")
-        print "Finished - exported %s objects\n" % self.nobj
+        print "Finished - exported %s primitives\n" % self.nprim
+        #print "%s CPU time\n" % (time.clock()-clock)
 
     #------------------------------------------------------------------------
     def checkFile (self):
@@ -331,10 +348,10 @@ class OBJexport:
 
     #------------------------------------------------------------------------
     def writeHeader (self):
-        if Blender.sys.dirsep=="\\":
-            systype="I"
+        if Blender.sys.progname.find("blender.app")!=-1:
+            systype='A'
         else:
-            systype="A"
+            systype='I'
         self.file.write("%s\n700\t// \nOBJ\t// \n\n" % systype)
         self.file.write("%s\t\t// Texture\n\n" % self.texture)
         if not self.iscockpit:
@@ -343,10 +360,10 @@ class OBJexport:
     #------------------------------------------------------------------------
     def getTexture (self, theObjects):
         texture=""
-        erroring=0;
+        multierr=0
+        panelerr=0
         nobj=len(theObjects)
         texlist=[]
-        self.dolayers=0
         layers=0
 
         for o in range (nobj-1,-1,-1):
@@ -365,27 +382,56 @@ class OBJexport:
                 mesh=object.getData()
                 if mesh.hasFaceUV():
                     for face in mesh.faces:
-                        if face.image and face.image.name.lower().find("panel."):
-                            if ((not texture) or
-                                (str.lower(texture) ==
-                                 str.lower(face.image.filename))):
-                                texture = face.image.filename
-                                texlist.append(str.lower(texture))
+                        if face.image:
+                            if face.image.name.lower().find("panel.")!=-1:
+                                # Check that at least one panel texture is OK
+                                if not self.havepanel:
+                                    self.havepanel=1
+                                    self.iscockpit=1
+                                    self.dolayers=0
+                                    panelerr=1
+                                if panelerr and object.Layer&1:
+                                    for uv in face.uv:
+                                        if (uv[0]<0.0  or uv[0]>1.0 or
+                                            uv[1]<0.25 or uv[1]>1.0):
+                                            break
+                                    else:
+                                        panelerr=0
                             else:
-                                if not erroring:
-                                    erroring=1
-                                    print "Warn:\tOBJ format supports one texture, but multiple texture files found:"
-                                    print "\t\"%s\"" % texture
-                                if not str.lower(face.image.filename) in texlist:
-                                    texlist.append(str.lower(face.image.filename))
-                                    print "\t\"%s\"" % face.image.filename
+                                if ((not texture) or
+                                    (str.lower(texture) ==
+                                     str.lower(face.image.filename))):
+                                    texture = face.image.filename
+                                    texlist.append(str.lower(texture))
+                                else:
+                                    if not multierr:
+                                        multierr=1
+                                        print "Warn:\tMultiple texture files found:"
+                                        print "\t\"%s\"" % texture
+                                    if not str.lower(face.image.filename) in texlist:
+                                        texlist.append(str.lower(face.image.filename))
+                                        print "\t\"%s\"" % face.image.filename
+            elif (self.iscockpit and (object.Layer & 7) and objType == "Lamp"
+                  and object.getData().getType() == Lamp.Types.Lamp):
+                raise ExportError("Cockpit objects can't contain lights.")
                             
-        if erroring:
-            print "Warn:\tSome objects will have the wrong textures"
+        if multierr:
+            raise ExportError("OBJ format supports one texture, but multiple texture files found.")
                                     
+        if panelerr:
+            raise ExportError("At least one instrument panel texture must be within 1024x768.")
+
         if not texture:
             self.texture = "none"
             return
+
+        l=texture.rfind(Blender.sys.dirsep)
+        if l!=-1:
+            l=l+1
+        else:
+            l=0
+        if texture[l:].find(" ")!=-1:
+            raise ExportError("Texture filename \"%s\" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file." % texture[l:])
 
         self.texture=""
         for i in range(len(texture)):
@@ -399,52 +445,60 @@ class OBJexport:
         elif self.texture[-4:].lower() == ".png":
             self.texture = self.texture[:-4]
         else:
-            print "Warn:\tTexture must be in bmp or png format. Please convert your file."
-            if self.texture[-4:-3] == ".":
-                self.texture = self.texture[:-4]
+            raise ExportError("Texture must be in bmp or png format.\n\tPlease convert the file. Use Image->Replace to load the new file.")
         
         # try to guess correct texture path
-        for prefix in ["custom object textures", "autogen textures"]:
-            l=self.texture.lower().find(prefix)
-            if l!=-1:
-                self.texture = self.texture[l+len(prefix)+1:]
-                if self.texture.find(" ")!=-1:
-                    print "Warn:\tTexture file name must not contain spaces. Please fix."
-                return
-            
         if not self.iscockpit:
+            for prefix in ["custom object textures", "autogen textures"]:
+                l=self.texture.lower().find(prefix)
+                if l!=-1:
+                    self.texture = self.texture[l+len(prefix)+1:]
+                    return
             print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
 
         l=self.texture.rfind(":")
         if l!=-1:
             self.texture = self.texture[l+1:]
-        if self.texture.find(" ")!=-1:
-            print "Warn:\tTexture file name must not contain spaces. Please fix."
 
     #------------------------------------------------------------------------
     def writeObjects (self, theObjects):
-        nobj=len(theObjects)
 
         if not self.dolayers:
             seq=[1]
         else:
             seq=[1,2,4]
 
+        # Count the objects
+        nobj=0
+        objlen=1
         for layer in seq:
-            self.faces=[]
-            self.verts=[]
+            for object in theObjects:
+                if object.Layer&layer:
+                    objlen=objlen+1
+        objlen=objlen*4	# 4 passes
+
+        for layer in seq:
             self.updateLayer(layer)
-            for o in range (nobj-1,-1,-1):
+            faces=[]	# Per-mesh list of list of faces
+            verts=[]	# Per-mesh list of list of vertices
+
+            # Four passes
+            # 1st pass: Output Lamps and Lines, build meshes
+            for o in range (len(theObjects)-1,-1,-1):
                 object=theObjects[o]
                 if not object.Layer&layer:
                     continue
                 
-                Window.DrawProgressBar(float(nobj-o)/(nobj*2),
-                                       "Exporting %s%% ..." % ((nobj-o)*50/nobj))
-                objType=object.getType()
+                Window.DrawProgressBar(float(nobj)/objlen,
+                                       "Exporting %s%% ..." % (
+                    nobj*100/objlen))
+                nobj=nobj+1
 
+                objType=object.getType()
+                face=0
+                vert=0
                 if objType == "Mesh":
-                    self.sortMesh(object)
+                    (face,vert)=self.sortMesh(object)
                 elif objType == "Lamp":
                     self.writeLamp(object)
                 elif objType == "Camera":
@@ -452,13 +506,46 @@ class OBJexport:
                 else:
                     print "Warn:\tIgnoring unsupported %s \"%s\"" % (
                         object.getType(), object.name)
+                faces.append(face)
+                verts.append(vert)
 
-            self.writeFaces()
+            # Hack! Find a kosher panel texture and put it last
+            if self.havepanel:
+                panelsorted=0
+                i=0
+                while not panelsorted:
+                    if not faces[i]:
+                        continue
+
+                    for j in range(len(faces[i])):
+                        if faces[i][j].flags&Face.PANEL:
+                            for uv in faces[i][j].uv:
+                                if (uv.s<0.0  or uv.s>1.0 or
+                                    uv.t<0.25 or uv.t>1.0):
+                                    break
+                            else:
+                                faces.append([faces[i][j]])
+                                verts.append([0])	# Not used for panels
+                                faces[i][j]=0		# Remove original face
+                                panelsorted=1
+                                break
+                    i=i+1
+
+            # 2nd-4th pass: Output meshes
+            for bucket in [0, Face.ALPHA, Face.ALPHA+Face.PANEL]:
+                for i in range(len(faces)):
+                    Window.DrawProgressBar(float(nobj)/objlen,
+                                           "Exporting %s%% ..." % (
+                        nobj*100/objlen))
+                    nobj=nobj+1
+
+                    if faces[i]:
+                        self.writeFaces(faces[i], verts[i], bucket)
                 
             self.updateFlags(0,0,0)	# not sure if this is required
             
         self.file.write("end\t\t\t// eof\n\n")
-        self.file.write("// Built using Blender %4.2f, http://www.blender3d.org/\n// Exported using XPlane2Blender %4.2f, http://marginal.org.uk/x-planescenery/\n" % (float(Blender.Get('version'))/100, OBJexport.VERSION))
+        self.file.write("// Built using Blender %4.2f, http://www.blender3d.org/\n// Exported using XPlane2Blender %4.2f, http://marginal.org.uk/x-planescenery/\n" % (float(Blender.Get('version'))/100, self.VERSION))
 
     #------------------------------------------------------------------------
     def writeLamp(self, object):
@@ -499,11 +586,8 @@ class OBJexport:
             self.file.write("%s\t%2d     %2d     %2d\n\n" % (v,c[0],c[1],c[2]))
         else:
             self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
-                v,
-                round(c[0],UV.ROUND),
-                round(c[1],UV.ROUND),
-                round(c[2],UV.ROUND)))
-        self.nobj+=1
+                v, round(c[0],3), round(c[1],3), round(c[2],3)))
+        self.nprim+=1
 
 
     #------------------------------------------------------------------------
@@ -536,20 +620,14 @@ class OBJexport:
                mesh.materials[face.mat].G*10,
                mesh.materials[face.mat].B*10,]
         else:
-            c=[0.5,0,5,0,5]
+            c=[5,5,5]
     
         self.file.write("line\t\t\t// %s\n" % name)
+        self.file.write("%s\t%-6s %-6s %-6s\n" % (
+            v1, round(c[0],3), round(c[1],3), round(c[2],3)))
         self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
-            v1,
-            round(c[0],UV.ROUND),
-            round(c[1],UV.ROUND),
-            round(c[2],UV.ROUND)))
-        self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
-            v2,
-            round(c[0],UV.ROUND),
-            round(c[1],UV.ROUND),
-            round(c[2],UV.ROUND)))
-        self.nobj+=1
+            v2, round(c[0],3), round(c[1],3), round(c[2],3)))
+        self.nprim+=1
 
 
     #------------------------------------------------------------------------
@@ -559,9 +637,8 @@ class OBJexport:
 
         # A line is represented as a mesh with one 4-edged face, where vertices
         # at each end of the face are less than self.linewidth units apart
-        if  (len(mesh.faces)==1 and
-             len(mesh.faces[0].v)==4 and
-             not mesh.faces[0].mode&NMesh.FaceModes.TEX):
+        if (len(mesh.faces)==1 and len(mesh.faces[0].v)==4 and
+            not mesh.faces[0].mode&NMesh.FaceModes.TEX):
             f=mesh.faces[0]
             v=[]
             for i in range(4):
@@ -570,7 +647,7 @@ class OBJexport:
                 if (v[i].equals(v[i+1],self.linewidth) and
                     v[i+2].equals(v[(i+3)%4],self.linewidth)):
                     self.writeLine(object)
-                    return
+                    return (0,0)	# Not a mesh any more
             
         if self.verbose:
             print "Info:\tExporting Mesh \"%s\"" % object.name
@@ -578,10 +655,12 @@ class OBJexport:
             print "Mesh \"%s\" %s faces" % (object.name, len(mesh.faces))
 
         # Build list of faces and vertices
-        twoside=0
+        twosideerr=0
+        faces=[]
+        verts=[]
         for f in mesh.faces:
             n=len(f.v)
-            if (n!=3) and (n!=4):
+            if not n in [3,4]:
                 print "Warn:\tIgnoring %s-edged face in mesh \"%s\"" % (
                     n, object.name)
             else:
@@ -592,18 +671,15 @@ class OBJexport:
                     face.flags|=Face.ALPHA
                 if f.mode & NMesh.FaceModes.TWOSIDE:
                     face.flags|=Face.DBLSIDED
-                    if not twoside:
+                    if not twosideerr:
                         print "Warn:\tFound two-sided face(s) in mesh \"%s\""%(
                             object.name)
-                    twoside=1
+                    twosideerr=1
                 if f.smooth:
                     face.flags|=Face.SMOOTH
-                if (n==4) and f.image and not f.image.name.lower().find("panel."):
-                    face.flags|=Face.PANEL
-                    for uv in f.uv:
-                        if (uv[0]<0.0  or uv[0]>1.0 or
-                            uv[1]<0.25 or uv[1]>1.0):	# t must be <= 768
-                            raise ExportError("Panel texture in Mesh \"%s\" is outside 1024x768." % object.name)
+                if (n==4) and f.image and f.image.name.lower().find("panel.")!=-1:
+                    # Sort is easier if we also assume alpha
+                    face.flags|=(Face.PANEL|Face.ALPHA)
                 elif (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TEX:
@@ -612,7 +688,7 @@ class OBJexport:
                 v=[]
                 for i in range(n):
                     vertex=Vertex(f.v[i][0],f.v[i][1],f.v[i][2],mm)
-                    for q in self.verts:
+                    for q in verts:
                         if vertex.equals(q):
                             q.x = (q.x + vertex.x) / 2
                             q.y = (q.y + vertex.y) / 2
@@ -620,7 +696,7 @@ class OBJexport:
                             face.addVertex(q)
                             break
                     else:
-                        self.verts.append(vertex)
+                        verts.append(vertex)
                         face.addVertex(vertex)
 
                     if f.mode & NMesh.FaceModes.TEX:
@@ -639,188 +715,180 @@ class OBJexport:
                             face.uv.pop(j)
                             break
                     i+=1
-                        
+
+                # Disappeared!
                 if len(face.v) < 3:
+                    print "Warn:\tIgnoring degenerate face in mesh \"%s\"" % (
+                        object.name)
                     continue
 
-                self.faces.append(face)
+                # Add this face to the list and add pointers from the vertices
+                faces.append(face)
                 for vertex in face.v:
-                    vertex.addFace(len(self.faces)-1)
+                    vertex.addFace(len(faces)-1)
                 
                 if self.debug: print face
 
+        return (faces,verts)
 
     #------------------------------------------------------------------------
-    def writeFaces(self):
+    def writeFaces(self, faces, verts, bucket):
 
-        facenum=0
-        nfaces=len(self.faces)
-        
-        for bucket in [0, Face.ALPHA, Face.PANEL, Face.ALPHA+Face.PANEL]:
-
-            # Identify strips
-            for faceindex in range(nfaces):
+        # Identify strips
+        for faceindex in range(len(faces)):
                 
-                if (self.faces[faceindex] and
-                    (self.faces[faceindex].flags&Face.BUCKET) == bucket):
-                    Window.DrawProgressBar(0.5+float(facenum)/(nfaces*2),
-                                           "Exporting %s%% ..." %
-                                           (50 + facenum*50/nfaces))
-                    facenum=facenum+1
-                    
-                    startface=self.faces[faceindex]
-                    strip=[startface]
-                    self.faces[faceindex]=0	# take face off list
-                    firstvertex=0
+            if (faces[faceindex] and
+                (faces[faceindex].flags&Face.BUCKET) == bucket):
 
-                    if ((startface.flags & Face.HARD) or
-                        (startface.flags & Face.PANEL)):
-                        # Can't be part of a Quad_Strip
-                        self.writeStrip(strip,0)
+                startface=faces[faceindex]
+                strip=[startface]
+                faces[faceindex]=0	# take face off list
+                firstvertex=0
+                        
+                if ((startface.flags & Face.HARD) or
+                    (startface.flags & Face.PANEL)):
+                    # Can't be part of a Quad_Strip
+                    self.writeStrip(strip,0)
 
-                    elif len(startface.v)==3:
+                elif len(startface.v)==3:
 
-                        # First look for a tri_fan.
-                        # Vertex which is member of most triangles is centre.
-                        tris=[]
-                        for v in startface.v:
-                            tri=0
-                            for i in v.faces:
-                                if  (self.faces[i] and
-                                     len(self.faces[i].v) == 3 and
-                                     (self.faces[i].flags&Face.BUCKET) == bucket):
-                                    tri=tri+1
-                            tris.append(tri)
-                        if tris[0]>=tris[1] and tris[0]>=tris[2]:
-                            c=0
-                        elif tris[1]>=tris[2]:
-                            c=1
-                        else:
-                            c=2
-                        firstvertex=(c-1)%3
-                        if self.debug: print "Start fan, centre=%s:\n%s" % (
-                            c, startface)
+                    # First look for a tri_fan.
+                    # Vertex which is member of most triangles is centre.
+                    tris=[]
+                    for v in startface.v:
+                        tri=0
+                        for i in v.faces:
+                            if  (faces[i] and len(faces[i].v) == 3 and
+                                 (faces[i].flags&Face.BUCKET) == bucket):
+                                tri=tri+1
+                        tris.append(tri)
+                    if tris[0]>=tris[1] and tris[0]>=tris[2]:
+                        c=0
+                    elif tris[1]>=tris[2]:
+                        c=1
+                    else:
+                        c=2
+                    firstvertex=(c-1)%3
+                    if self.debug: print "Start fan, centre=%s:\n%s" % (
+                        c, startface)
 
-                        tri_inds=[faceindex]
-                        for o in [0,2]:
-                            # vertices must be in clockwise order
-                            if self.debug: print "Order %s" % o
-                            of=startface
-                            v=(c+o)%3
-                            while 1:
-                                (nf,i)=self.findFace(of,v)
-                                if nf>=0:
-                                    of=self.faces[nf]
-                                    if self.debug: print of
-                                    if o==0:
-                                        strip.append(of)
-                                        tri_inds.append(nf)
-                                        v=(i+1)%3
-                                    else:
-                                        strip.insert(0, of)
-                                        tri_inds.insert(0, nf)
-                                        v=(i-1)%3
-                                        firstvertex=v
-                                    self.faces[nf]=0  # take face off list
+                    tri_inds=[faceindex]
+                    for o in [0,2]:
+                        # vertices must be in clockwise order
+                        if self.debug: print "Order %s" % o
+                        of=startface
+                        v=(c+o)%3
+                        while 1:
+                            (nf,i)=self.findFace(faces,of,v)
+                            if nf>=0:
+                                of=faces[nf]
+                                if self.debug: print of
+                                if o==0:
+                                    strip.append(of)
+                                    tri_inds.append(nf)
+                                    v=(i+1)%3
                                 else:
-                                    break
-
-                        # tri_fans are rendered incorrectly (wrong apex
-                        # normal?) under some situations. So only make a
-                        # tri_fan if enough vertices and either smoothed
-                        # or closed.
-                        if len(strip)>=8:	# strictly >2
-                            # closed if first and last faces share two vertices
-                            common=0
-                            for i in range(3):
-                                for j in range(3):
-                                    if strip[0].v[i].equals(strip[-1].v[j]):
-                                        common+=1
-                            if common==2 or startface.flags&Face.SMOOTH:
-                                print "Info:\tFound  Tri_Fan   of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
-                                for i in tri_inds:
-                                    self.faces[i]=0	# take face off list
-                                    facenum=facenum+1
-                                self.writeStrip(strip,firstvertex)
-                                continue
-                            elif self.debug:
-                                print "Not closed (%s)" % common
-
-                        # Didn't find a tri_fan, restore deleted faces
-                        for i in range(len(strip)):
-                            self.faces[tri_inds[i]]=strip[i]
-                        
-                        strip=[startface]
-                        firstvertex=0
-
-                        # Look for a tri_strip
-                        
-                        if len(strip)>1:
-                            print "Info:\tFound  Tri_Strip of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
-                        
-                        self.writeStrip(strip,firstvertex)
-                        
-                    elif len(startface.v)==4:
-                        # Find most horizontal edge
-                        miny=sys.maxint
-                        for i in range(4):
-                            q=(startface.v[i]-startface.v[(i+1)%4]).norm()
-                            if abs(q.y)<miny:
-                                sv=i
-                                miny=abs(q.y)
-                        
-                        if self.debug: print "Start strip, edge=%s,%s:\n%s" % (
-                            sv, (sv+1)%4, startface)
-
-                        # Strip could maybe go two ways
-                        if startface.flags&Face.SMOOTH:
-                            # Vertically then Horizontally for fuselages
-                            seq=[0,1]
-                        else:
-                            # Horizontally then Vertically
-                            seq=[1,0]
-                        for hv in seq:	# rotate 0 or 90
-                            firstvertex=(sv+2+hv)%4
-                            for o in [0,2]:
-                                # vertices must be in clockwise order
-                                if self.debug: print "Order %s" % (o+hv)
-                                of=startface
-                                v=(sv+o+hv)%4
-                                while 1:
-                                    (nf,i)=self.findFace(of,v)
-                                    if nf>=0:
-                                        of=self.faces[nf]
-                                        if self.debug: print of
-                                        v=(i+2)%4
-                                        if o==0:
-                                            strip.append(of)
-                                        else:
-                                            strip.insert(0, of)
-                                            firstvertex=v
-                                        self.faces[nf]=0  # take face off list
-                                        facenum=facenum+1
-                                    else:
-                                        break
-                            # not both horiontally and vertically
-                            if len(strip)>1:
+                                    strip.insert(0, of)
+                                    tri_inds.insert(0, nf)
+                                    v=(i-1)%3
+                                    firstvertex=v
+                                faces[nf]=0  # take face off list
+                            else:
                                 break
 
-                        if len(strip)>1:
-                            print "Info:\tFound Quad_Strip of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
-                        self.writeStrip(strip,firstvertex)
+                    # tri_fans are rendered incorrectly (wrong apex
+                    # normal) under some situations. So only make a
+                    # tri_fan if enough vertices and either smoothed
+                    # or closed.
+                    if len(strip)>=8:	# strictly >2
+                        # closed if first and last faces share two vertices
+                        common=0
+                        for i in range(3):
+                            for j in range(3):
+                                if strip[0].v[i].equals(strip[-1].v[j]):
+                                    common+=1
+                        if common==2 or startface.flags&Face.SMOOTH:
+                            print "Info:\tFound  Tri_Fan   of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
+                            self.writeStrip(strip,firstvertex)
+                            continue
+                        elif self.debug:
+                            print "Not closed (%s)" % common
+
+                    # Didn't find a tri_fan, restore deleted faces
+                    for i in range(len(strip)):
+                        faces[tri_inds[i]]=strip[i]
                     
+                    strip=[startface]
+                    firstvertex=0
+
+                    # Look for a tri_strip
+                    # XXXX ToDO
+                    
+                    if len(strip)>1:
+                        print "Info:\tFound  Tri_Strip of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
+                    
+                    self.writeStrip(strip,firstvertex)
+                    
+                elif len(startface.v)==4:
+                    # Find most horizontal edge
+                    miny=sys.maxint
+                    for i in range(4):
+                        q=(startface.v[i]-startface.v[(i+1)%4]).norm()
+                        if abs(q.y)<miny:
+                            sv=i
+                            miny=abs(q.y)
+                    
+                    if self.debug: print "Start strip, edge=%s,%s:\n%s" % (
+                        sv, (sv+1)%4, startface)
+
+                    # Strip could maybe go two ways
+                    if startface.flags&Face.SMOOTH:
+                        # Vertically then Horizontally for fuselages
+                        seq=[0,1]
+                    else:
+                        # Horizontally then Vertically
+                        seq=[1,0]
+                    for hv in seq:	# rotate 0 or 90
+                        firstvertex=(sv+2+hv)%4
+                        for o in [0,2]:
+                            # vertices must be in clockwise order
+                            if self.debug: print "Order %s" % (o+hv)
+                            of=startface
+                            v=(sv+o+hv)%4
+                            while 1:
+                                (nf,i)=self.findFace(faces,of,v)
+                                if nf>=0:
+                                    of=faces[nf]
+                                    if self.debug: print of
+                                    v=(i+2)%4
+                                    if o==0:
+                                        strip.append(of)
+                                    else:
+                                        strip.insert(0, of)
+                                        firstvertex=v
+                                    faces[nf]=0  # take face off list
+                                else:
+                                    break
+                        # not both horiontally and vertically
+                        if len(strip)>1:
+                            break
+
+                    if len(strip)>1:
+                        print "Info:\tFound Quad_Strip of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
+                    self.writeStrip(strip,firstvertex)
+                
 
     #------------------------------------------------------------------------
     # Return index of a face which has the same number of edges, same flags,
     # has v and v+1 as vertices and faces the same way as the supplied face.
-    def findFace (self,face,v):
+    def findFace (self,faces,face,v):
         n=len(face.v)
         v1=face.v[v]
         v2=face.v[(v+1)%n]
         uv1=face.uv[v]
         uv2=face.uv[(v+1)%n]
         for faceindex in v1.faces:
-            f=self.faces[faceindex]
+            f=faces[faceindex]
             if f and f!=face and f.flags==face.flags and len(f.v)==n:
                 for i in range(n):
                     if  (f.v[i]==v2 and
@@ -845,7 +913,7 @@ class OBJexport:
                          face.flags&Face.SMOOTH)
         
         if (len(strip))==1:            
-            # Oh for fuck's sake, X-Plane 8.00-8.03 loses the plot unless
+            # Oh for fuck's sake, X-Plane 8.00-8.04 loses the plot unless
             # quad_cockpit polys start with the top or bottom left vertex.
             # We'll choose the vertex with smallest s.
             mins=sys.maxint
@@ -903,12 +971,12 @@ class OBJexport:
                         if face.v[i]==v:
                             self.file.write("%s\t%s\t%s\t%s\n" % (
                                 face.v[(i+1)%n], face.uv[(i+1)%n],
-                                face.v[(i+2)%n],  face.uv[(i+2)%n]))
+                                face.v[(i+2)%n], face.uv[(i+2)%n]))
                             v=face.v[(i+1)%n]
                             break
                 
         self.file.write("\n")
-        self.nobj+=1
+        self.nprim+=1
 
     #------------------------------------------------------------------------
     def updateLayer(self,layer):
@@ -972,7 +1040,7 @@ else:
         obj.export(scene)
     except ExportError, e:
         Window.DrawProgressBar(1, "Error")
-        msg="ERROR:\t"+e.msg
+        msg="ERROR:\t"+e.msg+"\n"
         print msg
         Blender.Draw.PupMenu(msg)
         if obj.file:

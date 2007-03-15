@@ -36,7 +36,7 @@ object editor for Windows, Mac and UNIX. These Blender scripts export
 scenery created in Blender to X-Plane v7 <code>.obj</code> format for
 placement with World-Maker. The scripts also import existing X-Plane v6
 and v7 <code>.obj</code> scenery files into Blender. All X-Plane
-object types are supported apart from <code>smoke_black</code> and <code>smoke_white</code>
+primitives are supported apart from <code>smoke_black</code> and <code>smoke_white</code>
 (which are not directly representable in Blender).</p>
 <h3>Requirements</h3>
 <p>Requires <a href="http://www.blender3d.org/Download/">Blender</a>
@@ -106,10 +106,12 @@ in a Blender text window. Hit <samp><b>Alt P</b></samp> to run.</small></p>
 Cursor" position. Any problems with the import are reported in the
 Console window as lines starting "Warn" or "Error".</p>
 <p>The <code>.obj</code> file format doesn't preserve any information
-about which objects belong together in the same mesh. So the script
-works quite hard to merge faces into meshes for ease and speed of
-editing in Blender. This means that it can be very slow to import large
-scenery. Even so, the script only does an OK job. You may find it
+about which primitives belong together in the same mesh. So the script
+works quite hard to glue faces together into meshes for ease and speed
+of
+editing in Blender. This means that it can be <span
+ style="text-decoration: underline;">very</span> slow to import large
+scenery. You may find it
 helpful to manually merge some meshes together after importing; in
 "Object Mode" select the meshes you want to merge and choose <samp>Space
 -&gt; Object -&gt; Join Objects</samp>.</p>
@@ -390,7 +392,7 @@ meshes that contain one face each. So if you're about to create a new
 face that shares an edge with an existing mesh, select the shared edge
 and press <samp style="font-weight: bold;">E</samp> to "extrude" a new
 face, rather than create it as a new standalone Mesh "Plane".</p>
-<p> X-Plane normally only displays one side of an object's face; faces
+<p> X-Plane normally only displays one side of a face; faces
 are invisible from behind (unless you set press the <samp>Twoside</samp>
 button). In order to see which side of a single-sided face is the
 visible side:</p>
@@ -411,7 +413,7 @@ you are looking at when the line is pointing <u>towards</u> you.</p>
 <h4>Import</h4>
 <ul>
   <li><code>smoke_black</code> and <code>smoke_white</code> X-Plane
-objects are ignored.</li>
+primitives are ignored.</li>
   <li>Poly_Os, Ambient, Difuse, Specular, Emission and Shiny attributes
 are ignored.</li>
   <li>Can't tell which faces should have Alpha transparency.
@@ -421,9 +423,10 @@ button in <samp>UV Face Select</samp> mode after import.</li>
 <h4>Export</h4>
 <ul>
   <li>Only Lamps and Mesh Faces (including "lines") are exported.</li>
-  <li>All objects must share a single texture (this is a limitation of
-the X-Plane <code>.obj</code> file format) apart from cockpit objects
-which can additionally use the cockpit panel texture. Multiple textures
+  <li>All faces must share a single texture (this is a limitation of
+the X-Plane <code>.obj</code> file format) apart from cockpit panel
+faces which can additionally use the cockpit panel texture. Multiple
+textures
 are not automagically merged into one file during the export.</li>
 </ul>
 <h3>Problems</h3>
@@ -440,7 +443,7 @@ titled "Blender" that looks like a Command Prompt). </small></li>
 <h3>Stuff</h3>
 <p>Copyright &copy; 2004 Jonathan Harris
 &lt;x-plane&nbsp;at&nbsp;marginal.org.uk&gt;.<br>
-Version 1.88<br>
+Version 1.89<br>
 <a href="http://marginal.org.uk/x-planescenery/">
 http://marginal.org.uk/x-planescenery/</a></p>
 <p><!-- Creative Commons License --> <a rel="license"

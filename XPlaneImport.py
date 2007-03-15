@@ -109,10 +109,15 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 # 2004-12-29 v1.87
 #  - Don't set DoubleSided on Meshes since this doesn't do anything useful.
 #
+# 2004-01-09 v1.89
+#  - Detect and fix up spaces in texture file name.
+#  - Made merging algorithm thorough.
+#
 
 import sys
 import Blender
 from Blender import Object, NMesh, Lamp, Image, Material, Window
+#import time
 
 class ParseError(Exception):
     def __init__(self, type, value=""):
@@ -421,8 +426,7 @@ class OBJimport:
     def __init__(self, filename):
         #--- public you can change these ---
         self.verbose=0	# level of verbosity in console 0-none, 1-some, 2-most
-        self.aggressive=12	# how aggressively to merge meshes. Should be
-        			# at least 1. 12 seems to cover most cases OK.
+        self.merge=1	# whether to merge primitives into meshes
         
         #--- class private don't touch ---
         self.filename=filename
@@ -433,7 +437,7 @@ class OBJimport:
         self.fileformat=0	# 6 or 7
         self.image=0		# texture image, iff scenery has texture
         self.curmesh=[]		# unoutputted meshes
-        self.nobj=0		# Number of X-Plane objects imported
+        self.nprim=0		# Number of X-Plane objects imported
         
         # random stuff
         self.whitespace=[" ","\t","\n","\r"]
@@ -449,7 +453,9 @@ class OBJimport:
         
     #------------------------------------------------------------------------
     def doimport(self):
+        #clock=time.clock()	# Processor time
         print "Starting OBJ import from " + self.filename
+        Blender.Window.WaitCursor(1)
     
         self.file = open(self.filename, "rb")
         self.file.seek(0,2)
@@ -457,10 +463,10 @@ class OBJimport:
         self.file.seek(0)
         Window.DrawProgressBar(0, "Opening ...")
         self.readHeader()
-        self.readTexture()
         self.readObjects()
         Window.DrawProgressBar(1, "Finished")
-        print "Finished - imported %s objects\n" % self.nobj
+        print "Finished - imported %s primitives\n" % self.nprim
+        #print "%s CPU time\n" % (time.clock()-clock)
 
     #------------------------------------------------------------------------
     def getInput(self):
@@ -624,11 +630,24 @@ class OBJimport:
                 self.lineno += 1
             if not c in self.whitespace:
                 self.file.seek(pos)
-                return
-            
-    #------------------------------------------------------------------------
-    def readTexture (self):
-        tex=self.getInput()
+                break
+
+        # read texture
+        tex=""
+        while 1:
+            pos = self.file.tell()
+            c = self.file.read(1)
+            if not c:
+                raise ParseError(HEADER)
+            if c == "\r":
+                self.lineno += 1
+            if c in ["\r", '/']:
+                self.file.seek(pos)
+                break
+            tex = tex + c
+        tex = tex.strip()
+
+        self.getCR()
         if tex=="none":
             self.image=0
             if self.verbose:
@@ -657,16 +676,30 @@ class OBJimport:
                            p+"AutoGen textures"+Blender.sys.dirsep,
                            p+p+"AutoGen textures"+Blender.sys.dirsep,
                            p+p+p+"AutoGen textures"+Blender.sys.dirsep]:
-                texfilename=self.filename[:l]+prefix+basename+extension
+                texname=self.filename[:l]+prefix+basename+extension
                 try:
-                    file = open(texfilename, "rb")
+                    file = open(texname, "rb")
                 except IOError:
                     pass
                 else:
+                    # Detect and fix up spaces in texture file name
+                    if basename.find(" ") != -1:
+                        newname=""
+                        for i in range(len(basename)):
+                            if basename[i]==" ":
+                                newname+="_"
+                            else:
+                                newname+=basename[i]
+                        newname=self.filename[:l]+prefix+newname+extension
+                        newfile=open(newname, "wb")
+                        newfile.write(file.read())
+                        newfile.close()
+                        texname=newname
+                        print "Info:\tCreated new texture file \"%s\"" %texname
+                    elif self.verbose:
+                        print "Info:\tUsing texture file \"%s\"" % texname
                     file.close()
-                    if self.verbose:
-                        print "Info:\tUsing texture file \"%s\"" % texfilename
-                    self.image = Image.Load(texfilename)
+                    self.image = Image.Load(texname)
                     return
             
         self.image=0
@@ -683,7 +716,6 @@ class OBJimport:
                 if t==Token.END7:
                     # write meshes
                     self.mergeMeshes()
-                    Blender.Window.WaitCursor(1)
                     for mesh in self.curmesh:
                         mesh.doimport(scene,self.image,self.filename)
                     return
@@ -935,7 +967,7 @@ class OBJimport:
             ob.Layer=OBJimport.LAYER[self.lod]
         cur=Window.GetCursorPos()
         ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
-        self.nobj+=1
+        self.nprim+=1
         
     #------------------------------------------------------------------------
     def addLine(self,scene,v,c):
@@ -993,7 +1025,7 @@ class OBJimport:
         cur=Window.GetCursorPos()
         ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
-        self.nobj+=1
+        self.nprim+=1
 
     #------------------------------------------------------------------------
     def addFan(self, scene, token, v, uv):
@@ -1033,7 +1065,7 @@ class OBJimport:
 
         if faces:
             self.addToMesh(scene,name,faces,flags)
-            self.nobj+=1
+            self.nprim+=1
 
     #------------------------------------------------------------------------
     def addStrip(self, scene, token, v, uv, vorder):
@@ -1104,7 +1136,7 @@ class OBJimport:
 
         if faces:
             self.addToMesh(scene,name,faces,flags)
-            self.nobj+=1
+            self.nprim+=1
 
     #------------------------------------------------------------------------
     # add faces to existing or new mesh
@@ -1117,7 +1149,7 @@ class OBJimport:
         # (and so can be safely added to the same mesh) since they all come
         # from the same X-Plane object).
 
-        if self.curmesh and self.aggressive:
+        if self.curmesh and self.merge:
             if self.comment!='' and self.comment==self.lastcomment:
                 self.curmesh[-1].addFaces (name, faces)
                 return            
@@ -1127,20 +1159,43 @@ class OBJimport:
                 return
 
         # No common edge - new mesh required
-        #for face in self.curmesh[-1].faces: print face
         self.curmesh.append(Mesh(name, faces, flags))
         self.lastcomment=self.comment
 
     #------------------------------------------------------------------------
     # last chance - try to merge meshes that abut each other
     def mergeMeshes (self):
+        if not self.merge: return
+
         # Brute force and ignorance algorithm is used. But search most recently
         # added meshes first on the assumption of locality.
-#        for m in range (len(self.curmesh)-1,-1,-1):
-#            mesh=self.curmesh[m]
-#            if mesh.abut(faces):
-#                mesh.addFaces(faces)
-#                return
+        m=len(self.curmesh)-2
+        while m>=0:
+            n=float(m)/len(self.curmesh)
+            Window.DrawProgressBar(1-n/2,"Merging %s%% ..." % (100-int(50*n)))
+
+            # optimisation: take a copy of m's faces to prevent comparing any
+            # newly merged faces multiple times
+            facesm=[]
+            for face in self.curmesh[m].faces:
+                facesm.append(face)
+
+            l=m+1
+            while l<len(self.curmesh):
+                if (self.curmesh[l].flags==self.curmesh[m].flags and
+                    self.curmesh[l].intersect(self.curmesh[m]) and
+                    self.curmesh[l].abut(facesm)):
+                    self.curmesh[m].addFaces("Mesh", self.curmesh[l].faces)
+                    self.curmesh.pop(l)
+                else:
+                    l=l+1
+            m=m-1
+
+    #------------------------------------------------------------------------
+    # last chance - try to merge meshes that abut each other
+    def OldmergeMeshes (self):
+        # Brute force and ignorance algorithm is used. But search most recently
+        # added meshes first on the assumption of locality.
         m=len(self.curmesh)-2
         while m>=0:
             n=float(m)/len(self.curmesh)
@@ -1152,7 +1207,7 @@ class OBJimport:
             for face in self.curmesh[m].faces:
                 facesm.append(face)
             # sliding window
-            while l<min(m+1+self.aggressive,len(self.curmesh)):
+            while l<min(m+1+self.merge,len(self.curmesh)):
                 if (self.curmesh[l].flags==self.curmesh[m].flags and
                     self.curmesh[l].intersect(self.curmesh[m]) and
                     self.curmesh[l].abut(facesm)):
