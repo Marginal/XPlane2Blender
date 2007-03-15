@@ -43,7 +43,9 @@ and material attributes.</p>
 <p>Runs on Windows 98 or later, Mac OS 10.3.9 or later, and Linux.</p>
 <p>Requires <a href="http://www.blender3d.org/Download/">Blender
 2.41</a> or later <small>(Mac OS users should download the "Python 2.3"
-build of Blender unless you have installed Python 2.4)</small>.</p>
+build of Blender unless you have installed Python 2.4. Linux users should
+download the build that corresponds to the Python version that is
+installed on your system - usually "Python 2.4")</small>.</p>
 <h3>Tutorials</h3>
 <p>This document is a reference and assumes familiarity
 with Blender. You may find it easier to get started using the following
@@ -149,11 +151,13 @@ explanation of why it does this.</p>
 as scenery or as a CSL object; see <a href="#Tweaking_planes">Tweaking
 planes</a> below.</p>
 <h3>Exporting objects</h3>
+<p>Save the <code>.blend</code> file in the aircraft or
+scenery folder where you want the <code>.obj</code> file to end up.</p>
 <samp>File &raquo; Export &raquo; X-Plane CSL Object</samp> or<br>
 <samp>File &raquo; Export &raquo; X-Plane v7 Object</samp> or<br>
 <samp>File &raquo; Export &raquo; X-Plane v8 Object</samp>
 <p>The output filename and location is the same as the current
-Blender filename, but with a <code>.obj</code> extension.
+Blender filename, but with a <code>.obj</code> extension. 
 Always check the Console window for messages reporting any problems
 with the export, which are displayed as lines starting "Warn" or
 "Error".</p>
@@ -163,27 +167,31 @@ multi-user plugins such as
 <a href="http://www.ivao.aero/softdev/X-IvAp/">X-IvAp</a>.</p>
 <p><samp><b>v8: </b></samp>These objects are supported by X-Plane versions 8.20 and later.</p>
 <h3>Using Blender to create X-Plane objects</h3>
-<h4>Lamps</h4>
+<p>Only Lamps and Meshes are exported to X-Plane.
+You can use other Blender object types, <i>eg</i> Curves and Surfaces,
+to construct your scenery as long as you convert them to meshes before
+exporting to X-Plane.</p>
+<h4><a name="lamps">Lamps</h4>
 <ul>
-  <li>Only Lamps of type "Lamp" are exported to X-Plane. Lamps of
-types "Area", "Spot", "Semi" and "Hemi" are ignored (and so can be
+  <li>Only Lamp objects of type "Lamp" are exported to X-Plane. Lamp objects
+of types "Area", "Spot", "Semi" and "Hemi" are ignored (and so can be
 used to illuminate your model in Blender).</li>
-  <li>Lamps with certain words in their names have special behaviours when exported to an X-Plane v8 object:
+  <li>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v8 object:
     <dl>
-      <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> panel.</dd>
-      <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> panel.</dd>
+      <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
+      <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
       <dd><code>Pulse</code>, <code>Strobe</code>, <code>Traffic</code> - As for X-Plane v7 objects. (R,G,B settings are ignored).</dd>
-      <dd><i>other</i> - X-Plane pre-defined "named" light. (Supported by X-Plane 8.50 and later. R,G,B settings are ignored).</dd>
+      <dd><i>other</i> - X-Plane pre-defined "named" light. (Supported by X-Plane 8.50 and later. R,G,B settings are ignored). The name of the X-Plane light is taken from the value of a <a href="#properties">property</a> named <code>name</code> if this exists, otherwise from the name of the lamp object.</dd>
     </dl>
-  <li>Lamps with certain words in their names have special behaviours when exported to an X-Plane v7 object:
+  <li>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v7 object:
     <dl>
-      <dd><code>Flash</code> - Flashing light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> panel.</dd>
+      <dd><code>Flash</code> - Flashing light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
       <dd><code>Pulse</code> or <code>airplane_beacon</code> - Red pulsing anti-collision light. (R,G,B settings are ignored).</dd>
       <dd><code>Strobe</code> or <code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
       <dd><code>Traffic</code> - Cycles red, orange, green. (R,G,B settings are ignored).</dd>
-      <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> panel.</dd>
+      <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
     </dl>
-  <li>Lamps with certain names have special behaviours when exported to
+  <li>Lamp objects with certain names have special behaviours when exported to
 an X-Plane CSL object. The XSquawkBox documentation strongly recommends
 using these special lights rather than normal lights:
     <dl>
@@ -193,7 +201,7 @@ using these special lights rather than normal lights:
       <dd><code>airplane_nav_right</code> - Green navigation/position light. (R,G,B settings are ignored).</dd>
       <dd><code>airplane_beacon</code> - Red pulsing anti-collision light, on when engines are running. (R,G,B settings are ignored).</dd>
       <dd><code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
-      <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> panel.</dd>
+      <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
     </dl>
   </li>
 </ul>
@@ -201,21 +209,21 @@ using these special lights rather than normal lights:
 <ul>
   <li>Create faces with 3 or 4 edges (called "<code>tri</code>"s
 and "<code>quad</code>"s in X-Plane).</li>
-  <li>In the <samp>Link and Materials</samp> panel:
+  <li>In the <samp>Link and Materials</samp> Editing panel (<samp style="font-weight: bold;">F9</samp>):
     <ul>
-      <li><samp>Set Smooth</samp> and <samp>Set
-Solid</samp> control whether to smooth edges of faces in a mesh.
+      <li><samp>Set Smooth</samp> and <samp>Set Solid</samp> control whether
+to smooth edges of faces in a mesh.
 This is useful when using multiple faces to simulate a curved surface.
 Go to "Object Mode", select the mesh and press <samp>Set Smooth</samp>.
 The effect is only visible in Blender <samp>3D View</samp>
 windows when the <samp>Viewport Shading</samp> button is
 set to <samp>Solid</samp> or <samp>Shaded</samp>.</li>
 	<div><samp style="font-weight: bold;">v7: </samp>Only faces that
-are part of a Strip (see <a href="#strips">Strips</a>
-below) will be smoothed when displayed in X-Plane.</div>
+are part of a <a href="#strips">Strip</a> will be smoothed when displayed
+in X-Plane.</div>
     </ul>
   </li>
-  <li>In the <samp>Texture Face</samp> panel (available in <samp>UV Face Select</samp> mode):
+  <li>In the <samp>Texture Face</samp> Editing panel (<samp style="font-weight: bold;">F9</samp>) available in <samp>UV Face Select</samp> mode:
     <ul>
       <li><samp>Tex</samp> button controls whether
 the face has a texture. Create a <code>.bmp</code> or <code>.png
@@ -245,6 +253,8 @@ normally be pressed. Unpress this button only for things like
 helicopter landing pads. <small>(Note: The meaning of this
 button was changed in v1.50. Use <a href="http://marginal.org.uk/x-planescenery/collide.txt">this</a>
 script to turn the Collision button back on for all faces).</small></li>
+        <div><samp style="font-weight: bold;">v8: </samp>You can specify
+the type of hard surface. Add a <a href="#properties">property</a> named <code>surface</code> and give it the value <code>water</code>, <code>concrete</code>, <code>asphalt</code>, <code>grass</code>, <code>dirt</code>, <code>gravel</code>, <code>lakebed</code>, <code>snow</code>, <code>shoulder</code> or <code>blastpad</code>. The surface type is ignored by X-Plane versions prior to 8.50.</div>
         <div><samp style="font-weight: bold;">v7: </samp>Only faces with
 4 edges (ie "<code>quads</code>") are exported as "hard".</div>
         <div><samp style="font-weight: bold;">v7: </samp>X-Plane
@@ -253,22 +263,54 @@ files that contain hard faces must be placed in WorldMaker with an
 "object heading" of 0. Otherwise the "hard" part of the surface ends
 up in the wrong place.</div>
 	<div><samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</div>
-      <li><samp>Twoside</samp> button controls
-whether one or both sides of the face are displayed. Using a two-sided
-face is more expensive than using a single-sided face, but is cheaper
-and easier than using two single-sided faces back-to-back.</li>
+      <li><samp>Twoside</samp> button controls whether one or both sides
+of the face are displayed. Unless you need a lot of double-sided faces it
+is cheaper to use two single-sided faces back-to-back instead.</li>
       <li><samp>Alpha</samp> button is a hint to
 Blender and to X-Plane that the face is transparent. Use this for
-transparent faces to prevent artifacts when displayed in X-Plane. Don't
-press this button for opaque (normal) faces.</li>
+transparent faces to instruct X-Plane to draw these faces last and so
+prevent artifacts. Don't press this button for opaque (normal) faces.
+See <a href="#order">drawing order</a> for more fine-grained control
+over drawing order.</li>
     </ul>
   </li>
+  <li><samp style="font-weight: bold;">v8: </samp>In
+the <samp>Material buttons</samp> Shading panels
+(<samp style="font-weight: bold;">F5</samp>) you can change the way that
+the mesh reacts to light by specifying a material. Changing between materials
+is expensive so you should ensure that you only use a few materials in
+your model.
+Press <samp>Add New</samp> to create a new material, or choose an existing
+material (if any) from the drop-down list.
+Only a few of the Blender's many material buttons affect X-Plane:
+    <ul>
+      <li><samp>Col</samp> button and <samp>R</samp>, <samp>G</samp>, <samp>B</samp> sliders on the <samp>Materials</samp> panel control the
+diffuse colour of the faces. X-Plane combines the colours that are
+specified by the texture bitmap (if any) with this setting.
+The default X-Plane setting is
+<code>1</code>, <code>1</code>, <code>1</code> (white).
+However the default setting of a new material in Blender is
+<code>0.8</code>, <code>0.8</code>, <code>0.8</code>.
+You should almost always set this to
+<code>1</code>, <code>1</code>, <code>1</code>
+and control the face colours using only the texture bitmap.</li>
+      <li><samp>Spec</samp> slider on the <samp>Shaders</samp> panel
+controls the specularity (shininess) of the faces.
+The default X-Plane setting is 0 (matt).
+However the default setting of a new material in Blender is 0.5.</li>
+      <li><samp>Emit</samp> slider on the <samp>Shaders</samp> panel
+controls the emissive brightness of the faces. Emissive faces give off
+light so this is most obvious at night. It is usually cheaper and easy
+to use <code>_LIT</code> textures to control night-time brightness
+instead of using this setting. However using this setting allows you to
+create faces that also give off light during the daytime, <i>eg</i> on
+overcast days, which <code>_LIT</code> textures do not.
+The default X-Plane and Blender setting is 0 (not emissive).</li>
+      <li><samp>Mir</samp> button and <samp>R</samp>, <samp>G</samp>, <samp>B</samp> sliders on the <samp>Materials</samp> panel control the
+emissive colour of the faces.</li>
+    </ul>
+  </li>      
 </ul>
-<p>The export script will change the order of faces in the output
-file to optimise for rendering speed and to ensure that faces with
-alpha are rendered after opaque faces. It will preserve the relative
-order of faces that have the same <samp>Texture Face</samp>
-settings as each other.</p>
 <p>Use <a href="http://marginal.org.uk/x-planescenery/normalise.txt">this</a>
 script if you need to reset all faces in the scene to standard settings
 <small>(<i>ie</i> no polygon offsetting, not hard,
@@ -278,9 +320,11 @@ single sided, not transparent)</small>.</p>
 4-edged face instead. The pair of vertices at each end of the "line"
 must be within 0.1 units of each other. The face must be the only face
 in its mesh and must not have a texture assigned to it.</p>
-<p>To colour the "line", assign a Material to the face and set
-the Material's <samp>Basic Colour</samp> RGB values. Faces
-not linked to a Material will be exported coloured grey.</p>
+<p>Assign a material to the face and use the
+<samp>Col</samp> button and <samp>R</samp>, <samp>G</samp>,
+<samp>B</samp> sliders on the <samp>Materials</samp> panel to control
+the colour of the line.
+Faces not linked to a material will be exported coloured grey.</p>
 <h4><a name="animation"><font size="+1">v8: </font>Animation</h4>
 <p>You can make lamps, meshes and lines animate in X-Plane
 according to the value of any of the simulator datarefs
@@ -296,7 +340,7 @@ to represent the throttle setting for the first engine. Add additional
 bones to the armature and create parent/child relationships between
 each bone (in <samp>Edit Mode</samp>) if you need to use
 multiple datarefs to describe the animation of a single lamp or mesh.</p>
-<p>Parent the lamp or mesh that you want to animate to the bone
+<p>Parent the lamps and/or meshes that you want to animate to the bone
 (choose the "youngest" child bone in the chain if you're using multiple
 datarefs):</p>
 <ul>
@@ -309,44 +353,174 @@ and select <samp>Bone</samp> from the popup menu</li>
 </ul>
 <p>Use <samp>Pose Mode</samp> to describe the
 animation; insert "LocRot" keys in Blender's frames 1 and 2 to represent
-the desired position of the mesh at the minimum and maximum dataref values
-respectively. <small>(X-Plane's animation syntax is quite
+the desired position of the meshes at the minimum and maximum dataref
+values - X-Plane will interpolate smoothly between these two positions.
+<small>(X-Plane's animation syntax is quite
 simple; so don't use IPOcurves or any other advanced Blender animation
 techniques since these will be ignored by the exporter - only the
 positions in frames 1 and 2 are exported to X-Plane).</small></p>
-<p>By default, the minimum and maximum dataref values are 0 and 1
-respectively. You can change the values by adding properties in the
-<samp>Logic</samp> panel (<samp style="font-weight: bold;">F4</samp>);
-name the property after the dataref and append <code>_v1</code>
-to the name for the minimum value or <code>_v2</code> for
-the maximum value.</p>
-<p><i>eg</i> the yoke pitch dataref <code>yolk_pitch_ratio</code>
+<p>By default, X-Plane will display the meshes in the frame 1 position
+when the dataref has a value of 0, and in the frame 2 position
+when the dataref has a value of 1.
+You can change these values by adding <a href="#properties">properties</a>;
+name the property after the dataref and append
+<code>_v1</code> to the name for the value corresponding to frame 1, or
+<code>_v2</code> for the value corresponding to frame 2.
+<i>eg</i> the yoke pitch dataref <code>yolk_pitch_ratio</code>
 has values between -1 (forward) and +1 (back) in X-Plane; to make
-X-Plane use the correct minimum dataref value for the animation add
-a property called <code>yolk_pitch_ratio_v1</code> and
+X-Plane display the position in frame 1 when the yoke is pushed fully
+forward add a property named <code>yolk_pitch_ratio_v1</code>, and
 give it the value <code>-1</code>.</p>
 <p>You can also use custom datarefs for animation (<i>ie</i> datarefs
-supplied by a plugin that calls
-XPLMRegisterDataAccessor); name the bone with the leaf name of the
-dataref and add a string property in the <samp>Logic</samp>
-panel named after the leaf name of the dataref. Set this property's
-value to the path of the dataref. <i>eg</i> the plugin registers the
-custom dataref <code>my_org/widget/volume</code>; to use this
-dataref name the bone <code>volume</code> and add a property called
-<code>volume</code> in the <samp>Logic</samp> panel with the string
-value <code>my_org/widget/</code>.</p>
-<h4><font size="+1">v8: </font>Layer control</h4>
-<p>You can specify in which group your X-Plane object should be drawn:</p>
+supplied by a plugin that calls XPLMRegisterDataAccessor); name the bone
+with the leaf name of the dataref and add a <a href="#properties">property</a>
+with the same name. Set this property's value to the path of the dataref.
+<i>eg</i> the plugin registers the custom dataref
+<code>my_org/widget/volume</code>; to use this dataref name the bone
+<code>volume</code> and add a property named
+<code>volume</code> with the string value <code>my_org/widget/</code>.</p>
+<p>You can make all of the lamps and meshes in an animation disappear
+when a dataref is within a certain range by adding
+<a href="#properties">properties</a> named
+<code><i>dataref</i>_hide_v1</code> and <code><i>dataref</i>_hide_v2</code>.
+(It's OK to use datarefs that are not otherwise used in the animation).
+You can make hidden lamps and meshes re-appear when a dataref is within
+a certain range by adding properties named
+<code><i>dataref</i>_show_v1</code> and <code><i>dataref</i>_show_v2</code>. 
+(These can be the same or different than the dataref(s)
+that you used to hide the animation).</p>
+<p>You can add multiple "hide" and "show" properties;
+the animation will be hidden only if one or more of the "hide" datarefs
+are in range and none of the "show" datarefs are in range. You can use
+the same dataref in multiple "show" and "hide" properties; name the
+subsequent pairs of properties <code><i>dataref</i>_hide_v3</code> and
+<code><i>dataref</i>_hide_v4</code> etc.</p>
+<div style="margin-left: 40px;">
+<table style="text-align: left;" border="0"; cellspacing="4">
+  <caption>Summary of animation <a href="#properties">properties</a></caption>
+  <thead>
+    <tr>
+      <th style="text-decoration: underline;">Property</th>
+      <th></th>
+      <th style="text-decoration: underline;">Type</th>
+      <th></th>
+      <th style="text-decoration: underline;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="vertical-align: bottom;"><code><i>dataref</i></code></td>
+      <td></td>
+      <td>String</td>
+      <td></td>
+      <td>Path name of custom dataref.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: bottom;"><code><i>dataref</i>_v1</code></td>
+      <td></td>
+      <td>Int or Float</td>
+      <td></td>
+      <td>Dataref value that corresponds to the pose in frame 1.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: bottom;"><code><i>dataref</i>_v2</code></td>
+      <td></td>
+      <td>Int or Float</td>
+      <td></td>
+      <td>Dataref value that corresponds to the pose in frame 2.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: bottom;"><code><i>dataref</i>_hide_v1</code></td>
+      <td></td>
+      <td>Int or Float</td>
+      <td></td>
+      <td>Hide animated objects - lower limit.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: bottom;"><code><i>dataref</i>_hide_v2</code></td>
+      <td></td>
+      <td>Int or Float</td>
+      <td></td>
+      <td>Hide animated objects - upper limit.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: bottom;"><code><i>dataref</i>_show_v1</code></td>
+      <td></td>
+      <td>Int or Float</td>
+      <td></td>
+      <td>Show hidden animated objects - lower limit.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: bottom;"><code><i>dataref</i>_show_v2</code></td>
+      <td></td>
+      <td>Int or Float</td>
+      <td></td>
+      <td>Show hidden animated objects - upper limit.</td>
+    </tr>
+  </tbody>
+</table>
+</div>      
+<h4><a name="order"><font size="+1">v8: </font>Drawing order</a></h4>
+<p>The order in which X-Plane draws the animations, lights, lines and
+triangles in your scenery or cockpit object usually has no effect on
+the appearance.
+So the exporter optimises the order of animations, lights, lines and
+triangles in your object to minimise the number of OpenGL state changes
+and therefore maximise X-Plane's framerate.</p>
+<p>However drawing order does become important if you use partially
+transparent textures on some of your faces - partially transparent faces
+must be drawn last, otherwise opaque faces will not be visible through
+them. You should therefore tell Blender which faces are transparent using
+the <samp>Alpha</samp> button in the <samp>Texture Face</samp> Editing panel
+(<samp style="font-weight: bold;">F9</samp>) in <samp>UV Face Select</samp>
+mode. The exporter will ensure that X-Plane draws these faces last.
+But sometimes you need even more control over the drawing order -
+<i>eg</i> modelling a cockpit with a transparent HUD and
+(obviously) a transparent canopy; the HUD must be drawn after the canopy.</p>
+<p>You can specify the relative order in which lamps, meshes etc should be
+drawn by assigning them to "Groups" on the <samp>Object and links</samp>
+panel (<samp style="font-weight: bold;">F7</samp>)
+(available in Blender 2.42 and later):</p>
+<ul>
+  <li>Objects that don't belong to a group are drawn first.</li>
+  <li>The groups are sorted by alphabetical order, and then</li>
+  <ul>
+    <li>objects that belong to the first group are drawn next.</li>
+    <div>...</div>
+    <li>objects that belong to the last group are drawn last.</li>
+  </ul>
+</ul>
+<p><i>eg</i> in the case of the cockpit with transparent canopy and HUD,
+we could put the canopy and HUD into separate groups named <code>GroupA</code>
+and <code>GroupB</code> resepctively. Since <code>A</code> is before
+<code>B</code> in the alphabet, the canopy would be drawn before the HUD
+(and both would be drawn after the rest of the cockpit).</p>
+<p>To add objects to a new group:</p>
+<ul>
+  <li>Select the meshes that you want to be drawn late.</li>
+  <li>Press the <samp>Add to Group</samp> button on the
+<samp>Object and links</samp> panel
+(<samp style="font-weight: bold;">F7</samp>) (or press
+<samp style="font-weight: bold;">Ctrl-G</samp>).</li>
+  <li>Choose <samp>ADD NEW</samp>.</li>
+  <li>Give the new group a name.</li>
+</ul>
+<p>Objects that belong to a group are highlighted in green instead of
+pink so that you can easily distinguish them.</p>
+<h4><a name="group"><font size="+1">v8: </font>Drawing group</a></h4>
+<p>You can specify when X-Plane should draw your scenery object relative to
+other scenery elements:</p>
 <ul>
   <li>Add a Blender object of type "Empty" to your scene.</li>
-  <li>In the <samp>Logic</samp> panel (<samp style="font-weight: bold;">F4</samp>) add a property called<code> group&nbsp;<i>name_of_group</i> </code>to the Empty object.</li>
+  <li>Add a <a href="#properties">property</a> to the Empty object
+named <code>group_terrain</code>, <code>group_beaches</code>, <code>group_shoulders</code>, <code>group_taxiways</code>, <code>group_runways</code>, <code>group_markings</code>, <code>group_airports</code>, <code>group_roads</code>, <code>group_objects</code>, <code>group_light_objects</code> or <code>group_cars</code>.</li>
   <li>Give the property the value
 <code>-1</code> to make X-Plane draw your object before this group,
 <code>0</code> to draw your object with this group, or
 <code>1</code> to draw your object after this group.</li>
 </ul>
 <p><i>eg</i> to make X-Plane draw your object at the same time that it
-draws runway markings add a property called<code> group&nbsp;markings </code>
+draws runway markings add a property named <code>group_markings</code>
 to an Empty object and give it the value <code>0</code>.</p>
 <h3>Creating X-Plane scenery</h3>
 <ul>
@@ -359,10 +533,6 @@ The X-Plane <code>.obj</code> file will be exported to the same place, <i>ie</i>
     <div style="margin-left: 40px;"><code>X-Plane&nbsp;8.50\Custom&nbsp;Scenery\EGLL\house.obj</code></div>
   </li>
 </ul>
-<p>Only Lamps and Meshes are exported to X-Plane.
-You can use other Blender object types, <i>eg</i> Curves and Surfaces,
-to construct your scenery as long as you convert them to meshes before
-exporting to X-Plane.</p>
 <h4><a name="Tweaking_planes"></a>Tweaking planes</h4>
 <p>Imported planes need to be positioned correctly on the ground for
 use as static scenery (don't do this if you're making a CSL or cockpit
@@ -492,7 +662,7 @@ cockpit when running at the default 1024x768 resolution. You may want
 to mention this in the Readme with your plane if your plane is
 intended to work in X-Plane versions prior to 8.20.</p>
 <h3>Optimising for X-Plane</h3>
-<h4><a name="strips"></a><font size="+1">v7: </font>Strips</h4>
+<h4><a name="strips"><font size="+1">v7: </font>Strips</a></h4>
 <p>As well as basic 3- and 4-edged faces ("<code>tri</code>"s
 and "<code>quad</code>"s), X-Plane v7 objects support two
 compound types - "<code>tri_fan</code>" and "<code>quad_strip</code>".
@@ -535,26 +705,32 @@ from a large distance it can be displayed with reduced detail without you
 noticing the difference. By displaying distant objects with reduced detail
 we can simulate a more complex scene than would be possible if all
 objects were drawn at maximum detail.</p>
-<p>Use Layers to draw scenery (but not Cockpits or Misc Objects) with
+<p>Use Layers to draw scenery and CSLs (but not Cockpits or Misc Objects) with
 multiple Levels Of Detail. Objects in layers 1-3 are visible in X-Plane
 at the following distances:</p>
 <div style="margin-left: 40px;">
-<table style="width: 100%; text-align: left;" border="0">
+<table style="text-align: left;" border="0">
+  <thead>
+    <tr>
+      <th style="text-decoration: underline;">Layer</td>
+      <th></th>
+      <th style="text-decoration: underline;">Distance</td>
+    </tr>
+  </thead>
   <tbody>
     <tr>
-      <td style="width: 10%; text-decoration: underline;">Layer</td>
-      <td style="text-decoration: underline;">Distance</td>
-    </tr>
-    <tr>
-      <td>1</td>
+      <td style="text-align: center;">1</td>
+      <td></td>
       <td>&lt; 1000m</td>
     </tr>
     <tr>
-      <td>2</td>
+      <td style="text-align: center;">2</td>
+      <td></td>
       <td>1000-4000m</td>
     </tr>
     <tr>
-      <td>3</td>
+      <td style="text-align: center;">3</td>
+      <td></td>
       <td>4000m-10000m</td>
     </tr>
   </tbody>
@@ -565,16 +741,43 @@ at the following distances:</p>
 <ul>
   <li>By default, Right mouse button does what you would expect
 Left mouse button to do. I strongly recommend that you change this;
-drag down the top menubar to reveal the User Preferences window, select
-the <samp>View &amp; Controls </samp>tab and choose <samp>Select
-with: Left Mouse</samp>. See <a href="http://marginal.org.uk/x-planescenery/hangar_tutorial/1-setup.html#prefs">
-this tutorial</a> for a fuller explanation.</li>
+drag down the top menubar to reveal the <samp>User Preferences</samp>
+window, select the <samp>View &amp; Controls </samp>tab and choose
+<samp>Select with: Left Mouse</samp>.
+See <a href="http://marginal.org.uk/x-planescenery/hangar_tutorial/1-setup.html#prefs">this tutorial</a> for a fuller explanation.</li>
   <li>Space does what you might expect Right mouse button to do.</li>
   <li>The user interface is "modal". Buttons and keys do
 different things depending on whether you are in "Object", "Edit",
 "UV Face Select" or "Pose" mode. (And I thought modal UIs went out with
 "vi"). Tab changes mode.</li>
 </ul>
+<h4>Auto-saving</h4>
+<p>Blender can automatically archive old copies of your
+<code>.blend</code> files when you save. This is useful if you later want
+to revert to an older version.
+In the <samp>User Preferences</samp> window, on the
+<samp>Auto Save</samp> tab, choose the number of <samp>Save Versions</samp>.
+The older versions of your file will be called <code>.blend1</code>,
+<code>.blend2</code> etc.</p>
+<p>Blender can also periodically save a copy of your work in case Blender
+or your computer crashes, or in case you quit Blender without saving.
+On the <samp>Auto Save</samp> tab press <samp>Auto Save Temp Files</samp>.
+Also, on the <samp>File Paths</samp> tab, ensure that <samp>Temp</samp>
+is set to a folder that exists on your machine. This is where the
+auto-saved files will be created.
+(The default value of <code>/tmp</code> is fine
+for Mac and Linux, but doesn't exist on most Windows machines).</p>
+<h4><a name="properties">Properties</a></h4>
+<p>"Properties" are used to specify <a href="#animation">animation</a>
+parameters, <a href="#lamps">"named" lights</a> and the
+<a href="#group">drawing group</a>. You can see an object's properties by
+selecting it and pressing <samp style="font-weight: bold;">F4</samp> to display
+the <samp>Logic</samp> panel. Press the <samp>Add Property</samp> to create
+a new property.</p>
+<p>Each
+property has three fields; Type, Name and Value. If you want to supply a
+non-numeric value, <i>eg</i> the name of a "named" light, you'll first need
+to change the Type from <samp>Float</samp> to <samp>String</samp>.</p>
 <h3>Limitations</h3>
 <h4>Import object</h4>
 <ul>
@@ -646,7 +849,7 @@ no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.27 &copy; 2004-2006
+      <td class="banner">Version 2.28 &copy; 2004-2006
       <a href="mailto:x-plane@marginal.org.uk">Jonathan
 Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>

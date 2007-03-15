@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.27"
+__version__ = "2.28"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -173,6 +173,12 @@ Limitations:<br>
 #      - doesn't parent objects to bones - see Blender bug #4726
 #      - requires 2.41 because of Blender bug #3712
 #
+# 2006-07-30 v2.28
+#  - Workaround for messed up mesh locations in non-visible layers.
+#  - Handle long light names using properties.
+#  - Support for ANIM_show/hide.
+#  - Support for ANIM_hard <surface>.
+#
 
 import sys
 import Blender
@@ -213,47 +219,48 @@ class Token:
     SHADE_SMOOTH= 14
     AMBIENT_RGB	= 15
     DIFUSE_RGB	= 16
-    SPECULAR_RGB= 17
-    EMISSION_RGB= 18
-    SHINY_RAT	= 19
-    NO_DEPTH	= 20
-    DEPTH	= 21
-    LOD		= 22
-    RESET	= 23
-    NO_CULL	= 24
-    NOCULL	= 25
-    CULL	= 26
-    POLY_OS	= 27
-    QUAD_COCKPIT= 28
-    TEXTURE	= 29
-    TEXTURE_LIT	= 30
-    POINT_COUNTS= 31
-    SLUNG_LOAD_WEIGHT = 32
-    VT		= 33
-    VLINE	= 34
-    VLIGHT	= 35
-    IDX		= 36
-    IDX10	= 37
-    TRIS	= 38
-    LINES	= 39
-    LIGHTS	= 40
-    HARD	= 41
-    NO_HARD	= 42
-    COCKPIT	= 43
-    NO_COCKPIT	= 44
-    BLEND	= 45
-    NO_BLEND	= 46
-    ANIM_BEGIN	= 47
-    ANIM_END	= 48
-    ANIM_ROTATE	= 49
-    ANIM_TRANS	= 50
-    ALPHA	= 51
-    NO_ALPHA	= 52
-    LIGHT_NAMED = 53
-    LIGHT_CUSTOM= 54
-    LAYER_GROUP = 55
-    ANIM_SHOW	= 56
-    ANIM_HIDE	= 57
+    DIFFUSE_RGB	= 17
+    SPECULAR_RGB= 18
+    EMISSION_RGB= 19
+    SHINY_RAT	= 20
+    NO_DEPTH	= 21
+    DEPTH	= 22
+    LOD		= 23
+    RESET	= 24
+    NO_CULL	= 25
+    NOCULL	= 26
+    CULL	= 27
+    POLY_OS	= 28
+    QUAD_COCKPIT= 29
+    TEXTURE	= 30
+    TEXTURE_LIT	= 31
+    POINT_COUNTS= 32
+    SLUNG_LOAD_WEIGHT = 33
+    VT		= 34
+    VLINE	= 35
+    VLIGHT	= 36
+    IDX		= 37
+    IDX10	= 38
+    TRIS	= 39
+    LINES	= 40
+    LIGHTS	= 41
+    HARD	= 42
+    NO_HARD	= 43
+    COCKPIT	= 44
+    NO_COCKPIT	= 45
+    BLEND	= 46
+    NO_BLEND	= 47
+    ANIM_BEGIN	= 48
+    ANIM_END	= 49
+    ANIM_ROTATE	= 50
+    ANIM_TRANS	= 51
+    ALPHA	= 52
+    NO_ALPHA	= 53
+    LIGHT_NAMED = 54
+    LIGHT_CUSTOM= 55
+    LAYER_GROUP = 56
+    ANIM_SHOW	= 57
+    ANIM_HIDE	= 58
     END		= 99
     NAMES = [
         "",
@@ -273,6 +280,7 @@ class Token:
         "ATTR_shade_smooth",
         "ATTR_ambient_rgb",
         "ATTR_difuse_rgb",
+        "ATTR_diffuse_rgb",
         "ATTR_specular_rgb",
         "ATTR_emission_rgb",
         "ATTR_shiny_rat",
@@ -324,11 +332,12 @@ class Mesh:
     # Flags
     LAYERMASK=7
 
-    def __init__(self, name, faces=[], layers=1, anim=None):
+    def __init__(self, name, faces=[], surface=None, layers=1, anim=None):
         self.name=name
-        self.layers=layers	# LOD
-        self.anim=anim	# (armob,bonename)
         self.faces=[]
+        self.surface=surface	# Hard surface type or None
+        self.layers=layers	# LOD
+        self.anim=anim		# (armob,bonename)
         self.bmax=Vertex(-sys.maxint,-sys.maxint,-sys.maxint)
         self.bmin=Vertex( sys.maxint, sys.maxint, sys.maxint)
         self.addFaces(name, faces)
@@ -473,6 +482,8 @@ class Mesh:
         else:
             cur=Window.GetCursorPos()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
+        if self.surface:
+            ob.addProperty('surface', self.surface)
         if self.layers&Mesh.LAYERMASK:
             ob.Layer=(self.layers&Mesh.LAYERMASK)
         mesh.update(1)
@@ -550,6 +561,7 @@ class OBJimport:
         self.action=None	# armature Action
         self.pendingbone=None	# current bone
         self.off=[]		# offset from current bone
+        self.bones=[]		# Latest children
 
     #------------------------------------------------------------------------
     def doimport(self):
@@ -562,17 +574,23 @@ class OBJimport:
         self.file.seek(0,2)
         self.filelen=self.file.tell()
         self.file.seek(0)
-        if not self.subroutine: Window.DrawProgressBar(0, "Opening ...")
+        if not self.subroutine:
+            Window.DrawProgressBar(0, "Opening ...")
+            scene=Blender.Scene.getCurrent()
+            layers=scene.Layers
+            scene.Layers=7	# workaround for 2.42 - Blender bug #4696 ?
         self.readHeader()
         ob=self.readObjects()
-        if not self.subroutine: Window.DrawProgressBar(1, "Finished")
+        if not self.subroutine:
+            Window.DrawProgressBar(1, "Finished")
+            scene.Layers=layers
         if self.verbose:
             print "Finished - imported %s primitives\n" % self.nprim
         #print "%s CPU time\n" % (time.clock()-clock)
         return ob
 
     #------------------------------------------------------------------------
-    def getInput(self):
+    def getInput(self, optional=False):
         # Skip whitespace
         while 1:
             c=self.file.read(1)
@@ -582,10 +600,13 @@ class OBJimport:
                 if c=='\n':
                     if self.fileformat<8:
                         self.lineno += 1
+                    elif optional:
+                        return None
                     else:
                         raise ParseError(ParseError.MISC, 'Unexpected newline')
             else:
                 break
+        # Read input
         input=c
         while 1:
             pos = self.file.tell()
@@ -634,6 +655,14 @@ class OBJimport:
                     self.getCR()
                     continue
                 break
+            elif self.fileformat>=8 and c=='/':
+                if self.file.read(1)=='/':
+                    # illegal v7-style comment - propsman likes these
+                    self.getCR()
+                else:
+                    # no idea
+                    self.file.seek(pos)
+                    break
             else:
                 break
         input=c
@@ -873,7 +902,7 @@ class OBJimport:
             
     #------------------------------------------------------------------------
     def readObjects (self):
-        scene = Blender.Scene.getCurrent();
+        scene = Blender.Scene.getCurrent()
 
         if self.fileformat==8:
             while 1:
@@ -1038,8 +1067,8 @@ class OBJimport:
                             if '[' in name: name=name[:name.index('[')]
                             if len(dataref)>1 and not name in datarefs:
                                 self.armob.addProperty(name, '/'.join(dataref[:-1])+'/')
-                            if v1!=0 and name+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v1', v1)
-                            if v2!=1 and name+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v2', v2)
+                            if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
+                            if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
                             head=self.off[-1]
                             #tail=self.off[-1]+(p2-p1).normalize()*0.1
                             tail=self.off[-1]+Vertex(0,0.1,0)
@@ -1062,8 +1091,8 @@ class OBJimport:
                     if '[' in name: name=name[:name.index('[')]
                     if len(dataref)>1 and not name in datarefs:
                         self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
-                    if v1!=0 and name+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v1', v1)
-                    if v2!=1 and name+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v2', v2)
+                    if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
+                    if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
                     head=self.off[-1]
                     #tail=self.off[-1]+Vertex(p.y,p.z,p.x)*0.1
                     tail=self.off[-1]+Vertex(0,0.1,0)
@@ -1071,12 +1100,35 @@ class OBJimport:
                     m2=RotationMatrix(r2,4,'r',p.toVector(3))
                     if self.pendingbone:
                         (name, head, tail, o1, o2)=self.pendingbone
-                        m1=m1*o1
-                        m2=m2*o2
+                        if name!=dataref[-1]: #or m2[3]==Vector(0,0,0,1):
+                            # Different dataref - new bone!
+                            self.addpendingbone()
+                        else:
+                            m1=m1*o1
+                            m2=m2*o2
                     self.pendingbone=(dataref[-1], head, tail, m1, m2)
 
+                elif t in [Token.ANIM_SHOW, Token.ANIM_HIDE]:
+                    v1=self.getFloat()
+                    v2=self.getFloat()
+                    dataref=self.getInput().split('/')
+                    name=dataref[-1]
+                    if '[' in name: name=name[:name.index('[')]
+                    if len(dataref)>1 and not name in datarefs:
+                        self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
+                    if t==Token.ANIM_SHOW:
+                        self.armob.addProperty(dataref[-1]+'_show_v1', v1)
+                        self.armob.addProperty(dataref[-1]+'_show_v2', v2)
+                    else:
+                        self.armob.addProperty(dataref[-1]+'_hide_v1', v1)
+                        self.armob.addProperty(dataref[-1]+'_hide_v2', v2)
+                           
                 elif t==Token.HARD:
-                    self.hard = True
+                    surface=self.getInput(True)
+                    if surface:
+                        self.hard = surface
+                    else:
+                        self.hard = True
                 elif t==Token.NO_HARD:
                     self.hard = False
 
@@ -1335,7 +1387,8 @@ class OBJimport:
                         n=0	# not really
                     elif t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
                         n=4
-                    elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
+                    elif t in [Token.AMBIENT_RGB,
+                               Token.DIFUSE_RGB, Token.DIFFUSE_RGB,
                                Token.SPECULAR_RGB, Token.EMISSION_RGB]:
                         n=3
                     elif t in [Token.SHINY_RAT, Token.SLUNG_LOAD_WEIGHT]:
@@ -1435,6 +1488,7 @@ class OBJimport:
 
     #------------------------------------------------------------------------
     def addLamp(self, scene, v, c):
+        propname=None
         if isinstance(c, str):
             name=c	# named light
             # try to be helpful - some names that we know about
@@ -1448,6 +1502,10 @@ class OBJimport:
                 c=[1,1,1]
             else:	# dunno
                 c=[0.75,0.75,0.75]
+            if len(name)>17 or 'lamp' in name.lower().split():
+                # Blender name limit is 17
+                propname=name
+                name='Named light'
         elif c[0]==1.1 and c[1]==1.1 and c[2]==1.1:
             name="airplane_nav_left"
             c=[1,0,0]
@@ -1482,6 +1540,7 @@ class OBJimport:
         lamp.dist=4.0	# arbitrary - stop lamp colouring whole object
         #amp.mode |= Lamp.Modes.Sphere
         ob = Object.New("Lamp", name)
+        if propname: ob.addProperty('name', propname)
         ob.link(lamp)
         scene.link(ob)
         if self.layer:
@@ -1594,6 +1653,11 @@ class OBJimport:
         if self.alpha:
             flags |= Face.ALPHA
 
+        if isinstance(self.hard, str):
+            surface=self.hard
+        else:
+            surface=None
+
         faces=[]
         for f in range(1,nv-1):
             face=Face()
@@ -1610,10 +1674,12 @@ class OBJimport:
 
         if faces:
             if self.armob:
-                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                self.addToMesh(scene,name,faces,surface,
+                               OBJimport.LAYER[self.layer],
                                (self.armob,self.off[-1],self.bones[-1]))
             else:
-                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                self.addToMesh(scene,name,faces,surface,
+                               OBJimport.LAYER[self.layer],
                                None)
             self.nprim+=1
 
@@ -1653,6 +1719,11 @@ class OBJimport:
         if self.alpha:
             flags |= Face.ALPHA
 
+        if isinstance(self.hard, str):
+            surface=self.hard
+        else:
+            surface=None
+
         n=len(vorder)	# 3 or 4 vertices
         faces=[]
         for f in range(2,nv,n-2):
@@ -1685,16 +1756,18 @@ class OBJimport:
 
         if faces:
             if self.armob:
-                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                self.addToMesh(scene,name,faces,surface,
+                               OBJimport.LAYER[self.layer],
                                (self.armob,self.off[-1],self.bones[-1]))
             else:
-                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                self.addToMesh(scene,name,faces,surface,
+                               OBJimport.LAYER[self.layer],
                                None)
             self.nprim+=1
 
     #------------------------------------------------------------------------
     # add faces to existing or new mesh
-    def addToMesh (self,scene,name,faces,layers,anim):
+    def addToMesh (self,scene,name,faces,surface,layers,anim):
         # New faces are added to the existing mesh if:
         #  - they share the same comment, or
         #  - any of the new faces has a common edge with any existing face in
@@ -1705,14 +1778,17 @@ class OBJimport:
 
         if (self.curmesh and
             self.curmesh[-1].layers==layers and
+            (self.curmesh[-1].surface==surface or
+             not (self.curmesh[-1].surface and surface)) and
             self.curmesh[-1].anim==anim and
             (self.merge>=2 or anim or
              (self.comment and self.comment==self.lastcomment) or
              self.curmesh[-1].abut(faces))):
-            self.curmesh[-1].addFaces (name, faces)
+            self.curmesh[-1].addFaces(name, faces)
+            if surface: self.curmesh[-1].surface=surface
         else:
             # No common edge - new mesh required
-            self.curmesh.append(Mesh(name, faces, layers, anim))
+            self.curmesh.append(Mesh(name, faces, surface, layers, anim))
 
         self.lastcomment=self.comment
 
@@ -1740,10 +1816,14 @@ class OBJimport:
             l=m+1
             while l<len(self.curmesh):
                 if (self.curmesh[l].layers==self.curmesh[m].layers and
+                    (self.curmesh[l].surface==self.curmesh[m].surface or
+                     not (self.curmesh[l].surface and self.curmesh[m].surface)) and
                     self.curmesh[l].anim==self.curmesh[m].anim and
                     self.curmesh[l].intersect(self.curmesh[m]) and
                     self.curmesh[l].abut(facesm)):
                     self.curmesh[m].addFaces("Mesh", self.curmesh[l].faces)
+                    if self.curmesh[l].surface:
+                        self.curmesh[m].surface=self.curmesh[l].surface
                     self.curmesh.pop(l)
                 else:
                     l=l+1
@@ -1751,8 +1831,15 @@ class OBJimport:
 
     #------------------------------------------------------------------------
     def addpendingbone(self):
-        if not self.pendingbone: return None
-        (origname, head, tail, m1, m2)=self.pendingbone
+        if not self.pendingbone:
+            if self.bones==[None]:
+                # eek no bones! Maybe just receptacle for show/hide?
+                (origname, head, tail)=('bone', Vertex(0,0,0), Vertex(0,0.1,0))
+                m1=m2=Matrix().identity().resize4x4()
+            else:
+                return None
+        else:
+            (origname, head, tail, m1, m2)=self.pendingbone
         name=origname
         i=0
         while name in self.arm.bones.keys():

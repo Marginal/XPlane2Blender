@@ -653,7 +653,7 @@ class OBJexport7:
             if sname=='airplane_nav_left' or sname.startswith("Nav Left"):
                 c[0]=c[1]=c[2]=11
                 special=1
-            elif sname=='airplane_nav_right' or sname.startswith("Nav Right"):
+            elif sname in ['airplane_nav_right', 'airplane_nav_righ'] or sname.startswith("Nav Right"):
                 c[0]=c[1]=c[2]=22
                 special=1
             elif sname in ['airplane_landing', 'airplane_taxi'] or sname.startswith("Landing 1") or sname.startswith("Landing 2") or sname.startswith("Taxi"):

@@ -7,7 +7,7 @@ Tooltip: 'Merge X-Plane plane_paint and plane_paint2 bitmaps'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.27"
+__version__ = "2.28"
 __bpydoc__ = """\
 This script fixes up an imported plane's texture assignments to use
 a single bitmap file.

@@ -196,7 +196,7 @@ class Face:
         self.v=[]
         self.uv=[]
         self.flags=0
-        self.kosher=0	# Hack! True iff panel and within 1024x768
+        self.kosher=0		# Hack! True iff panel and within 1024x768
 
     # for debug only
     def __str__ (self):

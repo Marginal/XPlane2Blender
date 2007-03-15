@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.27"
+__version__ = "2.28"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -89,6 +89,13 @@ Limitations:<br>
 # 2006-07-19 v2.25
 #  - Support for named lights, layer group, custom LOD ranges.
 #
+# 2006-07-30 v2.28
+#  - Light names taken from "name" property, if present.
+#  - Support for ANIM_show/hide.
+#  - Support for ANIM_hard <surface>.
+#  - Support for materials.
+#  - Add sorting by group name.
+#
 
 
 #
@@ -98,13 +105,15 @@ Limitations:<br>
 #
 # So we have to sort on export to ensure alpha comes after non-alpha. We also
 # sort to minimise attribute state changes, in rough order of expense:
-#  - HARD - should be first. Renderer merges hard polys with similar non-hard.
+#  - Hard - should be first. Renderer merges hard polys with similar non-hard.
+#  - Materials
 #  - TWOSIDE
 #  - NPOLY - negative so polygon offsets come first
-#  - (animations)
+#  - Animations
 #  - PANEL - most expensive
 #  - ALPHA - must be last for correctness. Renderer will merge with previous.
-#  - (LOD)
+#  - Group
+#  - Layer
 #
 
 import sys
@@ -117,6 +126,8 @@ from XPlaneExport import *
 
 datarefs={}
 
+# Default X-Plane (not Blender) material (ambient & specular do jack)
+DEFMAT=((1,1,1), (0,0,0), 0)	# diffuse, emission, shiny
 
 class VT:
     def __init__(self, v, n, uv):
@@ -174,26 +185,36 @@ class NLIGHT:
 
 class Prim:
     # Flags in sort order
-    HARD=1
-    TWOSIDE=2
-    NPOLY=4
-    PANEL=8	# Should be 2nd last
-    ALPHA=16	# Must be last
-    
-    BUCKET1=HARD|TWOSIDE|NPOLY
-    # ANIM comes here
-    BUCKET2=PANEL|ALPHA
-    # LOD comes here
+    TWOSIDE=1
+    NPOLY=2
+    PANEL=4	# Should be 2nd last
+    ALPHA=8	# Must be last
 
-    def __init__ (self, layer, flags, anim):
+    SURFACES=[False, True, 'water', 'concrete', 'asphalt', 'grass', 'dirt', 'gravel', 'lakebed', 'snow', 'shoulder', 'blastpad']	# default is first
+
+    # surface comes here
+    # material comes here
+    BUCKET1=TWOSIDE|NPOLY
+    # anim comes here
+    BUCKET2=PANEL|ALPHA
+    # group comes here
+    # layer comes here
+
+    def __init__ (self, layer, group, flags, surface, mat, anim):
         self.i=[]	# indices for lines & tris, VLIGHT/NLIGHT for lights
         self.anim=anim
         self.flags=flags
+        self.surface=surface	# tris: one of Prim.SURFACES
+        self.mat=mat		# tris: (diffuse, emission, shiny)
+        self.group=group
         self.layer=layer
 
-    def match(self, layer, flags, anim):
+    def match(self, layer, group, flags, surface, mat, anim):
         return (self.layer&layer and
+                self.group==group and
                 self.flags==flags and
+                self.surface==surface and
+                self.mat==mat and
                 self.anim.equals(anim))
 
 
@@ -217,17 +238,19 @@ class OBJexport8:
         self.layermask=1
         self.havepanel=False
         self.texture=None
-        self.group=None
+        self.drawgroup=None
         self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
 
         # attributes controlling export
         self.hard=False
+        self.mat=DEFMAT
         self.twoside=False
         self.npoly=True
         self.panel=False
         self.alpha=False	# implicit - doesn't appear in output file
         self.layer=0
+        self.group=None
         self.lod=None		# list of lod limits
         self.anim=Anim(None)
 
@@ -235,6 +258,12 @@ class OBJexport8:
         self.vt=[]
         self.vline=[]
         self.anims=[Anim(None)]
+        self.mats=[DEFMAT]	# list of (diffuse, emission, shiny)
+        if Blender.Get('version')>=242:	# new in 2.42
+            self.groups=Blender.Group.Get()
+            self.groups.sort(lambda x,y: cmp(x.name.lower(), y.name.lower()))
+        else:
+            self.groups=[]
 
         # primitive lists
         self.tris=[]
@@ -268,7 +297,6 @@ class OBJexport8:
         self.writeHeader ()
         self.writeObjects (theObjects)
         checkLayers (theObjects, self.iscockpit)
-        self.file.close ()
         
         Blender.Set('curframe', frame)
         #scene.update(1)
@@ -319,8 +347,10 @@ class OBJexport8:
                 pass	# these dealt with separately
             elif objType == 'Empty':
                 for prop in object.getAllProperties():
-                    if prop.type in ['INT', 'FLOAT'] and prop.name.startswith('group '):
-                        self.group=(prop.name[6:].strip(), int(prop.data))
+                    if prop.type in ['INT', 'FLOAT'] and prop.name.strip().startswith('group_'):
+                        self.drawgroup=(prop.name.strip()[6:], int(prop.data))
+                        if not self.drawgroup[0] in ['terrain', 'beaches', 'shoulders', 'taxiways', 'runways', 'markings', 'airports', 'roads', 'objects', 'light_objects', 'cars']:
+                            raise ExportError('Invalid drawing group "%s" in "%s"' % (self.drawgroup[0], object.name))
             else:
                 print "Warn:\tIgnoring %s \"%s\"" % (objType.lower(),
                                                      object.name)
@@ -331,47 +361,49 @@ class OBJexport8:
             if (object.getType()=='Lamp' and object.Layer&self.layermask):
                 self.sortLamp(object)
 
-        # Build ((1+Prim.ALPHA*2) *len(anims) *len(lseq)) indices
+        # Build indices
         indices=[]
         offsets=[]
         counts=[]
         progress=0.0
         for layer in lseq:
-            for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
-                Window.DrawProgressBar(0.4+progress/(10*len(lseq)),
-                                       "Exporting %d%% ..." % (40+progress*10/len(lseq)))
-                progress+=1
-                for anim in self.anims:
-
-                    # Lines
-                    index=[]
-                    offsets.append(len(indices))
-                    for line in self.lines:
-                        if line.match(layer, passhi, anim):
-                            index.append(line.i[0])
-                            index.append(line.i[1])
-                    counts.append(len(index))
-                    indices.extend(index)
-
-                    # Tris
-                    # Hack!: Can't have hard tris outside layer 1
-                    if layer==2:
-                        for tri in self.tris:
-                            tri.flags&=~Prim.HARD
-                    for passno in range(passhi,passhi+Prim.BUCKET1+1):
+            # Hack!: Can't have hard tris outside layer 1
+            if layer==2:
+                for tri in self.tris: tri.surface=False
+            for group in [None]+self.groups:
+                for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
+                    Window.DrawProgressBar(0.4+progress/(10*len(lseq)),
+                                           "Exporting %d%% ..." % (40+progress*10/len(lseq)))
+                    progress+=1
+                    for anim in self.anims:
+    
+                        # Lines
                         index=[]
                         offsets.append(len(indices))
-                        for tri in self.tris:
-                            if tri.match(layer, passno, anim):
-                                index.append(tri.i[0])
-                                index.append(tri.i[1])
-                                index.append(tri.i[2])
-                                if len(tri.i)==4:	# quad
-                                    index.append(tri.i[0])
-                                    index.append(tri.i[2])
-                                    index.append(tri.i[3])
+                        for line in self.lines:
+                            if line.match(layer, group, passhi, False, DEFMAT, anim):
+                                index.append(line.i[0])
+                                index.append(line.i[1])
                         counts.append(len(index))
                         indices.extend(index)
+    
+                        # Tris
+                        for passno in range(passhi,passhi+Prim.BUCKET1+1):
+                            for mat in self.mats:
+                                for surface in Prim.SURFACES:
+                                    index=[]
+                                    offsets.append(len(indices))
+                                    for tri in self.tris:
+                                        if tri.match(layer, group, passno, surface, mat, anim):
+                                            index.append(tri.i[0])
+                                            index.append(tri.i[1])
+                                            index.append(tri.i[2])
+                                            if len(tri.i)==4:	# quad
+                                                index.append(tri.i[0])
+                                                index.append(tri.i[2])
+                                                index.append(tri.i[3])
+                                    counts.append(len(index))
+                                    indices.extend(index)
 
         self.nprim=len(self.vt)+len(self.vline)+len(self.lights)+len(self.nlights)
         self.file.write("POINT_COUNTS\t%d %d %d %d\n\n" % (len(self.vt),
@@ -404,71 +436,79 @@ class OBJexport8:
         for j in range(n-(n%10), n):
             self.file.write("IDX\t%d\n" % indices[j])
 
-        if self.group:
+        if self.drawgroup:
             self.file.write("\nATTR_layer_group\t%s\t%d\n" % (
-                self.group[0], self.group[1]))
+                self.drawgroup[0], self.drawgroup[1]))
             
         # Geometry Commands
+        # Order of loops must be *exactly* the same as above
         n=0
         for layer in lseq:
-            for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
-                for anim in self.anims:
-                    # Lines
-                    if counts[n]:
-                        self.updateAttr(0, 0, 1, 0, 0, layer, anim)
-                        self.file.write("%sLINES\t%d %d\n" %
-                                        (anim.ins(), offsets[n], counts[n]))
-                    n=n+1
-                    
-                    # Lights
-                    i=0
-                    while i<len(self.lights):
-                        if self.lights[i].match(layer, passhi, anim):
-                            self.updateAttr(0, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, anim)
-                            for j in range(i+1, len(self.lights)):
-                                if not self.lights[j].match(layer,passhi,anim):
-                                    break
-                            else:
-                                j=len(self.lights)	# point past last match
-                            self.file.write("%sLIGHTS\t%d %d\n" %
-                                            (anim.ins(), i, j-i))
-                            i=j
-                        else:
-                            i=i+1
-
-                    # Named lights
-                    for i in range(len(self.nlights)):
-                        if self.nlights[i].match(layer,passhi,anim):
-                            self.updateAttr(0, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, anim)
-                            self.file.write("%sLIGHT_NAMED\t%s\n" %
-                                            (anim.ins(), self.nlights[i].i))
-                        
-                    # Tris
-                    for passno in range(passhi,passhi+Prim.BUCKET1+1):
+            for group in [None]+self.groups:
+                for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
+                    for anim in self.anims:
+                        # Lines
                         if counts[n]:
-                            self.updateAttr(passno&Prim.HARD,
-                                            passno&Prim.TWOSIDE,
-                                            passno&Prim.NPOLY,
-                                            passno&Prim.PANEL,
-                                            passno&Prim.ALPHA,
-                                            layer, anim)
-                            self.file.write("%sTRIS\t%d %d\n" %
-                                            (anim.ins(), offsets[n],counts[n]))
+                            self.updateAttr(0, DEFMAT, 0, 1, 0, 0, layer, group, anim)
+                            self.file.write("%sLINES\t%d %d\n" %
+                                            (anim.ins(),offsets[n],counts[n]))
                         n=n+1
+                        
+                        # Lights
+                        i=0
+                        while i<len(self.lights):
+                            if self.lights[i].match(layer, group, passhi, False, DEFMAT, anim):
+                                self.updateAttr(0, DEFMAT, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, group, anim)
+                                for j in range(i+1, len(self.lights)):
+                                    if not self.lights[j].match(layer, group, passhi, False, DEFMAT, anim):
+                                        break
+                                else:
+                                    j=len(self.lights)	# point past last match
+                                self.file.write("%sLIGHTS\t%d %d\n" %
+                                                (anim.ins(), i, j-i))
+                                i=j
+                            else:
+                                i=i+1
     
+                        # Named lights
+                        for i in range(len(self.nlights)):
+                            if self.nlights[i].match(layer, group, passhi, False, DEFMAT, anim):
+                                self.updateAttr(0, DEFMAT, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, group, anim)
+                                self.file.write("%sLIGHT_NAMED\t%s\n" %
+                                                (anim.ins(), self.nlights[i].i))
+                            
+                        # Tris
+                        for passno in range(passhi,passhi+Prim.BUCKET1+1):
+                            for mat in self.mats:
+                                for surface in Prim.SURFACES:
+                                    if counts[n]:
+                                        self.updateAttr(surface,
+                                                        mat,
+                                                        passno&Prim.TWOSIDE,
+                                                        passno&Prim.NPOLY,
+                                                        passno&Prim.PANEL,
+                                                        passno&Prim.ALPHA,
+                                                        layer, group, anim)
+                                        self.file.write("%sTRIS\t%d %d\n" %
+                                                        (anim.ins(), offsets[n],counts[n]))
+                                    n=n+1
+
         # Close animations in final layer
         while not self.anim.equals(Anim(None)):
             self.anim=self.anim.anim
             self.file.write("%sANIM_end\n" % self.anim.ins())
 
         self.file.write("\n# Built with Blender %4.2f. Exported with XPlane2Blender %s.\n" % (float(Blender.Get('version'))/100, __version__))
+        self.file.close()
 
-
+        if not n==len(offsets)==len(counts):
+            raise ExportError('Bug - indices out of sync')
+        
     #------------------------------------------------------------------------
     def sortLamp(self, object):
 
         (anim, mm)=self.makeAnim(object)
-        light=Prim(object.Layer, Prim.ALPHA, anim)
+        light=Prim(object.Layer, self.findgroup(object), Prim.ALPHA, False, DEFMAT, anim)
         
         lamp=object.getData()
         name=object.name
@@ -502,6 +542,8 @@ class OBJexport8:
             c[1]=lamp.col[1]
             c[2]=lamp.col[2]
         else:	# named light
+            for prop in object.getAllProperties():
+                if prop.name.lower()=='name': name=str(prop.data).strip()
             light.i=NLIGHT(Vertex(0,0,0, mm), name)
             self.nlights.append(light)
             return
@@ -516,7 +558,7 @@ class OBJexport8:
             print "Info:\tExporting Line \"%s\"" % object.name
 
         (anim, mm)=self.makeAnim(object)
-        line=Prim(object.Layer, 0, anim)
+        line=Prim(object.Layer, self.findgroup(object), 0, False, DEFMAT, anim)
 
         mesh=object.getData()
         face=mesh.faces[0]
@@ -579,6 +621,20 @@ class OBJexport8:
         if self.debug:
             print "Mesh \"%s\" %s faces" % (object.name, len(nmesh.faces))
 
+        group=self.findgroup(object)
+        if self.iscockpit:
+            surface=False
+        else:
+            for prop in object.getAllProperties():
+                if prop.name.strip()=='surface':
+                    if str(prop.data).strip() in Prim.SURFACES:
+                        surface=prop.data.strip()
+                        break
+                    else:
+                        raise ExportError('Invalid surface "%s" for face in mesh "%s"' % (prop.data, object.name))
+            else:
+                surface=True
+
         # Optimisation: Children of animations might be dupes. This test only
         # looks for exact duplicates, but this can reduce vertex count by ~10%.
         twosideerr=0
@@ -624,7 +680,17 @@ class OBJexport8:
                     if not n in [3,4]:
                         degenerr+=1
                     elif not (f.mode & NMesh.FaceModes.INVISIBLE):
-                        face=Prim(object.Layer, 0, anim)
+                        if f.mat<len(nmesh.materials):
+                            material=nmesh.materials[f.mat]
+                            # diffuse, emission, shiny
+                            mat=((material.R, material.G, material.B),
+                                 (material.mirR*material.emit,
+                                  material.mirG*material.emit,
+                                  material.mirB*material.emit), material.spec)
+                            if not mat in self.mats: self.mats.append(mat)
+                        else:
+                            mat=DEFMAT
+                        face=Prim(object.Layer, group, 0, False, mat, anim)
            
                         if f.mode & NMesh.FaceModes.TEX:
                             if len(f.uv)!=n:
@@ -642,7 +708,7 @@ class OBJexport8:
                         if f.image and 'panel.' in f.image.name.lower():
                             face.flags|=Prim.PANEL
                         elif not (f.mode&NMesh.FaceModes.DYNAMIC or self.iscockpit):
-                            face.flags|=Prim.HARD
+                            face.surface=surface
                             harderr=harderr+1
 
                         for i in range(n):
@@ -673,11 +739,21 @@ class OBJexport8:
             if not n in [3,4]:
                 degenerr+=1
             elif not (f.mode & NMesh.FaceModes.INVISIBLE):
-                face=Prim(object.Layer, 0, anim)
+                if f.mat<len(nmesh.materials):
+                    material=nmesh.materials[f.mat]
+                    # diffuse, emission, shiny
+                    mat=((material.R, material.G, material.B),
+                         (material.mirR*material.emit,
+                          material.mirG*material.emit,
+                          material.mirB*material.emit), material.spec)
+                    if not mat in self.mats: self.mats.append(mat)
+                else:
+                    mat=DEFMAT
+                face=Prim(object.Layer, group, 0, False, mat, anim)
    
                 if f.mode & NMesh.FaceModes.TEX:
                     if len(f.uv)!=n:
-                        raise ExportError("Missing UV in mesh \"%s\"" % object.name)
+                        raise ExportError('Missing UV for face in mesh "%s"' % object.name)
                     if f.transp == NMesh.FaceTranspModes.ALPHA:
                         face.flags|=Prim.ALPHA
 
@@ -691,7 +767,7 @@ class OBJexport8:
                 if f.image and 'panel.' in f.image.name.lower():
                     face.flags|=Prim.PANEL
                 elif not (f.mode&NMesh.FaceModes.DYNAMIC or self.iscockpit):
-                    face.flags|=Prim.HARD
+                    face.surface=surface
                     harderr=harderr+1
 
                 for i in seq[n]:
@@ -730,16 +806,24 @@ class OBJexport8:
             self.animcands.append(starttri)
 
         if degenerr and self.verbose:
-            print "Info:\tIgnoring %s degenerate face(s) in mesh \"%s\"" % (
+            print 'Info:\tIgnoring %s degenerate face(s) in mesh "%s"' % (
                 degenerr, object.name)
         if harderr:
-            print "Info:\tFound %s hard face(s) in mesh \"%s\"" % (
+            print 'Info:\tFound %s hard face(s) in mesh "%s"' % (
                 harderr, object.name)
         if twosideerr:
-            print "Info:\tFound %s two-sided face(s) in mesh \"%s\"" % (
+            print 'Info:\tFound %s two-sided face(s) in mesh "%s"' % (
                 twosideerr, object.name)
 
 
+    #------------------------------------------------------------------------
+    # Return name of group that this object belongs to
+    def findgroup(self, ob):
+        for group in self.groups:
+            if ob in group.objects:
+                return group
+        return None
+    
     #------------------------------------------------------------------------
     # Return (Anim object, Transformation for object relative to world/parent)
     def makeAnim(self, child):
@@ -770,7 +854,7 @@ class OBJexport8:
 
         #mm=Matrix(child.getMatrix('localspace')) doesn't work in 2.40alpha
         mm=child.getMatrix('worldspace')
-        
+
         for a in al:
             # Hack!
             # We need the position of the child in bone space - ie
@@ -786,8 +870,9 @@ class OBJexport8:
                 print "\t%s" % mm.translationPart()
 
             # anim is in X-Plane space. But we need Blender space. Yuck.
-            mm=Matrix(mm[0],mm[1],mm[2],
-                      mm[3]-Vector([a.t[0].x, -a.t[0].z, a.t[0].y, 0]))
+            if a.t:
+                mm=Matrix(mm[0],mm[1],mm[2],
+                          mm[3]-Vector([a.t[0].x, -a.t[0].z, a.t[0].y, 0]))
 
             if a.r and a.a[0]:
                 tr=RotationMatrix(a.a[0], 4, 'r',
@@ -817,7 +902,7 @@ class OBJexport8:
 
 
     #------------------------------------------------------------------------
-    def updateAttr(self, hard, twoside, npoly, panel, alpha, layer,anim):
+    def updateAttr(self, hard, mat, twoside, npoly, panel, alpha, layer, group, anim):
 
         if layer!=self.layer:
             # Reset all attributes
@@ -825,6 +910,7 @@ class OBJexport8:
                 self.anim=self.anim.anim
                 self.file.write("%sANIM_end\n" % self.anim.ins())
             self.hard=False
+            self.mat=DEFMAT
             self.twoside=False
             self.npoly=True
             self.panel=False
@@ -853,36 +939,9 @@ class OBJexport8:
                     olda.pop()
                     self.anim=self.anim.anim
                     self.file.write("%sANIM_end\n" % self.anim.ins())
-            for i in newa[len(olda):]:
-                self.file.write("%sANIM_begin\n" % self.anim.ins())
-                self.anim=i
-                if not (self.anim.t[0].equals(Vertex(0,0,0)) and
-                        self.anim.t[1].equals(Vertex(0,0,0))):
-                    if self.anim.t[0].equals(self.anim.t[1]):
-                        # save a potential accessor callback
-                        self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
-                            self.anim.ins(), self.anim.t[0], self.anim.t[1],
-                            0, 0, 'no_ref'))
-                    else:
-                        self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
-                            self.anim.ins(), self.anim.t[0], self.anim.t[1],
-                            self.anim.v[0], self.anim.v[1], self.anim.dataref))
-                if len(self.anim.r)==1:
-                    self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n" % (
-                        self.anim.ins(), self.anim.r[0],
-                        self.anim.a[0], self.anim.a[1],
-                        self.anim.v[0], self.anim.v[1], self.anim.dataref))
-                elif len(self.anim.r)==2:
-                    self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n" % (
-                        self.anim.ins(), self.anim.r[0],
-                        self.anim.a[0], 0,
-                        self.anim.v[0], self.anim.v[1], self.anim.dataref))
-                    self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n" % (
-                        self.anim.ins(), self.anim.r[1],
-                        0, self.anim.a[1],
-                        self.anim.v[0], self.anim.v[1], self.anim.dataref))
-                        
-
+        else:
+            newa=olda=[]
+    
         # For readability, write turn-offs before turn-ons
 
         if self.hard and not hard:
@@ -902,9 +961,29 @@ class OBJexport8:
             self.file.write("%s####_no_alpha\n" % self.anim.ins())
 
         # Turn Ons
-        if hard and not self.hard:
-            self.file.write("%sATTR_hard\n" % self.anim.ins())
+        if self.group!=group:
+            self.file.write("%s####_group: %s\n" %(self.anim.ins(),group.name))
+            
+        if hard and self.hard!=hard:
+            if hard==True:
+                self.file.write("%sATTR_hard\n" % self.anim.ins())
+            else:
+                self.file.write("%sATTR_hard\t%s\n" % (self.anim.ins(), hard))
 
+        if self.mat!=mat and mat==DEFMAT:
+            self.file.write("%sATTR_reset\n" % self.anim.ins())
+        else:
+            # diffuse, emission, shiny
+            if self.mat[0]!=mat[0]:
+                self.file.write("%sATTR_diffuse_rgb\t%6.3f %6.3f %6.3f\n" % (
+                    self.anim.ins(), mat[0][0], mat[0][1], mat[0][2]))
+            if self.mat[1]!=mat[1]:
+                self.file.write("%sATTR_emission_rgb\t%6.3f %6.3f %6.3f\n" % (
+                    self.anim.ins(), mat[1][0], mat[1][1], mat[1][2]))
+            if self.mat[2]!=mat[2]:
+                self.file.write("%sATTR_shiny_rat\t%6.3f\n" % (
+                    self.anim.ins(), mat[2]))
+            
         if twoside and not self.twoside:
             self.file.write("%sATTR_no_cull\n" % self.anim.ins())
 
@@ -918,12 +997,47 @@ class OBJexport8:
         if alpha and not self.alpha:
             self.file.write("%s####_alpha\n" % self.anim.ins())
 
+        for i in newa[len(olda):]:
+            self.file.write("%sANIM_begin\n" % self.anim.ins())
+            self.anim=i
+            for (d, v1, v2) in self.anim.hide:
+                self.file.write("%sANIM_hide\t%s %s\t%s\n" % (
+                    self.anim.ins(), v1, v2, d))
+            for (d, v1, v2) in self.anim.show:
+                self.file.write("%sANIM_show\t%s %s\t%s\n" % (
+                    self.anim.ins(), v1, v2, d))
+            if self.anim.t and not (self.anim.t[0].equals(Vertex(0,0,0)) and self.anim.t[1].equals(Vertex(0,0,0))):
+                if self.anim.t[0].equals(self.anim.t[1]):
+                    # save a potential accessor callback
+                    self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
+                        self.anim.ins(), self.anim.t[0], self.anim.t[1],
+                        0, 0, 'no_ref'))
+                else:
+                    self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
+                        self.anim.ins(), self.anim.t[0], self.anim.t[1],
+                        self.anim.v[0], self.anim.v[1], self.anim.dataref))
+            if len(self.anim.r)==1:
+                self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n"%(
+                    self.anim.ins(), self.anim.r[0],
+                    self.anim.a[0], self.anim.a[1],
+                    self.anim.v[0], self.anim.v[1], self.anim.dataref))
+            elif len(self.anim.r)==2:
+                self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n"%(
+                    self.anim.ins(), self.anim.r[0],
+                    self.anim.a[0], 0,
+                    self.anim.v[0], self.anim.v[1], self.anim.dataref))
+                self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n"%(
+                    self.anim.ins(), self.anim.r[1],
+                    0, self.anim.a[1],
+                    self.anim.v[0], self.anim.v[1], self.anim.dataref))
+
         self.hard=hard
+        self.mat=mat
         self.twoside=twoside
         self.npoly=npoly
         self.panel=panel
         self.alpha=alpha
-
+        self.group=group
 
 #------------------------------------------------------------------------
 class Anim:
@@ -932,7 +1046,9 @@ class Anim:
         self.r=[]	# 0, 1 or 2 rotation vectors
         self.a=[]	# rotation angles (iff self.r)
         self.t=[]	# translation
-        self.v=[]	# dataref value
+        self.v=[0,1]	# dataref value
+        self.hide=[]	# hide values (name, v1, v2)
+        self.show=[]	# show values (name, v1, v2)
         self.anim=None	# parent Anim
 
         if not child:
@@ -959,65 +1075,31 @@ class Anim:
             else:
                 raise ExportError('Missing animation data for bone "%s" in armature "%s".' % (bonename, object.name))	# wtf?
 
-        name=bone.name
-        l=name.find('.')
-        if l!=-1:
-            name=name[:l]
-        name=name.strip()
-        l=name.find('[')
-        if l!=-1:
-            ref=name[:l]
-            idx=name[l+1:-1]
-            if name[-1]!=']' or not idx or not idx.isdigit():
-                raise ExportError('Malformed dataref index "%s" in bone "%s" in armature "%s"' % (name[l:], name, child.name))
-            idx=int(idx)
+        if bone.parent:
+            self.anim=Anim(child, bone.parent)
         else:
-            ref=name
-            idx=None
-
-        for prop in object.getAllProperties():
-            if prop.name==ref:
-                # custom dataref
-                if prop.type=='STRING':
-                    if prop.data[-1]!='/':
-                        self.dataref=prop.data+'/'+name
-                    else:
-                        self.dataref=prop.data+name
-                    break
-                else:
-                    raise ExportError('Unsupported data type for path of custom dataref "%s" in armature "%s".' % (ref, child.name))
-        else:
-            if ref in datarefs:
-                (path, n)=datarefs[ref]
-                if n==0:
-                    raise ExportError('Dataref %s (used in armature "%s") can\'t be used for animation.' % (path+ref, child.name))
-                elif n==1 and idx!=None:
-                    raise ExportError('Dataref %s is not an array. Rename the bone in armature "%s" to "%s".' % (path+ref, child.name, ref))
-                elif n!=1 and idx==None:
-                    raise ExportError('Dataref %s is an array. Rename the bone in armature "%s" to "%s[0]" to use the first value, etc.' % (path+ref, child.name, ref))                
-                self.dataref=path+name
-            else:
-                raise ExportError('Unrecognised dataref "%s" for bone in armature "%s".' % (name, child.name))
-            
-        # dataref values v1 & v2
-        for val in [1,2]:
-            valstr="%s_v%d" % (ref, val)
+            self.anim=Anim(None)
+            # Hide/show values if first bone
+            vals={}
             for prop in object.getAllProperties():
-                if prop.name==valstr:
-                    if prop.type=='INT':
-                        self.v.append(prop.data)
-                    elif prop.type=='FLOAT':
-                        self.v.append(round(prop.data, Vertex.ROUND))
-                    else:
-                        raise ExportError('Unsupported data type for "%s" in armature "%s".' % (valstr, child.name))
-                    break
-            else:
-                self.v.append(val-1)	# defaults = [0,1]
+                propname=prop.name.strip()
+                for suffix in ['_hide_v', '_show_v']:
+                    if not (suffix) in propname: continue
+                    digit=propname[propname.index(suffix)+7:]
+                    if not digit.isdigit() or not int(digit)&1: continue
+                    (ref, v)=self.getdataref(object, propname[:propname.index(suffix)], suffix[:-2], int(digit))
+                    if v:
+                        if suffix=='_hide_v': self.hide.append((ref,v[0],v[1]))
+                        else: self.show.append((ref,v[0],v[1]))
 
         if not (object.getAction() and
                 object.getAction().getAllChannelIpos().has_key(bone.name)):
-            print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this animation.' % (bone.name, object.name)
-            if bone.parent:
+            print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
+
+            if (self.hide or self.show) and not bone.parent:
+                # Create a dummy animation to hold hide/show values
+                self.dataref='no_ref'	# mustn't eval to False
+            elif bone.parent:
                 foo=Anim(child, bone.parent)
                 self.dataref=foo.dataref
                 self.r=foo.r
@@ -1025,10 +1107,11 @@ class Anim:
                 self.t=foo.t
                 self.v=foo.v
                 self.anim=foo.anim
-                return	#parent
             else:
-                self.dataref=None
-                return	#null
+                self.dataref=None	# is null
+            return
+
+        (self.dataref, self.v)=self.getdataref(object, bone.name, '')
         ipo=object.getAction().getAllChannelIpos()[bone.name]
 
         scene=Blender.Scene.getCurrent()
@@ -1068,11 +1151,6 @@ class Anim:
                                        ipo.getCurveCurval('LocZ')])
             print
 
-        if bone.parent:
-            self.anim=Anim(child, bone.parent)
-        else:
-            self.anim=Anim(None)
-    
         # Useful info in Blender 2.40:
         # child.getMatrix('localspace') - rot & trans rel to arm pre pose
         # child.getMatrix('worldspace') - rot & trans post pose
@@ -1143,6 +1221,74 @@ class Anim:
 
 
     #------------------------------------------------------------------------
+    def getdataref(self, object, name, suffix, first=1):
+        if not suffix:
+            vals=[0,1]
+            thing='bone'
+        else:
+            vals=[None,None]
+            thing='property'
+            
+        l=name.find('.')
+        if l!=-1: name=name[:l]
+        name=name.strip()
+        l=name.find('[')
+        # split name into ref & idx
+        if l!=-1:
+            ref=name[:l].strip()
+            idx=name[l+1:-1]
+            if name[-1]!=']' or not idx or not idx.isdigit():
+                raise ExportError('Malformed dataref index "%s" in bone "%s" in armature "%s"' % (name[l:], name, object.name))
+            idx=int(idx)
+            seq=[ref, name]
+        else:
+            ref=name
+            idx=None
+            seq=[ref]
+
+        props=object.getAllProperties()
+        dataref=None
+        for tmpref in seq:
+            for prop in props:
+                if prop.name.strip()==tmpref:
+                    # custom dataref
+                    if prop.type=='STRING':
+                        path=prop.data.strip()
+                        if path[-1]!='/': path=path+'/'
+                        dataref=path+name
+                        break
+                    else:
+                        raise ExportError('Unsupported data type for path of custom dataref "%s" in armature "%s".' % (ref, object.name))
+        if not dataref:
+            if ref in datarefs:
+                (path, n)=datarefs[ref]
+                if n==0:
+                    raise ExportError('Dataref %s (used in armature "%s") can\'t be used for animation.' % (path+ref, object.name))
+                elif n==1 and idx!=None:
+                    raise ExportError('Dataref %s (used in armature "%s") is not an array. Rename the %s to "%s".' % (path+ref, object.name, thing, ref))
+                elif n!=1 and idx==None:
+                    raise ExportError('Dataref %s (used in armature "%s") is an array. Rename the %s to "%s[0]" to use the first value, etc.' % (path+ref, object.name, thing, ref))
+                dataref=path+name
+            else:
+                raise ExportError('Unrecognised dataref "%s" for %s in armature "%s".' % (ref, thing, object.name))
+            
+        # dataref values v1 & v2
+        for tmpref in seq:
+            for val in [first,first+1]:
+                valstr="%s%s_v%d" % (tmpref, suffix, val)
+                for prop in object.getAllProperties():
+                    if prop.name.strip()==valstr:
+                        if prop.type=='INT':
+                            vals[val-first]=prop.data
+                        elif prop.type=='FLOAT':
+                            vals[val-first]=round(prop.data, Vertex.ROUND)
+                        else:
+                            raise ExportError('Unsupported data type for "%s" in armature "%s".' % (valstr, object.name))
+        if vals[0]==None or vals[1]==None: vals=None
+        return (dataref, vals)
+        
+
+    #------------------------------------------------------------------------
     def __str__ (self):
         if self.dataref:
             return "%x %s r=%s a=%s t=%s v=%s p=(%s)" % (id(self), self.dataref, self.r, self.a, self.t, self.v, self.anim)
@@ -1158,6 +1304,8 @@ class Anim:
         if (self.dataref!=b.dataref or
             len(self.r)!=len(b.r) or
             not self.anim.equals(b.anim)):
+            return False
+        if self.hide!=b.hide or self.show!=b.show:
             return False
         for i in range(len(self.r)):
             if not self.r[i].equals(b.r[i]):
