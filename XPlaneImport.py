@@ -1,12 +1,12 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane scenery...'
+Name: 'X-Plane scenery (.obj)...'
 Blender: 232
 Group: 'Import'
-Tip: 'Import X-Plane scenery file format (.obj)'
+Tip: 'Import an X-Plane scenery file (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.32 or above, version 1.50
+# X-Plane importer for blender 2.32 or above
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -70,7 +70,11 @@ Tip: 'Import X-Plane scenery file format (.obj)'
 #
 # 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reversed meaning of DYNAMIC flag, since it is set by default when
-#    creating new faces in Blnder
+#    creating new faces in Blender
+#
+# 2004-08-28 v1.60 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Added support for double-sided faces
+#  - Import: Support importing files with multiple LODs
 #
 
 import sys
@@ -111,30 +115,41 @@ class Token:
     NO_DEPTH	= 20
     DEPTH	= 21
     LOD		= 22
+    NO_CULL	= 23
+    NOCULL	= 24
+    CULL	= 25
+    POLY_OS	= 26
     END6	= 99
-    NAMES = ["end",
-             "Light",
-             "Line",
-             "Tri",
-             "Quad",
-             "Quad_hard",
-             "Smoke_Black",
-             "Smoke_White",
-             "Quad_Movie",
-             "Polygon",
-             "Quad_Strip",
-             "Tri_Strip",
-             "Tri_Fan",
-             "ATTR_shade_flat",
-             "ATTR_shade_smooth",
-             "ATTR_ambient_rgb",
-             "ATTR_difuse_rgb",
-             "ATTR_specular_rgb",
-             "ATTR_emission_rgb",
-             "ATTR_shiny_rat",
-             "ATTR_no_depth",
-             "ATTR_depth",
-             "ATTR_LOD"]
+    NAMES = [
+        "end",
+        "Light",
+        "Line",
+        "Tri",
+        "Quad",
+        "Quad_hard",
+        "Smoke_Black",
+        "Smoke_White",
+        "Quad_Movie",
+        "Polygon",
+        "Quad_Strip",
+        "Tri_Strip",
+        "Tri_Fan",
+        "ATTR_shade_flat",
+        "ATTR_shade_smooth",
+        "ATTR_ambient_rgb",
+        "ATTR_difuse_rgb",
+        "ATTR_specular_rgb",
+        "ATTR_emission_rgb",
+        "ATTR_shiny_rat",
+        "ATTR_no_depth",
+        "ATTR_depth",
+        "ATTR_LOD",
+        # 7.40+
+        "ATTR_no_cull",
+        "ATTR_nocull",	# Also seen
+        "ATTR_cull",
+        "ATTR_poly_os"
+        ]
 
 class Vertex:
     LIMIT=0.01	# max distance between vertices for them to be merged
@@ -172,6 +187,7 @@ class Face:
     # Flags
     HARD=1    
     NO_DEPTH=2
+    DBLSIDED=4
 
     def __init__(self):
         self.v=[]
@@ -200,7 +216,9 @@ class Face:
 
 class Mesh:
     # Flags
-    SMOOTH=4
+    LAYERMASK=7
+    DBLSIDED=8
+    SMOOTH=16
 
     def __init__(self, name, faces=[], flags=0):
         self.name=name
@@ -232,6 +250,8 @@ class Mesh:
         mesh=NMesh.New(self.name)
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
+        if self.flags&Mesh.DBLSIDED:
+            mesh.mode |= NMesh.Modes.TWOSIDED
         if image:
             mesh.addMaterial(material)
 
@@ -256,6 +276,8 @@ class Mesh:
                 face.mode |= NMesh.FaceModes.DYNAMIC
             if f.flags&Face.NO_DEPTH:
                 face.mode |= NMesh.FaceModes.TILES
+            if f.flags&Face.DBLSIDED:
+                face.mode |= NMesh.FaceModes.TWOSIDE
             if self.flags&Mesh.SMOOTH:
                 face.smooth=1
 
@@ -286,6 +308,8 @@ class Mesh:
         ob = Object.New("Mesh", self.name)
         ob.link(mesh)
         scene.link(ob)
+        if self.flags&Mesh.LAYERMASK:
+            ob.Layer=(self.flags&Mesh.LAYERMASK)
         cur=Window.GetCursorPos()
         ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
@@ -295,6 +319,10 @@ class Mesh:
 #-- OBJimport --
 #------------------------------------------------------------------------
 class OBJimport:
+    VERSION=1.60
+    
+    LAYER=[0,1,2,4]
+
     #------------------------------------------------------------------------
     def __init__(self, filename):
         #--- public you can change these ---
@@ -316,8 +344,10 @@ class OBJimport:
         self.whitespace=[" ","\t","\n","\r"]
 
         # flags controlling import
+        self.comment=""
         self.smooth=0
         self.no_depth=0
+        self.dblsided=0
         self.lod=0
         
     #------------------------------------------------------------------------
@@ -425,8 +455,13 @@ class OBJimport:
         
     #------------------------------------------------------------------------
     def getCR(self):
-        while self.file.read(1) not in ["", "\n", "\r"]:
-            pass
+        self.comment=""
+        while 1:
+            c=self.file.read(1)
+            if c in ["", "\n", "\r"]:
+                break
+            self.comment += c
+        self.comment=self.comment[1:].strip()
         pos=self.file.tell()
         while self.file.read(1) in ["\n", "\r"]:
             pos=self.file.tell()
@@ -539,8 +574,7 @@ class OBJimport:
                 elif t==Token.LIGHT:
                     v=self.getVertex()
                     c=self.getCol()
-                    if not self.lod:
-                        self.addLamp(scene,v,c)
+                    self.addLamp(scene,v,c)
 
                 elif t==Token.LINE:
                     v = []
@@ -548,8 +582,7 @@ class OBJimport:
                     for i in range(2):
                         v.append(self.getVertex())
                         c=self.getCol()	# use second colour value
-                    if not self.lod:
-                        self.addLine(scene,v,c)
+                    self.addLine(scene,v,c)
 
                 elif t==Token.TRI:
                     v = []
@@ -557,8 +590,7 @@ class OBJimport:
                     for i in range(3):
                         v.append(self.getVertex())
                         uv.append(self.getUV())
-                    if not self.lod:
-                        self.addTris(scene,t,v,uv)
+                    self.addTris(scene,t,v,uv)
 
                 elif t in [Token.QUAD,
                            Token.QUAD_HARD,
@@ -568,8 +600,7 @@ class OBJimport:
                     for i in range(4):
                         v.append(self.getVertex())
                         uv.append(self.getUV())
-                    if not self.lod:
-                        self.addQuads(scene,t,v,uv,[3,2,1,0])
+                    self.addQuads(scene,t,v,uv,[3,2,1,0])
                                          
                 elif t==Token.POLYGON:
                     # add centre point, duplicate first point, use Tri_Fan
@@ -586,17 +617,16 @@ class OBJimport:
                         uv.append(self.getUV())
                         cuv[0]+=uv[i].s
                         cuv[1]+=uv[i].t
-                    if not self.lod:
-                        cv[0]/=n
-                        cv[1]/=n
-                        cv[2]/=n
-                        cuv[0]/=n
-                        cuv[1]/=n
-                        v.append(v[0])
-                        uv.append(uv[0])
-                        v.insert(0,Vertex(cv[0],cv[1],cv[2]))
-                        uv.insert(0,UV(cuv[0],cuv[1]))
-                        self.addTris(scene,t,v,uv)
+                    cv[0]/=n
+                    cv[1]/=n
+                    cv[2]/=n
+                    cuv[0]/=n
+                    cuv[1]/=n
+                    v.append(v[0])
+                    uv.append(uv[0])
+                    v.insert(0,Vertex(cv[0],cv[1],cv[2]))
+                    uv.insert(0,UV(cuv[0],cuv[1]))
+                    self.addTris(scene,t,v,uv)
 
                 elif t==Token.QUAD_STRIP:
                     n = self.getInt()
@@ -605,8 +635,7 @@ class OBJimport:
                     for i in range(n):
                         v.append(self.getVertex())
                         uv.append(self.getUV())
-                    if not self.lod:
-                        self.addQuads(scene,t,v,uv,[1,0,2,3])
+                    self.addQuads(scene,t,v,uv,[1,0,2,3])
                         
                 elif t==Token.TRI_FAN:
                     v = []
@@ -615,8 +644,7 @@ class OBJimport:
                     for i in range(n):
                         v.append(self.getVertex())
                         uv.append(self.getUV())
-                    if not self.lod:
-                        self.addTris(scene,t,v,uv)
+                    self.addTris(scene,t,v,uv)
                     
                 elif t==Token.SHADE_FLAT:
                     self.smooth = 0
@@ -628,15 +656,22 @@ class OBJimport:
                 elif t==Token.NO_DEPTH:
                     self.no_depth = 1
                 
+                elif t==Token.CULL:
+                    self.dblsided = 0
+                elif t in [Token.NO_CULL, Token.NOCULL]:
+                    self.dblsided = 1
+
                 elif t==Token.LOD:
-                    x = self.getInt()
-                    self.getInt()
-                    if (x):
-                        self.lod = x
-                        print "Warn:\tNon-zero LOD not supported: Ignoring following objects"
-                    elif self.lod:
-                        self.lod = 0
-                        print "Info:\tLOD reset: Stopped ignoring objects"
+                    x = self.getFloat()
+                    self.getFloat()
+                    if not self.lod:
+                        print "Info:\tMultiple Levels Of Detail found"
+                    if x>=3999:
+                        self.lod=3
+                    elif x>=999:
+                        self.lod=2
+                    else:
+                        self.lod=1
                 
                 else:
                     print "Warn:\tIgnoring unsupported %s" % Token.NAMES[t]
@@ -647,7 +682,7 @@ class OBJimport:
                     elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
                                Token.SPECULAR_RGB, Token.EMISSION_RGB]:
                         n=3
-                    elif t==Token.SHINY_RAT:
+                    elif t in [Token.SHINY_RAT, Token.POLY_OS]:
                         n=1
                     else:
                         assert 0, "Can't parse type %s" % t
@@ -762,13 +797,16 @@ class OBJimport:
         ob = Object.New("Lamp", name)
         ob.link(lamp)
         scene.link(ob)
+        if self.lod:
+            ob.Layer=OBJimport.LAYER[self.lod]
         cur=Window.GetCursorPos()
         ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
         
     #------------------------------------------------------------------------
     def addLine(self,scene,v,c):
+        name=self.name("Line")
         if self.verbose:
-            print "Info:\tImporting Line"
+            print "Info:\tImporting Line \"%s\"" % name
 
         # Round centre to integer to give easier positioning
         centre=Vertex(round((v[0].x+v[1].x)/2,0),
@@ -784,7 +822,7 @@ class OBJimport:
             e=Vertex(0,self.linesemi,-self.linesemi)
 
         # 'Line's shouldn't be merged, so add immediately 
-        mesh=NMesh.New("Line")
+        mesh=NMesh.New(name)
         mesh.mode &= ~(NMesh.Modes.AUTOSMOOTH|NMesh.Modes.NOVNORMALSFLIP)
         mesh.mode |= NMesh.Modes.TWOSIDED
 
@@ -807,14 +845,16 @@ class OBJimport:
         for nmv in mesh.verts:
             face.v.append(nmv)
 
-        mesh.materials.append(Material.New("Line"))
+        mesh.materials.append(Material.New(name))
         mesh.materials[0].rgbCol=[c[0]/10.0,c[1]/10.0,c[2]/10.0]
         face.mat=0            
         mesh.faces.append(face)
 
-        ob = Object.New("Mesh", "Line")
+        ob = Object.New("Mesh", name)
         ob.link(mesh)
         scene.link(ob)
+        if self.lod:
+            ob.Layer=OBJimport.LAYER[self.lod]
         cur=Window.GetCursorPos()
         ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
@@ -823,14 +863,10 @@ class OBJimport:
     def addTris(self, scene, token, v, uv):
         # input v: list of co-ords, uv: corresponding list of uv points
         #	v[0] and uv[0] are common to every triangle
-        name=Token.NAMES[token]
+        name=self.name(Token.NAMES[token])
         if self.verbose:
-            print "Info:\tImporting %s" % name
+            print "Info:\tImporting %s \"%s\"" % (Token.NAMES[token], name)
         nv=len(v)
-
-        flags=0
-        if self.smooth:
-            flags |= Mesh.SMOOTH
 
         faces=[]
         for f in range(1,nv-1):
@@ -845,9 +881,19 @@ class OBJimport:
 
             if self.no_depth:
                 face.flags |= Face.NO_DEPTH
+            if self.dblsided:
+                face.flags |= Face.DBLSIDED
                 
             faces.append(face)
             
+        flags=0
+        if self.dblsided:
+            flags |= Mesh.DBLSIDED
+        if self.smooth:
+            flags |= Mesh.SMOOTH
+        if self.lod:
+            flags |= OBJimport.LAYER[self.lod]
+
         self.addToMesh(scene,name,faces,flags)
 
     #------------------------------------------------------------------------
@@ -855,20 +901,16 @@ class OBJimport:
         # input v: list of co-ords, uv: corresponding list of uv points
         #	vorder: order of vertices within each face
 
-        name=Token.NAMES[token]
+        name=self.name(Token.NAMES[token])
         if token==Token.QUAD_HARD:
-            name=Token.NAMES[Token.QUAD]
+            name=self.name(Token.NAMES[Token.QUAD])
         elif token==Token.QUAD_MOVIE:
-            name="Movie"
+            name=self.name("Movie")
         if self.verbose:
-            print "Info:\tImporting %s" % name
+            print "Info:\tImporting %s \"%s\"" % (Token.NAMES[token], name)
         nv=len(v)
         assert not nv%2, "Odd %s vertices in \"%s\"" % (nv, name)
         
-        flags=0
-        if self.smooth:
-            flags |= Mesh.SMOOTH
-
         faces=[]
         for f in range(2,nv,2):
             face=Face()
@@ -886,8 +928,18 @@ class OBJimport:
                 face.flags |= Face.HARD
             if self.no_depth:
                 face.flags |= Face.NO_DEPTH
+            if self.dblsided:
+                face.flags |= Face.DBLSIDED
             
             faces.append(face)
+
+        flags=0
+        if self.dblsided:
+            flags |= Mesh.DBLSIDED
+        if self.smooth:
+            flags |= Mesh.SMOOTH
+        if self.lod:
+            flags |= OBJimport.LAYER[self.lod]
 
         self.addToMesh(scene,name,faces,flags)
 
@@ -914,7 +966,7 @@ class OBJimport:
                 return
             
         # No common edge - new mesh required
-        self.curmesh.append(Mesh(name, faces,flags))
+        self.curmesh.append(Mesh(name, faces, flags))
 
 
     #------------------------------------------------------------------------
@@ -939,6 +991,14 @@ class OBJimport:
                 else:
                     l=l+1
             m=m-1
+
+    #------------------------------------------------------------------------
+    def name (self, fallback):
+        if self.comment=='':
+            name=fallback
+        else:
+            name=self.comment[:19].strip()
+        return name
 
 #------------------------------------------------------------------------
 def file_callback (filename):

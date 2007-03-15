@@ -1,19 +1,19 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane Scenery'
+Name: 'X-Plane Scenery (.obj)'
 Blender: 232
 Group: 'Export'
 Tip: 'Export to X-Plane scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.32 or above, version 1.50
+# X-Plane exporter for blender 2.32 or above
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
-# Web: http://marginal.org.uk/x-planescenery/
+# Web:  http://marginal.org.uk/x-planescenery/
 #
-# See XPlane2Blender.txt for usage
+# See XPlane2Blender.html for usage
 #
 # This software is provided 'as-is', without any express or implied
 # warranty. In no event will the author be held liable for any damages
@@ -70,7 +70,12 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reversed meaning of DYNAMIC flag, since it is set by default when
-#    creating new faces in Blnder
+#    creating new faces in Blender
+#
+# 2004-08-28 v1.60 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Added support for double-sided faces
+#  - Import: Support importing files with multiple LODs
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -86,8 +91,8 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 #      - normal (usually the fullest bucket)
 #      - no_depth+alpha
 #      - alpha
-#      (Smooth and Hard faces are mixed up with the other faces and are output
-#       in the order they're found).
+#      (Smooth, Hard and double-sided faces are mixed up with the other
+#       faces and are output in the order they're found).
 #
 
 import sys
@@ -145,8 +150,9 @@ class Face:
     # Flags
     NO_DEPTH=1
     ALPHA=2
-    SMOOTH=4
-    HARD=8
+    DBLSIDED=4
+    SMOOTH=8
+    HARD=16
     BUCKET=NO_DEPTH|ALPHA
 
     def __init__(self, name):
@@ -173,6 +179,8 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
+    VERSION=1.60
+
     #------------------------------------------------------------------------
     def __init__(self, filename):
         #--- public you can change these ---
@@ -186,8 +194,9 @@ class OBJexport:
         self.linewidth=0.1
 
         # flags controlling export
-        self.smooth=0
         self.no_depth=0
+        self.dblsided=0
+        self.smooth=0
 
         # stuff for exporting faces
         self.faces=[]
@@ -227,11 +236,10 @@ class OBJexport:
 
     #------------------------------------------------------------------------
     def writeHeader(self):
-        banner="Exported from blender3d using XPlane2Blender - http://marginal.org.uk/x-planescenery/"
         if self.fileformat==7:
-            self.file.write("I\n700\t// %s\nOBJ\n\n" % banner)
+            self.file.write("I\n700\t// \nOBJ\t// \n\n")
         else:
-            self.file.write("I\n2\t// %s\n\n" % banner)
+            self.file.write("I\n2\t//\n\n")
         self.file.write("%s\t\t// Texture\n\n\n" % self.texture)
 
     #------------------------------------------------------------------------
@@ -343,12 +351,13 @@ class OBJexport:
 
             self.writeFaces()
                 
-            self.updateFlags(0,0)	# not sure if this is required
+            self.updateFlags(0,0,0)	# not sure if this is required
             
         if self.fileformat==7:
             self.file.write("end\t\t\t// eof\n")
         else:
             self.file.write("99\t\t\t// eof\n")
+        self.file.write("\n// Built using Blender %4.2f, http://www.blender3d.org/\n// Exported using XPlane2Blender %4.2f, http://marginal.org.uk/x-planescenery/\n" % (float(Blender.Get('version'))/100, OBJexport.VERSION))
 
     #------------------------------------------------------------------------
     def writeLamp(self, object):
@@ -381,10 +390,10 @@ class OBJexport:
                     
         v=Vertex(0,0,0, object.getMatrix())
         if self.fileformat==7:
-            self.file.write("light\t\t\t// Light: %s\n" % name)
+            self.file.write("light\t\t\t// %s\n" % name)
             self.file.write("%s\t  %3d %3d %3d\n\n" % (v, c[0],c[1],c[2]))
         else:
-            self.file.write("1  %3d %3d %3d\t\t// Light: %s\n" % (
+            self.file.write("1  %3d %3d %3d\t\t// %s\n" % (
                 c[0], c[1], c[2], name))
             self.file.write("%s\n" % v)
             
@@ -421,11 +430,11 @@ class OBJexport:
             c=[0.5,0,5,0,5]
     
         if self.fileformat==7:
-            self.file.write("line\t\t\t// Line: %s\n" % name)
+            self.file.write("line\t\t\t// %s\n" % name)
             self.file.write("%s\t  %3d %3d %3d\n" % (v1, c[0],c[1],c[2]))
             self.file.write("%s\t  %3d %3d %3d\n\n" % (v2, c[0],c[1],c[2]))
         else:
-            self.file.write("2  %3d %3d %3d\t\t// Line: %s\n" % (
+            self.file.write("2  %3d %3d %3d\t\t// %s\n" % (
                 c[0], c[1], c[2], name))
             self.file.write("%s\n%s\n\n" % (v1, v2))
 
@@ -462,18 +471,17 @@ class OBJexport:
                 print "Warn:\tIgnoring %s-edged face in mesh \"%s\"" % (
                     n, object.name)
             else:
-                if (f.mode & NMesh.FaceModes.TWOSIDE):
-                    print "Warn:\tMesh \"%s\" has double-sided face" % (
-                        object.name)
                 face=Face(object.name)
-                if f.smooth:
-                    face.flags|=Face.SMOOTH
-                if f.transp == NMesh.FaceTranspModes.ALPHA:
-                    face.flags|=Face.ALPHA
-                if (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
-                    face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TILES:
                     face.flags|=Face.NO_DEPTH
+                if f.transp == NMesh.FaceTranspModes.ALPHA:
+                    face.flags|=Face.ALPHA
+                if f.mode & NMesh.FaceModes.TWOSIDE:
+                    face.flags|=Face.DBLSIDED
+                if f.smooth:
+                    face.flags|=Face.SMOOTH
+                if (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
+                    face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TEX:
                     assert len(f.uv)==n, "Missing UV in \"%s\"" % object.name
 
@@ -675,7 +683,8 @@ class OBJexport:
         
         face=strip[0]
         n=len(face.v)
-        self.updateFlags(face.flags&Face.SMOOTH, face.flags&Face.NO_DEPTH)
+        self.updateFlags(face.flags&Face.NO_DEPTH, face.flags&Face.DBLSIDED,
+                         face.flags&Face.SMOOTH)
         
         if (len(strip))==1:            
             # When viewing the visible side of a face
@@ -698,10 +707,7 @@ class OBJexport:
                     self.file.write ("quad_hard")
                 else:
                     self.file.write ("quad\t")
-                if face.flags&Face.ALPHA:
-                    self.file.write("\t\t// Mesh(alpha): %s\n" % face.name)
-                else:
-                    self.file.write("\t\t// Mesh: %s\n" % face.name)
+                self.file.write("\t\t// %s\n" % face.name)
             else:
                 if (n==4) and (face.flags & Face.HARD):
                     poly=5	# make quad "hard"
@@ -713,10 +719,7 @@ class OBJexport:
                     round(face.uv[ topright     ].s,UV.ROUND),
                     round(face.uv[(topright-2)%n].t,UV.ROUND),
                     round(face.uv[ topright     ].t,UV.ROUND)))
-                if face.flags&Face.ALPHA:
-                    self.file.write("\t// Mesh(alpha): %s\n" % face.name)
-                else:
-                    self.file.write("\t// Mesh: %s\n" % face.name)
+                self.file.write("\t// %s\n" % face.name)
 
             for i in range(topright, topright-n, -1):
                 if self.fileformat==7:
@@ -736,10 +739,7 @@ class OBJexport:
                     self.file.write ("quad_strip %s" % ((len(strip)+1)*2))
             else:
                 self.file.write ("%s\t" % -(len(strip)+1))
-            if face.flags&Face.ALPHA:
-                self.file.write("\t\t// Mesh(alpha): %s\n" % face.name)
-            else:
-                self.file.write("\t\t// Mesh: %s\n" % face.name)
+            self.file.write("\t\t// %s\n" % face.name)
 
             if (n==3):	# Tris
                 for i in [(firstvertex+1)%n,firstvertex]:
@@ -802,25 +802,30 @@ class OBJexport:
 
 
     #------------------------------------------------------------------------
-    def updateFlags(self,smooth,no_depth):
+    def updateFlags(self, no_depth, dblsided, smooth):
         if not self.fileformat==7:
             return	# v6 format doesn't support this stuff
 
         # For readability, write turn-offs before turn-ons
         # Note X-Plane parser requires a comment after attribute statements
         
-        if self.smooth and not smooth:
-            self.file.write("ATTR_shade_flat\t\t//\n\n")
         if self.no_depth and not no_depth:
             self.file.write("ATTR_depth\t\t//\n\n")
+        if self.dblsided and not dblsided:
+            self.file.write("ATTR_cull\t\t//\n\n")
+        if self.smooth and not smooth:
+            self.file.write("ATTR_shade_flat\t\t//\n\n")
             
-        if smooth and not self.smooth:
-            self.file.write("ATTR_shade_smooth\t//\n\n")
         if no_depth and not self.no_depth:
             self.file.write("ATTR_no_depth\t\t//\n\n")
+        if dblsided and not self.dblsided:
+            self.file.write("ATTR_no_cull\t\t//\n\n")
+        if smooth and not self.smooth:
+            self.file.write("ATTR_shade_smooth\t//\n\n")
                 
-        self.smooth=smooth
         self.no_depth=no_depth
+        self.dblsided=dblsided
+        self.smooth=smooth
 
     
 #------------------------------------------------------------------------

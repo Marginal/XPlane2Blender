@@ -169,24 +169,6 @@ are ignored). </dd>
 <ul>
   <li>Create faces with 3 or 4 edges (called "Tri"s and "Quad"s in
 X-Plane).</li>
-  <li>In the <samp>Texture Face</samp> panel (available in "UV Face
-Select" mode):</li>
-  <ul>
-    <li><samp>Tex</samp> button controls whether the face has a
-texture. Create a .bmp or .png file in an image editor program in the <code>custom
-object textures</code> folder. Height and width must be powers of two
-(eg 256, 512, etc). Draw all the textures required by the scenery onto
-it. Areas of the texture that are coloured magenta or that have Alpha
-transparency (png files only) will be transparent when displayed in
-X-Plane. Use a "UV Image Editor" window to control mapping of the
-texture bitmap to the face.</li>
-    <li><samp>Collision</samp> button indicates that the face is
-not "landable on" in X-Plane. Faces with 3
-edges are never "landable on", irrespective of the state of this button.</li>
-    <li><samp>Tiles</samp> button turns off depth-testing. Use this for
-horizontal or inwards-facing faces to prevent nasty artifacts when
-displayed in X-Plane.</li>
-  </ul>
   <li>In the <samp>Link and Materials</samp> panel:</li>
   <ul>
     <li><samp>Set Smooth</samp> and <samp>Set Solid</samp> control
@@ -201,8 +183,28 @@ when the "Viewport Shading" button is set to "Solid" or "Shaded". </li>
 on
 individual faces. Don't do that - the results when exported to X-Plane
 are undefined. <samp>Set Smooth</samp> or <samp>Set Solid</samp> on
-the whole mesh instead. </dd>
+the whole mesh instead.</dd>
   </dl>
+  <li>In the <samp>Texture Face</samp> panel (available in "UV Face
+Select" mode):</li>
+  <ul>
+    <li><samp>Tex</samp> button controls whether the face has a
+texture. Create a .bmp or .png file in an image editor program in the <code>custom
+object textures</code> folder. Height and width must be powers of two
+(eg 256, 512, etc). Draw all the textures required by the scenery onto
+it. Areas of the texture that are coloured magenta or that have Alpha
+transparency (png files only) will be transparent when displayed in
+X-Plane. Use a "UV Image Editor" window to control mapping of the
+texture bitmap to the face.</li>
+    <li><samp>Tiles</samp> button turns off depth-testing. Use this for
+horizontal or inwards-facing faces to prevent nasty artifacts when
+displayed in X-Plane.</li>
+    <li><samp>Collision</samp> button indicates that the face is
+not "landable on" in X-Plane. Faces with 3
+edges are never "landable on", irrespective of the state of this button.</li>
+    <li><samp>Twoside</samp> button controls whether one or both sides
+of the face are displayed.</li>
+  </ul>
 </ul>
 <h4>Lines</h4>
 <p>Blender doesn't support Lines directly. Use a mesh with one 4-edged
@@ -301,16 +303,17 @@ meshes that contain one face each. So if you're about to create a new
 face that shares an edge with an existing mesh, add it to that existing
 mesh rather than create it as a new standalone Mesh "Plane". To do this
 select the existing mesh and go to "Edit Mode" before adding the plane.</p>
-<p> X-Plane only displays one side of an object's face; faces are
-invisible from behind. So don't make double-sided faces in Blender or
-you'll just get confused. In order to see which side of a face is the
+<p> X-Plane normally only displays one side of an object's face; faces
+are
+invisible from behind unless you set press the <samp>Twoside</samp>
+button. In order to see which side of a single-sided face is the
 visible side:</p>
 <ul>
   <li>Go to Edit mode (you need to have an object selected to do this).</li>
   <li>Hit <samp><span style="font-weight: bold;">F9</span></samp> to
 see the <samp>Editing</samp> buttons.</li>
   <li>Select <samp>Draw Normals</samp> and set <samp>NSize</samp> to
-at least 1.0 in the <samp>Mesh Tools 1</samp> panel. (I also like to
+at least 0.5 in the <samp>Mesh Tools 1</samp> panel. (I also like to
 select <samp>Draw Faces</samp> and <samp>Draw Edges</samp>, but
 that's up to you). </li>
 </ul>
@@ -343,7 +346,7 @@ this is the "Console" program. In Windows this the window titled
 "Blender" that looks like a Command Prompt).</p>
 <h3>Stuff</h3>
 <p>Copyright &copy; 2004 Jonathan Harris.<br>
-Version 1.50<br>
+Version 1.60<br>
 <a href="http://marginal.org.uk/x-planescenery/">http://marginal.org.uk/x-planescenery/</a></p>
 <hr style="width: 100%; height: 2px;">
 <table style="width: 100%; text-align: left;" cellpadding="0"
