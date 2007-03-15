@@ -7,18 +7,19 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.07"
+__version__ = "2.10"
 __bpydoc__ = """\
-This script imports X-Plane v6 and v7 .obj scenery files into Blender.
+This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
 Limitations:<br>
   * smoke_black and smoke_white X-Plane primitives are ignored.<br>
-  * poly_os, ambient, difuse, specular, emission and shiny<br>
+  * ambient, difuse, specular, emission and shiny<br>
     attributes are ignored.<br>
-  * Can't work out which faces have transparency. Transparent faces<br>
-    must be manually marked with the Alpha button in UV Face Select<br>
-    mode after import.<br>
+  * Can't work out which faces have transparency. You should tell<br>
+    Blender which faces are transparent faces by pressing the Alpha<br>
+    button in UV Face Select mode after import.<br>
 """
+
 #------------------------------------------------------------------------
 # X-Plane importer for blender 2.34 or above
 #
@@ -141,6 +142,9 @@ Limitations:<br>
 # 2005-05-15 v2.05
 #  - Fixed bug introduced in 2.04 with twosided polys.
 #
+# 2005-11-10 v2.10
+#  - Add support for v8 objects. No animation yet.
+#
 
 import sys
 import Blender
@@ -156,10 +160,11 @@ class ParseError(Exception):
     TOKEN  = 1
     INTEGER= 2
     FLOAT  = 3
+    MISC   = 4
 
 class Token:
     "OBJ tokens"
-    END7	= 0
+    # numbers 1-8 and 99 should not change for v6 compatibility
     LIGHT	= 1
     LINE	= 2
     TRI		= 3
@@ -188,9 +193,33 @@ class Token:
     CULL	= 26
     POLY_OS	= 27
     QUAD_COCKPIT= 28
-    END6	= 99
+    TEXTURE	= 29
+    TEXTURE_LIT	= 30
+    POINT_COUNTS= 31
+    SLUNG_LOAD_WEIGHT = 32
+    VT		= 33
+    VLINE	= 34
+    VLIGHT	= 35
+    IDX		= 36
+    IDX10	= 37
+    TRIS	= 38
+    LINES	= 39
+    LIGHTS	= 40
+    HARD	= 41
+    NO_HARD	= 42
+    COCKPIT	= 43
+    NO_COCKPIT	= 44
+    BLEND	= 45
+    NO_BLEND	= 46
+    ANIM_BEGIN	= 47
+    ANIM_END	= 48
+    ANIM_ROTATE	= 49
+    ANIM_TRANS	= 50
+    ALPHA	= 51
+    NO_ALPHA	= 52
+    END		= 99
     NAMES = [
-        "end",
+        "",
         "Light",
         "Line",
         "Tri",
@@ -220,7 +249,32 @@ class Token:
         "ATTR_cull",
         "ATTR_poly_os",
         # 8.00+
-        "Quad_Cockpit"
+        "Quad_Cockpit",
+        # 8.20+
+        "TEXTURE",
+        "TEXTURE_LIT",
+        "POINT_COUNTS",
+        "slung_load_weight",
+        "VT",
+        "VLINE",
+        "VLIGHT",
+        "IDX",
+        "IDX10",
+        "TRIS",
+        "LINES",
+        "LIGHTS",
+        "ATTR_hard",
+        "ATTR_no_hard",
+        "ATTR_cockpit",
+        "ATTR_no_cockpit",
+        "ATTR_blend",
+        "ATTR_no_blend",
+        "ANIM_begin",
+        "ANIM_end",
+        "ANIM_rotate",
+        "ANIM_trans",
+        "####_alpha",
+        "####_no_alpha",
         ]
 
 class Mesh:
@@ -305,16 +359,19 @@ class Mesh:
             face=NMesh.Face()
             face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TEX|
                            NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
-            #face.transp=NMesh.FaceTranspModes.ALPHA
             if not f.flags&Face.HARD:
                 face.mode |= NMesh.FaceModes.DYNAMIC
-            #if f.flags&Face.NO_DEPTH:
-            #    face.mode |= NMesh.FaceModes.TILES
             if f.flags&Face.TWOSIDE:
                 face.mode |= NMesh.FaceModes.TWOSIDE
-            if f.flags&Face.SMOOTH:
+            if f.flags&Face.TILES:
+                face.mode |= NMesh.FaceModes.TILES
+            if not f.flags&Face.FLAT:
                 face.smooth=1
-
+            if f.flags&Face.ALPHA:
+                face.transp=NMesh.FaceTranspModes.ALPHA
+            else:
+                face.transp=NMesh.FaceTranspModes.SOLID
+                
             for v in f.v:
                 rv=Vertex(v.x-centre.x,v.y-centre.y,v.z-centre.z)
                 for nmv in mesh.verts:
@@ -334,12 +391,11 @@ class Mesh:
 
             if f.flags&Face.PANEL:
                 face.mode |= NMesh.FaceModes.TEX
-                face.transp=NMesh.FaceTranspModes.ALPHA
                 mesh.hasFaceUV(1)
                 if not panel:
                     l = filename.rfind(Blender.sys.dirsep)
                     if l!=-1:
-                        for extension in [".bmp", ".png"]:
+                        for extension in ['', '.bmp', '.png']:
                             cockpit=filename[:l+1]+"cockpit"+Blender.sys.dirsep+"-PANELS-"+Blender.sys.dirsep+"Panel"+extension
                             try:
                                 panel = Image.Load(cockpit)
@@ -378,39 +434,66 @@ class OBJimport:
         self.merge=1	# merge primitives into meshes: 0-no, 1-abut, 2-force
         
         #--- class private don't touch ---
+        self.filename=filename
         if Blender.sys.dirsep=='\\':
-            # Lowercase Windows drive lettter
-            self.filename=filename[0].lower()+filename[1:]
-        else:
-            self.filename=filename
+            if filename[0] in ['/', '\\']:
+                # Add Windows drive letter
+                for drive in [Blender.Get('filename'),
+                              Blender.sys.progname]:
+                    if drive and not drive[0] in ['/', '\\']:
+                        f=drive.lower()[:2]+'\\'+filename[1:]
+                        try:
+                            file=open(f, 'rb')
+                        except IOError:
+                            pass
+                        else:
+                            file.close()
+                            self.filename=f
+                            break
+            else:
+                # Lowercase Windows drive lettter
+                self.filename=filename[0].lower()+filename[1:]
+
         self.linesemi=0.025
-        self.lastpos=0		# for progress reporting
-        self.lineno=0		# for error reporting
+        self.lineno=1		# for error reporting
         self.filelen=0		# for progress reports
-        self.fileformat=0	# 6 or 7
+        self.fileformat=0	# 6, 7 or 8
         self.image=None		# texture image, iff scenery has texture
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
         
         # random stuff
-        self.whitespace=[" ","\t","\n","\r"]
+        self.whitespace=[' ','\t','\n']
 
         # flags controlling import
         self.comment=""
         self.lastcomment=""
-        self.smooth=1		# >=7.30 defaults to smoothed rendering
-        self.no_depth=0
-        self.twoside=0
         self.lod=0
         self.fusecount=0
+
+        # v8 structures
+        self.vt=[]
+        self.vline=[]
+        self.vlight=[]
+        self.idx=[]
         
+        # attributes
+        self.hard=False
+        self.twoside=False
+        self.flat=False		# >=7.30 defaults to smoothed
+        self.alpha=False
+        self.panel=False
+        self.poly=False
+        self.arm=None
+        self.bone=None
+
     #------------------------------------------------------------------------
     def doimport(self):
         #clock=time.clock()	# Processor time
         print "Starting OBJ import from " + self.filename
         Blender.Window.WaitCursor(1)
     
-        self.file = open(self.filename, "rb")
+        self.file = open(self.filename, 'rU')
         self.file.seek(0,2)
         self.filelen=self.file.tell()
         self.file.seek(0)
@@ -423,58 +506,89 @@ class OBJimport:
 
     #------------------------------------------------------------------------
     def getInput(self):
-        input=""
-        self.lastpos=self.file.tell()
+        # Skip whitespace
         while 1:
             c=self.file.read(1)
             if not c:
-            	raise ParseError(ParseError.TOKEN, "<EOF>")
+            	raise ParseError(ParseError.MISC, 'Unexpected <EOF>')
             elif c in self.whitespace:
-                if c == "\r":
-                    self.lineno += 1
-                # skip to first non-whitespace
-                while 1:
-                    pos = self.file.tell()
-                    c = self.file.read(1)
-                    if not c:
-                        if self.verbose>1:
-                            print "Input:\t\"%s\"" % input
-                        return input
-                    elif c == "\r":
+                if c=='\n':
+                    if self.fileformat<8:
                         self.lineno += 1
-                    elif c == "/":
-                        self.getCR()
-                    elif not c in self.whitespace:
-                        self.file.seek(pos)
-                        if self.verbose>1:
-                            print "Input:\t\"%s\"" % input
-                        return input
+                    else:
+                        raise ParseError(ParseError.MISC, 'Unexpected newline')
             else:
-                input+=c
+                break
+        input=c
+        while 1:
+            pos = self.file.tell()
+            c = self.file.read(1)
+            if not c:
+            	raise ParseError(ParseError.MISC, 'Unexpected <EOF>')
+            elif c in self.whitespace:
+                if c=='\n':
+                    if self.fileformat<8:
+                        self.lineno += 1
+                    else:
+                        self.file.seek(pos)	# stay on this line
+                if self.verbose>1:
+                    print "Input:\t\"%s\"" % input
+                return input
+            else:
+                input=input+c
 
     #------------------------------------------------------------------------
-    def get7Token(self):
-        c=self.getInput()
-        u=c.lower()
-        Window.DrawProgressBar(float(self.lastpos)*0.5/self.filelen,
-                               "Importing %s%% ..." %
-                               (self.lastpos*50/self.filelen))
-        for i in range(len(Token.NAMES)):
-            if u==Token.NAMES[i].lower():
-                return i
-        raise ParseError(ParseError.TOKEN, c)
+    def getToken(self):
+        # Skip whitespace & v8-style comment lines
+        while 1:
+            pos = self.file.tell()
+            c=self.file.read(1)
+            if not c:
+                if self.fileformat<8:
+                    raise ParseError(ParseError.TOKEN, "<EOF>")
+                else:
+                    return Token.END
+            elif c in self.whitespace:
+                if c == '\n':
+                    self.lineno += 1
+            elif self.fileformat==8 and c=='#':
+                self.getCR()
+            else:
+                break
+        input=c
+        Window.DrawProgressBar(float(pos)*0.5/self.filelen,
+                               "Importing %s%% ..." % (pos*50/self.filelen))
+        while 1:
+            pos=self.file.tell()
+            c=self.file.read(1)
+            if not c:
+                raise ParseError(ParseError.TOKEN, "<EOF>")
+            elif c in self.whitespace:
+                if c == '\n':
+                    if self.fileformat<8:
+                        self.lineno += 1
+                    else:
+                        self.file.seek(pos)	# stay on this line
+                break
+            input=input+c
+            
+        if self.verbose>1:
+            print "Token:\t\"%s\"" % input
+
+        if self.fileformat>6:
+            u=input.lower()
+            for i in range(len(Token.NAMES)):
+                if u==Token.NAMES[i].lower():
+                    return i
+            if self.fileformat==7 and u=='end':
+                return Token.END
+        else:
+            try:
+                return int(input)
+            except ValueError:
+                raise ParseError(ParseError.TOKEN, input)
+        raise ParseError(ParseError.TOKEN, input)
         
-    #------------------------------------------------------------------------
-    def get6Token(self):
-        c=self.getInput()
-        Window.DrawProgressBar(float(self.lastpos)*0.5/self.filelen,
-                               "Importing %s%% ..." %
-                               (self.lastpos*50/self.filelen))
-        try:
-            return int(c)
-        except ValueError:
-            raise ParseError(ParseError.TOKEN, c)
-
     #------------------------------------------------------------------------
     def getInt(self):
         c=self.getInput()
@@ -495,7 +609,10 @@ class OBJimport:
     def getCol(self):
         v=[]
         for i in range(3):
-            v.append(self.getFloat())
+            c=self.getFloat()
+            if self.fileformat<8:
+                c=c/10.0
+            v.append(c)
         return v
 
     #------------------------------------------------------------------------
@@ -517,16 +634,30 @@ class OBJimport:
         
     #------------------------------------------------------------------------
     def getCR(self):
-        self.comment=""
         while 1:
             c = self.file.read(1)
-            if c == "\r":
+            if c in self.whitespace:
+                if c == '\n':
+                    self.lineno += 1
+                    self.comment=''
+                    return
+            else:
+                break
+        input=c
+        while 1:
+            c = self.file.read(1)
+            if c == '\n':
                 self.lineno += 1
+                pos=self.file.tell()
                 break
-            elif c in ["", "\n"]:
-                break
-            self.comment += c
-        self.comment = self.comment[1:].strip()
+            input+=c            
+
+        if self.fileformat>=8:
+            return
+
+        while input and input[0]=='/':
+            input=input[1:]
+        self.comment = input.strip()
         # Export used to attach these prefixes to comments
         for c in ["Mesh: ", "Mesh(alpha): ", "Light: ", "Line: "]:
             if self.comment.find (c) == 0:
@@ -536,72 +667,78 @@ class OBJimport:
             if self.comment[35:]=="FUSELAGE    station 0":
                 self.fusecount=self.fusecount+1
             self.comment=self.comment[35:47].strip()
-        while 1:
-            pos = self.file.tell()
-            c = self.file.read(1)
-            if c == "\r":
-                self.lineno += 1
-            elif c != "\n":
-                break
-        self.file.seek(pos)
 
     #------------------------------------------------------------------------
     def readHeader(self):
         c=self.file.read(1)
         if self.verbose>1:
             print "Input:\t\"%s\"" % c
-        if c=="A" or c=="I":
+        if not c in ['A', 'I']:
+            raise ParseError(ParseError.HEADER)
+        
+        self.getCR()
+        c = self.file.read(1)
+        if self.verbose>1:
+            print "Input:\t\"%s\"" % c
+        if c=="2":
             self.getCR()
-            c = self.file.read(1)
-            if self.verbose>1:
-                print "Input:\t\"%s\"" % c
-            if c=="2":
-                self.getCR()
-                self.fileformat=6
-                if self.verbose:
-                    print "Info:\tThis is an X-Plane v6 format file"
-            elif c=="7" and self.file.read(2)=="00":
-                self.getCR()
-                if self.file.read(3)!="OBJ":
-                    raise ParseError(ParseError.HEADER)
-                self.getCR()
-                self.fileformat=7
-                if self.verbose:
-                    print "Info:\tThis is an X-Plane v7 format file"
-            else:
+            self.fileformat=6
+            if self.verbose:
+                print "Info:\tThis is an X-Plane v6 format file"
+        elif c=="7" and self.file.read(2)=="00":
+            self.getCR()
+            if self.file.read(3)!="OBJ":
                 raise ParseError(ParseError.HEADER)
+            self.getCR()
+            self.fileformat=7
+            if self.verbose:
+                print "Info:\tThis is an X-Plane v7 format file"
+        elif c=="8" and self.file.read(2)=="00":
+            self.getCR()
+            if self.file.read(3)!="OBJ":
+                raise ParseError(ParseError.HEADER)
+            self.getCR()
+            self.fileformat=8
+            if self.verbose:
+                print "Info:\tThis is an X-Plane v8 format file"
         else:
             raise ParseError(ParseError.HEADER)
 
-        # skip to first non-whitespace
-        while 1:
-            pos = self.file.tell()
-            c = self.file.read(1)
-            if not c:
-                raise ParseError(ParseError.HEADER)
-            if c == "\r":
-                self.lineno += 1
-            if not c in self.whitespace:
-                self.file.seek(pos)
-                break
-
         # read texture
+        if self.fileformat==8:
+            t=self.getToken()
+            if t!=Token.TEXTURE:
+                raise ParseError(ParseError.HEADER)
+        else:
+            # skip to first non-whitespace
+            while 1:
+                pos = self.file.tell()
+                c = self.file.read(1)
+                if not c:
+                    raise ParseError(ParseError.HEADER)
+                if c == '\n':
+                    self.lineno += 1 
+                if not c in self.whitespace:
+                    self.file.seek(pos)
+                    break
+
+        # read to newline or comment - include spaces
         tex=""
         while 1:
             pos = self.file.tell()
             c = self.file.read(1)
             if not c:
                 raise ParseError(ParseError.HEADER)
-            if c == "\r":
+            if c == '\n':
                 self.lineno += 1
-            if c in ["\r", '/']:
+            if c in ['\n', '/']:
                 self.file.seek(pos)
                 break
             tex = tex + c
+        self.getCR()
         tex = tex.strip()
 
-        self.getCR()
-        if tex=="none":
+        if tex.lower() in ['', 'none']:
             self.image=0
             if self.verbose:
                 print "Info:\tNo texture"
@@ -625,7 +762,7 @@ class OBJimport:
                 else:
                     break
                 
-                for extension in [".bmp", ".png"]:
+                for extension in ['', '.bmp', '.png']:
                     texname=texdir+subdir+basename+extension
                     try:
                         file = open(texname, "rb")
@@ -640,7 +777,7 @@ class OBJimport:
                                     newname+="_"
                                 else:
                                     newname+=basename[i]
-                            newname=self.filename[:l]+prefix+newname+extension
+                            newname=texdir+subdir+newname+extension
                             newfile=open(newname, "wb")
                             newfile.write(file.read())
                             newfile.close()
@@ -660,11 +797,202 @@ class OBJimport:
     def readObjects (self):
         scene = Blender.Scene.getCurrent();
 
-        if self.fileformat==7:
+        if self.fileformat==8:
             while 1:
-                t=self.get7Token()
+                t=self.getToken()
 
-                if t==Token.END7:
+                if t==Token.END:
+                    # write meshes
+                    self.mergeMeshes()
+                    for mesh in self.curmesh:
+                        mesh.doimport(scene,self.image,self.filename)
+                    return
+
+                elif t==Token.VLIGHT:
+                    v=self.getVertex()
+                    c=self.getCol()
+                    self.vlight.append((v,c))
+
+                elif t==Token.VLINE:
+                    v=self.getVertex()
+                    c=self.getCol()
+                    self.vline.append((v,c))
+
+                elif t==Token.VT:
+                    v=self.getVertex()
+                    self.getVertex()	# ignore normal
+                    uv=self.getUV()
+                    self.vt.append((v,uv))
+
+                elif t==Token.IDX:
+                    self.idx.append(self.getInt())
+
+                elif t==Token.IDX10:
+                    for i in range(10):
+                        self.idx.append(self.getInt())
+
+                elif t==Token.LIGHTS:
+                    a=self.getInt()
+                    b=self.getInt()
+                    for i in range(a,a+b):
+                        (v,c)=self.vlight[i]
+                        self.addLamp(scene,v,c)
+
+                elif t==Token.LINES:
+                    a=self.getInt()
+                    b=self.getInt()
+                    for i in range(a,a+b,2):
+                        v=[]
+                        for j in range(i,i+2):
+                            (vj,cj)=self.vline[self.idx[j]]
+                            v.append(vj)
+                            c=cj	# use second colour value
+                        self.addLine(scene,v,c)
+
+                elif t==Token.TRIS:
+                    a=self.getInt()
+                    b=self.getInt()
+                    for i in range(a,a+b,3):
+                        v=[]
+                        uv=[]
+                        for j in range(i,i+3):
+                            (vj,uvj)=self.vt[self.idx[j]]
+                            v.append(vj)
+                            uv.append(uvj)
+                        self.addFan(scene,t,v,uv)
+
+                elif t==Token.ANIM_BEGIN:
+                    raise ParseError(ParseError.MISC, 'Animation is not supported')
+                    if Blender.Get('version')<239:
+                        raise ParseError(ParseError.MISC, 'Blender version 2.40 or later required for animation')
+                    if self.bone:
+                        if self.bone.name!='Bone':
+                            self.arm.addBone(self.bone)
+                            bone = Armature.Bone.New('Bone')
+                            bone.setParent(self.bone)
+                            self.bone=bone
+                    else:
+                        self.arm = Armature.New()
+                        self.bone = Armature.Bone.New('Bone')
+                    
+                elif t==Token.ANIM_END:
+                    if self.bone:
+                        self.arm.addBone(self.bone)
+                        if self.bone.parent:
+                            self.bone=self.bone.parent
+                        else:
+                            ob = Object.New('Armature', 'Armature')
+                            ob.link(self.arm)
+                            scene.link(ob)
+                            if self.lod:
+                                ob.Layer=OBJimport.LAYER[self.lod]
+                            ob.setLocation(Window.GetCursorPos())
+                            self.arm=None
+                            self.bone=None
+                    
+                elif t==Token.ANIM_TRANS:
+                    p1=self.getVertex()
+                    p2=self.getVertex()
+                    v1=self.getFloat()
+                    v2=self.getFloat()
+                    dataref=self.getInput()
+                    if dataref.find('/')!=-1:
+                        dataref=dataref[:dataref.find('/')+1]
+                    if self.bone.name=='Bone':
+                        self.bone.name=dataref
+                    elif self.bone.name[:len(dataref)]!=dataref:
+                        self.arm.addBone(self.bone)
+                        bone = Armature.Bone.New(dataref)
+                        bone.setParent(self.bone)
+                        self.bone=bone
+
+                elif t==Token.HARD:
+                    self.hard = True
+                elif t==Token.NO_HARD:
+                    self.hard = False
+
+                elif t==Token.COCKPIT:
+                    self.panel = True
+                elif t==Token.NO_COCKPIT:
+                    self.panel = False
+
+                elif t==Token.SHADE_FLAT:
+                    self.flat = True
+                elif t==Token.SHADE_SMOOTH:
+                    self.flat = False
+                
+                elif t==Token.POLY_OS:
+                    n = self.getFloat()
+                    self.poly = (n!=0)
+
+                elif t==Token.DEPTH:
+                    self.poly=False
+                elif t==Token.NO_DEPTH:
+                    self.poly=True
+
+                elif t==Token.CULL:
+                    self.twoside = False
+                elif t in [Token.NO_CULL, Token.NOCULL]:
+                    self.twoside = True
+
+                elif t==Token.ALPHA:
+                    self.alpha = True
+                elif t==Token.NO_ALPHA:
+                    self.alpha = False
+
+                elif t==Token.LOD:
+                    x = self.getFloat()
+                    self.getFloat()
+                    if not self.lod:
+                        print "Info:\tMultiple Levels Of Detail found"
+                    if x>=3999:
+                        self.lod=3
+                    elif x>=999:
+                        self.lod=2
+                    else:
+                        self.lod=1
+                    # Reset attributes
+                    self.hard=False
+                    self.twoside=False
+                    self.flat=False
+                    self.alpha=False
+                    self.panel=False
+                    self.poly=False
+                
+                elif t==Token.RESET:
+                    self.hard=False
+                    self.twoside=False
+                    self.flat=False
+                    self.alpha=False
+                    self.panel=False
+                    self.poly=False
+
+                elif t in [Token.POINT_COUNTS, Token.TEXTURE_LIT]:
+                    # Silently ignore
+                    self.getCR()
+
+                else:
+                    print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
+                    if t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
+                        n=4
+                    elif t in [Token.AMBIENT_RGB, Token.SPECULAR_RGB,
+                               Token.EMISSION_RGB]:
+                        n=3
+                    elif t in [Token.SHINY_RAT, Token.SLUNG_LOAD_WEIGHT]:
+                        n=1
+                    elif t in [Token.BLEND, Token.NO_BLEND]:
+                        n=0
+                    else:
+                        raise ParseError(ParseError.TOKEN, Token.NAMES[t])
+
+                    for i in range(n):
+                        self.getFloat()
+                
+        elif self.fileformat==7:
+            while 1:
+                t=self.getToken()
+
+                if t==Token.END:
                     # write meshes
                     self.mergeMeshes()
                     for mesh in self.curmesh:
@@ -672,19 +1000,21 @@ class OBJimport:
                     return
                 
                 elif t==Token.LIGHT:
+                    self.getCR()
                     v=self.getVertex()
                     c=self.getCol()
                     self.addLamp(scene,v,c)
 
                 elif t==Token.LINE:
+                    self.getCR()
                     v = []
-                    c = []
                     for i in range(2):
                         v.append(self.getVertex())
                         c=self.getCol()	# use second colour value
                     self.addLine(scene,v,c)
 
                 elif t==Token.TRI:
+                    self.getCR()
                     v = []
                     uv = []
                     for i in range(3):
@@ -696,12 +1026,19 @@ class OBJimport:
                            Token.QUAD_HARD,
                            Token.QUAD_MOVIE,
                            Token.QUAD_COCKPIT]:
+                    self.getCR()
+                    if t==Token.QUAD_HARD:
+                        self.hard=True
+                    elif t==Token.QUAD_COCKPIT:
+                        self.panel=True
                     v = []
                     uv = []
                     for i in range(4):
                         v.append(self.getVertex())
                         uv.append(self.getUV())
                     self.addStrip(scene,t,v,uv,[3,2,1,0])
+                    self.hard=False
+                    self.panel=False
                                          
                 elif t==Token.POLYGON:
                     # add centre point, duplicate first point, use Tri_Fan
@@ -710,6 +1047,7 @@ class OBJimport:
                     cv = [0,0,0]
                     cuv = [0,0]
                     n = self.getInt()
+                    self.getCR()
                     for i in range(n):
                         v.append(self.getVertex())
                         cv[0]+=v[i].x
@@ -731,6 +1069,7 @@ class OBJimport:
 
                 elif t==Token.QUAD_STRIP:
                     n = self.getInt()
+                    self.getCR()
                     v = []
                     uv = []
                     for i in range(n):
@@ -742,6 +1081,7 @@ class OBJimport:
                     v = []
                     uv = []
                     n = self.getInt()
+                    self.getCR()
                     for i in range(n):
                         v.append(self.getVertex())
                         uv.append(self.getUV())
@@ -751,24 +1091,42 @@ class OBJimport:
                     v = []
                     uv = []
                     n = self.getInt()
+                    self.getCR()
                     for i in range(n):
                         v.append(self.getVertex())
                         uv.append(self.getUV())
                     self.addFan(scene,t,v,uv)
                     
                 elif t==Token.SHADE_FLAT:
-                    self.smooth = 0
+                    self.getCR()
+                    self.flat = True
                 elif t==Token.SHADE_SMOOTH:
-                    self.smooth = 1
+                    self.getCR()
+                    self.flat = False
                 
+                elif t==Token.POLY_OS:
+                    n = self.getFloat()
+                    self.getCR()
+                    self.poly = (n!=0)
+
                 elif t==Token.DEPTH:
-                    self.no_depth = 0
+                    self.getCR()
+                    self.poly=False
                 elif t==Token.NO_DEPTH:
-                    self.no_depth = 1
-                
+                    self.getCR()
+                    self.poly=True
+
+                elif t==Token.CULL:
+                    self.getCR()
+                    self.twoside = False
+                elif t in [Token.NO_CULL, Token.NOCULL]:
+                    self.getCR()
+                    self.twoside = True
+
                 elif t==Token.LOD:
                     x = self.getFloat()
                     self.getFloat()
+                    self.getCR()
                     if not self.lod:
                         print "Info:\tMultiple Levels Of Detail found"
                     if x>=3999:
@@ -777,28 +1135,20 @@ class OBJimport:
                         self.lod=2
                     else:
                         self.lod=1
+                    # Reset attributes
+                    self.twoside=False
+                    self.flat=False
+                    self.poly=False
                 
                 elif t==Token.RESET:
-                    # Not sure what gets reset
-                    self.smooth=1	# >=7.30 defaults to smoothed rendering
-                    self.no_depth=0
-                    self.twoside=0
-
-                elif t==Token.CULL:
-                    self.twoside = 0
-                elif t in [Token.NO_CULL, Token.NOCULL]:
-                    self.twoside = 1
-
-                elif t==Token.POLY_OS:
-                    n = self.getInt()
-                    if n!=0:
-                        print "Warn:\tIgnoring non-zero ATTR_poly_os"
+                    self.getCR()
+                    self.twoside=False
+                    self.flat=False
+                    self.poly=False
 
                 else:
-                    print "Warn:\tIgnoring unsupported %s" % Token.NAMES[t]
-                    if t==Token.LINE:
-                        n=12
-                    elif t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
+                    print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
+                    if t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
                         n=4
                     elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
                                Token.SPECULAR_RGB, Token.EMISSION_RGB]:
@@ -806,15 +1156,17 @@ class OBJimport:
                     elif t in [Token.SHINY_RAT]:
                         n=1
                     else:
-                        assert 0, "Can't parse type %s" % t
+                        raise ParseError(ParseError.TOKEN, Token.NAMES[t])
 
                     for i in range(n):
                         self.getFloat()
+                    self.getCR()
+
         else:	# v6
             while 1:
-                t=self.get6Token()
+                t=self.getToken()
 
-                if t==Token.END6:
+                if t==Token.END:
                     # write meshes
                     self.mergeMeshes()
                     Blender.Window.WaitCursor(1)
@@ -824,12 +1176,14 @@ class OBJimport:
     
                 elif t==Token.LIGHT:
                     c=self.getCol()
+                    self.getCR()
                     v=self.getVertex()
                     self.addLamp(scene,v,c)
                 
                 elif t==Token.LINE:
                     v = []
                     c=self.getCol()
+                    self.getCR()
                     for i in range(2):
                         v.append(self.getVertex())
                     self.addLine(scene,v,c)
@@ -839,6 +1193,7 @@ class OBJimport:
                     uv = []
                     for i in range(4):
                         uv.append(self.getFloat())	# s s t t
+                    self.getCR()
                     for i in range(3):
                         v.append(self.getVertex())
                     # UV order appears to be arbitrary
@@ -848,10 +1203,13 @@ class OBJimport:
                 elif t in [Token.QUAD,
                            Token.QUAD_HARD,
                            Token.QUAD_MOVIE]:
+                    if t==Token.QUAD_HARD:
+                        self.hard=True
                     v = []
                     uv = []
                     for i in range(4):
                         uv.append(self.getFloat())
+                    self.getCR()
                     for i in range(4):
                         v.append(self.getVertex())
                     self.addStrip(scene,t,v,[UV(uv[1],uv[3]),
@@ -859,8 +1217,10 @@ class OBJimport:
                                              UV(uv[0],uv[2]),
                                              UV(uv[0],uv[3])],
                                   [3,2,1,0])
+                    self.hard=False
 
                 elif t<0:	# Quad strip
+                    self.getCR()
                     n = -t	# number of pairs
                     v = []
                     uv = []
@@ -874,40 +1234,35 @@ class OBJimport:
                     self.addStrip(scene,Token.QUAD_STRIP,v,uv,[1,0,2,3])
 
                 else:
-                    print "Warn:\tIgnoring unsupported %s" % Token.NAMES[t]
-                    if t==Token.LINE:
-                        n=9
-                    elif t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE,
-                               Token.QUAD, Token.QUAD_HARD, Token.QUAD_MOVIE]:
+                    print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
+                    self.getCR()
+                    if t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
                         n=16
                     else:
-                        assert 0, "Can't parse type %s" % t
+                        raise ParseError(ParseError.TOKEN, ("%s" % t))
                         
                     for i in range(n):
                         self.getFloat()
 
     #------------------------------------------------------------------------
     def addLamp(self, scene, v, c):
-        if c[0]==99 and c[1]==99 and c[2]==99:
-            c[0]=1.0
-            c[1]=c[2]=0.0
+        if c[0]==9.9 and c[1]==9.9 and c[2]==9.9:
+            c[0]=1
+            c[1]=c[2]=0
             name="Pulse"
-        elif c[0]==98 and c[1]==98 and c[2]==98:
-            c[0]=c[1]=c[2]=1.0
+        elif c[0]==9.8 and c[1]==9.8 and c[2]==9.8:
+            c[0]=c[1]=c[2]=1
             name="Strobe"
-        elif c[0]==97 and c[1]==97 and c[2]==97:
-            c[0]=c[1]=1.0
-            c[2]=0.0
+        elif c[0]==9.7 and c[1]==9.7 and c[2]==9.7:
+            c[0]=c[1]=1
+            c[2]=0
             name="Traffic"
         elif c[0]<0 or c[1]<0 or c[2]<0:
-            c[0]=abs(c[0])/10.0
-            c[1]=abs(c[1])/10.0
-            c[2]=abs(c[2])/10.0
+            c[0]=abs(c[0])
+            c[1]=abs(c[1])
+            c[2]=abs(c[2])
             name="Flash"
         else:
-            c[0]=c[0]/10.0
-            c[1]=c[1]/10.0
-            c[2]=c[2]/10.0
             name="Light"
 
         if self.verbose:
@@ -969,8 +1324,8 @@ class OBJimport:
             face.v.append(nmv)
 
         mesh.materials.append(Material.New(name))
-        mesh.materials[0].rgbCol=[c[0]/10.0,c[1]/10.0,c[2]/10.0]
-        face.mat=0            
+        mesh.materials[0].rgbCol=[c[0],c[1],c[2]]
+        face.mat=0
         mesh.faces.append(face)
 
         ob = Object.New("Mesh", name)
@@ -987,7 +1342,10 @@ class OBJimport:
     def addFan(self, scene, token, v, uv):
         # input v: list of co-ords, uv: corresponding list of uv points
         #	v[0] and uv[0] are common to every triangle
-        name=self.name(Token.NAMES[token])
+        if self.fileformat==8:
+            name="Mesh"
+        else:
+            name=self.name(Token.NAMES[token])
         if self.verbose:
             print "Info:\tImporting %s at line %s \"%s\"" % (
                 Token.NAMES[token], self.lineno, name)
@@ -1004,12 +1362,12 @@ class OBJimport:
             face.addUV(uv[f+1])
             face.addUV(uv[f])
 
-            if self.smooth:
-                face.flags |= Face.SMOOTH
-            if self.no_depth:
-                face.flags |= Face.NO_DEPTH
             if self.twoside:
                 face.flags |= Face.TWOSIDE
+            if self.flat:
+                face.flags |= Face.FLAT
+            if self.poly:
+                face.flags |= Face.TILES
                 
             faces.append(face)
             
@@ -1069,16 +1427,16 @@ class OBJimport:
             if face.removeDuplicateVertices() < 3:
                 continue
             
-            if token==Token.QUAD_HARD:
+            if self.hard:
                 face.flags |= Face.HARD
-            if token==Token.QUAD_COCKPIT:
-                face.flags |= Face.PANEL
-            if self.smooth:
-                face.flags |= Face.SMOOTH
-            if self.no_depth:
-                face.flags |= Face.NO_DEPTH
             if self.twoside:
                 face.flags |= Face.TWOSIDE
+            if self.flat:
+                face.flags |= Face.FLAT
+            if self.poly:
+                face.flags |= Face.TILES
+            if self.panel:
+                face.flags |= Face.PANEL
             
             faces.append(face)
 
@@ -1160,18 +1518,18 @@ def file_callback (filename):
         obj.doimport()
     except ParseError, e:
         if e.type == ParseError.HEADER:
-            msg="ERROR:\tThis is not a valid X-Plane v6 or v7 OBJ file\n"
+            msg="ERROR:\tThis is not a valid X-Plane v6, v7 or v8 OBJ file\n"
         else:
             if e.type == ParseError.TOKEN:
-                msg="ERROR:\tExpecting a Token,"
+                msg="ERROR:\tExpecting a Token, found \"%s\" at line %s\n" % (
+                    e.value, obj.lineno)
             elif e.type == ParseError.INTEGER:
-                msg="ERROR:\tExpecting an integer,"
+                msg="ERROR:\tExpecting an integer, found \"%s\" at line %s\n" % (e.value, obj.lineno)
             elif e.type == ParseError.FLOAT:
-                msg="ERROR:\tExpecting a number,"
+                msg="ERROR:\tExpecting a number, found \"%s\" at line %s\n" % (
+                    e.value, obj.lineno)
             else:
-                msg="ERROR:\tParse error,",
-            msg=msg+" found \"%s\" at line %s\n" % (
-                e.value, obj.lineno)
+                msg="ERROR:\t%s at line %s\n" % (e.value, obj.lineno)
         Window.DrawProgressBar(1, "Error")
         print msg
         Blender.Draw.PupMenu(msg)

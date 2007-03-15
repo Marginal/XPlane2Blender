@@ -35,7 +35,7 @@ import sys
 from math import sqrt, sin, cos
 import Blender
 from Blender import Types, Image
-from Blender.Mathutils import Vector
+from Blender.Mathutils import Vector, Euler
 
 class Vertex:
     LIMIT=0.001	# max distance between vertices for them to be merged
@@ -44,7 +44,7 @@ class Vertex:
     def __init__ (self, x, y=None, z=None, mm=None):
         self.faces=[]	# indices into face array
 
-        if isinstance(x, Types.vectorType):
+        if isinstance(x, Types.vectorType) or isinstance(x, Types.eulerType):
             mm=y
             z=x.z
             y=x.y
@@ -90,6 +90,9 @@ class Vertex:
     def __div__ (self, right):
         return Vertex(self.x/right, self.y/right, self.z/right)
     
+    def __neg__ (self):
+        return Vertex(-self.x, -self.y, -self.z)
+
     def equals (self, v, fudge=LIMIT):
         if ((abs(self.x-v.x) <= fudge) and
             (abs(self.y-v.y) <= fudge) and
@@ -98,7 +101,7 @@ class Vertex:
         else:
             return False
 
-    def Vector (self, n):
+    def toVector (self, n):
         v=[self.x, self.y]
         if n==3:
             v.append(self.z)
@@ -108,7 +111,17 @@ class Vertex:
             raise AttributeError
         return Vector(v)
 
-    def norm (self):
+    def toEuler (self, n):
+        v=[self.x, self.y]
+        if n==3:
+            v.append(self.z)
+        elif n==4:
+            v.extend([self.z, 1.0])
+        else:
+            raise AttributeError
+        return Euler(v)
+
+    def normalize (self):
         hyp=sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
         return self/hyp
 
@@ -146,7 +159,10 @@ class UV:
         return UV(self.s*right.s, self.t*right.t)
 
     def __div__ (self, right):
-        return UV(self.s/right.s, self.t/right.t)
+        if isinstance(right, int):
+            return UV(self.s/right, self.t/right)
+        else:
+            return UV(self.s/right.s, self.t/right.t)
 
     def equals (self, uv):
         if ((abs(self.s-uv.s) <= UV.LIMIT) and
@@ -157,13 +173,12 @@ class UV:
 
 class Face:
     # Flags in sort order
-    TWOSIDE=1
-    SMOOTH=2
-    ALPHA=4	# Must be 2nd last
-    PANEL=8	# Must be last
-    BUCKET=TWOSIDE|SMOOTH|ALPHA|PANEL
-    # Other flags
-    HARD=16
+    HARD=1
+    TWOSIDE=2
+    FLAT=4
+    ALPHA=8	# Must be 2nd last
+    PANEL=16	# Must be last
+    BUCKET=HARD|TWOSIDE|FLAT|ALPHA|PANEL	# For v7 export
     TILES=32
 
     def __init__ (self):

@@ -14,7 +14,7 @@ for I in $FILES; do
 done
  
 mkdir -p "$DESTDIR"
-FILES="helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport7.py XPlaneImport.py XPlaneImportPlane.py XPlaneUtils.py XPlaneACF.py XPlane2Blender.html"
+FILES="helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneImport.py XPlaneImportPlane.py XPlaneUtils.py XPlaneACF.py XPlane2Blender.html"
 cp -f $FILES "$DESTDIR"
 for I in $FILES; do
     if ! [ -r "$DESTDIR/$I" ]; then

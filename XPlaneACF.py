@@ -253,7 +253,7 @@ class ACFimport:
         mm=TranslationMatrix((Vertex(part.part_x,
                                      part.part_y+self.acf.VTOL_vectarmY,
                                      part.part_z+self.acf.VTOL_vectarmZ,
-                                     self.mm)+self.cur).Vector(4))
+                                     self.mm)+self.cur).toVector(4))
         mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
         mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
 
@@ -381,7 +381,7 @@ class ACFimport:
             imagemkr=ACFimport.IMAGE2MKR
             image=self.image2
 
-        mm=TranslationMatrix(centre.Vector(4))
+        mm=TranslationMatrix(centre.toVector(4))
         mm=RotationMatrix(-wing.lat_sign*wing.dihed1, 4, 'y')*mm
         
         # Don't want to rotate to find wing sweep. So find tip manually.
@@ -550,7 +550,7 @@ class ACFimport:
                 Vertex(0.0,   -self.acf.wing[rootp].Croot*self.scale*3/4, 0.0)]
             lv=[rv[3], rv[2], rv[1], rv[0]]
 
-            mm=TranslationMatrix(centre.Vector(4))	# no rotation
+            mm=TranslationMatrix(centre.toVector(4))	# no rotation
 
 
         mesh=NMesh.New(name+ACFimport.LAYER3MKR+imagemkr)
@@ -584,7 +584,7 @@ class ACFimport:
             mm=TranslationMatrix((Vertex(watt.watt_x,
                                          watt.watt_y,
                                          watt.watt_z,
-                                         self.mm)+self.cur).Vector(4))
+                                         self.mm)+self.cur).toVector(4))
 
             if watt.watt_con in range(14,24):
                 # Rotation modified by gear angle
@@ -600,7 +600,7 @@ class ACFimport:
             mm=TranslationMatrix(Vertex(-part.part_x,
                                         -part.part_y,
                                         -part.part_z,
-                                        self.mm).Vector(4))*mm
+                                        self.mm).toVector(4))*mm
         else:
             # Normal bodies
             part=self.acf.part[p]
@@ -623,12 +623,12 @@ class ACFimport:
                                              gear.gear_z,
                                              self.mm)+
                                       Vertex(MatMultVec(a,Vector([0,0,-gear.leg_len*self.scale])))+
-                                      self.cur).Vector(4))
+                                      self.cur).toVector(4))
             else:
                 mm=TranslationMatrix((Vertex(part.part_x,
                                              part.part_y,
                                              part.part_z,
-                                             self.mm)+self.cur).Vector(4))
+                                             self.mm)+self.cur).toVector(4))
 
             if part.patt_con in range(14,24):
                 # Rotation modified by gear angle
@@ -933,7 +933,7 @@ class ACFimport:
         if self.debug: print name
         
         mm=TranslationMatrix((Vertex(gear.gear_x, gear.gear_y, gear.gear_z,
-                                     self.mm)+self.cur).Vector(4))
+                                     self.mm)+self.cur).toVector(4))
         mm=RotationMatrix(-gear.latE, 4, 'y')*mm
         mm=RotationMatrix(gear.lonE, 4, 'x')*mm
 
@@ -1040,7 +1040,7 @@ class ACFimport:
         mm=TranslationMatrix((Vertex(gear.gear_x, gear.gear_y, gear.gear_z,
                                      self.mm)+
                               Vertex(MatMultVec(a,Vector([0,0,-strutlen])))+
-                              self.cur).Vector(4))
+                              self.cur).toVector(4))
         mesh=NMesh.New(name+ACFimport.LAYER1MKR)
 
         if self.acf.HEADER_version<800:	# v7
@@ -1239,7 +1239,7 @@ class ACFimport:
 
         name="Door %s" % (p+1)
         
-        mm=TranslationMatrix((Vertex(door.xyz,self.mm)+self.cur).Vector(4))
+        mm=TranslationMatrix((Vertex(door.xyz,self.mm)+self.cur).toVector(4))
         mm=RotationMatrix(-door.axi_rot, 4, 'z')*mm
         if self.acf.HEADER_version<800:	# v7
             mm=RotationMatrix(-door.ext_ang, 4, 'y')*mm
