@@ -3,10 +3,10 @@
 Name: 'X-Plane'
 Blender: 230
 Group: 'Export'
-Tooltip: 'Export to X-Plane (.obj) file.'
+Tooltip: 'Export to X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.31 or above, version 1.0
+# X-Plane exporter for blender 2.32 or above, version 1.1
 #
 # Author: Jonathan Harris <x-plane@marginal.org.uk>
 #
@@ -24,11 +24,13 @@ Tooltip: 'Export to X-Plane (.obj) file.'
 # 2004-02-01 v1.0 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - First public version
 #
+# 2004-02-01 v1.1 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Updated for Blender 2.32
+#
 
 import sys
 import Blender
 from Blender import NMesh, Lamp, Draw
-import math
 from string import *
 
 #------------------------------------------------------------------------
@@ -105,9 +107,8 @@ class OBJexport:
                 if mesh.hasFaceUV():
                     for face in mesh.faces:
                         if face.image:
-                            if (not texture) or \
-                                   (lower(texture) ==
-                                    lower(face.image.filename)):
+                            if (not texture) or (lower(texture) ==
+                                                 lower(face.image.filename)):
                                 texture = face.image.filename
                                 texlist.append(lower(texture))
                             else:
@@ -233,8 +234,7 @@ class OBJexport:
                     smooth=0
                     self.file.write("ATTR_shade_flat\t// solid\n\n")
 
-                if self.fileformat==7 and \
-                       (face.mode & NMesh.FaceModes.TILES) and not no_depth:
+                if self.fileformat==7 and (face.mode & NMesh.FaceModes.TILES) and not no_depth:
                     no_depth=1
                     # X-Plane parser requires a comment
                     self.file.write("ATTR_no_depth\t// no depth testing\n\n")

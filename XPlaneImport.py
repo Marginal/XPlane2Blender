@@ -1,12 +1,12 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane'
+Name: 'X-Plane...'
 Blender: 230
 Group: 'Import'
-Tooltip: 'Import from X-Plane (.obj) file.'
+Tooltip: 'Import X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.3 or above, version 1.0
+# X-Plane importer for blender 2.32 or above, version 1.1
 #
 # Author: Jonathan Harris <x-plane@marginal.org.uk>
 #
@@ -23,11 +23,13 @@ Tooltip: 'Import from X-Plane (.obj) file.'
 # 2004-02-01 v1.0 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - First public version
 #
+# 2004-02-01 v1.1 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Updated for Blender 2.32
+#
 
 import sys
 import Blender
 from Blender import Object, NMesh, Lamp, Image, Material, Texture
-import math
 from string import *
 
 class ParseError(Exception):

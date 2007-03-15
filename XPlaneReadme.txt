@@ -2,12 +2,8 @@ XPlane2Blender - X-Plane import/export scripts for Blender 3D
 -------------------------------------------------------------
 
 Author: 	Jonathan Harris <x-plane@marginal.org.uk>
-Version:	1.0
+Version:	1.1
 Latest version:	http://marginal.org.uk/x-plane
-
-Requirements:	Blender 2.3 or later <http://www.blender3d.org/Download/>
-		Python 2.2 <http://www.python.org/2.2.3/> (Blender 2.3
-		does not support Python 2.3 at time or writing).
 
 
 Blender is an open source 3D object editor <http://www.blender3d.org/>.
@@ -18,11 +14,33 @@ Smoke_Black and Smoke_White (none of which are directly representable in
 Blender).
 
 
+Requirements
+------------
+ - Blender 2.32 or later:
+   http://www.blender3d.org/Download/
+ - Python 2.2 (Blender does not support Python 2.3 at time of
+   writing - this should be fixed in the next Blender release)
+    - Windows:
+      http://www.python.org/2.2.3/
+    - Mac OS X:
+      The default Python that ships with Mac OS X is not suitable.
+      There are Mac OS X installation instructions at
+      http://www.widomaker.com/~katorlegaz/blendertips/python.html
+
+
+Installation
+------------
+Unpack the zip file to the folder containing your Blender scripts. If
+you installed Blender in the default location on Windows this folder is
+"C:\Program Files\Blender Foundation\Blender\.blender\scripts\".
+(Re)start Blender.
+
+
 Importing
 ---------
-Open XPlaneImport.py in a Blender text window. Hit Alt-P to run. Select
-a .obj file. Any problems with the import will be listed in the console
-window with lines starting "Warn" or "Error".
+File -> Import -> X-Plane
+Select a .obj file. Any problems with the import will be listed in the
+console window with lines starting "Warn" or "Error".
 
 You can import multiple scenery files and re-export them as a single
 file. But note that the X-Plane .obj file format only supports one
@@ -33,10 +51,10 @@ exporting.
 
 Exporting
 ---------
-Open XPlaneExport.py in a Blender text window. Hit Alt-P to run. The
-output filename is the same as the current Blender filename, but with a
-.obj extension. Any problems with the export will be listed in the
-console window with lines starting "Warn" or "Error".
+File -> Export -> X-Plane
+The output filename is the same as the current Blender filename, but
+with a .obj extension. Any problems with the export will be listed in
+the console window with lines starting "Warn" or "Error".
 
 
 Using Blender to create X-Plane scenery
@@ -48,7 +66,7 @@ Lamps:
    "Energy") are ignored.
  - Lamp types "Spot", "Semi" and "Hemi" are not exported. You can use
    lamps of these types to provide general illumination of your scene.
- - Lamps with certain names have special meanings to X-Plane:
+ - Lamps with certain names have special meanings when exported:
     "Flash"   - Light flashes.
     "Pulse"   - Red pulsing light. (R,G,B settings are ignored).
     "Strobe"  - White strobe light. (R,G,B settings are ignored).
@@ -102,6 +120,8 @@ coming from their centre. The visible side of the face is the side that
 you are looking at when the line is pointing _towards_ you.
 
 Mail me <x-plane@marginal.org.uk> with any questions, problems etc.
+If reporting a problem, please try to send me the contents of the
+Console window.
 
 
 Limitations
