@@ -6,7 +6,7 @@ Group: 'Import'
 Tooltip: 'Import X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.32 or above, version 1.12
+# X-Plane importer for blender 2.32 or above, version 1.13
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -49,6 +49,10 @@ Tooltip: 'Import X-Plane file format (.obj)'
 #  - Export: Fixed filename bug when texture file is a png
 #  - Import: Fixed refusing to recognise DOS-mode v6 files
 #  - Import: Fixed triangle texture rotation with v6 files
+#
+# 2004-02-09 v1.13 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Import: Fixed filename bug when texture file is a png
+#  - Export: Fixed lack of comment bug on v7 objects
 #
 
 import sys
@@ -127,8 +131,8 @@ class OBJimport:
         self.filename=filename
         self.lastpos=0	# for error reporting
         self.fileformat=0
-        self.image=""
-        self.material=""
+        self.image=0
+        self.material=0
         self.whitespace=[" ","\t","\n","\r"]
 
         if sys.platform=="win32":
@@ -285,7 +289,7 @@ class OBJimport:
     def readTexture (self):
         tex=self.getInput()
         if tex=="none":
-            self.image=""
+            self.image=0
             if self.verbose:
                 print "Info:\tNo texture"
             return
@@ -304,31 +308,32 @@ class OBJimport:
             l=l+1
 
         p=".."+self.dirsep
-        for prefix in ["",
-                       p+"custom object textures"+self.dirsep,
-                       p+p+"custom object textures"+self.dirsep,
-                       p+p+p+"custom object textures"+self.dirsep,
-                       p+"AutoGen textures"+self.dirsep,
-                       p+p+"AutoGen textures"+self.dirsep,
-                       p+p+p+"AutoGen textures"+self.dirsep]:
-            texfilename=self.filename[:l]+prefix+basename+".bmp"
-            try:
-                file = open(texfilename, "rb")
-            except IOError:
-                pass
-            else:
-                file.close()
-                if self.verbose:
-                    print "Info:\tUsing texture file \"%s\"" % texfilename
-                self.image = Image.Load(texfilename)
+        for extension in [".bmp", ".png"]:
+            for prefix in ["",
+                           p+"custom object textures"+self.dirsep,
+                           p+p+"custom object textures"+self.dirsep,
+                           p+p+p+"custom object textures"+self.dirsep,
+                           p+"AutoGen textures"+self.dirsep,
+                           p+p+"AutoGen textures"+self.dirsep,
+                           p+p+p+"AutoGen textures"+self.dirsep]:
+                texfilename=self.filename[:l]+prefix+basename+extension
+                try:
+                    file = open(texfilename, "rb")
+                except IOError:
+                    pass
+                else:
+                    file.close()
+                    if self.verbose:
+                        print "Info:\tUsing texture file \"%s\"" % texfilename
+                    self.image = Image.Load(texfilename)
                 
-                self.material = Material.New(tex)
-                self.material.mode |= Material.Modes.TEXFACE
-                self.material.setAmb(0.25)	# Make more visible
+                    self.material = Material.New(tex)
+                    self.material.mode |= Material.Modes.TEXFACE
+                    self.material.setAmb(0.25)	# Make more visible
 
-                return
+                    return
             
-        self.image=""
+        self.image=0
         print "Warn:\tTexture file \"%s\" not found" % basename
             
     #------------------------------------------------------------------------

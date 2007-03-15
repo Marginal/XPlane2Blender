@@ -6,7 +6,7 @@ Group: 'Export'
 Tooltip: 'Export to X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.32 or above, version 1.12
+# X-Plane exporter for blender 2.32 or above, version 1.13
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -49,6 +49,10 @@ Tooltip: 'Export to X-Plane file format (.obj)'
 #  - Export: Fixed filename bug when texture file is a png
 #  - Import: Fixed refusing to recognise DOS-mode v6 files
 #  - Import: Fixed triangle texture rotation with v6 files
+#
+# 2004-02-09 v1.13 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Import: Fixed filename bug when texture file is a png
+#  - Export: Fixed lack of comment bug on v7 objects
 #
 
 import sys
@@ -160,6 +164,10 @@ class OBJexport:
             self.texture = self.texture[:-4]
         elif self.texture[-4:].lower() == ".png":
             self.texture = self.texture[:-4]
+        else:
+            print "Warn:\tTexture must be in bmp or png format. Please convert your file."
+            if self.texture[-4:-3] == ".":
+                self.texture = self.texture[:-4]
 
         # try to guess correct texture path
         for prefix in ["custom object textures", "autogen textures"]:
@@ -167,7 +175,13 @@ class OBJexport:
             if l!=-1:
                 self.texture = self.texture[l+len(prefix)+1:]
                 return
-            
+
+        print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
+        l=self.texture.rfind(":")
+        if l!=-1:
+            self.texture = self.texture[l+1:]
+        
+
     #------------------------------------------------------------------------
     def writeObjects (self, theObjects):
         nobj=len(theObjects)
@@ -179,6 +193,8 @@ class OBJexport:
                 self.writeMesh(object)
             elif objType == "Lamp":
                 self.writeLamp(object)
+            elif objType == "Camera":
+                print "Info:\tIgnoring Camera \"%s\"" % object.name
             else:
                 print "Warn:\tIgnoring unsupported %s \"%s\"" % (
                     object.getType(), object.name)
@@ -310,7 +326,7 @@ class OBJexport:
                     self.file.write("\t// Mesh: %s\n" % object.name)
                     first = 0
                 else:
-                    self.file.write("\n")
+                    self.file.write("\t//\n")
 
                 for i in range(topright, topright-n, -1):
                     v=self.rotVertex(mm, face.v[i%n])

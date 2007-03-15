@@ -2,7 +2,7 @@ XPlane2Blender - X-Plane import/export scripts for Blender 3D
 -------------------------------------------------------------
 
 Author: 	Jonathan Harris <x-plane@marginal.org.uk>
-Version:	1.12
+Version:	1.13
 Latest version:	http://marginal.org.uk/x-plane
 
 
