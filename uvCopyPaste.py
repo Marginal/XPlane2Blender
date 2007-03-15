@@ -6,7 +6,7 @@ Group: 'UV'
 Tooltip: 'Copy selected texture to other faces'
 """
 #------------------------------------------------------------------------
-# UV Copy & Paste for blender 2.34 or above
+# UV Copy & Paste for blender 2.35 or above
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -37,32 +37,15 @@ Tooltip: 'Copy selected texture to other faces'
 # 2004-09-02 v1.70
 #  - New file
 #
-# 2004-09-04 v1.71
-#
 # 2004-09-10 v1.72
 #  - Checks that in strip mode pasted faces are in same mesh.
-#
-# 2004-10-10 v1.73
-#
-# 2004-10-17 v1.74
-#
-# 2004-11-01 v1.80
-#
-# 2004-11-14 v1.81
-#
-# 2004-11-22 v1.82
-#
-# 2004-11-24 v1.83
-#
-# 2004-12-10 v1.84
-#
-# 2004-12-28 v1.85
 #
 # 2004-12-29 v1.86
 #  - More helpful error message when no object selected.
 #  - Don't try to copy texture to face with different number of vertices.
 #
-# 2004-12-29 v1.87
+# 2004-12-29 v1.88
+#  - Draw dialog in theme colours (requires Blender 235).
 #
 
 import Blender
@@ -187,19 +170,42 @@ def gui():
     size=size.list
     x=int(size[2])
     y=int(size[3])
-    bkgnd=180.5/256
-    header=165.5/256
-    panel=192.5/256
-    BGL.glClearColor (bkgnd, bkgnd, bkgnd, 1)
+
+    # Default theme
+    text   =[  0,   0,   0, 255]
+    text_hi=[255, 255, 255, 255]
+    header =[195, 195, 195, 255]
+    panel  =[255, 255, 255,  40]
+    back   =[180, 180, 180, 255]
+
+    # Actual theme
+    if Blender.Get('version') >= 235:
+        theme=Blender.Window.Theme.Get()
+        if theme:
+            theme=theme[0]
+            space=theme.get('buts')
+            text=theme.get('ui').text
+            text_hi=space.text_hi
+            header=space.header
+            panel=space.panel
+            back=space.back
+
+    BGL.glEnable (BGL.GL_BLEND)
+    BGL.glBlendFunc (BGL.GL_SRC_ALPHA, BGL.GL_ONE_MINUS_SRC_ALPHA)
+    BGL.glClearColor (float(back[0])/255, float(back[1])/255,
+                      float(back[2])/255, 1)
     BGL.glClear (BGL.GL_COLOR_BUFFER_BIT)
-    BGL.glColor3f (header, header, header)
-    BGL.glRectd(7, y-8, 295, y-26 )
-    BGL.glColor3f (panel, panel, panel)
-    BGL.glRectd(7, y-27, 295, y-130 )
-    BGL.glColor3d (1, 1, 1)
-    BGL.glRasterPos2d(16, y-22)
+    BGL.glColor4ub (max(header[0]-30, 0),	# 30 appears to be hard coded
+                    max(header[1]-30, 0),
+                    max(header[2]-30, 0),
+                    header[3])
+    BGL.glRectd(7, y-8, 295, y-28)
+    BGL.glColor4ub (panel[0], panel[1], panel[2], panel[3])
+    BGL.glRectd(7, y-28, 295, y-130)
+    BGL.glColor4ub (text_hi[0], text_hi[1], text_hi[2], text_hi[3])
+    BGL.glRasterPos2d(16, y-23)
     Draw.Text("UV Copy & Paste")
-    BGL.glColor3d (0, 0, 0)
+    BGL.glColor4ub (text[0], text[1], text[2], text[3])
     BGL.glRasterPos2d(16, y-48)
     Draw.Text("Select the faces to paint and then press Paste")
     BGL.glRasterPos2d(16, y-75)

@@ -1,9 +1,9 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane Scenery (.obj)'
+Name: 'X-Plane v7 Scenery (.obj)'
 Blender: 232
 Group: 'Export'
-Tooltip: 'Export to X-Plane scenery file format (.obj)'
+Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
 # X-Plane exporter for blender 2.34 or above
@@ -75,17 +75,16 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-08-29 v1.62
 #  - Light and Line colours are floats
-#  - Don't generate no_depth attribute - it's broken in X-Plane 7.61
+#  - Don't generate ATTR_no_depth - its meaning changed from X-Plane
+#    7.61 and it no longer helps with Z-buffer thrashing.
 #
 # 2004-08-30 v1.63
-#  - Work round X-Plane 7.61 tri_fan normal bug by disabling generation of
+#  - Work round X-Plane 7.x tri_fan normal bug by disabling generation of
 #    "unclosed" tri_fans.
-#
-# 2004-09-02 v1.70
 #
 # 2004-09-04 v1.71
 #  - Since ATTR_no_depth is broken, changed output ordering to make no_depth
-#    faces come after normal faces. This slightly improves rendering.
+#    faces come after normal faces. This slightly improves rendering maybe.
 #
 # 2004-09-10 v1.72
 #  - Fixed bug with exporting flashing lights.
@@ -108,33 +107,43 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #  - Prettified output slightly.
 #
 # 2004-11-22 v1.82
-#  - Fix for LOD detection when objects outside levels 1-3.
+#  - Fix for LOD detection when objects exist outside levels 1-3.
 #  - tri_fan disable hack from v1.63 not applied to smooth meshes - normal
 #    bug appears to be less noticable with smooth meshes.
-#
-# 2004-11-24 v1.83
 #
 # 2004-12-10 v1.84
 #  - Default smoothing state appears different between cockpits and scenery
 #    so explicitly set smoothing state at start of file.
 #
 # 2004-12-28 v1.85
-#  - Fix formatting bug in Vertex output.
+#  - Fix formatting bug in vertex output introduced in v1.81.
 #
 # 2004-12-29 v1.86
-#  - Removed residual support for exporting v6 format.
+#  - Removed residual broken support for exporting v6 format.
 #  - Work round X-Plane 8.00-8.03 limitation where quad_cockpit polys must
-#    start with the top-left vertex.
+#    start with the top or bottom left vertex.
 #  - Check that quad_cockpit texture t < 768.
-#  - Work round X-Plane 7.6x bug where poly_os cannot be assumed to be 0.
+#  - Work round X-Plane 7.6x bug where default poly_os level appears to be
+#    undefined.
 #
 # 2004-12-29 v1.87
-#  - Really fix quad_cockpit top-left vertex thing.
+#  - Really fix quad_cockpit left vertex thing.
+#
+# 2004-12-30 v1.88
+#  - Fix quad_cockpit vertex order for non-squarish textures. Still doesn't
+#    handle mirrored textures.
+#  - Suppress LODs if making a cockpit object.
+#  - Tweaked tri_fans again - generate tri_fans for >=8 faces and either
+#    closed or smoothed - helps with nose of imported aircraft.
+#  - Calculate quad orientation more accurately during strip generation -
+#    helps to smooth correctly the nose and tail of imported aircraft.
+#  - Remove sort on no_depth/TILES - it didn't do anything useful.
 #
 
 #
-# X-Plane renders faces in scenery files in the order that it finds them -
-# it doesn't sort by Z-buffer order or do anything intelligent at all.
+# X-Plane renders faces in scenery files mostly in the order that it finds
+# them - it detects use of Alpha but doesn't sort by Z-buffer order or do
+# anything intelligent at all.
 # So we have to sort on export. The algorithm below isn't guaranteed to
 # produce the right result in all cases, but seems to work OK in practice:
 #
@@ -143,10 +152,9 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #     Build up global vertex list and global face list.
 #  3. Output faces in the following order, joined into strips where possible.
 #      - normal (usually the fullest bucket)
-#      - no_depth
 #      - alpha
-#      - no_depth+alpha
-#      - panel + (normal, no_depth, alpha, no_depth+alpha)
+#      - panel
+#      - alpha + panel
 #      (Smooth, Hard and double-sided faces are mixed up with the other
 #       faces and are output in the order they're found).
 #
@@ -154,6 +162,7 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 import sys
 import Blender
 from Blender import NMesh, Lamp, Draw, Window
+from math import sqrt
 
 class ExportError(Exception):
     def __init__(self, msg=""):
@@ -188,6 +197,16 @@ class Vertex:
         else:
             return 0
 
+    def __add__ (self, other):
+        return Vertex(self.x+other.x, self.y+other.y, self.z+other.z)
+        
+    def __sub__ (self, other):
+        return Vertex(self.x-other.x, self.y-other.y, self.z-other.z)
+        
+    def norm (self):
+        hyp=sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+        return Vertex(self.x/hyp, self.y/hyp, self.z/hyp)
+
     def addFace(self, v):
         self.faces.append(v)
 
@@ -211,13 +230,13 @@ class UV:
 
 class Face:
     # Flags
-    NO_DEPTH=1
+    TILES=1
     ALPHA=2
     DBLSIDED=4
     SMOOTH=8
     HARD=16
     PANEL=32
-    BUCKET=NO_DEPTH|ALPHA|PANEL
+    BUCKET=TILES|ALPHA|PANEL
 
     def __init__(self, name):
         self.v=[]
@@ -243,7 +262,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.87
+    VERSION=1.88
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -257,9 +276,10 @@ class OBJexport:
         self.texture=""
         self.linewidth=0.1
         self.nobj=0		# Number of X-Plane objects exported
+        self.iscockpit=(filename.lower().find("_cockpit.obj") != -1)
 
         # flags controlling export
-        self.no_depth=0
+        self.tiles=0
         self.dblsided=0
         self.smooth=-1		# Default appears indeterminate in 8.01/2
 
@@ -317,7 +337,8 @@ class OBJexport:
             systype="A"
         self.file.write("%s\n700\t// \nOBJ\t// \n\n" % systype)
         self.file.write("%s\t\t// Texture\n\n" % self.texture)
-        self.file.write("ATTR_poly_os 0\t\t//\n\n")
+        if not self.iscockpit:
+            self.file.write("ATTR_poly_os 0\t\t//\n\n")
 
     #------------------------------------------------------------------------
     def getTexture (self, theObjects):
@@ -327,14 +348,17 @@ class OBJexport:
         texlist=[]
         self.dolayers=0
         layers=0
+
         for o in range (nobj-1,-1,-1):
             object=theObjects[o]
 
-            if layers==0:
-                layers = object.Layer&7
-            elif object.Layer&7 and layers^(object.Layer&7) and not self.dolayers:
-                self.dolayers=1
-                print "Info:\tMultiple Levels Of Detail found"
+            if not self.iscockpit:
+                if layers==0:
+                    layers = object.Layer&7
+                elif (object.Layer&7 and layers^(object.Layer&7) and
+                      not self.dolayers):
+                    self.dolayers=1
+                    print "Info:\tMultiple Levels Of Detail found"
                 
             objType=object.getType()
             if objType == "Mesh" and (object.Layer & 7):
@@ -388,7 +412,7 @@ class OBJexport:
                     print "Warn:\tTexture file name must not contain spaces. Please fix."
                 return
             
-        if self.filename.lower().find("_cockpit.obj") == -1:
+        if not self.iscockpit:
             print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
 
         l=self.texture.rfind(":")
@@ -562,8 +586,8 @@ class OBJexport:
                     n, object.name)
             else:
                 face=Face(object.name)
-                if f.mode & NMesh.FaceModes.TILES:
-                    face.flags|=Face.NO_DEPTH
+                #if f.mode & NMesh.FaceModes.TILES:
+                #    face.flags|=Face.TILES
                 if f.transp == NMesh.FaceTranspModes.ALPHA:
                     face.flags|=Face.ALPHA
                 if f.mode & NMesh.FaceModes.TWOSIDE:
@@ -577,8 +601,9 @@ class OBJexport:
                 if (n==4) and f.image and not f.image.name.lower().find("panel."):
                     face.flags|=Face.PANEL
                     for uv in f.uv:
-                        if uv[1]<0.25:	# texture must be <= 768
-                            raise ExportError("Panel texture in Mesh \"%s\" exceeds 1024x768." % object.name)
+                        if (uv[0]<0.0  or uv[0]>1.0 or
+                            uv[1]<0.25 or uv[1]>1.0):	# t must be <= 768
+                            raise ExportError("Panel texture in Mesh \"%s\" is outside 1024x768." % object.name)
                 elif (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TEX:
@@ -631,11 +656,7 @@ class OBJexport:
         facenum=0
         nfaces=len(self.faces)
         
-        for bucket in [0, Face.NO_DEPTH, Face.ALPHA, Face.NO_DEPTH+Face.ALPHA,
-                       Face.PANEL,
-                       Face.PANEL+Face.NO_DEPTH,
-                       Face.PANEL+Face.ALPHA,
-                       Face.PANEL+Face.NO_DEPTH+Face.ALPHA]:
+        for bucket in [0, Face.ALPHA, Face.PANEL, Face.ALPHA+Face.PANEL]:
 
             # Identify strips
             for faceindex in range(nfaces):
@@ -705,8 +726,9 @@ class OBJexport:
                                     break
 
                         # tri_fans are rendered incorrectly (wrong apex
-                        # normal?) under some situations. So only make
-                        # tri_fan if closed and enough vertices.
+                        # normal?) under some situations. So only make a
+                        # tri_fan if enough vertices and either smoothed
+                        # or closed.
                         if len(strip)>=8:	# strictly >2
                             # closed if first and last faces share two vertices
                             common=0
@@ -714,7 +736,7 @@ class OBJexport:
                                 for j in range(3):
                                     if strip[0].v[i].equals(strip[-1].v[j]):
                                         common+=1
-                            if common==2:
+                            if common==2 or startface.flags&Face.SMOOTH:
                                 print "Info:\tFound  Tri_Fan   of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
                                 for i in tri_inds:
                                     self.faces[i]=0	# take face off list
@@ -739,32 +761,24 @@ class OBJexport:
                         self.writeStrip(strip,firstvertex)
                         
                     elif len(startface.v)==4:
-                        # Find lowest two points
+                        # Find most horizontal edge
                         miny=sys.maxint
                         for i in range(4):
-                            if startface.v[i].y<miny:
-                                min1=i
-                                miny=startface.v[i].y
-                        miny=sys.maxint
-                        for i in range(4):
-                            if i!=min1 and startface.v[i].y<miny:
-                                min2=i
-                                miny=startface.v[i].y
-                        # first pair contains only one of the lowest two points
-                        if min2==(min1+1)%4:
-                            sv=min2	#(min1-1)%4
-                        else:
-                            sv=min1
+                            q=(startface.v[i]-startface.v[(i+1)%4]).norm()
+                            if abs(q.y)<miny:
+                                sv=i
+                                miny=abs(q.y)
+                        
                         if self.debug: print "Start strip, edge=%s,%s:\n%s" % (
                             sv, (sv+1)%4, startface)
 
                         # Strip could maybe go two ways
                         if startface.flags&Face.SMOOTH:
                             # Vertically then Horizontally for fuselages
-                            seq=[1,0]
+                            seq=[0,1]
                         else:
                             # Horizontally then Vertically
-                            seq=[0,1]
+                            seq=[1,0]
                         for hv in seq:	# rotate 0 or 90
                             firstvertex=(sv+2+hv)%4
                             for o in [0,2]:
@@ -827,21 +841,18 @@ class OBJexport:
         
         face=strip[0]
         n=len(face.v)
-        self.updateFlags(face.flags&Face.NO_DEPTH, face.flags&Face.DBLSIDED,
+        self.updateFlags(face.flags&Face.TILES, face.flags&Face.DBLSIDED,
                          face.flags&Face.SMOOTH)
         
         if (len(strip))==1:            
             # Oh for fuck's sake, X-Plane 8.00-8.03 loses the plot unless
-            # quad_cockpit polys start with the top-left vertex.
-            # For our purposes, the top-left vertex is the one with UV
-            # co-ords nearest to the top left corner of the texture file.
-            # Note that this can be wrong for weirdly shaped textures.
-            hyp=sys.maxint
+            # quad_cockpit polys start with the top or bottom left vertex.
+            # We'll choose the vertex with smallest s.
+            mins=sys.maxint
             for i in range(n):
-                j = face.uv[i].s*face.uv[i].s + face.uv[i].t*face.uv[i].t
-                if j < hyp:
-                    hyp = j
-                    topleft=i
+                if face.uv[i].s < mins:
+                    mins=face.uv[i].s
+                    start=i
                             
             if (n==3):
                 self.file.write ("tri\t")
@@ -853,7 +864,7 @@ class OBJexport:
                 self.file.write ("quad\t")
             self.file.write("\t\t// %s\n" % face.name)
 
-            for i in range(topleft, topleft-n, -1):
+            for i in range(start, start-n, -1):
                 self.file.write("%s\t%s\n" % (face.v[i%n], face.uv[i%n]))
 
         else:	# len(strip)>1
@@ -912,27 +923,27 @@ class OBJexport:
 
 
     #------------------------------------------------------------------------
-    def updateFlags(self, no_depth, dblsided, smooth):
+    def updateFlags(self, tiles, dblsided, smooth):
 
         # For readability, write turn-offs before turn-ons
         # Note X-Plane parser requires a comment after attribute statements
 
         # Grrrr, no_depth is broken from X-Plane 7.61
-        #if self.no_depth and not no_depth:
+        #if self.tiles and not tiles:
         #    self.file.write("ATTR_depth\t\t//\n\n")
         if self.dblsided and not dblsided:
             self.file.write("ATTR_cull\t\t//\n\n")
         if self.smooth and not smooth:
             self.file.write("ATTR_shade_flat\t\t//\n\n")
             
-        #if no_depth and not self.no_depth:
+        #if tiles and not self.tiles:
         #    self.file.write("ATTR_no_depth\t\t//\n\n")
         if dblsided and self.dblsided<=0:
             self.file.write("ATTR_no_cull\t\t//\n\n")
         if smooth and self.smooth<=0:
             self.file.write("ATTR_shade_smooth\t//\n\n")
                 
-        self.no_depth=no_depth
+        self.tiles=tiles
         self.dblsided=dblsided
         self.smooth=smooth
 
