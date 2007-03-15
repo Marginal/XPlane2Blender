@@ -84,8 +84,11 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 # 2004-09-02 v1.70
 #
 # 2004-09-04 v1.71
-#  - since ATTR_no_depth is broken, changed output ordering to make no_depth
+#  - Since ATTR_no_depth is broken, changed output ordering to make no_depth
 #    faces come after normal faces. This slightly improves rendering.
+#
+# 2004-09-10 v1.72
+#  - Fixed bug with exporting flashing lights.
 #
 
 #
@@ -190,7 +193,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.70
+    VERSION=1.72
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -400,9 +403,9 @@ class OBJexport:
             c[0]=c[1]=c[2]=97
             special=1
         elif lname.find("flash")!=-1:
-            c[0]=-lamp.col[0]*10,0
-            c[1]=-lamp.col[1]*10,0
-            c[2]=-lamp.col[2]*10,0
+            c[0]=-lamp.col[0]*10
+            c[1]=-lamp.col[1]*10
+            c[2]=-lamp.col[2]*10
         else:
             c[0]=lamp.col[0]*10
             c[1]=lamp.col[1]*10

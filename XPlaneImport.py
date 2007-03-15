@@ -85,6 +85,8 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #
 # 2004-09-04 v1.71
 #
+# 2004-09-10 v1.72
+#
 
 
 import sys

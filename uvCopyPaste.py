@@ -39,6 +39,9 @@ Tooltip: 'Copy selected texture to other faces'
 #
 # 2004-09-04 v1.71
 #
+# 2004-09-10 v1.72
+#  - Checks that in strip mode pasted faces are in same mesh.
+#
 
 
 import Blender
@@ -46,6 +49,7 @@ from Blender import Object, NMesh, Draw, BGL
 
 # Globals
 face = 0
+meshname = ""
 copynorm = Draw.Create(1)
 copystrp = Draw.Create(0)
 
@@ -91,7 +95,7 @@ def mapstrip (oldface, faces):
 
 # the function to handle Draw Button events
 def bevent (evt):
-    global face, copynorm, copystrp
+    global face, meshname, copynorm, copystrp
     
     if evt == 1:
         Draw.Exit()
@@ -110,14 +114,17 @@ def bevent (evt):
         if copystrp.val:	# Reverse faces
             objects = Blender.Object.GetSelected()
             if (len(objects) != 1 or
-                objects[0].getType() != "Mesh"):
-                Draw.PupMenu("Please select faces in the same mesh only.")
+                objects[0].getType() != "Mesh" or
+                objects[0].name != meshname):
+                Draw.PupMenu("Please select faces only in the same mesh - %s." % meshname)
                 return
     
             mesh = objects[0].getData()
             faces = mesh.getSelectedFaces()
-            if len(faces) > 32*32:
-                Draw.PupMenu("Please select 1024 faces or fewer.")
+            if len(faces) > 1024:
+                # 1024 takes a reasonable time due to inefficiency of this
+                # algorithm and doesn't overflow Python's recursion limit
+                Draw.PupMenu("Please select at most 1024 faces.")
                 return
     
             Blender.Window.WaitCursor(1)
@@ -125,7 +132,6 @@ def bevent (evt):
             mesh.update()
 
         else:	# Just map
-            Blender.Window.WaitCursor(1)
             n = len(face.v)
             for ob in Blender.Object.GetSelected():
                 mesh = ob.getData()
@@ -175,9 +181,10 @@ def gui():
     Draw.Text("Select the faces to paint and then press Paste")
     BGL.glRasterPos2d(16, y-75)
     Draw.Text("Copy type:", "small")
-    copynorm = Draw.Toggle("Normal", 3, 73, y-79, 51, 17, copynorm.val)
+    copynorm = Draw.Toggle("Normal", 3, 73, y-79, 51, 17, copynorm.val,
+                           "Copy texture to selected faces in the same or a different mesh")
     copystrp = Draw.Toggle("Strip", 4, 124, y-79, 51, 17, copystrp.val,
-                           "Reverse textures as necessary to make a strip")
+                           "Reverse copied texture as necessary to make a strip in the same mesh")
     Draw.Button("Paste", 2, 14, y-120, 100, 26)
     Draw.Button("Cancel", 1, 187, y-120, 100, 26)
   
@@ -205,6 +212,7 @@ try:
         raise StripError("Selected object is not a Mesh.")
 
     mesh = ob.getData()
+    meshname = ob.name
     faces = mesh.getSelectedFaces ()
     if len (faces) != 1:
         raise StripError("Please select exactly one face.")
