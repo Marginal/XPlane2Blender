@@ -78,7 +78,8 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #  - Don't generate no_depth attribute - it's broken in X-Plane 7.61
 #
 # 2004-08-30 v1.63
-#  - Work round X-Plane 7.61 tri_fan normal bug
+#  - Work round X-Plane 7.61 tri_fan normal bug by disabling generation of
+#    "unclosed" tri_fans.
 #
 # 2004-09-02 v1.70
 #
@@ -102,15 +103,17 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #  - Support for "quad_cockpit" using "Text" button.
 #
 # 2004-11-14 v1.81
-#  - Removed use of "Text" button; cockpit panels now detected by texture name.
+#  - Ignore use of "Text" button; cockpit panels now detected by texture name.
 #  - Cockpit panels must go last in file.
 #  - Prettified output slightly.
 #
 # 2004-11-22 v1.82
 #  - Fix for LOD detection when objects outside levels 1-3
-#  - tri_fan hack from v1.73 not applied to smooth meshes
+#  - tri_fan disable hack from v1.63 not applied to smooth meshes - normal
+#    bug appears to be less noticable with smooth meshes.
 #
-
+# 2004-11-24 v1.83
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -126,7 +129,7 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #      - no_depth
 #      - alpha
 #      - no_depth+alpha
-#      - panel
+#      - panel + (normal, no_depth, alpha, no_depth+alpha)
 #      (Smooth, Hard and double-sided faces are mixed up with the other
 #       faces and are output in the order they're found).
 #
@@ -216,7 +219,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.82
+    VERSION=1.83
 
     #------------------------------------------------------------------------
     def __init__(self, filename):

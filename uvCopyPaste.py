@@ -51,10 +51,9 @@ Tooltip: 'Copy selected texture to other faces'
 # 2004-11-14 v1.81
 #
 # 2004-11-22 v1.82
-#  - Fix for LOD detection when objects outside levels 1-3
-#  - tri_fan hack from v1.73 not applied to smooth meshes
 #
-
+# 2004-11-24 v1.83
+#
 
 import Blender
 from Blender import Object, NMesh, Draw, BGL
