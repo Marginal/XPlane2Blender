@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: ' X-Plane CSL Object (.obj)'
+Name: 'X-Plane CSL Object (.obj)'
 Blender: 240
 Group: 'Export'
 Tooltip: 'Export to X-Plane CSL format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.26"
+__version__ = "2.27"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane CSL .obj
 format for use with XSquawkbox.

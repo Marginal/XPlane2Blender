@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: ' X-Plane Object (.obj)...'
+Name: 'X-Plane Object (.obj)...'
 Blender: 241
 Group: 'Import'
 Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.26"
+__version__ = "2.27"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -1684,7 +1684,12 @@ class OBJimport:
             faces.append(face)
 
         if faces:
-            self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],self.anim[0])
+            if self.armob:
+                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                               (self.armob,self.off[-1],self.bones[-1]))
+            else:
+                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                               None)
             self.nprim+=1
 
     #------------------------------------------------------------------------

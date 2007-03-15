@@ -1,4 +1,4 @@
-2 850 Thu Jul 20 09:11:30 2006
+2 850 Thu Jul 20 21:51:49 2006
 
 sim/aircraft/acf_struct	int[10]	y	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
@@ -1064,6 +1064,14 @@ sim/graphics/animation/draw_object_x	float	n	float	X position in cartesian space
 sim/graphics/animation/draw_object_y	float	n	float	Y position in cartesian space of currently drawn object
 sim/graphics/animation/draw_object_z	float	n	float	Z position in cartesian space of currently drawn object
 sim/graphics/animation/draw_object_psi	float	n	float	rotation in cartesian space of currently drawn object
+sim/graphics/animation/airport_beacon_rotation	float	n	degrees	angle this beacon is rotating (0-360)
+sim/graphics/animation/windsock_psi	float	n	degrees	windsock heading
+sim/graphics/animation/windsock_the	float	n	degrees	windsock pitch
+sim/graphics/animation/windsock_phi	float	n	degrees	windsock roll
+sim/graphics/animation/crane_psi	float	n	ratio	crane heading
+sim/graphics/animation/buoy_height	float	n	meters	how high above MSL 0 is this buoy riding?
+sim/graphics/animation/ping_pong_2	float	n	ratio	-1 to 1
+sim/graphics/animation/sin_wave_2	float	n	ratio	-1 to 1
 sim/graphics/animation/birds/wing_flap_deg	float	n	float	degree of wing flap for the currently drawn bird
 sim/graphics/animation/lights/flasher	float[9]	n	light	A flashing light, on only at night, matches v7
 sim/graphics/animation/lights/pulse	float[9]	n	light	A red pulsing light, on only at night, matches v7
