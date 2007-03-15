@@ -6,12 +6,12 @@ Group: 'Import'
 Tooltip: 'Import X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.32 or above, version 1.13
+# X-Plane importer for blender 2.32 or above, version 1.20
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
-# Web: http://marginal.org.uk/x-plane
+# Web:  http://marginal.org.uk/x-planescenery/
 #
 # See XPlaneReadme.txt for usage
 #
@@ -53,6 +53,11 @@ Tooltip: 'Import X-Plane file format (.obj)'
 # 2004-02-09 v1.13 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Import: Fixed filename bug when texture file is a png
 #  - Export: Fixed lack of comment bug on v7 objects
+#
+# 2004-02-29 v1.20 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Emulate Lines with faces
+#  - Import: Join adjacent faces into meshes for easier and faster editing
+#  - Export: Automatically generate strips where possible for faster rendering
 #
 
 import sys
@@ -118,6 +123,162 @@ class Token:
              "ATTR_depth",
              "ATTR_LOD"]
 
+class Vertex:
+    LIMIT=0.25	# max distance between vertices for them to be merged
+    ROUND=2	# Precision
+    
+    def __init__(self, x, y, z):
+        self.x=x
+        self.y=y
+        self.z=z
+
+    def __str__(self):
+        return "%s %s %s" % (round(self.x,Vertex.ROUND),
+                             round(self.y,Vertex.ROUND),
+                             round(self.z,Vertex.ROUND))
+    
+    def equals (self, v):
+        if ((abs(self.x-v.x) <= Vertex.LIMIT) and
+            (abs(self.y-v.y) <= Vertex.LIMIT) and
+            (abs(self.z-v.z) <= Vertex.LIMIT)):
+            return 1
+        else:
+            return 0
+
+class UV:
+    ROUND=4
+
+    def __init__(self, s, t):
+        self.s=s
+        self.t=t
+
+    def __str__(self):
+        return "%s %s" % (round(self.s,UV.ROUND), round(self.t,UV.ROUND))
+
+class Face:
+    # Flags
+    HARD=1    
+    NO_DEPTH=2
+
+    def __init__(self):
+        self.v=[]
+        self.uv=[]
+        self.flags=0
+
+    def addVertex(self, v):
+        self.v.append(v)
+
+    def addUV(self, uv):
+        self.uv.append(uv)
+
+    def checkDuplicateVertices(self):
+    	for i in range(len(self.v)-1):
+            for j in range(i+1,len(self.v)):
+                if self.v[i].equals(self.v[j]):
+                    self.v[i].x=(self.v[i].x+self.v[j].x)/2
+                    self.v[i].y=(self.v[i].y+self.v[j].y)/2
+                    self.v[i].z=(self.v[i].z+self.v[j].z)/2
+                    del self.v[j]
+                    # This is pretty arbitrary
+                    self.uv[i].s=max(self.uv[i].s,self.uv[j].s)
+                    self.uv[i].t=max(self.uv[i].t,self.uv[j].t)
+                    del self.uv[j]
+                    return
+
+class Mesh:
+    # Flags
+    SMOOTH=4
+
+    def __init__(self, name, faces=[], flags=0):
+        self.name=name
+        self.faces=faces
+        self.flags=flags
+
+    def addFaces(self, faces):
+        self.name="Mesh"	# no longer a standard X-Plane object
+        self.faces.extend(faces)
+
+    #------------------------------------------------------------------------
+    # do faces have any edges in common?
+    def abut(self,faces):
+        for face1 in self.faces:
+            n1=len(face1.v)
+            for i1 in range(n1):
+                for face2 in faces:
+                    n2=len(face2.v)
+                    for i2 in range(n2):
+                        if ((face1.v[i1].equals(face2.v[i2]) and
+                             face1.v[(i1+1)%n1].equals(face2.v[(i2+1)%n2])) or
+                            (face1.v[i1].equals(face2.v[(i2+1)%n2]) and
+                             face1.v[(i1+1)%n1].equals(face2.v[i2]))):
+                            return 1
+        return 0
+    
+    #------------------------------------------------------------------------
+    def doimport(self,scene,image,material):
+        mesh=NMesh.New(self.name)
+        mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
+        mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
+        if image:
+            mesh.addMaterial(material)
+
+        n=0
+        centre=Vertex(0,0,0)
+        for f in self.faces:
+            for vertex in f.v:
+                n+=1
+                centre.x+=vertex.x
+                centre.y+=vertex.y
+                centre.z+=vertex.z
+        # Round centre to integer to give easier positioning
+        centre.x=round(centre.x/n,0)
+        centre.y=round(centre.y/n,0)
+        centre.z=round(centre.z/n,0)
+        
+        for f in self.faces:
+            face=NMesh.Face()
+            face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TEX|
+                           NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
+            face.transp=NMesh.FaceTranspModes.ALPHA
+            if f.flags&Face.HARD:
+                face.mode |= NMesh.FaceModes.DYNAMIC
+            if f.flags&Face.NO_DEPTH:
+                face.mode |= NMesh.FaceModes.TILES
+            if self.flags&Mesh.SMOOTH:
+                face.smooth=1
+
+            for v in f.v:
+                rv=Vertex(v.x-centre.x,v.y-centre.y,v.z-centre.z)
+                for nmv in mesh.verts:
+                    if rv.equals(Vertex(nmv.co[0],nmv.co[1],nmv.co[2])):
+                        nmv.co[0]=(nmv.co[0]+rv.x)/2
+                        nmv.co[1]=(nmv.co[1]+rv.y)/2
+                        nmv.co[2]=(nmv.co[2]+rv.z)/2
+                        face.v.append(nmv)
+                        break
+                else:
+                    nmv=NMesh.Vert(rv.x,rv.y,rv.z)
+                    mesh.verts.append(nmv)
+                    face.v.append(nmv)
+
+            for uv in f.uv:
+                face.uv.append((uv.s, uv.t))
+                
+            if image:
+                face.mode |= NMesh.FaceModes.TEX
+                face.image = image
+                mesh.hasFaceUV(1)
+                            
+            mesh.faces.append(face)
+
+        ob = Object.New("Mesh", self.name)
+        ob.link(mesh)
+        scene.link(ob)
+        cur=Window.GetCursorPos()
+        ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
+        mesh.update(1)
+        
+
 #------------------------------------------------------------------------
 #-- OBJimport --
 #------------------------------------------------------------------------
@@ -126,15 +287,20 @@ class OBJimport:
     def __init__(self, filename):
         #--- public you can change these ---
         self.verbose=0	# level of verbosity in console 0-none, 1-some, 2-most
+        self.aggressive=6	# how aggressively to merge meshes. Should be
+        			# at least 1. 5 seems to cover most cases OK.
         
         #--- class private don't touch ---
         self.filename=filename
-        self.lastpos=0	# for error reporting
-        self.fileformat=0
-        self.image=0
-        self.material=0
+        self.lastpos=0		# for error reporting
+        self.filelen=0		# for progress reports
+        self.fileformat=0	# 6 or 7
+        self.image=0		# texture image, iff scenery has texture
+        self.material=0		# only valid if self.image
+        self.curmesh=[]		# unoutputted meshes
+        
+        # random stuff
         self.whitespace=[" ","\t","\n","\r"]
-
         if sys.platform=="win32":
             self.dirsep="\\"
         else:
@@ -150,9 +316,14 @@ class OBJimport:
         print "Starting OBJ import from " + self.filename
     
         self.file = open(self.filename, "rb")
+        self.file.seek(0,2)
+        self.filelen=self.file.tell()
+        self.file.seek(0)
+        Window.DrawProgressBar(0, "Opening ...")
         self.readHeader()
         self.readTexture()
         self.readObjects()
+        Window.DrawProgressBar(1, "Finished")
         print "Finished\n"
 
     #------------------------------------------------------------------------
@@ -186,7 +357,9 @@ class OBJimport:
     def get7Token(self):
         c=self.getInput()
         u=c.lower()
-
+        Window.DrawProgressBar(float(self.lastpos)*0.5/self.filelen,
+                               "Importing %s%% ..." %
+                               (self.lastpos*50/self.filelen))
         for i in range(len(Token.NAMES)):
             if u==Token.NAMES[i].lower():
                 return i
@@ -195,6 +368,9 @@ class OBJimport:
     #------------------------------------------------------------------------
     def get6Token(self):
         c=self.getInput()
+        Window.DrawProgressBar(float(self.lastpos)*0.5/self.filelen,
+                               "Importing %s%% ..." %
+                               (self.lastpos*50/self.filelen))
         try:
             return int(c)
         except ValueError:
@@ -229,14 +405,14 @@ class OBJimport:
         for i in range(3):
             v.append(self.getFloat())
         # Rotate to Blender format
-        return [v[0],-v[2],v[1]]
+        return Vertex(v[0],-v[2],v[1])
     
     #------------------------------------------------------------------------
     def getUV(self):
         uv=[]
         for i in range(2):
             uv.append(self.getFloat())
-        return uv
+        return UV(uv[0],uv[1])
         
     #------------------------------------------------------------------------
     def getCR(self):
@@ -345,6 +521,10 @@ class OBJimport:
                 t=self.get7Token()
 
                 if t==Token.END7:
+                    # write meshes
+                    self.mergeMeshes()
+                    for mesh in self.curmesh:
+                        mesh.doimport(scene,self.image,self.material)
                     return
                 
                 elif t==Token.LIGHT:
@@ -353,6 +533,15 @@ class OBJimport:
                     if not self.lod:
                         self.addLamp(scene,v,c)
 
+                elif t==Token.LINE:
+                    v = []
+                    c = []
+                    for i in range(2):
+                        v.append(self.getVertex())
+                        c=self.getCol()	# use second colour value
+                    if not self.lod:
+                        self.addLine(scene,v,c)
+
                 elif t==Token.TRI:
                     v = []
                     uv = []
@@ -360,7 +549,7 @@ class OBJimport:
                         v.append(self.getVertex())
                         uv.append(self.getUV())
                     if not self.lod:
-                        self.addTris(scene,t,3,v,uv)
+                        self.addTris(scene,t,v,uv)
 
                 elif t in [Token.QUAD,
                            Token.QUAD_HARD,
@@ -371,7 +560,7 @@ class OBJimport:
                         v.append(self.getVertex())
                         uv.append(self.getUV())
                     if not self.lod:
-                        self.addQuads(scene,t,4,v,uv,[3,2,1,0])
+                        self.addQuads(scene,t,v,uv,[3,2,1,0])
                                          
                 elif t==Token.POLYGON:
                     # add centre point, duplicate first point, use Tri_Fan
@@ -382,12 +571,12 @@ class OBJimport:
                     n = self.getInt()
                     for i in range(n):
                         v.append(self.getVertex())
-                        cv[0]+=v[i][0]
-                        cv[1]+=v[i][1]
-                        cv[2]+=v[i][2]
+                        cv[0]+=v[i].x
+                        cv[1]+=v[i].y
+                        cv[2]+=v[i].z
                         uv.append(self.getUV())
-                        cuv[0]+=uv[i][0]
-                        cuv[1]+=uv[i][1]
+                        cuv[0]+=uv[i].s
+                        cuv[1]+=uv[i].t
                     if not self.lod:
                         cv[0]/=n
                         cv[1]/=n
@@ -396,9 +585,9 @@ class OBJimport:
                         cuv[1]/=n
                         v.append(v[0])
                         uv.append(uv[0])
-                        v.insert(0,cv)
-                        uv.insert(0,cuv)
-                        self.addTris(scene,t,n+2,v,uv)
+                        v.insert(0,Vertex(cv[0],cv[1],cv[2]))
+                        uv.insert(0,UV(cuv[0],cuv[1]))
+                        self.addTris(scene,t,v,uv)
 
                 elif t==Token.QUAD_STRIP:
                     n = self.getInt()
@@ -408,7 +597,7 @@ class OBJimport:
                         v.append(self.getVertex())
                         uv.append(self.getUV())
                     if not self.lod:
-                        self.addQuads(scene,t,n,v,uv,[1,0,2,3])
+                        self.addQuads(scene,t,v,uv,[1,0,2,3])
                         
                 elif t==Token.TRI_FAN:
                     v = []
@@ -418,7 +607,7 @@ class OBJimport:
                         v.append(self.getVertex())
                         uv.append(self.getUV())
                     if not self.lod:
-                        self.addTris(scene,t,n,v,uv)
+                        self.addTris(scene,t,v,uv)
                     
                 elif t==Token.SHADE_FLAT:
                     self.smooth = 0
@@ -440,10 +629,7 @@ class OBJimport:
                         self.lod = 0
                         print "Info:\tLOD reset: Stopped ignoring objects"
                 
-                elif t in [Token.LINE, Token.SMOKE_BLACK, Token.SMOKE_WHITE,
-                           Token.AMBIENT_RGB, Token.DIFUSE_RGB,
-                           Token.SPECULAR_RGB, Token.EMISSION_RGB,
-                           Token.SHINY_RAT]:
+                else:
                     print "Warn:\tIgnoring unsupported %s" % Token.NAMES[t]
                     if t==Token.LINE:
                         n=12
@@ -452,17 +638,22 @@ class OBJimport:
                     elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
                                Token.SPECULAR_RGB, Token.EMISSION_RGB]:
                         n=3
-                    else:
+                    elif t==Token.SHINY_RAT:
                         n=1
+                    else:
+                        assert 0, "Can't parse type %s" % t
+
                     for i in range(n):
                         self.getFloat()
-                else:
-                    print "Error:\tInternal error, object type %s" % t
         else:	# v6
             while 1:
                 t=self.get6Token()
 
                 if t==Token.END6:
+                    # write meshes
+                    self.mergeMeshes()
+                    for mesh in self.curmesh:
+                        mesh.doimport(scene,self.image,self.material)
                     return
     
                 elif t==Token.LIGHT:
@@ -470,6 +661,13 @@ class OBJimport:
                     v=self.getVertex()
                     self.addLamp(scene,v,c)
                 
+                elif t==Token.LINE:
+                    v = []
+                    c=self.getCol()
+                    for i in range(2):
+                        v.append(self.getVertex())
+                    self.addLine(scene,v,c)
+
                 elif t==Token.TRI:
                     v = []
                     uv = []
@@ -478,9 +676,9 @@ class OBJimport:
                     for i in range(3):
                         v.append(self.getVertex())
                     # UV order appears to be arbitrary
-                    self.addTris(scene,t,3,v,[[uv[1],uv[3]],
-                                              [uv[1],uv[2]],
-                                              [uv[0],uv[2]]])
+                    self.addTris(scene,t,v,[UV(uv[1],uv[3]),
+                                            UV(uv[1],uv[2]),
+                                            UV(uv[0],uv[2])])
                 elif t in [Token.QUAD,
                            Token.QUAD_HARD,
                            Token.QUAD_MOVIE]:
@@ -490,36 +688,37 @@ class OBJimport:
                         uv.append(self.getFloat())
                     for i in range(4):
                         v.append(self.getVertex())
-                    self.addQuads(scene,t,4,v, [[uv[1],uv[3]],
-                                                [uv[1],uv[2]],
-                                                [uv[0],uv[2]],
-                                                [uv[0],uv[3]]],
+                    self.addQuads(scene,t,v,[UV(uv[1],uv[3]),
+                                             UV(uv[1],uv[2]),
+                                             UV(uv[0],uv[2]),
+                                             UV(uv[0],uv[3])],
                                   [3,2,1,0])
 
                 elif t<0:	# Quad strip
-                    n = -t
+                    n = -t	# number of pairs
                     v = []
                     uv = []
                     for i in range(n):
                         v.append(self.getVertex())
                         v.append(self.getVertex())
-                        s=self.getUV()
+                        s=self.getUV()		# s s t t
                         t=self.getUV()
-                        uv.append([s[0],t[0]])
-                        uv.append([s[1],t[1]])
-                    self.addQuads(scene,Token.QUAD_STRIP,n*2,v,uv,[1,0,2,3])
+                        uv.append(UV(s.s,t.s))
+                        uv.append(UV(s.t,t.t))
+                    self.addQuads(scene,Token.QUAD_STRIP,v,uv,[1,0,2,3])
 
-                elif t in [Token.LINE, Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
+                else:
                     print "Warn:\tIgnoring unsupported %s" % Token.NAMES[t]
                     if t==Token.LINE:
                         n=9
-                    else:
+                    elif t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE,
+                               Token.QUAD, Token.QUAD_HARD, Token.QUAD_MOVIE]:
                         n=16
+                    else:
+                        assert 0, "Can't parse type %s" % t
+                        
                     for i in range(n):
                         self.getFloat()
-                else:
-                    print "Error:\tInternal error, object type %s" % t
-            
 
     #------------------------------------------------------------------------
     def addLamp(self, scene, v, c):
@@ -554,134 +753,184 @@ class OBJimport:
         ob = Object.New("Lamp", name)
         ob.link(lamp)
         scene.link(ob)
-        self.locate(ob,v)
+        cur=Window.GetCursorPos()
+        ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
         
     #------------------------------------------------------------------------
-    def addQuads(self, scene, token, nv, v, uv, vorder):
-        name=Token.NAMES[token]
-        if nv%2:
-            print "Error:\t%s has odd number of vertices - %s" % (name, nv)
-        else:
-            if token==Token.QUAD_HARD:
-                name=Token.NAMES[Token.QUAD]
-            elif token==Token.QUAD_MOVIE:
-                name="Movie"
-            if self.verbose:
-                print "Info:\tImporting %s" % name
-        
-            mesh=NMesh.New(name)
-            mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
-            mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
-
-            centre=[0,0,0]
-            for i in range(nv):
-                centre[0]+=v[i][0]
-                centre[1]+=v[i][1]
-                centre[2]+=v[i][2]
-
-            centre[0]/=nv
-            centre[1]/=nv
-            centre[2]/=nv
-
-            for i in range(nv):
-                mesh.verts.append(NMesh.Vert(v[i][0]-centre[0],
-                                             v[i][1]-centre[1],
-                                             v[i][2]-centre[2]))
-
-            for f in range(2,nv,2):
-                n=4
-                face=NMesh.Face()
-                face.smooth=self.smooth
-                face.mode &= ~NMesh.FaceModes.TWOSIDE
-                if self.no_depth:
-                    face.mode |= NMesh.FaceModes.TILES
-                else:
-                    face.mode &= ~NMesh.FaceModes.TILES
-                if token==Token.QUAD_HARD:
-                    face.mode |= NMesh.FaceModes.DYNAMIC
-                else:
-                    face.mode &= ~NMesh.FaceModes.DYNAMIC
-
-                for i in range(n):
-                    face.v.append(mesh.verts[f-2+vorder[i]])
-
-                if self.image:
-                    hasTex=0
-                    for i in range(f-n/2,f+n/2):
-                        if uv[i][0] or uv[1][1]:
-                            hasTex=1
-                    if hasTex:
-                        face.mode |= NMesh.FaceModes.TEX
-                        face.image = self.image
-                        for i in range(4):
-                            face.uv.append((uv[f-2+vorder[i]][0],
-                                            uv[f-2+vorder[i]][1]))
-                        mesh.hasFaceUV(1)
-                            
-                mesh.faces.append(face)
-
-            if self.image:
-                mesh.addMaterial(self.material)
-
-            ob = Object.New("Mesh", name)
-            ob.link(mesh)
-            scene.link(ob)
-            self.locate(ob,centre)
-            mesh.update(1)
-
-    #------------------------------------------------------------------------
-    def addTris(self, scene, token, nv, v, uv):
-        name=Token.NAMES[token]
+    def addLine(self,scene,v,c):
         if self.verbose:
-            print "Info:\tImporting %s" % name
-        
-        mesh=NMesh.New(name)
-        mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
-        mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
+            print "Info:\tImporting Line"
 
-        centre=v[0]
-        for i in range(nv):
-            mesh.verts.append(NMesh.Vert(v[i][0]-centre[0],
-                                         v[i][1]-centre[1],
-                                         v[i][2]-centre[2]))
+        # Round centre to integer to give easier positioning
+        centre=Vertex(round((v[0].x+v[1].x)/2,0),
+                      round((v[0].y+v[1].y)/2,0),
+                      round((v[0].z+v[1].z)/2,0))
+        d=Vertex(abs(v[0].x-v[1].x),abs(v[0].y-v[1].y),abs(v[0].z-v[1].z))
 
-        for f in range(1,nv-1):
-            face=NMesh.Face()
-            face.smooth=self.smooth
-            face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.DYNAMIC)
+        if d.z>max(d.x,d.y):
+            e=Vertex(0.1,-0.1,0)
+        elif d.y>max(d.z,d.x):
+            e=Vertex(-0.1,0,0.1)
+        else:	# d.x>max(d.y,d.z):
+            e=Vertex(0,0.1,-0.1)
 
-            face.v.append(mesh.verts[0  ])
-            face.v.append(mesh.verts[f+1])
-            face.v.append(mesh.verts[f  ])
+        # 'Line's shouldn't be merged, so add immediately 
+        mesh=NMesh.New("Line")
+        mesh.mode &= ~(NMesh.Modes.AUTOSMOOTH|NMesh.Modes.NOVNORMALSFLIP)
+        mesh.mode |= NMesh.Modes.TWOSIDED
 
-            if self.image:
-                hasTex=0
-                for i in range(f,f+2):
-                    if uv[i][0] or uv[1][1]:
-                        hasTex=1
-                if hasTex:
-                    face.mode |= NMesh.FaceModes.TEX
-                    face.image = self.image
-                    face.uv.append((uv[0  ][0], uv[0  ][1]))
-                    face.uv.append((uv[f+1][0], uv[f+1][1]))
-                    face.uv.append((uv[f  ][0], uv[f  ][1]))
-                    mesh.hasFaceUV(1)
-                            
-            mesh.faces.append(face)
+        face=NMesh.Face()
+        face.mode &= ~(NMesh.FaceModes.TEX|
+                       NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
+        face.mode |= NMesh.FaceModes.TWOSIDE
 
-        if self.image:
-            mesh.addMaterial(self.material)
-            
-        ob = Object.New("Mesh", name)
+        mesh.verts.append(NMesh.Vert(v[0].x-centre.x+e.x,
+                                     v[0].y-centre.y+e.y,
+                                     v[0].z-centre.z+e.z))
+        mesh.verts.append(NMesh.Vert(v[0].x-centre.x-e.x,
+                                     v[0].y-centre.y-e.y,
+                                     v[0].z-centre.z-e.z))
+        mesh.verts.append(NMesh.Vert(v[1].x-centre.x-e.x,
+                                     v[1].y-centre.y-e.y,
+                                     v[1].z-centre.z-e.z))
+        mesh.verts.append(NMesh.Vert(v[1].x-centre.x+e.x,
+                                     v[1].y-centre.y+e.y,
+                                     v[1].z-centre.z+e.z))
+        for nmv in mesh.verts:
+            face.v.append(nmv)
+
+        mesh.materials.append(Material.New("Line"))
+        mesh.materials[0].rgbCol=[c[0]/10.0,c[1]/10.0,c[2]/10.0]
+        face.mat=0            
+        mesh.faces.append(face)
+
+        ob = Object.New("Mesh", "Line")
         ob.link(mesh)
         scene.link(ob)
-        self.locate(ob,centre)
+        cur=Window.GetCursorPos()
+        ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
 
     #------------------------------------------------------------------------
-    def locate (self,object,v):
-        c=Window.GetCursorPos()
-        object.setLocation(v[0]+c[0], v[1]+c[1], v[2]+c[2])
+    def addTris(self, scene, token, v, uv):
+        # input v: list of co-ords, uv: corresponding list of uv points
+        #	v[0] and uv[0] are common to every triangle
+        name=Token.NAMES[token]
+        if self.verbose:
+            print "Info:\tImporting %s" % name
+        nv=len(v)
+
+        flags=0
+        if self.smooth:
+            flags |= Mesh.SMOOTH
+
+        faces=[]
+        for f in range(1,nv-1):
+            face=Face()
+
+            face.addVertex(v[0])
+            face.addVertex(v[f+1])
+            face.addVertex(v[f])
+            face.addUV(uv[0])
+            face.addUV(uv[f+1])
+            face.addUV(uv[f])
+
+            if self.no_depth:
+                face.flags |= Face.NO_DEPTH
+                
+            faces.append(face)
+            
+        self.addToMesh(scene,name,faces,flags)
+
+    #------------------------------------------------------------------------
+    def addQuads(self, scene, token, v, uv, vorder):
+        # input v: list of co-ords, uv: corresponding list of uv points
+        #	vorder: order of vertices within each face
+
+        name=Token.NAMES[token]
+        if token==Token.QUAD_HARD:
+            name=Token.NAMES[Token.QUAD]
+        elif token==Token.QUAD_MOVIE:
+            name="Movie"
+        if self.verbose:
+            print "Info:\tImporting %s" % name
+        nv=len(v)
+        assert not nv%2, "Odd %s vertices in \"%s\"" % (nv, name)
+        
+        flags=0
+        if self.smooth:
+            flags |= Mesh.SMOOTH
+
+        faces=[]
+        for f in range(2,nv,2):
+            face=Face()
+            for i in range(4):
+                face.addVertex(v[f-2+vorder[i]])
+                face.addUV(uv[f-2+vorder[i]])
+
+            # Some people use quads as tris to get round limitations in v6
+            # in the way that textures are mapped to triangles. This is
+            # unnecessary in v7 and screws up when we try to add the same
+            # vertex twice. So manually remove any extra vertexs.
+            face.checkDuplicateVertices()
+            
+            if token==Token.QUAD_HARD:
+                face.flags |= Face.HARD
+            if self.no_depth:
+                face.flags |= Face.NO_DEPTH
+            
+            faces.append(face)
+
+        self.addToMesh(scene,name,faces,flags)
+
+    #------------------------------------------------------------------------
+    # add faces to existing or new mesh
+    def addToMesh (self,scene,name,faces,flags):
+        # New faces are added to an existing mesh if any new face has a common
+        # edge with any existing face in the mesh (and existing and new faces
+        # have the same flags).
+        # We assume that all the new faces have common edges with each other
+        # (and so can be safely added to the same mesh) since they all come
+        # from the same X-Plane object).
+        # Brute force and ignorance algorithm is used. But search most recently
+        # added meshes first on the assumption of locality.
+#        for m in range (len(self.curmesh)-1,-1,-1):
+#            mesh=self.curmesh[m]
+#            if mesh.abut(faces):
+#                mesh.addFaces(faces)
+#                return
+            
+        if self.curmesh:
+            if self.curmesh[-1].flags==flags and self.curmesh[-1].abut(faces):
+                self.curmesh[-1].addFaces(faces)
+                return
+            
+        # No common edge - new mesh required
+        self.curmesh.append(Mesh(name, faces,flags))
+
+
+    #------------------------------------------------------------------------
+    # last chance - try to merge meshes that abut each other
+    def mergeMeshes (self):
+        m=len(self.curmesh)-2
+        while m>=0:
+            n=float(m)/len(self.curmesh)
+            Window.DrawProgressBar(1-n/2,"Merging %s%% ..." % (100-int(50*n)))
+            l=m+1
+            # optimisation: take a copy of m's faces to prevent comparing any
+            # newly merged faces multiple times - appears to be worth the cost
+            facesm=[]
+            for face in self.curmesh[m].faces:
+                facesm.append(face)
+            flags=self.curmesh[m].flags
+            # sliding window
+            while l<min(m+1+self.aggressive,len(self.curmesh)):
+                if self.curmesh[l].flags==flags and self.curmesh[l].abut(facesm):
+                    self.curmesh[m].addFaces(self.curmesh[l].faces)
+                    self.curmesh.pop(l)
+                else:
+                    l=l+1
+            m=m-1
 
 #------------------------------------------------------------------------
 def file_callback (filename):
@@ -690,7 +939,7 @@ def file_callback (filename):
         obj.doimport()
     except ParseError, e:
         if e.type == ParseError.HEADER:
-            print "Error:\tNot an X-Plane v6 or v7 OBJ file\n"
+            print "Error:\tThis is not a valid X-Plane v6 or v7 OBJ file\n"
         else:
             if e.type == ParseError.TOKEN:
                 print "Error:\tExpecting a Token,",
