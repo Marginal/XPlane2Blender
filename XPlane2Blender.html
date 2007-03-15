@@ -45,9 +45,7 @@ Blender).</p>
 <h3>Installation</h3>
 <p>Close Blender if you have it running.</p>
 <p>Extract the contents of the zip file to a new (temporary) folder.
-Open
-this folder. Then:<br>
-</p>
+Open this folder. Then:</p>
 <table style="width: 100%; text-align: left;" border="0" cellpadding="2"
  cellspacing="2">
   <tbody>
@@ -91,8 +89,7 @@ location)</small>.<br>
 <p>On Mac OS, also run the "Console" application that comes with Mac OS
 X and which is found under "Utilities".</p>
 <h3>Importing</h3>
-<p><samp>File -&gt; Import -&gt; X-Plane Scenery<br>
-</samp></p>
+<p><samp>File -&gt; Import -&gt; X-Plane Scenery</samp></p>
 <p style="margin-left: 40px;"><small>Some users report that <samp>X-Plane</samp>
 doesn't appear
 under <samp>File-&gt;Import</samp>
@@ -110,16 +107,13 @@ file. But note that the X-Plane .obj file format only supports the use
 of one texture bitmap, so you'll have to create a single texture bitmap
 file and remap all the scenery textures onto it before exporting.</p>
 <h3>Exporting</h3>
-<p><samp>File -&gt; Export -&gt; X-Plane Scenery<br>
-</samp></p>
+<p><samp>File -&gt; Export -&gt; X-Plane Scenery</samp></p>
 <p style="margin-left: 40px;"><small>Some users report that <samp>X-Plane</samp>
 doesn't appear
 under <samp>File-&gt;Export</samp> on their machine. The script can
 also be run another way - open <code>XPlaneExport.py</code>
 in a Blender text window. Hit <samp><span style="font-weight: bold;">Alt
-P</span></samp>
-to run.<br>
-</small></p>
+P</span></samp>to run.</small></p>
 <p>The output filename and location is the same as the current Blender
 filename, but with a .obj extension. Always check the Console window
 for messages reporting any problems with the export, which are
@@ -139,8 +133,7 @@ correctly).</li>
   <li>Save your Blender file in the <code>custom objects</code> folder
 with a descriptive name, eg:<br>
     <div style="margin-left: 40px;"> <code>X-System 730\Custom
-Scenery\EGLL\custom objects\house.blend</code><br>
-    </div>
+Scenery\EGLL\custom objects\house.blend</code> </div>
 The X-Plane .obj file will be exported to the same place, eg:<br>
     <div style="margin-left: 40px;"> <code>X-System 730\Custom
 Scenery\EGLL\custom objects\house.obj</code> </div>
@@ -241,13 +234,16 @@ of these strips, the following conditions need to be true: </p>
 and last face).</li>
   <li>Each shared edge must have the same texture bitmap co-ordinates
 in
-both faces. In practice this means that the texture must be reversed in
+both faces.</li>
+</ol>
+<p>In practice this means that the texture must be reversed in
 alternate faces in the strip. In the case of <code>tri</code>s this
 can also be
 achieved by mapping a single area of the texture across all the <code>tri</code>s,
 with the tip of the <code>tri</code>s at the centre of the texture
-area. </li>
-</ol>
+area. Use <samp>UVs -&gt; Copy &amp; Paste</samp> from the<samp>
+UV/Image Editor</samp> window to automate the creation of strips.<br>
+</p>
 <ul>
 </ul>
 <p>See <a
@@ -303,8 +299,7 @@ to do. I strongly recommend that you change this; drag down the top
 menubar to reveal the User Preferences window, select the <samp>View
 &amp; Controls </samp>tab and choose <span
  style="font-family: Arial,Helvetica,sans-serif;">S</span><samp>elect
-with: Left Mouse</samp>.<br>
-  </li>
+with: Left Mouse</samp>. </li>
   <li>Space does what you would expect Right mouse button to do.</li>
   <li>The user interface is "modal". Buttons and keys do different
 things depending on whether you are in "Object", "Edit" or "UV Face
@@ -352,8 +347,7 @@ objects are ignored.</li>
 ignored.</li>
   <li>Can't tell which faces should have Alpha transparency.
 Transparent faces must be manually marked with the <samp>Alpha</samp>
-button in <samp>UV Face Select</samp> mode after import.<br>
-  </li>
+button in <samp>UV Face Select</samp> mode after import.</li>
 </ul>
 <h4>Export</h4>
 <ul>
@@ -371,7 +365,7 @@ this is the "Console" program. In Windows this the window titled
 "Blender" that looks like a Command Prompt).</p>
 <h3>Stuff</h3>
 <p>Copyright &copy; 2004 Jonathan Harris.<br>
-Version 1.63<br>
+Version 1.70<br>
 <a href="http://marginal.org.uk/x-planescenery/">http://marginal.org.uk/x-planescenery/</a></p>
 <hr style="width: 100%; height: 2px;">
 <table style="width: 100%; text-align: left;" cellpadding="0"

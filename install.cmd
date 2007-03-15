@@ -27,13 +27,16 @@ goto end
 
 :copy
 if exist "%DESTDIR%..\Bpymenus"         del "%DESTDIR%..\Bpymenus"
-if exist "%DESTDIR%XPlaneReadme.txt"    del "%DESTDIR%XPlaneReadme.txt"
+if exist "%DESTDIR%uvCopyPaste.py"      del "%DESTDIR%uvCopyPaste.py"
 if exist "%DESTDIR%XPlane2Blender.html" del "%DESTDIR%XPlane2Blender.html"
 if exist "%DESTDIR%XPlaneExport.py"     del "%DESTDIR%XPlaneExport.py"
 if exist "%DESTDIR%XPlaneImport.py"     del "%DESTDIR%XPlaneImport.py"
+if exist "%DESTDIR%XPlaneReadme.txt"    del "%DESTDIR%XPlaneReadme.txt"
+copy /v /y uvCopyPaste.py                   "%DESTDIR%" >nul:
 copy /v /y XPlane2Blender.html              "%DESTDIR%" >nul:
 copy /v /y XPlaneExport.py                  "%DESTDIR%" >nul:
 copy /v /y XPlaneImport.py                  "%DESTDIR%" >nul:
+if not exist "%DESTDIR%uvCopyPaste.py"      goto copyfail
 if not exist "%DESTDIR%XPlane2Blender.html" goto copyfail
 if not exist "%DESTDIR%XPlaneExport.py"     goto copyfail
 if not exist "%DESTDIR%XPlaneImport.py"     goto copyfail

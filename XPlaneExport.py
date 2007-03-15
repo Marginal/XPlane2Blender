@@ -3,7 +3,7 @@
 Name: 'X-Plane Scenery (.obj)'
 Blender: 232
 Group: 'Export'
-Tip: 'Export to X-Plane scenery file format (.obj)'
+Tooltip: 'Export to X-Plane scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
 # X-Plane exporter for blender 2.34 or above
@@ -35,51 +35,53 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 #    distribution.
 #
 #
-# 2004-02-01 v1.00 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-01 v1.00
 #  - First public version
 #
-# 2004-02-04 v1.10 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-04 v1.10
 #  - Updated for Blender 2.32
 #
-# 2004-02-05 v1.11 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-05 v1.11
 #  - Removed dependency on Python installation
 #
-# 2004-02-08 v1.12 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-08 v1.12
 #  - Fixed filename bug when texture file is a png
 #
-# 2004-02-09 v1.13 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-09 v1.13
 #  - Fixed lack of comment bug on v7 objects
 #
-# 2004-02-29 v1.20 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-29 v1.20
 #  - Emulate Lines with faces
 #  - Automatically generate strips where possible for faster rendering
 #
-# 2004-03-24 v1.30 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-03-24 v1.30
 #  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
 #  - Sort faces by type for correct rendering in X-Plane. This fixes bugs with
 #    alpha and no_depth faces.
 #
-# 2004-04-10 v1.40 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-04-10 v1.40
 #  - Reduced duplicate vertex limit to 0.01 to handle imported objects
 #  - Support 3 LOD levels: 1000,4000,10000
 #
-# 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-22 v1.50
 #  - Reversed meaning of DYNAMIC flag, since it is set by default when
 #    creating new faces in Blender
 #
-# 2004-08-28 v1.60 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-28 v1.60
 #  - Added support for double-sided faces
 #
-# 2004-08-28 v1.61 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-28 v1.61
 #  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
 #  - Display number of X-Plane objects on import and export
 #
-# 2004-08-29 v1.62 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-29 v1.62
 #  - Light and Line colours are floats
 #  - Don't generate no_depth attribute - it's broken in X-Plane 7.61
 #
-# 2004-08-30 v1.63 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-30 v1.63
 #  - Work round X-Plane 7.61 tri_fan normal bug
+#
+# 2004-09-02 v1.70
 #
 
 #
@@ -184,7 +186,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.63
+    VERSION=1.70
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -884,10 +886,10 @@ class OBJexport:
 #------------------------------------------------------------------------
 
 if Blender.Get('version') < 234:
-    msg="ERROR:\tRequires Blender version 2.34 or later."
-    print msg
-    Blender.Draw.PupMenu(msg)
-else:    
+    Blender.Draw.PupMenu("ERROR:\tRequires Blender version 2.34 or later.")
+elif Blender.Window.EditMode():
+    Blender.Draw.PupMenu("Please exit Edit Mode first.")
+else:
     baseFileName=Blender.Get('filename')
     if baseFileName.find('.') != -1:
         dots=Blender.Get('filename').split('.')[0:-1]
@@ -900,4 +902,3 @@ else:
     obj=OBJexport(objFile)
     scene = Blender.Scene.getCurrent()
     obj.export(scene)
-

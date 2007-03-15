@@ -3,7 +3,7 @@
 Name: 'X-Plane scenery (.obj)...'
 Blender: 232
 Group: 'Import'
-Tip: 'Import an X-Plane scenery file (.obj)'
+Tooltip: 'Import an X-Plane scenery file (.obj)'
 """
 #------------------------------------------------------------------------
 # X-Plane importer for blender 2.34 or above
@@ -35,50 +35,53 @@ Tip: 'Import an X-Plane scenery file (.obj)'
 #    distribution.
 #
 #
-# 2004-02-01 v1.00 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-01 v1.00
 #  - First public version
 #
-# 2004-02-04 v1.10 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-04 v1.10
 #  - Updated for Blender 2.32
 #
-# 2004-02-05 v1.11 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-05 v1.11
 #  - Removed dependency on Python installation
 #  - Import at cursor, not origin
 #
-# 2004-02-08 v1.12 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-08 v1.12
 #  - Fixed refusing to recognise DOS-mode v6 files
 #  - Fixed triangle texture rotation with v6 files
 #
-# 2004-02-09 v1.13 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-09 v1.13
 #  - Fixed filename bug when texture file is a png
 #
-# 2004-02-29 v1.20 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-29 v1.20
 #  - Emulate Lines with faces
 #  - Join adjacent faces into meshes for easier and faster editing
 #
-# 2004-03-24 v1.30 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-03-24 v1.30
 #  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
 #
-# 2004-04-10 v1.40 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-04-10 v1.40
 #  - Reduced duplicate vertex limit to 0.01 to handle imported objects
 #
-# 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-22 v1.50
 #  - Reversed meaning of DYNAMIC flag, since it is set by default when
 #    creating new faces in Blender
 #
-# 2004-08-28 v1.60 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-28 v1.60
 #  - Added support for double-sided faces
 #  - Support importing files with multiple LODs
 #
-# 2004-08-28 v1.61 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-28 v1.61
 #  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
 #  - Display number of X-Plane objects on import and export
 #
-# 2004-08-29 v1.62 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-29 v1.62
 #  - Light and Line colours are floats
 #
-# 2004-08-30 v1.63 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-08-30 v1.63
 #  - Don't set alpha
+#
+# 2004-09-02 v1.70
+#  - Try harder to preserve object names in comments
 #
 
 import sys
@@ -229,8 +232,10 @@ class Mesh:
         self.faces=faces
         self.flags=flags
 
-    def addFaces(self, faces):
-        self.name="Mesh"	# no longer a standard X-Plane object
+    def addFaces(self, name, faces):
+        if name != self.name:
+            # no longer a standard X-Plane object
+            self.name="Mesh"
         self.faces.extend(faces)
 
     #------------------------------------------------------------------------
@@ -323,8 +328,6 @@ class Mesh:
 #-- OBJimport --
 #------------------------------------------------------------------------
 class OBJimport:
-    VERSION=1.63
-    
     LAYER=[0,1,2,4]
 
     #------------------------------------------------------------------------
@@ -467,6 +470,10 @@ class OBJimport:
                 break
             self.comment += c
         self.comment=self.comment[1:].strip()
+        # Export used to attach these prefixes to comments
+        for c in ["Mesh: ", "Light: ", "Line: "]:
+            if self.comment.find (c) == 0:
+                self.comment=self.comment[len(c):]
         pos=self.file.tell()
         while self.file.read(1) in ["\n", "\r"]:
             pos=self.file.tell()
@@ -971,7 +978,7 @@ class OBJimport:
             
         if self.curmesh and self.aggressive:
             if self.curmesh[-1].flags==flags and self.curmesh[-1].abut(faces):
-                self.curmesh[-1].addFaces(faces)
+                self.curmesh[-1].addFaces (name, faces)
                 return
             
         # No common edge - new mesh required
@@ -995,7 +1002,7 @@ class OBJimport:
             # sliding window
             while l<min(m+1+self.aggressive,len(self.curmesh)):
                 if self.curmesh[l].flags==flags and self.curmesh[l].abut(facesm):
-                    self.curmesh[m].addFaces(self.curmesh[l].faces)
+                    self.curmesh[m].addFaces("Mesh", self.curmesh[l].faces)
                     self.curmesh.pop(l)
                 else:
                     l=l+1
