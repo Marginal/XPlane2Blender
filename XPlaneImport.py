@@ -111,6 +111,9 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #
 # 2004-12-28 v1.85
 #
+# 2004-12-29 v1.86
+#  - Display WaitCursor during NMesh creation stage.
+#
 
 import sys
 import Blender
@@ -685,6 +688,7 @@ class OBJimport:
                 if t==Token.END7:
                     # write meshes
                     self.mergeMeshes()
+                    Blender.Window.WaitCursor(1)
                     for mesh in self.curmesh:
                         mesh.doimport(scene,self.image,self.filename)
                     return
@@ -824,6 +828,7 @@ class OBJimport:
                 if t==Token.END6:
                     # write meshes
                     self.mergeMeshes()
+                    Blender.Window.WaitCursor(1)
                     for mesh in self.curmesh:
                         mesh.doimport(scene,self.image,self.filename)
                     return

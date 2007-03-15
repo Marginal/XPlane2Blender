@@ -58,6 +58,10 @@ Tooltip: 'Copy selected texture to other faces'
 #
 # 2004-12-28 v1.85
 #
+# 2004-12-29 v1.86
+#  - More helpful error message when no object selected.
+#  - Don't try to copy texture to face with different number of vertices.
+#
 
 import Blender
 from Blender import Object, NMesh, Draw, BGL
@@ -126,11 +130,12 @@ def bevent (evt):
         Draw.Redraw()
         
     elif evt == 2:
-        if copystrp.val:	# Reverse faces
+        if copystrp.val:	# Strip
             objects = Blender.Object.GetSelected()
             if (len(objects) != 1 or
                 objects[0].getType() != "Mesh" or
                 objects[0].name != meshname):
+                print len(objects)
                 Draw.PupMenu("Please select faces only in the same mesh - %s." % meshname)
                 return
     
@@ -146,18 +151,19 @@ def bevent (evt):
             mapstrip (face, faces)
             mesh.update()
 
-        else:	# Just map
+        else:			# Just map
             n = len(face.v)
             for ob in Blender.Object.GetSelected():
                 mesh = ob.getData()
                 if ob.getType() == "Mesh":
                     for newface in mesh.getSelectedFaces():
-                        newface.image  = face.image
-                        newface.mode   = face.mode
-                        newface.smooth = face.smooth
-                        newface.transp = face.transp
-                        for k in range (n):
-                            newface.uv[k] = face.uv[k]
+                        if len(newface.v) == n:
+                            newface.image  = face.image
+                            newface.mode   = face.mode
+                            newface.smooth = face.smooth
+                            newface.transp = face.transp
+                            for k in range (n):
+                                newface.uv[k] = face.uv[k]
                 mesh.update()
                 
         Draw.Exit()
@@ -219,8 +225,10 @@ try:
         raise StripError("Please enter UV Face Select mode first.")
     
     objects = Blender.Object.GetSelected ()
-    if len(objects) != 1:
-        raise StripError("Please select one face in one mesh.")
+    if len(objects) == 0:
+        raise StripError("Please select a mesh in Object mode first.")
+    elif len(objects) != 1:
+        raise StripError("Please select only one mesh in Object mode first.")
                      
     ob = objects[0]
     if ob.getType() != "Mesh":

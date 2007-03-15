@@ -121,6 +121,13 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 # 2004-12-28 v1.85
 #  - Fix formatting bug in Vertex output.
 #
+# 2004-12-29 v1.86
+#  - Removed residual support for exporting v6 format.
+#  - Work round X-Plane 8.00-8.03 limitation where "quad_cockpit" polys must
+#    start with the top-left vertex.
+#  - Check that "quad_cockpit" texture t < 768.
+#  - Work round X-Plane 7.6x bug where poly_os cannot be assumed to be 0.
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -144,6 +151,10 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 import sys
 import Blender
 from Blender import NMesh, Lamp, Draw, Window
+
+class ExportError(Exception):
+    def __init__(self, msg=""):
+        self.msg = msg
 
 class Vertex:
     LIMIT=0.001	# max distance between vertices for them to be merged = 1/4in
@@ -229,16 +240,16 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.85
+    VERSION=1.86
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
         #--- public you can change these ---
         self.verbose=0	# level of verbosity in console 0-none, 1-some, 2-most
         self.debug=0	# extra debug info in console
-        self.fileformat=7  # export v6 or v7
         
         #--- class private don't touch ---
+        self.file=0
         self.filename=filename
         self.texture=""
         self.linewidth=0.1
@@ -301,11 +312,9 @@ class OBJexport:
             systype="I"
         else:
             systype="A"
-        if self.fileformat==7:
-            self.file.write("%s\n700\t// \nOBJ\t// \n\n" % systype)
-        else:
-            self.file.write("%s\n2\t//\n\n" % systype)
-        self.file.write("%s\t\t// Texture\n\n\n" % self.texture)
+        self.file.write("%s\n700\t// \nOBJ\t// \n\n" % systype)
+        self.file.write("%s\t\t// Texture\n\n" % self.texture)
+        self.file.write("ATTR_poly_os 0\t\t// work round bug in v7.6x\n\n")
 
     #------------------------------------------------------------------------
     def getTexture (self, theObjects):
@@ -421,11 +430,8 @@ class OBJexport:
                 
             self.updateFlags(0,0,0)	# not sure if this is required
             
-        if self.fileformat==7:
-            self.file.write("end\t\t\t// eof\n")
-        else:
-            self.file.write("99\t\t\t// eof\n")
-        self.file.write("\n// Built using Blender %4.2f, http://www.blender3d.org/\n// Exported using XPlane2Blender %4.2f, http://marginal.org.uk/x-planescenery/\n" % (float(Blender.Get('version'))/100, OBJexport.VERSION))
+        self.file.write("end\t\t\t// eof\n\n")
+        self.file.write("// Built using Blender %4.2f, http://www.blender3d.org/\n// Exported using XPlane2Blender %4.2f, http://marginal.org.uk/x-planescenery/\n" % (float(Blender.Get('version'))/100, OBJexport.VERSION))
 
     #------------------------------------------------------------------------
     def writeLamp(self, object):
@@ -461,24 +467,15 @@ class OBJexport:
             c[2]=lamp.col[2]*10
 
         v=Vertex(0,0,0, object.getMatrix())
-        if self.fileformat==7:
-            self.file.write("light\t\t\t// %s\n" % name)
-            if special:
-                self.file.write("%s\t%2d     %2d     %2d\n\n" % (
-                    v, c[0],c[1],c[2]))
-            else:
-                self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
-                    v,
-                    round(c[0],UV.ROUND),
-                    round(c[1],UV.ROUND),
-                    round(c[2],UV.ROUND)))
+        self.file.write("light\t\t\t// %s\n" % name)
+        if special:
+            self.file.write("%s\t%2d     %2d     %2d\n\n" % (v,c[0],c[1],c[2]))
         else:
-            if special:
-                self.file.write("1  %2d %2d %2d\t\t// %s\n" % (
-                    c[0], c[1], c[2], name))
-                self.file.write("1  %5.2f %5.2f %5.2f\t\t// %s\n" % (
-                    c[0], c[1], c[2], name))
-            self.file.write("%s\n" % v)
+            self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
+                v,
+                round(c[0],UV.ROUND),
+                round(c[1],UV.ROUND),
+                round(c[2],UV.ROUND)))
         self.nobj+=1
 
 
@@ -514,22 +511,17 @@ class OBJexport:
         else:
             c=[0.5,0,5,0,5]
     
-        if self.fileformat==7:
-            self.file.write("line\t\t\t// %s\n" % name)
-            self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
-                v1,
-                round(c[0],UV.ROUND),
-                round(c[1],UV.ROUND),
-                round(c[2],UV.ROUND)))
-            self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
-                v2,
-                round(c[0],UV.ROUND),
-                round(c[1],UV.ROUND),
-                round(c[2],UV.ROUND)))
-        else:
-            self.file.write("2  %2d %2d %2d\t\t// %s\n" % (
-                c[0], c[1], c[2], name))
-            self.file.write("%s\n%s\n\n" % (v1, v2))
+        self.file.write("line\t\t\t// %s\n" % name)
+        self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
+            v1,
+            round(c[0],UV.ROUND),
+            round(c[1],UV.ROUND),
+            round(c[2],UV.ROUND)))
+        self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
+            v2,
+            round(c[0],UV.ROUND),
+            round(c[1],UV.ROUND),
+            round(c[2],UV.ROUND)))
         self.nobj+=1
 
 
@@ -581,6 +573,9 @@ class OBJexport:
                     face.flags|=Face.SMOOTH
                 if (n==4) and f.image and not f.image.name.lower().find("panel."):
                     face.flags|=Face.PANEL
+                    for uv in f.uv:
+                        if uv[1]<0.25:	# texture must be <= 768
+                            raise ExportError("Panel texture in Mesh \"%s\" exceeds 1024x768." % object.name)
                 elif (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TEX:
@@ -654,13 +649,12 @@ class OBJexport:
                     self.faces[faceindex]=0	# take face off list
                     firstvertex=0
 
-                    if (((startface.flags & Face.HARD) or
-                         (startface.flags & Face.PANEL))
-                        and (self.fileformat==7)):
+                    if ((startface.flags & Face.HARD) or
+                        (startface.flags & Face.PANEL)):
                         # Can't be part of a Quad_Strip
                         self.writeStrip(strip,0)
 
-                    elif len(startface.v)==3 and (self.fileformat==7):
+                    elif len(startface.v)==3:
 
                         # First look for a tri_fan.
                         # Vertex which is member of most triangles is centre.
@@ -834,77 +828,39 @@ class OBJexport:
                          face.flags&Face.SMOOTH)
         
         if (len(strip))==1:            
-            # When viewing the visible side of a face
-            #  - Blender stores vertices anticlockwise
-            #  - XPlane expects clockwise, starting with top right
-            # So find top right vertex, then write in reverse order
-            maxX=maxY=-1
+            # Oh for fuck's sake, X-Plane 8.00-8.03 loses the plot unless
+            # quad_cockpit polys start with the top-left vertex.
+            # For our purposes, the top-left vertex is the one with UV
+            # co-ords nearest to the top left corner of the texture file.
+            # Note that this can be wrong for weirdly shaped textures.
+            hyp=sys.maxint
             for i in range(n):
-                if (maxX<face.uv[i].s):
-                    maxX=face.uv[i].s
-                if (maxY<face.uv[i].t):
-                    maxY=face.uv[i].t
-                if (maxX==face.uv[i].s) and (maxY==face.uv[i].t):
-                    topright=i
+                if (face.uv[i].s*face.uv[i].s +
+                    face.uv[i].t*face.uv[i].t < hyp):
+                    topleft=i
                             
-            if self.fileformat==7:
-                if (n==3):
-                    self.file.write ("tri\t")
-                elif (face.flags & Face.PANEL):
-                    self.file.write ("quad_cockpit")
-                elif (face.flags & Face.HARD):
-                    self.file.write ("quad_hard")
-                else:
-                    self.file.write ("quad\t")
-                self.file.write("\t\t// %s\n" % face.name)
+            if (n==3):
+                self.file.write ("tri\t")
+            elif (face.flags & Face.PANEL):
+                self.file.write ("quad_cockpit")
+            elif (face.flags & Face.HARD):
+                self.file.write ("quad_hard")
             else:
-                if (n==4) and (face.flags & Face.HARD):
-                    poly=5	# make quad "hard"
-                else:
-                    poly=n
-                self.file.write("%s  %-6s %-6s %-6s %-6s" % (
-                    poly,
-                    round(face.uv[(topright-2)%n].s,UV.ROUND),
-                    round(face.uv[ topright     ].s,UV.ROUND),
-                    round(face.uv[(topright-2)%n].t,UV.ROUND),
-                    round(face.uv[ topright     ].t,UV.ROUND)))
-                self.file.write("\t// %s\n" % face.name)
+                self.file.write ("quad\t")
+            self.file.write("\t\t// %s\n" % face.name)
 
-            for i in range(topright, topright-n, -1):
-                if self.fileformat==7:
-                    self.file.write("%s\t%s\n" % (face.v[i%n], face.uv[i%n]))
-                else:
-                    self.file.write("%s\n" % face.v[i%n])
+            for i in range(topleft, topleft-n, -1):
+                self.file.write("%s\t%s\n" % (face.v[i%n], face.uv[i%n]))
 
         else:	# len(strip)>1
             if self.debug:
                 for f in strip:
                     print f
 
-            # Work round bug in X-Plane 7.61 where one tri is rendered
-            # incorrectly (wrong apex normal?) under some situations.
-            # Bug appears reliably to be avoided if the tri_fan is regular,
-            # but that's hard to work out. So assume it is regular if it is
-            # closed. Split back into tris if it is not closed.
-            #if n==3 and len(strip)>1 and not face.flags&Face.SMOOTH:
-            #    # tri_fan is closed if first and last faces share two vertices
-            #    common=0
-            #    for i in range(3):
-            #        for j in range(3):
-            #            if strip[0].v[i].equals(strip[-1].v[j]):
-            #                common+=1
-            #    if len(strip)==2 or common<2:
-            #        while len(strip):
-            #            self.writeStrip ([strip.pop()], 0)
-            #        return;
-                
-            if self.fileformat==7:
-                if n==3:
-                    self.file.write ("tri_fan %s" % (len(strip)+2))
-                else:
-                    self.file.write ("quad_strip %s" % ((len(strip)+1)*2))
+            if n==3:
+                self.file.write ("tri_fan %s" % (len(strip)+2))
             else:
-                self.file.write ("%s\t" % -(len(strip)+1))
+                self.file.write ("quad_strip %s" % ((len(strip)+1)*2))
             self.file.write("\t\t// %s\n" % face.name)
 
             if (n==3):	# Tris
@@ -922,34 +878,17 @@ class OBJexport:
                             break
 
             else:	# Quads
-                if self.fileformat==7:
-                    self.file.write("%s\t%s\t%s\t%s\n" % (
-                        face.v[(firstvertex+1)%n], face.uv[(firstvertex+1)%n],
-                        face.v[firstvertex], face.uv[firstvertex]))
-                else:
-                    self.file.write("%s\t%s\t  %-6s %-6s %-6s %-6s\n" % (
-                        face.v[(firstvertex+1)%n], face.v[firstvertex],
-                        round(face.uv[(firstvertex+1)%n].s,UV.ROUND),
-                        round(face.uv[ firstvertex     ].s,UV.ROUND),
-                        round(face.uv[(firstvertex+1)%n].t,UV.ROUND),
-                        round(face.uv[ firstvertex     ].t,UV.ROUND)))
+                self.file.write("%s\t%s\t%s\t%s\n" % (
+                    face.v[(firstvertex+1)%n], face.uv[(firstvertex+1)%n],
+                    face.v[firstvertex], face.uv[firstvertex]))
                 v=face.v[(firstvertex+1)%n]
                 
                 for face in strip:
                     for i in range(4):
                         if face.v[i]==v:
-                            if self.fileformat==7:
-                                self.file.write("%s\t%s\t%s\t%s\n" % (
-                                    face.v[(i+1)%n], face.uv[(i+1)%n],
-                                    face.v[(i+2)%n],  face.uv[(i+2)%n]))
-                            else:
-                                self.file.write("%s\t%s\t  %-6s %-6s %-6s %-6s\n" % (
-                                    face.v[(i+1)%n], face.v[(i+2)%n],
-                                    round(face.uv[(i+1)%n].s,UV.ROUND),
-                                    round(face.uv[(i+2)%n].s,UV.ROUND),
-                                    round(face.uv[(i+1)%n].t,UV.ROUND),
-                                    round(face.uv[(i+2)%n].t,UV.ROUND)))
-                                
+                            self.file.write("%s\t%s\t%s\t%s\n" % (
+                                face.v[(i+1)%n], face.uv[(i+1)%n],
+                                face.v[(i+2)%n],  face.uv[(i+2)%n]))
                             v=face.v[(i+1)%n]
                             break
                 
@@ -970,8 +909,6 @@ class OBJexport:
 
     #------------------------------------------------------------------------
     def updateFlags(self, no_depth, dblsided, smooth):
-        if not self.fileformat==7:
-            return	# v6 format doesn't support this stuff
 
         # For readability, write turn-offs before turn-ons
         # Note X-Plane parser requires a comment after attribute statements
@@ -1016,4 +953,12 @@ else:
 
     obj=OBJexport(objFile)
     scene = Blender.Scene.getCurrent()
-    obj.export(scene)
+    try:
+        obj.export(scene)
+    except ExportError, e:
+        Window.DrawProgressBar(1, "Error")
+        msg="ERROR:\t"+e.msg
+        print msg
+        Blender.Draw.PupMenu(msg)
+        if obj.file:
+            obj.file.close()
