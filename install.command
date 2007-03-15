@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Installation script for MacOS X
 clear
 echo Installing Blender scripts . . .
@@ -19,7 +19,7 @@ else
 fi
 
 # Candidate application locations
-DIRS=$($LS -dump | awk 'match($0, "blender.app") {if(sub("[ \t]+path:[ \t]+","")) print $0 "/Contents/MacOS/.blender/scripts"}')
+DIRS=$($LS -dump | awk 'match($2, "/blender.app") { print $2 "/Contents/MacOS/.blender/scripts"}')
 
 # Remove old files from everywhere
 FILES="../Bpymenus
@@ -70,12 +70,12 @@ fi
 # Copy new
 DONE=
 for I in $DIRS; do
-    if [ -d $I ]; then
+    if [ -d "$I" ]; then
 	DONE="$DONE
   $I"
-	cp -f $FILES $I
+	cp -f $FILES "$I"
 	for J in $FILES; do
-	    if ! [ -r $I/$J ]; then
+	    if ! [ -r "$I/$J" ]; then
 		echo
 		echo Failed to install scripts in folder
 		echo "  $I" !!!
@@ -88,7 +88,7 @@ done
 
 echo
 if [ "$DONE" ]; then
-    echo "Installated scripts in folder:"
+    echo "Installed scripts in folder:"
     echo "$DONE"
 else
     echo Failed to find the correct location for the scripts !!!

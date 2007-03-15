@@ -7,7 +7,7 @@ Tooltip: 'Copy selected texture assignment to other faces'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.18"
+__version__ = "2.19"
 __bpydoc__ = """\
 This script duplicates a face's texture assignment across many faces.
 
@@ -20,6 +20,7 @@ Usage:<br>
   * Select the face(s) that you want to change.<br>
   * Press the Copy button.<br>
 """
+
 #------------------------------------------------------------------------
 # UV Copy & Paste for blender 2.35 or above
 #

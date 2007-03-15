@@ -7,7 +7,7 @@ Tooltip: 'Adjust textures to enlarged bitmap'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.18"
+__version__ = "2.19"
 __bpydoc__ = """\
 This script fixes up selected meshes' texture assignments after doubling
 the size of the bitmap file.
@@ -21,6 +21,7 @@ Usage:<br>
   * Choose the location of the textures in the bitmap file.<br>
   * Press the Resize button.<br>
 """
+
 #------------------------------------------------------------------------
 # UV Resize for blender 2.34 or above
 #
