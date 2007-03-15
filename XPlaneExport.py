@@ -118,6 +118,9 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #  - Default smoothing state appears different between cockpits and scenery
 #    so explicitly set smoothing state at start of file.
 #
+# 2004-12-28 v1.85
+#  - Fix formatting bug in Vertex output.
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -158,7 +161,7 @@ class Vertex:
             self.z=-(mm[0][1]*x + mm[1][1]*y + mm[2][1]*z + mm[3][1])
             
     def __str__(self):
-        return "%7.3f%7.3f%7.3f" % (
+        return "%7.3f %7.3f %7.3f" % (
             round(self.x, Vertex.ROUND),
             round(self.y, Vertex.ROUND),
             round(self.z, Vertex.ROUND))
@@ -226,7 +229,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.84
+    VERSION=1.85
 
     #------------------------------------------------------------------------
     def __init__(self, filename):

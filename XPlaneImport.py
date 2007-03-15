@@ -109,6 +109,8 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #  - Work round duplicate fuselage bug in Plane-Maker 8.0x.
 #  - Fixed bug with bogus 2-edged single faces.
 #
+# 2004-12-28 v1.85
+#
 
 import sys
 import Blender
