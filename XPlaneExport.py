@@ -6,7 +6,7 @@ Group: 'Export'
 Tip: 'Export to X-Plane scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.32 or above
+# X-Plane exporter for blender 2.34 or above
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -75,6 +75,9 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 # 2004-08-28 v1.60 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Added support for double-sided faces
 #  - Import: Support importing files with multiple LODs
+#
+# 2004-08-28 v1.61 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
 #
 
 #
@@ -179,7 +182,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.60
+    VERSION=1.61
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -832,10 +835,10 @@ class OBJexport:
 # main routine
 #------------------------------------------------------------------------
 
-if Blender.Get('version') < 230:
-    print "Error:\tOBJ export failed, wrong blender version!"
-    print "\tYou aren't running blender version 2.30 or greater"
-    print "\tdownload a newer version from http://blender3d.org/"
+if Blender.Get('version') < 234:
+    msg="ERROR:\tRequires Blender version 2.34 or later."
+    print msg
+    Blender.Draw.PupMenu(msg)
 else:    
     baseFileName=Blender.Get('filename')
     if baseFileName.find('.') != -1:

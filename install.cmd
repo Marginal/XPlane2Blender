@@ -3,15 +3,15 @@
 echo Installing Blender scripts . . .
 echo.
 
-:appdata
-if "%APPDATA%"=="" goto prog
-set DESTDIR=%APPDATA%\Blender Foundation\Blender\.blender\scripts\
-if not exist "%DESTDIR%" goto prog
+:prog
+if "%ProgramFiles%"=="" goto appdata
+set DESTDIR=%ProgramFiles%\Blender Foundation\Blender\.blender\scripts\
+if not exist "%DESTDIR%" goto appdata
 goto copy
 
-:prog
-if "%ProgramFiles%"=="" goto home
-set DESTDIR=%ProgramFiles%\Blender Foundation\Blender\.blender\scripts\
+:appdata
+if "%USERPROFILE%"=="" goto home
+set DESTDIR=%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts\
 if not exist "%DESTDIR%" goto home
 goto copy
 
