@@ -6,14 +6,14 @@ Group: 'Export'
 Tip: 'Export to X-Plane scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.32 or above, version 1.40
+# X-Plane exporter for blender 2.32 or above, version 1.50
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web: http://marginal.org.uk/x-planescenery/
 #
-# See XPlaneReadme.txt for usage
+# See XPlane2Blender.txt for usage
 #
 # This software is provided 'as-is', without any express or implied
 # warranty. In no event will the author be held liable for any damages
@@ -68,6 +68,9 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 #  - Reduced duplicate vertex limit to 0.01 to handle imported objects
 #  - Export: Support 3 LOD levels: 1000,4000,10000
 #
+# 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Reversed meaning of DYNAMIC flag, since it is set by default when
+#    creating new faces in Blnder
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -467,7 +470,7 @@ class OBJexport:
                     face.flags|=Face.SMOOTH
                 if f.transp == NMesh.FaceTranspModes.ALPHA:
                     face.flags|=Face.ALPHA
-                if (n==4) and (f.mode & NMesh.FaceModes.DYNAMIC):
+                if (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TILES:
                     face.flags|=Face.NO_DEPTH

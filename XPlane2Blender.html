@@ -41,37 +41,51 @@ Smoke_White (which are not directly representable in Blender).</p>
 <p>Requires <a href="http://www.blender3d.org/Download/">Blender</a>
 2.32 or later.</p>
 <h3>Installation</h3>
-<p>Extract the contents of the zip file to the folder where Blnder
-looks for scripts:</p>
+<p>Close Blender if you have it running.</p>
+<p>Extract the contents of the zip file to a new (temporary) folder.
+Open
+this folder. Then:<br>
+</p>
 <table style="width: 100%; text-align: left;" border="0" cellpadding="2"
  cellspacing="2">
   <tbody>
     <tr>
-      <td style="width: 32px; height: 32px; vertical-align: top;">Windows:
+      <td style="vertical-align: top;">Windows 2000/XP:<br>
       </td>
-      <td>The location where you told you
-told Blender to install "User Data" files. Either:<code><br>
-C:\Program Files\Blender
-Foundation\Blender\.blender\scripts</code><br>
-(assuming that you installed Blender to the default location). Or:<br>
+      <td style="vertical-align: top;">Double-click on the <code>install.cmd</code>
+file.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 32px; height: 32px; vertical-align: top;">Windows
+98/ME: </td>
+      <td>Copy the files to the place that you you told Blender to
+install "User Data" files. This is either:<br>
       <code>C:\Documents and Settings\<span style="font-style: italic;">you</span>\Application
 Data\Blender Foundation\Blender\.blender\scripts</code><br>
-(assuming that your Windows profile is in the default location).<br>
+      <small>(assuming that your Windows profile is in the default
+location)</small>.<br>
+Or:<br>
+      <code>C:\Program Files\Blender
+Foundation\Blender\.blender\scripts</code><br>
+      <small>(assuming that you installed Blender to the default
+location)</small>.<br>
       <br>
       </td>
     </tr>
     <tr>
       <td style="width: 32px; height: 32px; vertical-align: top;">MacOS:
       </td>
-      <td><code>/Users/</code><span style="font-style: italic;">you</span><code>/.blender/scripts</code><br>
-(assuming that your home directory is in the default location).<br>
-You may need to first create the last two sub-folders of that path
-using the Terminal app. <font size="-1">(Finder doesn't let you create
-folders starting with '.')</font>:<br>
-Run the Terminal app, and type <code>mkdir ~/.blender/scripts</code> </td>
+      <td>Run the Terminal app, and type <code>mkdir ~/.blender/scripts<br>
+      </code>Copy the files to:<br>
+      <code>/Users/</code><span style="font-style: italic;">you</span><code>/.blender/scripts</code><br>
+      <small>(assuming that your home directory is in the default
+location)</small>.<br>
+      </td>
     </tr>
   </tbody>
 </table>
+<p>You can now delete the temporary folder.</p>
 <p>(Re)start Blender.</p>
 <p>On Mac OS, also run the "Console" application that comes with Mac OS
 X and which is found under "Utilities".</p>
@@ -166,10 +180,9 @@ it. Areas of the texture that are coloured magenta or that have Alpha
 transparency (png files only) will be transparent when displayed in
 X-Plane. Use a "UV Image Editor" window to control mapping of the
 texture bitmap to the face.</li>
-    <li><samp>Collision</samp> button controls whether the face is
-"hard" (ie landable on) in X-Plane. This only works for faces with 4
-edges. Blender adds new faces with "Collision" on by default. Turn this
-off for faces that don't need it to speed up rendering in X-Plane.</li>
+    <li><samp>Collision</samp> button indicates that the face is
+not "landable on" in X-Plane. Faces with 3
+edges are never "landable on", irrespective of the state of this button.</li>
     <li><samp>Tiles</samp> button turns off depth-testing. Use this for
 horizontal or inwards-facing faces to prevent nasty artifacts when
 displayed in X-Plane.</li>
@@ -305,14 +318,6 @@ that's up to you). </li>
 coming from their centre. The visible side of the face is the side that
 you are looking at when the line is pointing <span
  style="text-decoration: underline;">towards</span> you.</p>
-<h4>Problems</h4>
-<p><a href="mailto:x-plane@marginal.org.uk">Mail me</a> with any
-questions, problems
-etc.</p>
-<p>If reporting a problem, please try to send me the the .obj file
-(where relevant) and the contents of the Console window. (In Mac OS X,
-this is the "Console" program. In Windows this the window titled
-"Blender" that looks like a Command Prompt).</p>
 <h3>Limitations</h3>
 <h4>Import</h4>
 <ul>
@@ -329,9 +334,16 @@ visible from a non-zero distance are ignored. </li>
 the X-Plane .obj file format). Multiple textures are not automagically
 merged into one file during the export. </li>
 </ul>
+<h3>Problems</h3>
+<p><a href="mailto:x-plane@marginal.org.uk">Mail me</a> with any
+questions, problems etc.</p>
+<p>If reporting a problem, please try to send me the the .obj file
+(where relevant) and the contents of the Console window. (In Mac OS X,
+this is the "Console" program. In Windows this the window titled
+"Blender" that looks like a Command Prompt).</p>
 <h3>Stuff</h3>
 <p>Copyright &copy; 2004 Jonathan Harris.<br>
-Version 1.40<br>
+Version 1.50<br>
 <a href="http://marginal.org.uk/x-planescenery/">http://marginal.org.uk/x-planescenery/</a></p>
 <hr style="width: 100%; height: 2px;">
 <table style="width: 100%; text-align: left;" cellpadding="0"

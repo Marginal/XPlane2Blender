@@ -6,14 +6,14 @@ Group: 'Import'
 Tip: 'Import X-Plane scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.32 or above, version 1.40
+# X-Plane importer for blender 2.32 or above, version 1.50
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
-# See XPlaneReadme.txt for usage
+# See XPlane2Blender.html for usage
 #
 # This software is provided 'as-is', without any express or implied
 # warranty. In no event will the author be held liable for any damages
@@ -67,6 +67,10 @@ Tip: 'Import X-Plane scenery file format (.obj)'
 # 2004-04-10 v1.40 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reduced duplicate vertex limit to 0.01 to handle imported objects
 #  - Export: Support 3 LOD levels: 1000,4000,10000
+#
+# 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Reversed meaning of DYNAMIC flag, since it is set by default when
+#    creating new faces in Blnder
 #
 
 import sys
@@ -247,8 +251,8 @@ class Mesh:
             face=NMesh.Face()
             face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TEX|
                            NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
-            face.transp=0	# was NMesh.FaceTranspModes.ALPHA
-            if f.flags&Face.HARD:
+            face.transp=NMesh.FaceTranspModes.ALPHA
+            if not f.flags&Face.HARD:
                 face.mode |= NMesh.FaceModes.DYNAMIC
             if f.flags&Face.NO_DEPTH:
                 face.mode |= NMesh.FaceModes.TILES
@@ -785,9 +789,8 @@ class OBJimport:
         mesh.mode |= NMesh.Modes.TWOSIDED
 
         face=NMesh.Face()
-        face.mode &= ~(NMesh.FaceModes.TEX|
-                       NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
-        face.mode |= NMesh.FaceModes.TWOSIDE
+        face.mode &= ~(NMesh.FaceModes.TEX|NMesh.FaceModes.TILES)
+        face.mode |= (NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.DYNAMIC)
 
         mesh.verts.append(NMesh.Vert(v[0].x-centre.x+e.x,
                                      v[0].y-centre.y+e.y,
