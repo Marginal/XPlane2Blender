@@ -159,6 +159,9 @@
 # 2005-05-09 v2.01
 #  - Fix up relative image pathnames to avoid spurious duplicates.
 #
+# 2005-05-11 v2.03
+#  - Fix stupid panel bug.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -206,7 +209,7 @@ class Mesh:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=2.02
+    VERSION=2.03
 
     #------------------------------------------------------------------------
     def __init__(self, filename, fileformat):
@@ -428,7 +431,9 @@ class OBJexport:
             raise ExportError("Texture must be in bmp or png format.\n\tPlease convert the file. Use Image->Replace to load the new file.")
         
         # try to guess correct texture path
-        if not self.iscockpit:
+        if self.iscockpit:
+            print "Info:\tUsing algorithms appropriate for a cockpit object."
+        else:
             for prefix in ["custom object textures", "autogen textures"]:
                 l=self.texture.lower().find(prefix)
                 if l!=-1:
@@ -506,6 +511,7 @@ class OBJexport:
                                 mesh=Mesh(meshes[i].name)
                                 mesh.faces.append(meshes[i].faces[j])
                                 meshes[i].faces[j]=0	# Remove original face
+                                meshes.append(mesh)
                                 panelsorted=1
                                 break
                     i=i-1

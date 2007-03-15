@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.02"
+__version__ = "2.03"
 __bpydoc__ = """\
 This script imports X-Plane v6 and v7 .obj scenery files into Blender.
 
@@ -130,11 +130,15 @@ Limitations:<br>
 # 2005-01-15 v1.90
 #  - Add support for forcing all primitives into a single mesh.
 #
-# 2005-03-02 v2.00
+# 2005-04-24 v2.00
 #  - Default to smooth.
 #  - Add support ATTR_reset.
 #  - Eliminate ".." from texture paths.
 #
+# 2005-05-11 v2.03
+#  - Fixed bug importing quad_cockpits.
+#
+
 
 import sys
 import Blender
@@ -275,6 +279,9 @@ class Mesh:
 
     #------------------------------------------------------------------------
     def doimport(self,scene,image,filename):
+        
+        panel=None
+        
         mesh=NMesh.New(self.name)
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
@@ -327,17 +334,17 @@ class Mesh:
                 face.mode |= NMesh.FaceModes.TEX
                 face.transp=NMesh.FaceTranspModes.ALPHA
                 mesh.hasFaceUV(1)
-                if not self.panel:
+                if not panel:
                     l = filename.rfind(Blender.sys.dirsep)
                     if l!=-1:
                         for extension in [".bmp", ".png"]:
                             cockpit=filename[:l+1]+"cockpit"+Blender.sys.dirsep+"-PANELS-"+Blender.sys.dirsep+"Panel"+extension
                             try:
-                                self.panel = Image.Load(cockpit)
+                                panel = Image.Load(cockpit)
                                 break
                             except IOError:
                                 pass
-                face.image = self.panel
+                face.image = panel
             elif image:
                 face.mode |= NMesh.FaceModes.TEX
                 face.image = image
@@ -380,7 +387,6 @@ class OBJimport:
         self.filelen=0		# for progress reports
         self.fileformat=0	# 6 or 7
         self.image=None		# texture image, iff scenery has texture
-        self.panel=None		# texture image, iff cockpit with panel
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
         

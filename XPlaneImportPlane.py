@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.02"
+__version__ = "2.03"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes into Blender, so that
 they can be exported as X-Plane scenery.
@@ -77,7 +77,7 @@ Limitations:<br>
 # 2005-03-01 v1.15
 #  - Fixed parsing bug with non-zero values of is_hm or is_ga.
 #
-# 2005-04-08 v2.00
+# 2005-04-24 v2.00
 #  - Added support for v8 planes and weapons.
 #  - All bodies and weapons imported using correct texture.
 #  - Airfoil width read from .afl file.
