@@ -83,6 +83,9 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 # 2004-09-02 v1.70
 #  - Try harder to preserve object names in comments
 #
+# 2004-09-04 v1.71
+#
+
 
 import sys
 import Blender

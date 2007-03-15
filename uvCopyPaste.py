@@ -37,6 +37,9 @@ Tooltip: 'Copy selected texture to other faces'
 # 2004-09-02 v1.70
 #  - New file
 #
+# 2004-09-04 v1.71
+#
+
 
 import Blender
 from Blender import Object, NMesh, Draw, BGL

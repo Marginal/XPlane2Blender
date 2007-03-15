@@ -150,12 +150,15 @@ object types are exported.</li>
   <li>Lamps with certain words in their names have special behaviours
 when exported to X-Plane:</li>
   <dl>
-    <dd>Flash - Light flashes.</dd>
-    <dd>Pulse - Red pulsing light. (R,G,B settings in Blender are
+    <dd><code>Flash</code> - Light flashes.</dd>
+    <dd><code>Pulse</code> - Red pulsing light. (R,G,B settings in
+Blender are
 ignored).</dd>
-    <dd>Strobe - White strobe light. (R,G,B settings in Blender are
+    <dd><code>Strobe</code> - White strobe light. (R,G,B settings in
+Blender are
 ignored).</dd>
-    <dd>Traffic - Cycles red, orange, green. (R,G,B settings in Blender
+    <dd><code>Traffic</code> - Cycles red, orange, green. (R,G,B
+settings in Blender
 are ignored). </dd>
   </dl>
 </ul>
@@ -168,20 +171,17 @@ X-Plane).</li>
   <ul>
     <li><samp>Set Smooth</samp> and <samp>Set Solid</samp> control
 whether to smooth edges of faces in a mesh. This is useful when using
-multiple faces to simulate a curved surface;<br>
+multiple faces to simulate a curved surface. Only faces that are part
+of a Strip (see "Strips" below) will be smoothed when displayed in
+X-Plane;<br>
 go to "Object Mode", select the mesh&nbsp; and press <samp>Set Smooth</samp>.
 The effect is only visible in Blender <samp>3D View</samp> windows
-when the "Viewport Shading" button is set to "Solid" or "Shaded". </li>
+when the <samp>Viewport Shading</samp> button is set to <samp>Solid</samp>
+or <samp>Shaded</samp>. </li>
   </ul>
-  <dl>
-    <dd>Blender allows you (in "Edit Mode") to <samp>Set Smooth</samp>
-on
-individual faces. Don't do that - the results when exported to X-Plane
-are undefined. <samp>Set Smooth</samp> or <samp>Set Solid</samp> on
-the whole mesh instead.</dd>
-  </dl>
-  <li>In the <samp>Texture Face</samp> panel (available in "UV Face
-Select" mode):</li>
+  <li>In the <samp>Texture Face</samp> panel (available in <samp>UV
+Face
+Select</samp> mode):</li>
   <ul>
     <li><samp>Tex</samp> button controls whether the face has a
 texture. Create a .bmp or .png file in an image editor program in the <code>custom
@@ -192,14 +192,23 @@ transparency (png files only) will be transparent when displayed in
 X-Plane. Use a <samp>UV Image Editor</samp> window to control mapping
 of the
 texture bitmap to the face.</li>
-    <li><samp>Tiles</samp> button turns off depth-testing. Use this for
+    <li><samp>Tiles</samp> button is a hint to X-Plane that the face is
+inwards-facing. Use this for
 ground-level or inwards-facing faces to prevent nasty artifacts when
 displayed in X-Plane.</li>
     <li><samp>Collision</samp> button indicates that the face is
 not "landable on" in X-Plane. Faces with 3
-edges are never "landable on", irrespective of the state of this button.</li>
+edges are never "landable on", irrespective of the state of this
+button. Unpress this button only for things like helicopter landing
+pads.<br>
+    </li>
     <li><samp>Twoside</samp> button controls whether one or both sides
 of the face are displayed.</li>
+    <li><samp>Alpha</samp><span
+ style="font-family: Arial,Helvetica,sans-serif;"> </span>button is a
+hint to X-Plane that the face is transparent. Use this for
+transparent faces to prevent nasty artifacts when
+displayed in X-Plane.</li>
   </ul>
 </ul>
 <h4>Lines</h4>
@@ -311,7 +320,7 @@ mode. </li>
 create X-Plane scenery</a>.</p>
 <p><a href="http://www.blender3d.org/Education/">General Blender
 tutorials</a>.</p>
-<h4>Tips</h4>
+<h4>More tips</h4>
 <p>When creating boxes - eg a house or hangar body - you may find it
 easier to create a Mesh "Cube" and delete any faces that are not
 required, rather than create each face individually as Mesh "Plane"s.
@@ -322,8 +331,8 @@ mesh rather than create it as a new standalone Mesh "Plane". To do this
 select the existing mesh and go to "Edit Mode" before adding the plane.</p>
 <p> X-Plane normally only displays one side of an object's face; faces
 are
-invisible from behind unless you set press the <samp>Twoside</samp>
-button. In order to see which side of a single-sided face is the
+invisible from behind (unless you set press the <samp>Twoside</samp>
+button). In order to see which side of a single-sided face is the
 visible side:</p>
 <ul>
   <li>Go to Edit mode (you need to have an object selected to do this).</li>
@@ -365,7 +374,7 @@ this is the "Console" program. In Windows this the window titled
 "Blender" that looks like a Command Prompt).</p>
 <h3>Stuff</h3>
 <p>Copyright &copy; 2004 Jonathan Harris.<br>
-Version 1.70<br>
+Version 1.71<br>
 <a href="http://marginal.org.uk/x-planescenery/">http://marginal.org.uk/x-planescenery/</a></p>
 <hr style="width: 100%; height: 2px;">
 <table style="width: 100%; text-align: left;" cellpadding="0"

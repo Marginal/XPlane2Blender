@@ -83,6 +83,10 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-09-02 v1.70
 #
+# 2004-09-04 v1.71
+#  - since ATTR_no_depth is broken, changed output ordering to make no_depth
+#    faces come after normal faces. This slightly improves rendering.
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -94,10 +98,10 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #  2. Output lights and lines in the order that they're found.
 #     Build up global vertex list and global face list.
 #  3. Output faces in the following order, joined into strips where possible.
-#      - no_depth
 #      - normal (usually the fullest bucket)
-#      - no_depth+alpha
+#      - no_depth
 #      - alpha
+#      - no_depth+alpha
 #      (Smooth, Hard and double-sided faces are mixed up with the other
 #       faces and are output in the order they're found).
 #
@@ -561,7 +565,7 @@ class OBJexport:
         facenum=0
         nfaces=len(self.faces)
         
-        for bucket in [Face.NO_DEPTH, 0, Face.NO_DEPTH+Face.ALPHA, Face.ALPHA]:
+        for bucket in [0, Face.NO_DEPTH, Face.ALPHA, Face.NO_DEPTH+Face.ALPHA]:
 
             # Identify strips
             for faceindex in range(nfaces):
@@ -861,16 +865,16 @@ class OBJexport:
         # For readability, write turn-offs before turn-ons
         # Note X-Plane parser requires a comment after attribute statements
 
-# Grrrr, no_depth is broken in X-Plane 7.61
-#       if self.no_depth and not no_depth:
-#           self.file.write("ATTR_depth\t\t//\n\n")
+        # Grrrr, no_depth is broken in X-Plane 7.61
+        #if self.no_depth and not no_depth:
+        #    self.file.write("ATTR_depth\t\t//\n\n")
         if self.dblsided and not dblsided:
             self.file.write("ATTR_cull\t\t//\n\n")
         if self.smooth and not smooth:
             self.file.write("ATTR_shade_flat\t\t//\n\n")
             
-#       if no_depth and not self.no_depth:
-#           self.file.write("ATTR_no_depth\t\t//\n\n")
+        #if no_depth and not self.no_depth:
+        #    self.file.write("ATTR_no_depth\t\t//\n\n")
         if dblsided and not self.dblsided:
             self.file.write("ATTR_no_cull\t\t//\n\n")
         if smooth and not self.smooth:
