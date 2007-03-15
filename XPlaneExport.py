@@ -108,11 +108,15 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #  - Prettified output slightly.
 #
 # 2004-11-22 v1.82
-#  - Fix for LOD detection when objects outside levels 1-3
+#  - Fix for LOD detection when objects outside levels 1-3.
 #  - tri_fan disable hack from v1.63 not applied to smooth meshes - normal
 #    bug appears to be less noticable with smooth meshes.
 #
 # 2004-11-24 v1.83
+#
+# 2004-12-10 v1.84
+#  - Default smoothing state appears different between cockpits and scenery
+#    so explicitly set smoothing state at start of file.
 #
 
 #
@@ -154,7 +158,10 @@ class Vertex:
             self.z=-(mm[0][1]*x + mm[1][1]*y + mm[2][1]*z + mm[3][1])
             
     def __str__(self):
-        return "%8.3f %8.3f %8.3f" % (self.x, self.y, self.z)
+        return "%7.3f%7.3f%7.3f" % (
+            round(self.x, Vertex.ROUND),
+            round(self.y, Vertex.ROUND),
+            round(self.z, Vertex.ROUND))
     
     def equals (self, v, fudge=LIMIT):
         if ((abs(self.x-v.x) < fudge) and
@@ -205,8 +212,8 @@ class Face:
     def __str__(self):
         s="<"
         for v in self.v:
-            s=s+("[%5.2f %5.2f %5.2f]," % (v.x, v.y, v.z))
-        return s[:-1]+">"
+            s=s+("[%s]" % v)
+        return s+">"
 
     def addVertex(self, v):
         self.v.append(v)
@@ -219,7 +226,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.83
+    VERSION=1.84
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -237,7 +244,7 @@ class OBJexport:
         # flags controlling export
         self.no_depth=0
         self.dblsided=0
-        self.smooth=0
+        self.smooth=-1		# Default appears indeterminate in 8.01/2
 
         # stuff for exporting faces
         self.faces=[]
@@ -595,7 +602,7 @@ class OBJexport:
                     else:	# File format requires something - using (0,0)
                         face.addUV(UV(0,0))
 
-                # merge duplicate vertices
+                # merge duplicate vertices in this face
                 i=0
                 while i < len(face.v):
                     for j in range (len(face.v)):
@@ -647,9 +654,13 @@ class OBJexport:
                     if (((startface.flags & Face.HARD) or
                          (startface.flags & Face.PANEL))
                         and (self.fileformat==7)):
-                        pass	# Can't be part of a Quad_Strip
+                        # Can't be part of a Quad_Strip
+                        self.writeStrip(strip,0)
+
                     elif len(startface.v)==3 and (self.fileformat==7):
-                        # Vertex which is member of most triangles is centre
+
+                        # First look for a tri_fan.
+                        # Vertex which is member of most triangles is centre.
                         tris=[]
                         for v in startface.v:
                             tri=0
@@ -666,9 +677,10 @@ class OBJexport:
                         else:
                             c=2
                         firstvertex=(c-1)%3
-                        if self.debug: print "Start strip, centre=%s:\n%s" % (
+                        if self.debug: print "Start fan, centre=%s:\n%s" % (
                             c, startface)
 
+                        tri_inds=[faceindex]
                         for o in [0,2]:
                             # vertices must be in clockwise order
                             if self.debug: print "Order %s" % o
@@ -681,16 +693,51 @@ class OBJexport:
                                     if self.debug: print of
                                     if o==0:
                                         strip.append(of)
+                                        tri_inds.append(nf)
                                         v=(i+1)%3
                                     else:
                                         strip.insert(0, of)
+                                        tri_inds.insert(0, nf)
                                         v=(i-1)%3
                                         firstvertex=v
-                                    self.faces[nf]=0	# take face off list
-                                    facenum=facenum+1
+                                    self.faces[nf]=0  # take face off list
                                 else:
                                     break
 
+                        # tri_fans are rendered incorrectly (wrong apex
+                        # normal?) under some situations. So only make
+                        # tri_fan if closed and enough vertices.
+                        if len(strip)>=8:	# strictly >2
+                            # closed if first and last faces share two vertices
+                            common=0
+                            for i in range(3):
+                                for j in range(3):
+                                    if strip[0].v[i].equals(strip[-1].v[j]):
+                                        common+=1
+                            if common==2:
+                                print "Info:\tFound  Tri_Fan   of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
+                                for i in tri_inds:
+                                    self.faces[i]=0	# take face off list
+                                    facenum=facenum+1
+                                self.writeStrip(strip,firstvertex)
+                                continue
+                            elif self.debug:
+                                print "Not closed (%s)" % common
+
+                        # Didn't find a tri_fan, restore deleted faces
+                        for i in range(len(strip)):
+                            self.faces[tri_inds[i]]=strip[i]
+                        
+                        strip=[startface]
+                        firstvertex=0
+
+                        # Look for a tri_strip
+                        
+                        if len(strip)>1:
+                            print "Info:\tFound  Tri_Strip of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
+                        
+                        self.writeStrip(strip,firstvertex)
+                        
                     elif len(startface.v)==4:
                         # Find lowest two points
                         miny=sys.maxint
@@ -744,15 +791,10 @@ class OBJexport:
                             if len(strip)>1:
                                 break
 
-                    if len(strip)>1:
-                        if len(startface.v)==3:
-                            striptype="Tri"
-                        else:
-                            striptype="Quad"
-                        print "Info:\tFound strip of %s %ss in Mesh \"%s\"" % (
-                            len(strip), striptype, startface.name)
-                    self.writeStrip(strip,firstvertex)
-                
+                        if len(strip)>1:
+                            print "Info:\tFound Quad_Strip of %2d faces in Mesh \"%s\"" % (len(strip), startface.name)
+                        self.writeStrip(strip,firstvertex)
+                    
 
     #------------------------------------------------------------------------
     # Return index of a face which has the same number of edges, same flags,
@@ -765,7 +807,7 @@ class OBJexport:
         uv2=face.uv[(v+1)%n]
         for faceindex in v1.faces:
             f=self.faces[faceindex]
-            if f and f.flags==face.flags and len(f.v)==n:
+            if f and f!=face and f.flags==face.flags and len(f.v)==n:
                 for i in range(n):
                     if  (f.v[i]==v2 and
                          f.v[(i+1)%n]==v1 and
@@ -780,7 +822,7 @@ class OBJexport:
     # Assumes whole strip is either Tris or Quads, not mix of both
     # Assumes whole strip is either smooth or flat, not mix of both
     # Assumes whole strip is either depth tested or not, not mix of both
-    # Assumes that any "hard" faces are in a strip of length 1
+    # Assumes that any "hard" or "panel" faces are in a strip of length 1
     def writeStrip (self,strip,firstvertex):
         
         face=strip[0]
@@ -837,21 +879,21 @@ class OBJexport:
                     print f
 
             # Work round bug in X-Plane 7.61 where one tri is rendered
-            # incorrectly (wrong normal?) under some situations.
+            # incorrectly (wrong apex normal?) under some situations.
             # Bug appears reliably to be avoided if the tri_fan is regular,
             # but that's hard to work out. So assume it is regular if it is
             # closed. Split back into tris if it is not closed.
-            if n==3 and len(strip)>1 and not face.flags&Face.SMOOTH:
-                # tri_fan is closed if first and last faces share two vertices
-                common=0
-                for i in range(3):
-                    for j in range(3):
-                        if strip[0].v[i].equals(strip[-1].v[j]):
-                            common+=1
-                if len(strip)==2 or common<2:
-                    while len(strip):
-                        self.writeStrip ([strip.pop()], 0)
-                    return;
+            #if n==3 and len(strip)>1 and not face.flags&Face.SMOOTH:
+            #    # tri_fan is closed if first and last faces share two vertices
+            #    common=0
+            #    for i in range(3):
+            #        for j in range(3):
+            #            if strip[0].v[i].equals(strip[-1].v[j]):
+            #                common+=1
+            #    if len(strip)==2 or common<2:
+            #        while len(strip):
+            #            self.writeStrip ([strip.pop()], 0)
+            #        return;
                 
             if self.fileformat==7:
                 if n==3:
@@ -931,7 +973,7 @@ class OBJexport:
         # For readability, write turn-offs before turn-ons
         # Note X-Plane parser requires a comment after attribute statements
 
-        # Grrrr, no_depth is broken in X-Plane 7.61
+        # Grrrr, no_depth is broken from X-Plane 7.61
         #if self.no_depth and not no_depth:
         #    self.file.write("ATTR_depth\t\t//\n\n")
         if self.dblsided and not dblsided:
@@ -941,9 +983,9 @@ class OBJexport:
             
         #if no_depth and not self.no_depth:
         #    self.file.write("ATTR_no_depth\t\t//\n\n")
-        if dblsided and not self.dblsided:
+        if dblsided and self.dblsided<=0:
             self.file.write("ATTR_no_cull\t\t//\n\n")
-        if smooth and not self.smooth:
+        if smooth and self.smooth<=0:
             self.file.write("ATTR_shade_smooth\t//\n\n")
                 
         self.no_depth=no_depth
