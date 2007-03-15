@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.23"
+__version__ = "2.24"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -107,6 +107,9 @@ Limitations:<br>
 #
 # 2006-05-02 v2.22
 #  - Fix for fairing rotation.
+#
+# 2006-06-12 v2.24
+#  - Fix for zero-length bodies.
 #
 
 import sys
@@ -931,11 +934,15 @@ class ACFimport:
                 if s<sdim-1:
                     line_length_now+=hypot(v[s+1][0].z-v[s][0].z,
                                            v[s+1][0].y-v[s][0].y)
-        else:
+        elif hi_z!=lo_z:
             # do long-location
             for s in range(sdim):
                 for r in range(rsem):
                     uv[s][r].s=(hi_z-v[s][r].y)/(hi_z-lo_z)
+        else:
+            for s in range(sdim):
+                for r in range(rsem):
+                    uv[s][r].s=0
 
         # Scale
         r=UV(part.top_s1,part.top_t1)
