@@ -59,14 +59,37 @@ Tooltip: 'Export to X-Plane file format (.obj)'
 #  - Import: Join adjacent faces into meshes for easier and fast editing
 #  - Export: Automatically generate strips where possible for faster rendering
 #
+# 2004-03-24 v1.30 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
+#  - Export: Sort faces by type for correct rendering in X-Plane. This fixes
+#            bugs with alpha and no_depth faces.
+#
+
+#
+# X-Plane renders faces in scenery files in the order that it finds them -
+# it doesn't sort by Z-buffer order or do anything intelligent at all.
+# So we have to sort on export. The algorithm below isn't guaranteed to
+# produce the right result in all cases, but seems to work OK in practice:
+#
+#  1. Output texture file name.
+#  2. Output lights and lines in the order that they're found.
+#     Build up global vertex list and global face list.
+#  3. Output faces in the following order, joined into strips where possible.
+#      - no_depth
+#      - normal (usually the fullest bucket)
+#      - no_depth+alpha
+#      - alpha
+#      (Smooth and Hard faces are mixed up with the other faces and are output
+#       in the order they're found).
+#
 
 import sys
 import Blender
 from Blender import NMesh, Lamp, Draw, Window
 
 class Vertex:
-    LIMIT=0.25	# max distance between vertices for them to be merged =3 inches
-    ROUND=1	# Precision =about an inch
+    LIMIT=0.1	# max distance between vertices for them to be merged = 3.5in
+    ROUND=1	# Precision = about 4 inches
     
     def __init__(self, x, y, z, mm=0):
         self.faces=[]	# indices into face array
@@ -83,9 +106,9 @@ class Vertex:
         return "%7.1f %7.1f %7.1f" % (self.x, self.y, self.z)
     
     def equals (self, v):
-        if ((abs(self.x-v.x) <= Vertex.LIMIT) and
-            (abs(self.y-v.y) <= Vertex.LIMIT) and
-            (abs(self.z-v.z) <= Vertex.LIMIT)):
+        if ((abs(self.x-v.x) < Vertex.LIMIT) and
+            (abs(self.y-v.y) < Vertex.LIMIT) and
+            (abs(self.z-v.z) < Vertex.LIMIT)):
             return 1
         else:
             return 0
@@ -113,14 +136,17 @@ class UV:
 
 class Face:
     # Flags
-    HARD=1    
-    NO_DEPTH=2
-    SMOOTH=4
+    NO_DEPTH=1
+    ALPHA=2
+    BUCKET=3    # Bucket algorithm relies on ALPHA+NO_DEPTH==3
+    SMOOTH=4	# Due to X-Plane file format, SMOOTH and HARD are in practice
+    HARD=8	# mutually exclusive.
 
-    def __init__(self):
+    def __init__(self, name):
         self.v=[]
         self.uv=[]
         self.flags=0
+        self.name=name
 
     # for debug only
     def __str__(self):
@@ -160,6 +186,10 @@ class OBJexport:
         # flags controlling export
         self.smooth=0
         self.no_depth=0
+
+        # stuff for exporting faces
+        self.faces=[]
+        self.verts=[]
 
     #------------------------------------------------------------------------
     def export(self, scene):
@@ -269,13 +299,13 @@ class OBJexport:
     def writeObjects (self, theObjects):
         nobj=len(theObjects)
         for o in range (nobj-1,-1,-1):
-            Window.DrawProgressBar(float(nobj-o)/nobj,
-                                   "Exporting %s%% ..." % ((nobj-o)*100/nobj))
+            Window.DrawProgressBar(float(nobj-o)/(nobj*2),
+                                   "Exporting %s%% ..." % ((nobj-o)*50/nobj))
             object=theObjects[o]
             objType=object.getType()
 
             if objType == "Mesh":
-                self.writeMesh(object)
+                self.sortMesh(object)
             elif objType == "Lamp":
                 self.writeLamp(object)
             elif objType == "Camera":
@@ -284,6 +314,8 @@ class OBJexport:
                 print "Warn:\tIgnoring unsupported %s \"%s\"" % (
                     object.getType(), object.name)
 
+        self.writeFaces()
+                
         self.updateFlags(0,0)	# not sure if this is required
         if self.fileformat==7:
             self.file.write("end\t\t\t// eof\n")
@@ -370,10 +402,9 @@ class OBJexport:
 
 
     #------------------------------------------------------------------------
-    def writeMesh(self, object):
+    def sortMesh(self, object):
         mesh=object.getData()
         mm=object.getMatrix()
-        name=object.name
 
         # A line is represented as a mesh with one 4-edged face, where vertices
         # at each end of the face/line are less than Vertex.LIMIT units apart
@@ -395,8 +426,6 @@ class OBJexport:
             print "Mesh \"%s\" %s faces" % (object.name, len(mesh.faces))
 
         # Build list of faces and vertices
-        faces=[]
-        verts=[]
         for f in mesh.faces:
             n=len(f.v)
             if (n!=3) and (n!=4):
@@ -406,171 +435,185 @@ class OBJexport:
                 if (f.mode & NMesh.FaceModes.TWOSIDE):
                     print "Warn:\tMesh \"%s\" has double-sided face" % (
                         object.name)
-                face=Face()
+                face=Face(object.name)
                 if f.smooth:
                     face.flags|=Face.SMOOTH
+                if f.transp == NMesh.FaceTranspModes.ALPHA:
+                    face.flags|=Face.ALPHA
                 if (n==4) and (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TILES:
                     face.flags|=Face.NO_DEPTH
                 if f.mode & NMesh.FaceModes.TEX:
+                    assert len(f.uv)==n, "Missing UV in \"%s\"" % object.name
                     for uv in f.uv:
                         face.addUV(UV(uv[0],uv[1]))
-                    assert len(face.uv)==n, "Missing UV in \"%s\""%object.name
                 else:
                     # File format requires something - using (0,0)
                     for i in range(n):
                         face.addUV(UV(0,0))
 
-                # "hard" faces can't be part of a Quad_Strip so just write now.
-                # Also, for simplicity, write out no_depth faces individually.
-                if  ((face.flags & (Face.HARD|Face.NO_DEPTH)) or
-                     ((n==3) and not (self.fileformat==7))):
-                    for nmv in f.v:
-                        vertex=Vertex(nmv.co[0],nmv.co[1],nmv.co[2],mm)
-                        vertex.addFace(0)
-                        face.addVertex(vertex)
-                    self.writeStrip([face],0,name)
-                    name=0
-                else:
-                    faces.append(face)
-                    for nmv in f.v:
-                        vertex=Vertex(nmv.co[0],nmv.co[1],nmv.co[2],mm)
-                        for v in verts:
-                            if vertex.equals(v):
-                                v.x=(v.x+vertex.x)/2
-                                v.y=(v.y+vertex.y)/2
-                                v.z=(v.z+vertex.z)/2
-                                v.addFace(len(faces)-1)
-                                face.addVertex(v)
-                                break
-                        else:
-                            verts.append(vertex)
-                            vertex.addFace(len(faces)-1)
-                            face.addVertex(vertex)
-                    if self.debug: print face
-
-        # Identify strips
-        for faceindex in range(len(faces)):
-            if faces[faceindex]:
-                startface=faces[faceindex]
-                strip=[startface]
-                faces[faceindex]=0	# take face off list
-                firstvertex=0
-                
-                if len(startface.v)==3:	# Tris
-                    # Use vertex which is member of most triangles as centre
-                    striptype="Tri"
-                    tris=[]
-                    for v in startface.v:
-                        tri=0
-                        for i in v.faces:
-                            if faces[i] and (len(faces[i].v)==3): tri=tri+1
-                        tris.append(tri)
-                    if tris[0]>=tris[1] and tris[0]>=tris[2]:
-                        c=0
-                    elif tris[1]>=tris[2]:
-                        c=1
-                    else:
-                        c=2
-                    firstvertex=(c-1)%3
-                    if self.debug: print "Start strip, centre=%s:\n%s" % (
-                        c, startface)
-
-                    for o in [0,2]:
-                        # vertices must be in clockwise order
-                        if self.debug: print "Order %s" % o
-                        of=startface
-                        v=(c+o)%3
-                        while 1:
-                            (nf,i)=self.findFace(faces,of,v)
-                            if nf>=0:
-                                of=faces[nf]
-                                if self.debug: print of
-                                if o==0:
-                                    strip.append(of)
-                                    v=(i+1)%3
-                                else:
-                                    strip.insert(0, of)
-                                    v=(i-1)%3
-                                    firstvertex=v
-                                faces[nf]=0	# take face off list
-                            else:
-                                break
-
-                else:	# Quads
-                    striptype="Quad"
-                    # Strip could maybe go two ways - try horzontally first
-                    # Find lowest two points
-                    miny=sys.maxint
-                    for i in range(4):
-                        if startface.v[i].y<miny:
-                            min1=i
-                            miny=startface.v[i].y
-                    miny=sys.maxint
-                    for i in range(4):
-                        if i!=min1 and startface.v[i].y<miny:
-                            min2=i
-                            miny=startface.v[i].y
-                    # first pair contains only one of the lowest two points
-                    if min2==(min1+1)%4:
-                        sv=min2	#(min1-1)%4
-                    else:
-                        sv=min1
-                    if self.debug: print "Start strip, edge=%s,%s:\n%s" % (
-                        sv, (sv+1)%4, startface)
-
-                    # Horizontally then Vertically
-                    for hv in [0,1]:	# rotate 0 or 90
-                        firstvertex=(sv+2+hv)%4
-                        for o in [0,2]:
-                            # vertices must be in clockwise order
-                            if self.debug: print "Order %s" % (o+hv)
-                            of=startface
-                            v=(sv+o+hv)%4
-                            while 1:
-                                (nf,i)=self.findFace(faces,of,v)
-                                if nf>=0:
-                                    of=faces[nf]
-                                    if self.debug: print of
-                                    v=(i+2)%4
-                                    if o==0:
-                                        strip.append(of)
-                                    else:
-                                        strip.insert(0, of)
-                                        firstvertex=v
-                                    faces[nf]=0	# take face off list
-                                else:
-                                    break
-                        # not both horiontally and vertically
-                        if len(strip)>1:
+                self.faces.append(face)
+                for nmv in f.v:
+                    vertex=Vertex(nmv.co[0],nmv.co[1],nmv.co[2],mm)
+                    for v in self.verts:
+                        if vertex.equals(v):
+                            v.x=(v.x+vertex.x)/2
+                            v.y=(v.y+vertex.y)/2
+                            v.z=(v.z+vertex.z)/2
+                            v.addFace(len(self.faces)-1)
+                            face.addVertex(v)
                             break
-
-                if len(strip)>1:
-                    print "Info:\tFound strip of %s %ss in Mesh \"%s\"" % (
-                        len(strip), striptype, object.name)
-                self.writeStrip(strip,firstvertex,name)
-                name=0
-                
-        self.file.write("\n")	# Extra space after mesh for readability
+                    else:
+                        self.verts.append(vertex)
+                        vertex.addFace(len(self.faces)-1)
+                        face.addVertex(vertex)
+                if self.debug: print face
 
 
     #------------------------------------------------------------------------
-    # Return index of a face in faces which has the same number of edges, has
-    # v and v+1 as vertices and faces the same way as the supplied face.
-    def findFace (self,faces,face,v):
+    def writeFaces(self):
+
+        facenum=0
+        nfaces=len(self.faces)
+        
+        for bucket in [Face.NO_DEPTH, 0, Face.NO_DEPTH+Face.ALPHA, Face.ALPHA]:
+
+            # Identify strips
+            for faceindex in range(nfaces):
+                
+                if  (self.faces[faceindex] and
+                     (self.faces[faceindex].flags&Face.BUCKET) == bucket):
+                    Window.DrawProgressBar(0.5+float(facenum)/(nfaces*2),
+                                           "Exporting %s%% ..." %
+                                           (50 + facenum*50/nfaces))
+                    facenum=facenum+1
+                    
+                    startface=self.faces[faceindex]
+                    strip=[startface]
+                    self.faces[faceindex]=0	# take face off list
+                    firstvertex=0
+
+                    if (startface.flags & Face.HARD) and (self.fileformat==7):
+                        pass	# Hard faces can't be part of a Quad_Strip
+                    elif len(startface.v)==3 and (self.fileformat==7):
+                        # Vertex which is member of most triangles is centre
+                        tris=[]
+                        for v in startface.v:
+                            tri=0
+                            for i in v.faces:
+                                if  (self.faces[i] and
+                                     len(self.faces[i].v) == 3 and
+                                     (self.faces[i].flags&Face.BUCKET) == bucket):
+                                    tri=tri+1
+                            tris.append(tri)
+                        if tris[0]>=tris[1] and tris[0]>=tris[2]:
+                            c=0
+                        elif tris[1]>=tris[2]:
+                            c=1
+                        else:
+                            c=2
+                        firstvertex=(c-1)%3
+                        if self.debug: print "Start strip, centre=%s:\n%s" % (
+                            c, startface)
+
+                        for o in [0,2]:
+                            # vertices must be in clockwise order
+                            if self.debug: print "Order %s" % o
+                            of=startface
+                            v=(c+o)%3
+                            while 1:
+                                (nf,i)=self.findFace(of,v)
+                                if nf>=0:
+                                    of=self.faces[nf]
+                                    if self.debug: print of
+                                    if o==0:
+                                        strip.append(of)
+                                        v=(i+1)%3
+                                    else:
+                                        strip.insert(0, of)
+                                        v=(i-1)%3
+                                        firstvertex=v
+                                    self.faces[nf]=0	# take face off list
+                                    facenum=facenum+1
+                                else:
+                                    break
+
+                    elif len(startface.v)==4:
+                        # Strip could maybe go two ways - try horzontally first
+                        # Find lowest two points
+                        miny=sys.maxint
+                        for i in range(4):
+                            if startface.v[i].y<miny:
+                                min1=i
+                                miny=startface.v[i].y
+                        miny=sys.maxint
+                        for i in range(4):
+                            if i!=min1 and startface.v[i].y<miny:
+                                min2=i
+                                miny=startface.v[i].y
+                        # first pair contains only one of the lowest two points
+                        if min2==(min1+1)%4:
+                            sv=min2	#(min1-1)%4
+                        else:
+                            sv=min1
+                        if self.debug: print "Start strip, edge=%s,%s:\n%s" % (
+                            sv, (sv+1)%4, startface)
+
+                        # Horizontally then Vertically
+                        for hv in [0,1]:	# rotate 0 or 90
+                            firstvertex=(sv+2+hv)%4
+                            for o in [0,2]:
+                                # vertices must be in clockwise order
+                                if self.debug: print "Order %s" % (o+hv)
+                                of=startface
+                                v=(sv+o+hv)%4
+                                while 1:
+                                    (nf,i)=self.findFace(of,v)
+                                    if nf>=0:
+                                        of=self.faces[nf]
+                                        if self.debug: print of
+                                        v=(i+2)%4
+                                        if o==0:
+                                            strip.append(of)
+                                        else:
+                                            strip.insert(0, of)
+                                            firstvertex=v
+                                        self.faces[nf]=0  # take face off list
+                                        facenum=facenum+1
+                                    else:
+                                        break
+                            # not both horiontally and vertically
+                            if len(strip)>1:
+                                break
+
+                    if len(strip)>1:
+                        if len(startface.v)==3:
+                            striptype="Tri"
+                        else:
+                            striptype="Quad"
+                        print "Info:\tFound strip of %s %ss in Mesh \"%s\"" % (
+                            len(strip), striptype, startface.name)
+                    self.writeStrip(strip,firstvertex)
+                
+
+    #------------------------------------------------------------------------
+    # Return index of a face which has the same number of edges, same flags,
+    # has v and v+1 as vertices and faces the same way as the supplied face.
+    def findFace (self,face,v):
         n=len(face.v)
         v1=face.v[v]
         v2=face.v[(v+1)%n]
         uv1=face.uv[v]
         uv2=face.uv[(v+1)%n]
         for faceindex in v1.faces:
-            if faces[faceindex] and len(faces[faceindex].v)==n:
+            f=self.faces[faceindex]
+            if f and f.flags==face.flags and len(f.v)==n:
                 for i in range(n):
-                    if  (faces[faceindex].v[i]==v2 and
-                         faces[faceindex].v[(i+1)%n]==v1 and
-                         faces[faceindex].uv[i].equals(uv2) and
-                         faces[faceindex].uv[(i+1)%n].equals(uv1)):
+                    if  (f.v[i]==v2 and
+                         f.v[(i+1)%n]==v1 and
+                         f.uv[i].equals(uv2) and
+                         f.uv[(i+1)%n].equals(uv1)):
                         return (faceindex,i)
         return (-1,-1)
 
@@ -581,17 +624,11 @@ class OBJexport:
     # Assumes whole strip is either smooth or flat, not mix of both
     # Assumes whole strip is either depth tested or not, not mix of both
     # Assumes that any "hard" faces are in a strip of length 1
-    def writeStrip (self,strip,firstvertex,name):
-        n=len(strip[0].v)
+    def writeStrip (self,strip,firstvertex):
         
-        smooth=0
-        no_depth=0
-        for face in strip:
-            smooth|=(face.flags&Face.SMOOTH)
-            no_depth|=(face.flags&Face.NO_DEPTH)
-        self.updateFlags(smooth, no_depth)
-
         face=strip[0]
+        n=len(face.v)
+        self.updateFlags(face.flags&Face.SMOOTH, face.flags&Face.NO_DEPTH)
         
         if (len(strip))==1:            
             # When viewing the visible side of a face
@@ -614,10 +651,10 @@ class OBJexport:
                     self.file.write ("quad_hard")
                 else:
                     self.file.write ("quad\t")
-                if name:
-                    self.file.write("\t\t// Mesh: %s\n" % name)
+                if face.flags&Face.ALPHA:
+                    self.file.write("\t\t// Mesh(alpha): %s\n" % face.name)
                 else:
-                    self.file.write("\t\t//\n")
+                    self.file.write("\t\t// Mesh: %s\n" % face.name)
             else:
                 if (n==4) and (face.flags & Face.HARD):
                     poly=5	# make quad "hard"
@@ -629,10 +666,10 @@ class OBJexport:
                     round(face.uv[ topright     ].s,UV.ROUND),
                     round(face.uv[(topright-2)%n].t,UV.ROUND),
                     round(face.uv[ topright     ].t,UV.ROUND)))
-                if name:
-                    self.file.write("\t// Mesh: %s\n" % name)
+                if face.flags&Face.ALPHA:
+                    self.file.write("\t// Mesh(alpha): %s\n" % face.name)
                 else:
-                    self.file.write("\t//\n")
+                    self.file.write("\t// Mesh: %s\n" % face.name)
 
             for i in range(topright, topright-n, -1):
                 if self.fileformat==7:
@@ -652,10 +689,10 @@ class OBJexport:
                     self.file.write ("quad_strip %s" % ((len(strip)+1)*2))
             else:
                 self.file.write ("%s\t" % -(len(strip)+1))
-            if name:
-                self.file.write("\t\t// Mesh: %s\n" % name)
+            if face.flags&Face.ALPHA:
+                self.file.write("\t\t// Mesh(alpha): %s\n" % face.name)
             else:
-                self.file.write("\t\t//\n")
+                self.file.write("\t\t// Mesh: %s\n" % face.name)
 
             if (n==3):	# Tris
                 for i in [(firstvertex+1)%n,firstvertex]:

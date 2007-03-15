@@ -59,6 +59,11 @@ Tooltip: 'Import X-Plane file format (.obj)'
 #  - Import: Join adjacent faces into meshes for easier and faster editing
 #  - Export: Automatically generate strips where possible for faster rendering
 #
+# 2004-03-24 v1.30 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
+#  - Export: Sort faces by type for correct rendering in X-Plane. This fixes
+#            bugs with alpha and no_depth faces.
+#
 
 import sys
 import Blender
@@ -124,8 +129,8 @@ class Token:
              "ATTR_LOD"]
 
 class Vertex:
-    LIMIT=0.25	# max distance between vertices for them to be merged
-    ROUND=2	# Precision
+    LIMIT=0.1	# max distance between vertices for them to be merged
+    ROUND=1	# Precision
     
     def __init__(self, x, y, z):
         self.x=x
@@ -138,9 +143,9 @@ class Vertex:
                              round(self.z,Vertex.ROUND))
     
     def equals (self, v):
-        if ((abs(self.x-v.x) <= Vertex.LIMIT) and
-            (abs(self.y-v.y) <= Vertex.LIMIT) and
-            (abs(self.z-v.z) <= Vertex.LIMIT)):
+        if ((abs(self.x-v.x) < Vertex.LIMIT) and
+            (abs(self.y-v.y) < Vertex.LIMIT) and
+            (abs(self.z-v.z) < Vertex.LIMIT)):
             return 1
         else:
             return 0
@@ -239,7 +244,7 @@ class Mesh:
             face=NMesh.Face()
             face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TEX|
                            NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
-            face.transp=NMesh.FaceTranspModes.ALPHA
+            face.transp=0	# was NMesh.FaceTranspModes.ALPHA
             if f.flags&Face.HARD:
                 face.mode |= NMesh.FaceModes.DYNAMIC
             if f.flags&Face.NO_DEPTH:
@@ -768,11 +773,11 @@ class OBJimport:
         d=Vertex(abs(v[0].x-v[1].x),abs(v[0].y-v[1].y),abs(v[0].z-v[1].z))
 
         if d.z>max(d.x,d.y):
-            e=Vertex(0.1,-0.1,0)
+            e=Vertex(Vertex.LIMIT/4,-Vertex.LIMIT/4,0)
         elif d.y>max(d.z,d.x):
-            e=Vertex(-0.1,0,0.1)
+            e=Vertex(-Vertex.LIMIT/4,0,Vertex.LIMIT/4)
         else:	# d.x>max(d.y,d.z):
-            e=Vertex(0,0.1,-0.1)
+            e=Vertex(0,Vertex.LIMIT/4,-Vertex.LIMIT/4)
 
         # 'Line's shouldn't be merged, so add immediately 
         mesh=NMesh.New("Line")

@@ -2,7 +2,7 @@ XPlane2Blender - X-Plane import/export scripts for Blender 3D
 -------------------------------------------------------------
 
 Author: 	Jonathan Harris <x-plane@marginal.org.uk>
-Version:	1.20
+Version:	1.30
 Latest version:	http://marginal.org.uk/x-planescenery/
 
 
@@ -30,7 +30,8 @@ Windows:
 Mac OS X:
  - /users/<you>/.blender/scripts
    (assuming that your home directory is in the default place).
-   You may need to create the last two sub-directories of that path.
+   You will need to first create the last two sub-folders of that path:
+   Run the Terminal app, and type mkdir ~/.blender/scripts
 
 (Re)start Blender.
 On Mac OS, also run the "Console" program that comes with Mac OS X and
@@ -129,7 +130,7 @@ Meshes:
 Lines:
  - Blender doesn't support Lines directly. Use a mesh with one 4-edged
    face instead. The pair of vertices at each end of the 'line' must be
-   within 0.2 units of each other. The face must be the only face in its
+   within 0.1 units of each other. The face must be the only face in its
    mesh and must not have a texture assigned to it.
    To colour the 'line', assign a Material to the face and set the
    Material's "Basic Colour" RGB values. Faces not linked to a Material
@@ -182,8 +183,10 @@ Import
 from the standard X-Plane folder tree to see an example of how X-Plane
 scenery is made.
 
-See http://www.blender3d.org/Education/ for some tutorials to help you
-get started with Blender.
+See http://marginal.org.uk/x-planescenery/ for a tutorial on using
+Blender to create X-Plane scenery.
+
+See http://www.blender3d.org/Education/ for general Blender tutorials.
 
 When creating boxes - eg a house or hangar body - you may find it easier
 to create a Mesh "Cube" and delete any faces that are not required,
