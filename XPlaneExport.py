@@ -162,6 +162,9 @@
 # 2005-05-11 v2.03
 #  - Fix stupid panel bug.
 #
+# 2005-05-13 v2.04
+#  - Allow panels to be two-sided.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -209,7 +212,7 @@ class Mesh:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=2.03
+    VERSION=2.04
 
     #------------------------------------------------------------------------
     def __init__(self, filename, fileformat):
@@ -233,7 +236,7 @@ class OBJexport:
 
         # flags controlling export
         self.tiles=0
-        self.dblsided=0
+        self.twoside=0
         self.smooth=-1		# >=7.30 defaults to smoothed, but be explicit
         self.layer=0
 
@@ -301,7 +304,7 @@ class OBJexport:
 
     #------------------------------------------------------------------------
     def getTexture (self, theObjects):
-        texture=""
+        texture=None
         multierr=0
         panelerr=0
         nobj=len(theObjects)
@@ -371,7 +374,10 @@ class OBJexport:
                                     self.layermask=1
                                     panelerr=1
                                 if panelerr:
-                                    height=face.image.getSize()[1]
+                                    try:
+                                        height=face.image.getSize()[1]
+                                    except RuntimeError:
+                                        raise ExportError("Can't load instrument panel texture file")
                                     for uv in face.uv:
                                         if (uv[0]<0.0  or uv[0]>1.0 or
                                             (1-uv[1])*height>768 or uv[1]>1.0):
@@ -382,15 +388,15 @@ class OBJexport:
                             else:
                                 # Check for multiple textures
                                 if ((not texture) or
-                                    (str.lower(texture) ==
+                                    (str.lower(texture.filename) ==
                                      str.lower(face.image.filename))):
-                                    texture = face.image.filename
-                                    texlist.append(str.lower(texture))
+                                    texture = face.image
+                                    texlist.append(str.lower(texture.filename))
                                 else:
                                     if not multierr:
                                         multierr=1
                                         print "Warn:\tMultiple texture files found:"
-                                        print texture
+                                        print texture.filename
                                     if not str.lower(face.image.filename) in texlist:
                                         texlist.append(str.lower(face.image.filename))
                                         print face.image.filename
@@ -399,7 +405,7 @@ class OBJexport:
                 raise ExportError("Cockpit objects can't contain lights.")
                             
         if multierr:
-            raise ExportError("OBJ format supports one texture, but multiple texture files found.")
+            raise ExportError("OBJ format supports one texture file, but multiple files found.")
                                     
         if panelerr:
             raise ExportError("At least one instrument panel texture must be within 1024x768.")
@@ -408,27 +414,37 @@ class OBJexport:
             self.texture = "none\t"
             return
 
-        l=texture.rfind(Blender.sys.dirsep)
+        try:
+            dim=texture.getSize()
+        except RuntimeError:
+            raise ExportError("Can't load texture file")
+        for l in dim:
+            while l:
+                l=l/2
+                if l&1 and l>1:
+                    raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace to load the new file.")
+
+        l=texture.filename.rfind(Blender.sys.dirsep)
         if l!=-1:
             l=l+1
         else:
             l=0
-        if texture[l:].find(" ")!=-1:
-            raise ExportError("Texture filename \"%s\" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file." % texture[l:])
+        if texture.filename[l:].find(" ")!=-1:
+            raise ExportError("Texture filename \"%s\" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file." % texture.filename[l:])
 
         self.texture=""
-        for i in range(len(texture)):
-            if texture[i]==Blender.sys.dirsep:
+        for i in range(len(texture.filename)):
+            if texture.filename[i]==Blender.sys.dirsep:
                 self.texture+=":"
             else:
-                self.texture+=texture[i]
+                self.texture+=texture.filename[i]
 
         if self.texture[-4:].lower() == ".bmp":
             self.texture = self.texture[:-4]
         elif self.texture[-4:].lower() == ".png":
             self.texture = self.texture[:-4]
         else:
-            raise ExportError("Texture must be in bmp or png format.\n\tPlease convert the file. Use Image->Replace to load the new file.")
+            raise ExportError("Texture file must be in bmp or png format.\n\tPlease convert the file. Use Image->Replace to load the new file.")
         
         # try to guess correct texture path
         if self.iscockpit:
@@ -462,20 +478,14 @@ class OBJexport:
                     objlen=objlen+1
 
         if self.optimise:
-            objlen=objlen*10	# 10 passes
-            bseq=[0, Face.DBLSIDED,
-                  Face.SMOOTH, Face.SMOOTH|Face.DBLSIDED,
-                  Face.ALPHA, Face.ALPHA|Face.DBLSIDED,
-                  Face.ALPHA|Face.SMOOTH, Face.ALPHA|Face.SMOOTH|Face.DBLSIDED,
-                  Face.PANEL]
+            npasses=Face.BUCKET+1
         else:
-            objlen=objlen*2
-            bseq=[0]
+            npasses=1
+        objlen=objlen*(1+npasses)
 
         for layer in lseq:
             meshes=[]
 
-            # Four passes
             # 1st pass: Output Lamps and Lines, build meshes
             for o in range (len(theObjects)-1,-1,-1):
                 object=theObjects[o]
@@ -516,8 +526,8 @@ class OBJexport:
                                 break
                     i=i-1
 
-            # 2nd-10th pass: Output meshes
-            for bucket in bseq:
+            # 2nd-17th pass: Output meshes
+            for passno in range(npasses):
                 strips=[]
                 for i in range(len(meshes)):
                     Window.DrawProgressBar(float(nobj)/objlen,
@@ -526,7 +536,7 @@ class OBJexport:
                     nobj=nobj+1
 
                     if meshes[i]:
-                        self.makeStrips(strips, meshes[i], bucket, layer)
+                        self.makeStrips(strips, meshes[i], passno, layer)
 
                 for (strip, firstvertex, name) in strips:
                     if len(strip)==1 and len(strip[0].v)==3:
@@ -559,7 +569,7 @@ class OBJexport:
         if self.verbose:
             print "Info:\tExporting Light \"%s\"" % name
 
-        self.updateFlags(self.tiles, self.dblsided, self.smooth, layer)
+        self.updateFlags(self.tiles, self.twoside, self.smooth, layer)
 
         lname=name.lower()
         c=[0,0,0]
@@ -678,16 +688,18 @@ class OBJexport:
                     face.flags|=Face.ALPHA
 
                 if f.mode & NMesh.FaceModes.TWOSIDE:
-                    face.flags|=Face.DBLSIDED
+                    face.flags|=Face.TWOSIDE
                     twosideerr=twosideerr+1
 
                 if f.smooth:
                     face.flags|=Face.SMOOTH
 
                 if f.image and f.image.name.lower().find("panel.")!=-1:
-                    # Sort is easier if we don't set other flags
-                    face.flags=Face.PANEL
-                    height=f.image.getSize()[1]
+                    face.flags|=Face.PANEL
+                    try:
+                        height=f.image.getSize()[1]
+                    except RuntimeError:
+                        raise ExportError("Can't load instrument panel texture file")
                     for uv in f.uv:
                         if (uv[0]<0.0 or uv[0]>1.0 or
                             (1-uv[1])*height>768 or uv[1]>1.0):
@@ -938,7 +950,7 @@ class OBJexport:
         
         face=strip[0]
         n=len(face.v)
-        self.updateFlags(face.flags&Face.TILES, face.flags&Face.DBLSIDED,
+        self.updateFlags(face.flags&Face.TILES, face.flags&Face.TWOSIDE,
                          face.flags&Face.SMOOTH, layer)
         
         if (len(strip))==1:
@@ -1009,7 +1021,7 @@ class OBJexport:
 
 
     #------------------------------------------------------------------------
-    def updateFlags(self, tiles, dblsided, smooth, layer):
+    def updateFlags(self, tiles, twoside, smooth, layer):
 
         if self.layermask!=1 and self.layer!=layer:
             if layer==1:
@@ -1025,19 +1037,19 @@ class OBJexport:
         # Grrrr, no_depth is broken from X-Plane 7.61
         #if self.tiles and not tiles:
         #    self.file.write("ATTR_depth\t\t//\n\n")
-        if self.dblsided and not dblsided:
+        if self.twoside and not twoside:
             self.file.write("ATTR_cull\t\t//\n\n")
         if self.smooth and not smooth:
             self.file.write("ATTR_shade_flat\t\t//\n\n")
             
         #if tiles and not self.tiles:
         #    self.file.write("ATTR_no_depth\t\t//\n\n")
-        if dblsided and self.dblsided<=0:
+        if twoside and self.twoside<=0:
             self.file.write("ATTR_no_cull\t\t//\n\n")
         if smooth>0 and self.smooth<=0:
             self.file.write("ATTR_shade_smooth\t//\n\n")
                 
         self.tiles=tiles
-        self.dblsided=dblsided
+        self.twoside=twoside
         self.smooth=smooth
         self.layer=layer

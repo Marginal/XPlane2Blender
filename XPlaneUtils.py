@@ -156,14 +156,15 @@ class UV:
             return 0
 
 class Face:
-    # Flags
-    TILES=1
-    ALPHA=2
-    DBLSIDED=4
-    SMOOTH=8
+    # Flags in sort order
+    TWOSIDE=1
+    SMOOTH=2
+    ALPHA=4	# Must be 2nd last
+    PANEL=8	# Must be last
+    BUCKET=TWOSIDE|SMOOTH|ALPHA|PANEL
+    # Other flags
     HARD=16
-    PANEL=32
-    BUCKET=DBLSIDED|SMOOTH|ALPHA|PANEL
+    TILES=32
 
     def __init__ (self):
         self.v=[]

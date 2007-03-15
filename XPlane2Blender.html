@@ -170,7 +170,8 @@ three levels of detail. See <a href="#Level_Of_Detail">Level
 of Detail</a> below.</p>
 <p>The imported plane needs some
 tweaking before you can export it as scenery; see <a
- href="#Tweaking_planes">Tweaking planes</a> below.</p>
+ href="#Tweaking_planes">Tweaking planes</a>
+below.</p>
 <h3>Exporting scenery / cockpits</h3>
 <p><samp>File
 -&gt; Export -&gt; X-Plane v7 Object</samp></p>
@@ -265,9 +266,10 @@ Face</samp> panel (available in <samp>UV
 Face Select</samp> mode):
     <ul>
       <li><samp>Tex</samp>
-button controls whether the face has a texture. Create a .bmp or .png
-file in an image editor and save it in the <code>custom
-object textures</code> folder.
+button controls whether the face has a texture. Create a <code>.bmp </code>or
+        <code>.png
+        </code>file in an image editor and save it in the <code>custom
+object textures </code>folder.
 Height and width must be powers of two (eg 256, 512, etc) but the
 bitmap doesn't have to be square. Draw all the
 textures required by the scenery onto it. Areas of the texture that are
@@ -276,15 +278,26 @@ be transparent when displayed in X-Plane. Use the <samp>UV
 Image Editor</samp> window to
 control mapping of the texture bitmap to the face.</li>
       <li><samp>Collision</samp>
-button indicates that the face is not
-"landable on" in X-Plane. Faces with 3 edges are never "landable on",
-irrespective of the state of this button. Making faces "landable on" is
-very expensive, so this button should normally be pressed. Unpress this
-button only for things like helicopter landing pads. <small>Note:
+button indicates that the face is <span
+ style="text-decoration: underline;">not</span>
+"hard" (ie not "landable on") in X-Plane. Faces with 3 edges are
+never hard, irrespective of the state of this button. Making
+faces hard is very expensive, so this button should normally
+be pressed. Unpress this button only for things like helicopter landing
+pads.
+        <div style="margin-left: 0px;">Note:
 The meaning of this button was changed in v1.50. Use <a
  href="http://www.marginal.dsl.pipex.com/x-planescenery/collide.txt">
-this</a> script to turn the <samp>Collision</samp>
-button back on for all faces.</small></li>
+this</a> script to turn the
+Collision button back on for all faces.</div>
+        <div style="margin-left: 0px;">Note:
+X-Plane versions up to and including 8.15 have a bug where <code>.obj
+        </code>files that contain
+hard
+faces
+must be placed in WorldMaker with an "object heading" of 0.
+Otherwise the "hard" part of the surface ends up in the wrong place.</div>
+      </li>
       <li><samp>Twoside</samp>
 button controls whether one or both sides
 of the face are displayed. Using a two-sided face is more expensive
@@ -298,34 +311,40 @@ when displayed in X-Plane. Don't press this button for opaque faces.</li>
   </li>
 </ul>
 <h4>Lines</h4>
-<p>Blender doesn't support Lines
+<p>Blender doesn't support
+Lines
 directly. Use a mesh with one 4-edged face instead. The pair of
 vertices at each end of the "line" must be within 0.1 units of each
 other. The face must be the only face in its mesh and must not have a
 texture assigned to it.</p>
-<p>To colour the "line", assign a
+<p>To colour the "line",
+assign a
 Material to the face and set the Material's <samp>Basic
 Colour</samp>
 RGB values. Faces not linked to a Material will be exported coloured
 grey.</p>
 <h4><a name="Tweaking_planes"></a>Tweaking
 planes</h4>
-<p>The imported plane needs some
+<p>The imported plane needs
+some
 tweaking to be positioned correctly on the ground:</p>
 <ul>
-  <li>Select layers 1-3, select
+  <li>Select layers 1-3,
+select
 all objects and position the plane so that its undercarriage is sitting
 directly on the ground (represented by the <span
  style="font-style: italic;">x</span>/y
 axes).</li>
-  <li>You may also need to rotate
+  <li>You may also need to
+rotate
 the plane slightly so that all wheels are level; press <samp
  style="font-weight: bold;">r</samp>
 and move the mouse to <span style="text-decoration: underline;">r</span>otate
 the plane so that its undercarriage is sitting directly on the ground.
 Click to set the plane's position.</li>
 </ul>
-<p>The main texture bitmap file is
+<p>The main texture bitmap
+file is
 named <code><i>airplane</i>_paint</code>.
 Most planes also use textures from a second bitmap file named <code><i>airplane</i>_paint2</code>.
 If your imported plane uses weapons then each weapon will also use an
@@ -343,7 +362,8 @@ either:</p>
   <li>Delete the mesh,</li>
   <li>Or copy the required
 textures to an unused area in <code><i>airplane</i>_paint</code>,
-and use the <samp>UV Image Editor</samp> window to map the new
+and use the <samp>UV Image Editor</samp>
+window to map the new
 textures in <code><i>airplane</i>_paint</code>
 to the mesh's faces.</li>
   <ul>
@@ -361,14 +381,18 @@ slows things down. One 1024x1024 texture uses 4MB of video memory. Some
 people are running X-Plane on computers with only 32MB of video memory,
 so one 1024x1024 texture at highest resolution uses 1/8th of it.
 Consider resizing the texture bitmap file in an image editor to 512x512
-or even 256x256. Use <samp>Image -&gt; Replace</samp> to use the new
+or even 256x256. Use <samp>Image
+-&gt; Replace</samp> to use the
+new
 texture bitmap file.</li>
-  <li>Does the model have hidden
+  <li>Does the model have
+hidden
 faces? X-Plane doesn't handle hidden faces in scenery objects very well
 and they also a cause a small performance hit. Look for things like
 wings or misc bodies that are partially or wholly buried in the
 fuselage and delete any wholly hidden faces before exporting.</li>
-  <li>Do you really need all that
+  <li>Do you really need all
+that
 detail? Consider deleting details like flap tracks, antennae etc before
 exporting. This especially goes for the lower <a
  href="XPlane2Blender.html#Level_Of_Detail">Level of
@@ -376,9 +400,11 @@ Detail</a> versions of the plane in
 layers 2 and 3 which are only viewed in X-Plane from &gt;1000m and
 &gt;4000m respectively.</li>
 </ul>
-<h3>Optimising scenery for X-Plane</h3>
+<h3>Optimising scenery for
+X-Plane</h3>
 <h4><a name="strips"></a>Strips</h4>
-<p>As well as basic 3- and 4-edged
+<p>As well as basic 3- and
+4-edged
 faces ("<code>tri</code>"s
 and "<code>quad</code>"s),
 X-Plane supports two compound types - "<code>tri_fan</code>"
@@ -390,18 +416,22 @@ edges, X-Plane and the underlying OpenGL renderer have a third or a
 half as much work to do to render them compared to individual <code>tri</code>s
 and <code>quad</code>s.
 This gives higher frame rates.</p>
-<p>In order for a pair of faces to
+<p>In order for a pair of
+faces to
 be considered for inclusion in one of these strips, the following
 conditions need to be true: </p>
 <ol>
-  <li>The faces must be facing the
+  <li>The faces must be facing
+the
 same way.</li>
   <li>Each pair of faces must
 share a common edge (apart from the first and last face).</li>
-  <li>Each shared edge must have
+  <li>Each shared edge must
+have
 the same texture bitmap co-ordinates in both faces.</li>
 </ol>
-<p>In practice this means that the
+<p>In practice this means that
+the
 texture must be reversed in alternate faces in the strip. In the case
 of <code>tri</code>s
 this can also be achieved by mapping a single area of the texture
@@ -420,7 +450,8 @@ Of Detail</h4>
 concept of "Level Of Detail" from 3D games. This works on the principle
 that objects can be drawn with less detail when you're viewing them
 from a large distance.</p>
-<p>Use Layers to draw scenery with
+<p>Use Layers to draw scenery
+with
 multiple Levels Of Detail. Objects in layers 1-3 are visible in X-Plane
 at the following distances:</p>
 <div style="margin-left: 40px;">
@@ -448,7 +479,8 @@ at the following distances:</p>
 </div>
 <h3>Using Blender to create 3D
 cockpits</h3>
-<p>X-Plane 3D cockpits are just
+<p>X-Plane 3D cockpits are
+just
 normal scenery objects. However cockpits can't contain multiple <a
  href="XPlane2Blender.html#Level_Of_Detail">Levels
 of Detail</a>, so only objects in
@@ -483,11 +515,13 @@ faces showing moving cockpit instruments in X-Plane v8:</p>
 PlaneMaker as normal. But bear in mind that (at time of writing) only
 the top 768
 lines of the 2D panel can be used in the 3D cockpit.</li>
-  <li>Run X-Plane and load your
+  <li>Run X-Plane and load
+your
 aircraft. Press the <samp><span style="font-weight: bold;">Up</span></samp>
 arrow to ensure that you're looking at the top of the 2D panel. Take a
 screenshot (on a PC press <samp style="font-weight: bold;">Alt&nbsp;PrtSc</samp>).</li>
-  <li>Load the screenshot into an
+  <li>Load the screenshot into
+an
 image editor and change its size so that it's the same size as your 2D
 panel (typically 1024x1024). Note: Don't resize
 the screenshot, just
@@ -500,7 +534,8 @@ does not need to be distributed with your finished plane.</li>
 texture on those faces that you want to display moving cockpit
 instruments in X-Plane.</li>
 </ul>
-<p>Note that (at time of writing)
+<p>Note that (at time of
+writing)
 X-Plane only displays the 3D cockpit
 when running at the default 1024x768 resolution. You may want to
 mention this in the Readme with your plane. Maybe this will be fixed in
@@ -521,7 +556,8 @@ See <a
  href="http://www.marginal.dsl.pipex.com/x-planescenery/hangar_tutorial/1-setup.html#prefs">
 this tutorial</a> for a fuller
 explanation.</li>
-  <li>Space does what you would
+  <li>Space does what you
+would
 expect Right mouse button to do.</li>
   <li>The user interface is
 "modal". Buttons and keys do different things depending on whether you
@@ -534,11 +570,15 @@ UIs went out with "vi"). Tab changes mode.</li>
   <li><code>smoke_black</code>
 and <code>smoke_white</code>
 X-Plane primitives are ignored.</li>
-  <li><code>poly_os</code>, <code>ambient</code>, <code>difuse</code>,
-    <code>specular</code>, <code>emission</code>
+  <li><code>poly_os</code>,
+    <code>ambient</code>,
+    <code>difuse</code>,
+    <code>specular</code>,
+    <code>emission</code>
 and <code>shiny</code>
 attributes are ignored.</li>
-  <li>Can't work out which faces
+  <li>Can't work out which
+faces
 are partially or wholly transparent. Transparent faces have to be
 designated by pressing the <samp>Alpha</samp>
 button in <samp>UV Face Select</samp>
@@ -546,29 +586,34 @@ mode after import.</li>
 </ul>
 <h4>Import plane</h4>
 <ul>
-  <li>Cockpits are ignored. You
+  <li>Cockpits are ignored.
+You
 can use <samp>File
 -&gt; Import -&gt; X-Plane Object</samp>
 to import cockpits.</li>
-  <li>Planes (and their weapons)
+  <li>Planes (and their
+weapons)
 can use multiple texture bitmap files.
 These
 are not automagically
 merged into one file during the import.</li>
-  <li>Can't work out which faces
+  <li>Can't work out which
+faces
 are partially or wholly transparent. Transparent faces have to be
 designated by pressing the <samp>Alpha</samp>
 button in <samp>UV Face Select</samp>
 mode after import.</li>
   <li>LOD algorithm can be too
 conservative in layer 2.</li>
-  <li>v6 planes are not supported.
+  <li>v6 planes are not
+supported.
 Convert a v6 plane to v7 by opening
 it in PlaneMaker 7.40 or later and re-saving it.</li>
 </ul>
 <h4>Export</h4>
 <ul>
-  <li>Only Lamps and Mesh Faces
+  <li>Only Lamps and Mesh
+Faces
 (including "lines") are exported.</li>
   <li>All faces must share a
 single texture bitmap file (this is a limitation of the X-Plane <code>.obj</code>
@@ -580,23 +625,25 @@ merged into one file during the export.</li>
 <p><a href="mailto:Jonathan%20Harris%20%3Cx-plane@marginal.org.uk%3E">Mail
 me</a> with any questions, problems
 etc.</p>
-<p>If reporting a problem, please:</p>
+<p>If reporting a problem,
+please:</p>
 <ul>
-  <li>First, check that you are
+  <li>First, check that you
+are
 using the latest version of the scripts.</li>
-  <li>Try to send me the the <code>.obj</code>, <code>.acf</code>
+  <li>Try to send me the the <code>.obj</code>,
+    <code>.acf</code>
 or <code>.blend</code>
 file (where relevant) and the contents of the Console window. <small>(In
 Mac OS X, this is the "Console" program. In Windows this the window
 titled "Blender" that looks like a Command Prompt).</small></li>
 </ul>
 <h3>Stuff</h3>
-<p>Copyright &copy; 2004, 2005
-<a href="mailto:Jonathan%20Harris%20%3Cx-plane@marginal.org.uk%3E">Jonathan
+<p>Copyright &copy; 2004,
+2005 <a href="mailto:Jonathan%20Harris%20%3Cx-plane@marginal.org.uk%3E">Jonathan
 Harris &lt;x-plane@marginal.org.uk&gt;</a>.<br>
-Version 2.03<br>
-<a href="http://marginal.org.uk/x-planescenery/">
-http://marginal.org.uk/x-planescenery/</a></p>
+Version 2.04<br>
+<a href="http://marginal.org.uk/x-planescenery/">http://marginal.org.uk/x-planescenery/</a></p>
 <p><!-- Creative Commons License -->
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.0/"><img
  alt="Creative Commons License"
