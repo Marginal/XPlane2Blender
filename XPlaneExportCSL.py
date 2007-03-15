@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane CSL format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.20"
+__version__ = "2.21"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane CSL .obj
 format for use with XSquawkbox.

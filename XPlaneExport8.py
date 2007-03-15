@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.20"
+__version__ = "2.21"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -81,7 +81,12 @@ Limitations:<br>
 #  - Emit unit rotation vector even when Armature is scaled.
 #  - Fix face direction when object negatively scaled.
 #  - Fix face normal to be unit length when object is scaled.
+#  - Default to ATTR_no_blend.
 #
+# 2006-04-22 v2.21
+#  - Oops. ATTR_no_blend not such a good idea.
+#
+
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -378,8 +383,6 @@ class OBJexport8:
         for j in range(n-(n%10), n):
             self.file.write("IDX\t%d\n" % indices[j])
 
-        self.file.write("\nATTR_no_blend\n")
-
         # Geometry Commands
         n=0
         for layer in lseq:
@@ -389,20 +392,16 @@ class OBJexport8:
                     # Lights
                     i=0
                     while i<len(self.lights):
-                        offset=0
-                        count=0
                         if self.lights[i].match(layer, passhi, anim):
-                            offset=i
-                            for j in range(i, len(self.lights)):
+                            for j in range(i+1, len(self.lights)):
                                 if not self.lights[j].match(layer,passhi,anim):
-                                    count=i-offset
                                     break
                             else:
-                                count=len(self.lights)-offset
+                                j=len(self.lights)	# point past last match
                             self.updateAttr(0, 0, 1, 0, 0, layer, anim)
                             self.file.write("%sLIGHTS\t%d %d\n" %
-                                            (anim.ins(), offset, count))
-                            i=offset+count
+                                            (anim.ins(), i, j-i))
+                            i=j
                         else:
                             i=i+1
 

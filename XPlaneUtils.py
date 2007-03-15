@@ -49,12 +49,17 @@ class Vertex:
             z=x.z
             y=x.y
             x=x.x
+        elif isinstance(x, Types.NMVertType):
+            mm=y
+            z=x.co[2]
+            y=x.co[1]
+            x=x.co[0]
         elif isinstance(x, list):
             mm=y
             z=x[2]
             y=x[1]
             x=x[0]
-        elif y==None or z==None:
+	elif y==None or z==None:
             raise TypeError
 
         if not mm:
@@ -140,6 +145,8 @@ class UV:
         elif isinstance(s, list):
             self.s=s[0]
             self.t=s[1]
+        elif isinstance(s, tuple):
+            (self.s,self.t)=s
         elif t!=None:
             self.s=s
             self.t=t

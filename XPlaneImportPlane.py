@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.20"
+__version__ = "2.21"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -102,6 +102,9 @@ Limitations:<br>
 #  - Add wingtip strobe lights. All lights now present in all layers.
 #  - Fixes for misc objs, wpns and objs attached to gear and wheels
 #
+# 2006-04-22 v2.21
+#  - Re-use meshes for duplicate wings, bodies, weapons and objects
+#
 
 import sys
 import Blender
@@ -126,9 +129,11 @@ class ACFimport:
     LAYER1=1
     LAYER2=2
     LAYER3=4
+    LAYERS=[LAYER1,LAYER2,LAYER3]
     LAYER1MKR=' H'
     LAYER2MKR=' M'
     LAYER3MKR=' L'
+    MARKERS=[LAYER1MKR,LAYER2MKR,LAYER3MKR]
     IMAGE2MKR='*'	# Marker for parts with non-primary texture
 
     # bodies smaller than this [m] skipped
@@ -162,6 +167,7 @@ class ACFimport:
                        [0.0, 0.0, 0.0,         1.0])
         cur=Window.GetCursorPos()
         self.cur=Vertex(cur[0], cur[1], cur[2])
+        self.meshcache={}
         
         # Hack! Just importing weapon
         if self.acf.HEADER_version in [1,800]: return
@@ -360,7 +366,7 @@ class ACFimport:
                          [fv[3], fv[2], fv[1], fv[0]],
                          luv, image)
 
-        self.addMesh(mesh, ACFimport.LAYER1, mm)
+        self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
     #------------------------------------------------------------------------
     def doWing1(self, name, p):
@@ -394,7 +400,7 @@ class ACFimport:
         wing=self.acf.wing[p]
         if not (part.part_eq and wing.semilen_SEG):
             return
-        
+
         # Arbitrary constants for symmetrical and lifting wings
         sym_width=0.09
         lift_width=0.10
@@ -454,6 +460,46 @@ class ACFimport:
 
         mm=TranslationMatrix(centre.toVector(4))
         mm=RotationMatrix(-wing.lat_sign*wing.dihed1, 4, 'y')*mm
+
+        meshno=None
+        if p in DEFfmt.partRightWings:
+            # Re-use meshes from left wings
+            meshno=p-1
+        elif not p in DEFfmt.partMainWings:
+            # Re-use meshes from misc wings
+            crs=[DEFfmt.partMiscWings,DEFfmt.partPylons]
+            for cr in crs:
+                if not p in cr: continue
+                for p2 in cr:
+                    part2=self.acf.part[p2]
+                    wing2=self.acf.wing[p2]
+                    if (p2>=p or not part2.part_eq or
+                        part.part_tex!=part2.part_tex or
+                        part.top_s1!=part2.top_s1 or
+                        part.top_s2!=part2.top_s2 or
+                        part.top_t1!=part2.top_t1 or
+                        part.top_t2!=part2.top_t2 or
+                        wing.semilen_SEG!=wing2.semilen_SEG or
+                        wing.Ctip!=wing2.Ctip or
+                        wing.Croot!=wing2.Croot or
+                        wing.dihed1!=wing2.dihed1 or
+                        wing.sweep1!=wing2.sweep1 or
+                        wing.Rafl0!=wing2.Rafl0 or
+                        wing.Tafl0!=wing2.Tafl0): continue
+                    meshno=p2
+                    break
+                else:
+                    break
+        if meshno:
+            meshes=self.meshcache[meshno]
+            for i in range(len(meshes)):
+                ob=self.addMesh(name+ACFimport.MARKERS[i]+imagemkr,
+                                meshes[i], ACFimport.LAYERS[i], mm)
+                if wing.lat_sign*self.acf.wing[meshno].lat_sign<0:
+                    ob.SizeX=-ob.SizeX
+            return
+        else:
+            self.meshcache[p]=[]
 
         # Find four points - leading root & tip, trailing tip & root
         if istip:
@@ -516,9 +562,9 @@ class ACFimport:
             wing.Croot*self.scale < ACFimport.THRESH1/2 and
             istip and p==rootp):
             # Small and not part of a segment - draw as thin
-            iscrappy=1
+            iscrappy=True
         else:
-            iscrappy=0
+            iscrappy=False
                         
             # Orientation
             if abs(wing.dihed1) >= max_dihed:
@@ -595,7 +641,8 @@ class ACFimport:
                               UV(ruv[1].s+(ruv[2].s-ruv[1].s)*chord2,ruv[1].t)],
                              image)
 
-        self.addMesh(mesh, ACFimport.LAYER1, mm)
+        self.meshcache[p].append(mesh)
+        self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
         # Layer 2
         if iscrappy:
@@ -604,7 +651,8 @@ class ACFimport:
         mesh=NMesh.New(name+ACFimport.LAYER2MKR+imagemkr)
         self.addFace(mesh, rv, ruv, image)
         self.addFace(mesh, lv, luv, image)
-        self.addMesh(mesh, ACFimport.LAYER2, mm)
+        self.meshcache[p].append(mesh)
+        self.addMesh(mesh.name, mesh, ACFimport.LAYER2, mm)
 
 
         # Layer 3
@@ -635,7 +683,8 @@ class ACFimport:
         mesh=NMesh.New(name+ACFimport.LAYER3MKR+imagemkr)
         self.addFace(mesh, rv, ruv, image)
         self.addFace(mesh, lv, luv, image)
-        self.addMesh(mesh, ACFimport.LAYER3, mm)
+        self.meshcache[p].append(mesh)
+        self.addMesh(mesh.name, mesh, ACFimport.LAYER3, mm)
 
     
     #------------------------------------------------------------------------
@@ -648,13 +697,14 @@ class ACFimport:
             if name:	# Importing stand-alone weapon
                 watt=None
                 wpnname=name
-                (name,foo)=splitext(wpnname)
+                (obname,foo)=splitext(wpnname)
+                meshname=obname
             else:	# Get weapon details from weapon attach structure
                 watt=self.acf.watt[p]
                 wpnname=watt.watt_name
                 if not wpnname: return
-                (name,foo)=splitext(wpnname)
-                name="W%02d %s" % (p+1, name)
+                (meshname,foo)=splitext(wpnname)
+                obname="W%02d %s" % (p+1, meshname)
             wpn=self.wpn(wpnname)
             if not wpn: return
             part=wpn.part
@@ -675,8 +725,19 @@ class ACFimport:
                                         -part.part_y,
                                         -part.part_z,
                                         self.mm).toVector(4))*mm
+            # Re-use existing meshes
+            if wpnname in self.meshcache:
+                meshes=self.meshcache[wpnname]
+                for i in range(len(meshes)):
+                    self.addMesh(obname+ACFimport.MARKERS[i],
+                                 meshes[i], ACFimport.LAYERS[i], mm)
+                return
+            else:
+                self.meshcache[wpnname]=[]
+                
         else:
             # Normal bodies
+            obname=meshname=name
             part=self.acf.part[p]
             if not part.part_eq:
                 return
@@ -714,8 +775,41 @@ class ACFimport:
                 mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
                 if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
                     mm=RotationMatrix(self.acf.VTOL_vect_min_nace, 4, 'x')*mm
+
+            # Re-use existing meshes
+            crs=[DEFfmt.partMisc,DEFfmt.partNacelles,DEFfmt.partFairings]
+            for cr in crs:
+                if not p in cr: continue
+                for p2 in cr:
+                    part2=self.acf.part[p2]
+                    if (p2>=p or not part2.part_eq or
+                        part.s_dim!=part2.s_dim or
+                        part.r_dim!=part2.r_dim or
+                        part.part_tex!=part2.part_tex or
+                        part.top_s1!=part2.top_s1 or
+                        part.top_s2!=part2.top_s2 or
+                        part.top_t1!=part2.top_t1 or
+                        part.top_t2!=part2.top_t2): continue
+                    for i in range(part.s_dim):
+                        # Assume symmetrical
+                        for j in range(int((1+part.r_dim)/2)):
+                            if part.geo_xyz[i][j]!=part2.geo_xyz[i][j]:
+                                break
+                        else:
+                            continue
+                        break
+                    else:
+                        # Matching part
+                        meshes=self.meshcache[p2]
+                        for i in range(len(meshes)):
+                            self.addMesh(obname+ACFimport.MARKERS[i]+imagemkr,
+                                         meshes[i], ACFimport.LAYERS[i], mm)
+                        return
+            # No matching part
+            self.meshcache[p]=[]
+                            
         
-        if self.debug: print name
+        if self.debug: print obname
 
         # Get vertex data in 2D array
         v=[]
@@ -724,7 +818,7 @@ class ACFimport:
         rdim=int(part.r_dim/2)*2-2	# Must be even
         seq=range(rdim/2)
         seq.extend(range((rdim+2)/2,rdim+1))
-            
+
         for i in range(part.s_dim):
             if (i==12 and
                 Vertex(part.geo_xyz[i][0]).equals(Vertex(0.0, 0.0, 0.0))):
@@ -924,9 +1018,16 @@ class ACFimport:
                     mkr=""
 
             elif layer==ACFimport.LAYER2:
-                # Don't do small bodies
                 if length<ACFimport.THRESH2 or not self.isscenery:
-                    break
+                    break	# Don't do small bodies
+                elif p in DEFfmt.partFairings:
+                    break	# Don't do fairings since we don't do gear
+                elif (is_wpn and watt and
+                      watt.watt_con in DEFfmt.conGear+DEFfmt.conWheel):
+                    break	# Don't do weapons attached to gear
+                elif (not is_wpn and
+                      part.patt_con in DEFfmt.conGear+DEFfmt.conWheel):
+                    break	# Don't do bodies attached to gear
                 elif (p==DEFfmt.partFuse or
                       length>ACFimport.THRESH3 or
                       rdim<=8):
@@ -955,7 +1056,7 @@ class ACFimport:
                     seq=[0,point2,point3,sdim-1]
                 mkr=ACFimport.LAYER3MKR+imagemkr
 
-            mesh=NMesh.New(name+mkr)
+            mesh=NMesh.New(meshname+mkr)
 
             # Hack: do body from middle out to help export strip algorithm
             ir=range(len(seq)/2-1,len(seq)-1)
@@ -1010,8 +1111,11 @@ class ACFimport:
                              UV(0.5137+s_os, 1.0), UV(0.5137+s_os, 0.5)]
                         self.addFace(mesh, vf, uvf, image)
 
-                
-            self.addMesh(mesh, layer, mm)
+            if is_wpn:
+                self.meshcache[wpnname].append(mesh)
+            else:
+                self.meshcache[p].append(mesh)
+            self.addMesh(obname+mkr, mesh, layer, mm)
 
 
     #------------------------------------------------------------------------
@@ -1075,7 +1179,7 @@ class ACFimport:
                           UV(s0+(i+2)*sw/8.0,t1), UV(s0+(i+1)*sw/8.0, t1)],
                          self.image)
             
-        self.addMesh(mesh, ACFimport.LAYER1, mm)
+        self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
 
         # Tires
@@ -1329,7 +1433,7 @@ class ACFimport:
                                   rim2[2]+treadi, rim2[3]+treadi],
                                  self.image)
             
-        self.addMesh(mesh, ACFimport.LAYER1, mm)
+        self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
 
     #------------------------------------------------------------------------
@@ -1369,7 +1473,7 @@ class ACFimport:
                       UV(door.out_s2,door.out_t1),
                       UV(door.out_s1,door.out_t1),
                       UV(door.out_s1,door.out_t2)], self.image)
-        self.addMesh(mesh, ACFimport.LAYER1, mm)
+        self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
 
     #------------------------------------------------------------------------
@@ -1377,16 +1481,9 @@ class ACFimport:
 
         obj=self.acf.objs[p]
         if not obj.obj_name: return
-        object=OBJimport(join(dirname(self.filename), 'objects', obj.obj_name),
-                         True)
-        try:
-            ob=object.doimport()
-        except:
-            print "Warn:\tCouldn't read object \"%s\"" % obj.obj_name
-            return
         (name,ext)=splitext(basename(obj.obj_name))
-        ob.setName("O%02d %s" % (p+1, name))
-        
+        obname="O%02d %s" % (p+1, name)
+
         if obj.obj_con in DEFfmt.conWheel:
             # Take location from wheels
             gear=self.acf.gear[obj.obj_con-DEFfmt.conWheel1]
@@ -1403,9 +1500,27 @@ class ACFimport:
                                          obj.obj_y,
                                          obj.obj_z,
                                          self.mm)+self.cur).toVector(4))
-
         mm=self.rotate(obj.obj_con, False,
                        obj.obj_psi, obj.obj_the, obj.obj_phi)*mm
+
+        # Re-use existing meshes
+        if obj.obj_name in self.meshcache:
+            meshes=self.meshcache[obj.obj_name]
+            for i in range(len(meshes)):
+                self.addMesh(obname, meshes[i], ACFimport.LAYERS[i], mm)
+            return
+
+        object=OBJimport(join(dirname(self.filename), 'objects', obj.obj_name),
+                         True)
+        try:
+            ob=object.doimport()
+        except:
+            print "Warn:\tCouldn't read object \"%s\"" % obj.obj_name
+            return
+        mesh=ob.getData()
+        mesh.name=name
+        self.meshcache[obj.obj_name]=[mesh]
+        ob.setName(obname)
         ob.setMatrix(mm)
 
 
@@ -1479,32 +1594,31 @@ class ACFimport:
     
     #------------------------------------------------------------------------
     def addLamp(self, name, r, g, b, centre):
-        layers=[ACFimport.LAYER1,ACFimport.LAYER2,ACFimport.LAYER3]
-        names=[ACFimport.LAYER1MKR,ACFimport.LAYER2MKR,ACFimport.LAYER3MKR]
         for layer in range(3):
-            lamp=Lamp.New("Lamp", name+names[layer])
+            lamp=Lamp.New("Lamp", name+ACFimport.MARKERS[layer])
             lamp.col=[r,g,b]
             lamp.mode |= Lamp.Modes.Sphere	# stop colouring whole plane
             lamp.dist = 4.0
-            ob = Object.New("Lamp", name+names[layer])
+            ob = Object.New("Lamp", lamp.name)
             ob.link(lamp)
             self.scene.link(ob)
-            ob.Layer=layers[layer]
+            ob.Layer=ACFimport.LAYERS[layer]
             cur=Window.GetCursorPos()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
 
 
     #------------------------------------------------------------------------
-    def addMesh(self, mesh, layer, mm):
+    def addMesh(self, name, mesh, layer, mm):
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
-        ob = Object.New("Mesh", mesh.name)
+        ob = Object.New("Mesh", name)
         ob.link(mesh)
         self.scene.link(ob)
         ob.Layer=layer
         #ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         ob.setMatrix(mm)
         mesh.update(1)
+        return ob
 
 
     #------------------------------------------------------------------------
@@ -1664,7 +1778,11 @@ class DEFfmt:
     objsDIM=24		# number of Misc Objects
 
     partMainWings=range(8,20)	# used for nav light locations
-    partFuse=56		# used in LOD calculation
+    partRightWings=range(9,19,2)	# used for mirroring
+    partMiscWings=range(20,40)
+    partPylons=range(40,56)
+    partFuse=56			# used in LOD calculation
+    partMisc=range(57,77)
     partNace1=77
     partNacelles=range(77,85)	# used in texture mapping
     partFair1=85
