@@ -13,46 +13,45 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
-# See XPlane2Blender.html for usage
+# See XPlane2Blender.html for usage.
 #
-# This software is provided 'as-is', without any express or implied
-# warranty. In no event will the author be held liable for any damages
-# arising from the use of this software.
-# 
-# Permission is granted to anyone to use this software for any purpose,
-# including commercial applications, and to alter it and redistribute it
-# freely, subject to the following restrictions:
-# 
-# 1. The origin of this software must not be misrepresented; you must
-#    not claim that you wrote the original software. If you use this
-#    software in a product, an acknowledgment in the product
-#    documentation would be appreciated but is not required.
-# 
-# 2. Altered source versions must be plainly marked as such, and must
-#    not be misrepresented as being the original software.
-# 
-# 3. This notice may not be removed or altered from any source
-#    distribution.
+# This software is licensed under a Creative Commons License
+#   Attribution-ShareAlike 2.0:
+#
+#   You are free:
+#     * to copy, distribute, display, and perform the work
+#     * to make derivative works
+#     * to make commercial use of the work
+#   Under the following conditions:
+#     * Attribution: You must give the original author credit.
+#     * Share Alike: If you alter, transform, or build upon this work, you
+#       may distribute the resulting work only under a license identical to
+#       this one.
+#   For any reuse or distribution, you must make clear to others the license
+#   terms of this work.
+#
+# This is a human-readable summary of the Legal Code (the full license):
+#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
 #
 #
 # 2004-02-01 v1.00
-#  - First public version
+#  - First public version.
 #
 # 2004-02-04 v1.10
-#  - Updated for Blender 2.32
+#  - Updated for Blender 2.32.
 #
 # 2004-02-05 v1.11
-#  - Removed dependency on Python installation
+#  - Removed dependency on Python installation.
 #
 # 2004-02-08 v1.12
-#  - Fixed filename bug when texture file is a png
+#  - Fixed filename bug when texture file is a png.
 #
 # 2004-02-09 v1.13
-#  - Fixed lack of comment bug on v7 objects
+#  - Fixed lack of comment bug on v7 objects.
 #
 # 2004-02-29 v1.20
-#  - Emulate Lines with faces
-#  - Automatically generate strips where possible for faster rendering
+#  - Emulate Lines with faces.
+#  - Automatically generate strips where possible for faster rendering.
 #
 # 2004-03-24 v1.30
 #  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
@@ -60,19 +59,19 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #    alpha and no_depth faces.
 #
 # 2004-04-10 v1.40
-#  - Reduced duplicate vertex limit to 0.01 to handle imported objects
-#  - Support 3 LOD levels: 1000,4000,10000
+#  - Reduced duplicate vertex limit to 0.01 to handle imported objects.
+#  - Support 3 LOD levels: 1000,4000,10000.
 #
 # 2004-08-22 v1.50
 #  - Reversed meaning of DYNAMIC flag, since it is set by default when
-#    creating new faces in Blender
+#    creating new faces in Blender.
 #
 # 2004-08-28 v1.60
-#  - Added support for double-sided faces
+#  - Added support for double-sided faces.
 #
 # 2004-08-28 v1.61
-#  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
-#  - Display number of X-Plane objects on import and export
+#  - Requires Blender 234 due to changed layer semantics of Blender fix #1212.
+#  - Display number of X-Plane objects on import and export.
 #
 # 2004-08-29 v1.62
 #  - Light and Line colours are floats
@@ -92,15 +91,20 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-10-10 v1.73
 #  - Fixed missing data in tri_fans when triangle vertices are within
-#    duplicate vertex limit, which led to corrupt output file
-#  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits
+#    duplicate vertex limit, which led to corrupt output file.
+#  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits.
 #
 # 2004-10-17 v1.74
-#  - Warn if objects present in layers other than 1-3.
-#    Suggested by Hervé Duchesne de Lamotte.
+#  - Warn if objects present in layers other than 1-3, suggested by
+#    Hervé Duchesne de Lamotte.
 #
 # 2004-11-01 v1.80
-#  - Support for "quad_cockpit" using "Text" button
+#  - Support for "quad_cockpit" using "Text" button.
+#
+# 2004-14-01 v1.81
+#  - Removed use of "Text" button; cockpit panels now detected by texture name.
+#  - Cockpit panels must go last in file.
+#  - Prettified output slightly.
 #
 
 #
@@ -117,6 +121,7 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #      - no_depth
 #      - alpha
 #      - no_depth+alpha
+#      - panel
 #      (Smooth, Hard and double-sided faces are mixed up with the other
 #       faces and are output in the order they're found).
 #
@@ -179,8 +184,8 @@ class Face:
     DBLSIDED=4
     SMOOTH=8
     HARD=16
-    COCKPIT=32
-    BUCKET=NO_DEPTH|ALPHA
+    PANEL=32
+    BUCKET=NO_DEPTH|ALPHA|PANEL
 
     def __init__(self, name):
         self.v=[]
@@ -206,7 +211,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.80
+    VERSION=1.81
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -441,11 +446,14 @@ class OBJexport:
         if self.fileformat==7:
             self.file.write("light\t\t\t// %s\n" % name)
             if special:
-                self.file.write("%s\t %2d     %2d     %2d\n\n" % (
+                self.file.write("%s\t%2d     %2d     %2d\n\n" % (
                     v, c[0],c[1],c[2]))
             else:
-                self.file.write("%s\t %5.2f  %5.2f  %5.2f\n\n" % (
-                    v, c[0],c[1],c[2]))
+                self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
+                    v,
+                    round(c[0],UV.ROUND),
+                    round(c[1],UV.ROUND),
+                    round(c[2],UV.ROUND)))
         else:
             if special:
                 self.file.write("1  %2d %2d %2d\t\t// %s\n" % (
@@ -490,10 +498,16 @@ class OBJexport:
     
         if self.fileformat==7:
             self.file.write("line\t\t\t// %s\n" % name)
-            self.file.write("%s\t %5.2f  %5.2f  %5.2f\n" % (
-                v1, c[0],c[1],c[2]))
-            self.file.write("%s\t %5.2f  %5.2f  %5.2f\n\n" % (
-                v2, c[0],c[1],c[2]))
+            self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
+                v1,
+                round(c[0],UV.ROUND),
+                round(c[1],UV.ROUND),
+                round(c[2],UV.ROUND)))
+            self.file.write("%s\t%-6s %-6s %-6s\n\n" % (
+                v2,
+                round(c[0],UV.ROUND),
+                round(c[1],UV.ROUND),
+                round(c[2],UV.ROUND)))
         else:
             self.file.write("2  %2d %2d %2d\t\t// %s\n" % (
                 c[0], c[1], c[2], name))
@@ -548,7 +562,7 @@ class OBJexport:
                 if f.smooth:
                     face.flags|=Face.SMOOTH
                 if (n==4) and f.image and not f.image.name.lower().find("panel."):
-                    face.flags|=Face.COCKPIT
+                    face.flags|=Face.PANEL
                 elif (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TEX:
@@ -601,7 +615,11 @@ class OBJexport:
         facenum=0
         nfaces=len(self.faces)
         
-        for bucket in [0, Face.NO_DEPTH, Face.ALPHA, Face.NO_DEPTH+Face.ALPHA]:
+        for bucket in [0, Face.NO_DEPTH, Face.ALPHA, Face.NO_DEPTH+Face.ALPHA,
+                       Face.PANEL,
+                       Face.PANEL+Face.NO_DEPTH,
+                       Face.PANEL+Face.ALPHA,
+                       Face.PANEL+Face.NO_DEPTH+Face.ALPHA]:
 
             # Identify strips
             for faceindex in range(nfaces):
@@ -619,9 +637,9 @@ class OBJexport:
                     firstvertex=0
 
                     if (((startface.flags & Face.HARD) or
-                         (startface.flags & Face.COCKPIT))
+                         (startface.flags & Face.PANEL))
                         and (self.fileformat==7)):
-                        pass	# Hard faces can't be part of a Quad_Strip
+                        pass	# Can't be part of a Quad_Strip
                     elif len(startface.v)==3 and (self.fileformat==7):
                         # Vertex which is member of most triangles is centre
                         tris=[]
@@ -779,7 +797,7 @@ class OBJexport:
             if self.fileformat==7:
                 if (n==3):
                     self.file.write ("tri\t")
-                elif (face.flags & Face.COCKPIT):
+                elif (face.flags & Face.PANEL):
                     self.file.write ("quad_cockpit")
                 elif (face.flags & Face.HARD):
                     self.file.write ("quad_hard")
@@ -801,7 +819,7 @@ class OBJexport:
 
             for i in range(topright, topright-n, -1):
                 if self.fileformat==7:
-                    self.file.write("%s\t  %s\n" % (face.v[i%n], face.uv[i%n]))
+                    self.file.write("%s\t%s\n" % (face.v[i%n], face.uv[i%n]))
                 else:
                     self.file.write("%s\n" % face.v[i%n])
 
@@ -838,21 +856,21 @@ class OBJexport:
 
             if (n==3):	# Tris
                 for i in [(firstvertex+1)%n,firstvertex]:
-                    self.file.write("%s\t  %s\n" % (face.v[i], face.uv[i]))
+                    self.file.write("%s\t%s\n" % (face.v[i], face.uv[i]))
                 c=face.v[(firstvertex+1)%n]
                 v=face.v[firstvertex]
 
                 for face in strip:
                     for i in range(3):
                         if face.v[i]!=c and face.v[i]!=v:
-                            self.file.write("%s\t  %s\n" % (
+                            self.file.write("%s\t%s\n" % (
                                 face.v[i], face.uv[i]))
                             v=face.v[i]
                             break
 
             else:	# Quads
                 if self.fileformat==7:
-                    self.file.write("%s\t  %s\t%s\t  %s\n" % (
+                    self.file.write("%s\t%s\t%s\t%s\n" % (
                         face.v[(firstvertex+1)%n], face.uv[(firstvertex+1)%n],
                         face.v[firstvertex], face.uv[firstvertex]))
                 else:
@@ -868,7 +886,7 @@ class OBJexport:
                     for i in range(4):
                         if face.v[i]==v:
                             if self.fileformat==7:
-                                self.file.write("%s\t  %s\t%s\t  %s\n" % (
+                                self.file.write("%s\t%s\t%s\t%s\n" % (
                                     face.v[(i+1)%n], face.uv[(i+1)%n],
                                     face.v[(i+2)%n],  face.uv[(i+2)%n]))
                             else:

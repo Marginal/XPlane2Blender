@@ -13,26 +13,25 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
-# See XPlane2Blender.html for usage
+# See XPlane2Blender.html for usage.
 #
-# This software is provided 'as-is', without any express or implied
-# warranty. In no event will the author be held liable for any damages
-# arising from the use of this software.
-# 
-# Permission is granted to anyone to use this software for any purpose,
-# including commercial applications, and to alter it and redistribute it
-# freely, subject to the following restrictions:
-# 
-# 1. The origin of this software must not be misrepresented; you must
-#    not claim that you wrote the original software. If you use this
-#    software in a product, an acknowledgment in the product
-#    documentation would be appreciated but is not required.
-# 
-# 2. Altered source versions must be plainly marked as such, and must
-#    not be misrepresented as being the original software.
-# 
-# 3. This notice may not be removed or altered from any source
-#    distribution.
+# This software is licensed under a Creative Commons License
+#   Attribution-ShareAlike 2.0:
+#
+#   You are free:
+#     * to copy, distribute, display, and perform the work
+#     * to make derivative works
+#     * to make commercial use of the work
+#   Under the following conditions:
+#     * Attribution: You must give the original author credit.
+#     * Share Alike: If you alter, transform, or build upon this work, you
+#       may distribute the resulting work only under a license identical to
+#       this one.
+#   For any reuse or distribution, you must make clear to others the license
+#   terms of this work.
+#
+# This is a human-readable summary of the Legal Code (the full license):
+#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
 #
 #
 # 2004-02-01 v1.00
@@ -81,20 +80,23 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #  - Don't set alpha
 #
 # 2004-09-02 v1.70
-#  - Try harder to preserve object names in comments
+#  - Try harder to preserve object names in comments.
 #
 # 2004-09-04 v1.71
 #
 # 2004-09-10 v1.72
 #
 # 2004-10-10 v1.73
-#  - Report line number on input error
-#  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits
+#  - Report line number on input error.
+#  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits.
 #
 # 2004-10-17 v1.74
 #
 # 2004-11-01 v1.80
-#  - Support for "quad_cockpit" using "Text" button
+#  - Support for "quad_cockpit" using "Text" button.
+#
+# 2004-14-01 v1.81
+#  - Removed use of "Text" button; cockpit panels now assigned correct texture.
 #
 
 import sys
