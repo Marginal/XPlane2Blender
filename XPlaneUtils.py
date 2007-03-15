@@ -172,14 +172,14 @@ class UV:
             return 0
 
 class Face:
-    # Flags in sort order
+    # Flags in v7 sort order
     HARD=1
     TWOSIDE=2
     FLAT=4
     ALPHA=8	# Must be 2nd last
     PANEL=16	# Must be last
     BUCKET=HARD|TWOSIDE|FLAT|ALPHA|PANEL	# For v7 export
-    TILES=32
+    TILES=32	# Not output in v7
 
     def __init__ (self):
         self.v=[]

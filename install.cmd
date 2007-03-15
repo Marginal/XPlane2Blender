@@ -2,14 +2,35 @@
 @echo off
 
 echo Installing Blender scripts . . .
-echo.
 
-rem Remove old versions
+rem Old files
 set FILES=..\Bpymenus helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport.pyc XPlaneExport7.py XPlaneExport8.py XPlaneExportBodies.py XPlaneImport.py XPlaneImportPlane.py XPlaneImportBodies.py XPlaneUtils.py XPlaneUtils.pyc XPlaneACF.py XPlaneACF.pyc XPlane2Blender.html XPlaneImportPlane.html XPlaneReadme.txt
-set DIRS="%HOME%\.blender\scripts" "%ProgramFiles%\Blender Foundation\Blender\.blender\scripts" "%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts"
+
+set DIRS=
+if defined HOME set DIRS=%DIRS% "%HOME%\.blender\scripts"
+
+rem Try to locate Blender
+set FTYPE=
+for /f "tokens=2 delims==" %%I in ('assoc .blend') do set FTYPE=%%I
+if not defined FTYPE goto noassoc
+set BDIR=
+for /f "tokens=2* delims==" %%I in ('ftype %FTYPE%') do set BDIR=%%~dpI
+if defined BDIR set DIRS=%DIRS% "%BDIR%.blender\scripts"
+:noassoc
+
+set DIRS=%DIRS% "%ProgramFiles%\Blender Foundation\Blender\.blender\scripts" "%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts"
+
+rem Remove old files from everywhere
 for %%D in (%DIRS%) do for %%I in (%FILES%) do if exist "%%~D\%%I" del "%%~D\%%I"
 
-rem Remove empty script directories to prevent masking
+rem Remove empty script directories to prevent masking - but not home dir
+if not defined BDIR goto defdir
+set DESTDIR=%BDIR%.blender\scripts
+set EMPTY=1
+for %%I in ("%DESTDIR%\*") do set EMPTY=0
+if exist "%DESTDIR%\" if %EMPTY%==1 rd "%DESTDIR%"
+
+:defdir
 set DESTDIR=%ProgramFiles%\Blender Foundation\Blender\.blender\scripts
 set EMPTY=1
 for %%I in ("%DESTDIR%\*") do set EMPTY=0
@@ -20,24 +41,30 @@ set EMPTY=1
 for %%I in ("%DESTDIR%\*") do set EMPTY=0
 if exist "%DESTDIR%\" if %EMPTY%==1 rd "%DESTDIR%"
 
-rem Find target script directories
+rem Find target script directory
 for %%D in (%DIRS%) do if exist "%%~D\" (set DESTDIR=%%~D& goto copy)
 
 :destfail
-echo Failed to find appropriate location for Blender scripts !!!
+echo.
+echo Failed to find the correct location for the scripts !!!
 goto end
 
 :copy
 set FILES=helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneImport.py XPlaneImportPlane.py XPlaneUtils.py XPlaneACF.py XPlane2Blender.html
 for %%I in (%FILES%) do copy /v /y %%I "%DESTDIR%\" >nul:
 for %%I in (%FILES%) do if not exist "%DESTDIR%\%%I" goto copyfail
-echo Installation successful.
+echo.
+echo Installed scripts in folder
+echo   %DESTDIR%
 goto end
 
 :copyfail
-echo Failed to install scripts in "%DESTDIR%" !!!
+echo.
+echo Failed to install scripts in folder
+echo   %DESTDIR% !!!
 goto end
 
 :end
 echo.
 pause
+:reallyend

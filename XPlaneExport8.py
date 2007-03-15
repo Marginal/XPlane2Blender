@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.10"
+__version__ = "2.11"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -53,6 +53,10 @@ Limitations:<br>
 # 2005-11-10 v2.10
 #  - New file
 #
+# 2005-11-17 v2.11
+#  - Fixed error when ipo exists, but no curve defined.
+#  - Added support for updated (hopefully final) Blender 2.40 API.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -61,12 +65,14 @@ Limitations:<br>
 #
 # So we have to sort on export to ensure alpha comes after non-alpha. We also
 # sort to minimise attribute state changes, in rough order of expense:
-#  - HARD
+#  - HARD - should be first, since renderer merges hard polys with non-hard
 #  - TWOSIDE
 #  - FLAT
 #  - NPOLY - negative so polygon offsets come first
-#  - ALPHA
-#  - PANEL
+#  - (animations)
+#  - PANEL - most expensive
+#  - ALPHA - must be last for correctness
+#  - (LOD)
 #
 
 import sys
@@ -170,8 +176,8 @@ class OBJexport:
         self.twoside=False
         self.flat=False
         self.npoly=True
-        self.alpha=False	# implicit - doesn't appear in output file
         self.panel=False
+        self.alpha=False	# implicit - doesn't appear in output file
         self.layer=0
         self.anim=Anim(None)
 
@@ -192,6 +198,11 @@ class OBJexport:
         theObjects = scene.getChildren()
 
         print 'Starting OBJ export to ' + self.filename
+        if not checkFile(self.filename):
+            return
+
+        Blender.Window.WaitCursor(1)
+        Window.DrawProgressBar(0, 'Examining textures')
         (self.texture,self.havepanel,self.layermask)=getTexture(theObjects,
                                                                 self.layermask,
                                                                 self.iscockpit,
@@ -200,13 +211,8 @@ class OBJexport:
             self.iscockpit=True
             self.layermask=1
         
-        if not checkFile(self.filename):
-            return
-
         #clock=time.clock()	# Processor time
         frame=Blender.Get('curframe')
-        Blender.Window.WaitCursor(1)
-        Window.DrawProgressBar(0, 'Examining textures')
 
         self.file = open(self.filename, 'w')
         self.writeHeader ()
@@ -383,8 +389,9 @@ class OBJexport:
                                             passno&Prim.TWOSIDE,
                                             passno&Prim.FLAT,
                                             passno&Prim.NPOLY,
+                                            passno&Prim.PANEL,
                                             passno&Prim.ALPHA,
-                                            passno&Prim.PANEL, layer, anim)
+                                            layer, anim)
                             self.file.write("%sTRIS\t%d %d\n" %
                                             (anim.ins(), offsets[n],counts[n]))
                             self.nprim+=counts[n]
@@ -392,7 +399,7 @@ class OBJexport:
 
         # Close animations
         self.updateAttr(self.hard, self.twoside, self.flat, self.npoly,
-                        self.alpha, self.panel, self.layer, Anim(None))
+                        self.panel, self.alpha, self.layer, Anim(None))
 
         self.file.write("\n# Built with Blender %4.2f. Exported with XPlane2Blender %s.\n" % (float(Blender.Get('version'))/100, __version__))
 
@@ -587,55 +594,6 @@ class OBJexport:
 
         #return (Anim(None), mm)	# test - return frame 1 position
 
-        object=child.parent
-        if self.debug and object and object.getType()=='Armature':
-            bonename=child.getParentBoneName()        
-            if not bonename:
-                raise ExportError("%s \"%s\" has an armature as a parent. It should have a bone as a parent." % (child.getType(), child.name))
-
-            for bone in object.getData().bones:
-                if bone.name==bonename:
-                    break
-            else:
-                raise ExportError("Missing animation data for bone \"%s\" in armature \"%s\"." % (bonename, object.name))	# wtf?
-
-            if (object.getAction() and
-                object.getAction().getAllChannelIpos().has_key(bone.name)):
-                ipo=object.getAction().getAllChannelIpos()[bone.name]
-
-                for frame in [1,2]:            
-                    Blender.Set('curframe', frame)
-                    print "Frame\t%s" % frame
-                    print child
-                    print "local\t%s" % child.getMatrix('localspace').rotationPart().toEuler()
-                    print "\t%s" % child.getMatrix('localspace').translationPart()
-                    print "world\t%s" % child.getMatrix('worldspace').rotationPart().toEuler()
-                    print "\t%s" % child.getMatrix('worldspace').translationPart()
-                    print object
-                    print "local\t%s" % object.getMatrix('localspace').rotationPart().toEuler()
-                    print "\t%s" % object.getMatrix('localspace').translationPart()
-                    print "world\t%s" % object.getMatrix('worldspace').rotationPart().toEuler()
-                    print "\t%s" % object.getMatrix('worldspace').translationPart()
-                    print bone
-                    print "bone\t%s" % bone.getRestMatrix('bonespace').rotationPart().toEuler()
-                    print "\t%s" % bone.getRestMatrix('bonespace').translationPart()
-                    print "world\t%s" % bone.getRestMatrix('worldspace').rotationPart().toEuler()
-                    print "\t%s" % bone.getRestMatrix('worldspace').translationPart()
-                    #print "head\t%s" % bone.head
-                    #print "tail\t%s" % bone.tail
-                    #print "rot\t%s" % bone.quat.toEuler()
-                    #print "loc\t%s" % bone.loc
-                    print ipo
-                    q = Quaternion([ipo.getCurveCurval('QuatW'),
-                                    ipo.getCurveCurval('QuatX'),
-                                    ipo.getCurveCurval('QuatY'),
-                                    ipo.getCurveCurval('QuatZ')])
-                    print "ipo\t%s" % q.toEuler()
-                    print "\t%s %s" % (q.angle, q.axis)
-                    print "\t%s" % Vector([ipo.getCurveCurval('LocX'),
-                                           ipo.getCurveCurval('LocY'),
-                                           ipo.getCurveCurval('LocZ')])
-
         anim=Anim(child)
 
         # Add parent anims first
@@ -691,7 +649,7 @@ class OBJexport:
 
 
     #------------------------------------------------------------------------
-    def updateAttr(self, hard, twoside, flat, npoly, alpha, panel, layer,anim):
+    def updateAttr(self, hard, twoside, flat, npoly, panel, alpha, layer,anim):
 
         if layer!=self.layer:
             # Reset all attributes
@@ -702,8 +660,8 @@ class OBJexport:
             self.twoside=False
             self.flat=False
             self.npoly=True
-            self.alpha=False
             self.panel=False
+            self.alpha=False
                 
             if self.layermask==1:
                 self.file.write("\n")
@@ -770,12 +728,12 @@ class OBJexport:
         if self.npoly and not npoly:
             self.file.write("%sATTR_poly_os\t2\n" % self.anim.ins())
 
+        if self.panel and not panel:
+            self.file.write("%sATTR_no_cockpit\n" % self.anim.ins())
+
         # alpha is implicit - doesn't appear in output file
         if self.alpha and not alpha:
             self.file.write("%s####_no_alpha\n" % self.anim.ins())
-
-        if self.panel and not panel:
-            self.file.write("%sATTR_no_cockpit\n" % self.anim.ins())
 
         # Turn Ons
         if hard and not self.hard:
@@ -790,19 +748,19 @@ class OBJexport:
         if npoly and not self.npoly:
             self.file.write("%sATTR_poly_os\t0\n" % self.anim.ins())
 
+        if panel and not self.panel:
+            self.file.write("%sATTR_cockpit\n" % self.anim.ins())
+
         # alpha is implicit - doesn't appear in output file
         if alpha and not self.alpha:
             self.file.write("%s####_alpha\n" % self.anim.ins())
-
-        if panel and not self.panel:
-            self.file.write("%sATTR_cockpit\n" % self.anim.ins())
 
         self.hard=hard
         self.twoside=twoside
         self.flat=flat
         self.npoly=npoly
-        self.alpha=alpha
         self.panel=panel
+        self.alpha=alpha
 
 
 #------------------------------------------------------------------------
@@ -2792,10 +2750,15 @@ class Anim:
             if not bonename:
                 raise ExportError("%s \"%s\" has an armature as a parent. It should have a bone as a parent." % (child.getType(), child.name))
 
-            for bone in object.getData().bones:
-                if bone.name==bonename:
-                    break
-            else:
+            bones=object.getData().bones
+            if isinstance(bones, list):	# 2.40a1/2
+                for bone in object.getData().bones:
+                    if bone.name==bonename:
+                        break
+            else:	# 2.40
+                if bonename in bones.keys():
+                    bone=bones[bonename]
+            if not bone:
                 raise ExportError("Missing animation data for bone \"%s\" in armature \"%s\"." % (bonename, object.name))	# wtf?
 
         name=bone.name
@@ -2831,6 +2794,47 @@ class Anim:
                 return	#null
         ipo=object.getAction().getAllChannelIpos()[bone.name]
 
+        if 0:	# debug
+            for frame in [1,2]:            
+                Blender.Set('curframe', frame)
+                print "Frame\t%s" % frame
+                print child
+                print "local\t%s" % child.getMatrix('localspace').rotationPart().toEuler()
+                print "\t%s" % child.getMatrix('localspace').translationPart()
+                print "world\t%s" % child.getMatrix('worldspace').rotationPart().toEuler()
+                print "\t%s" % child.getMatrix('worldspace').translationPart()
+                print object
+                print "local\t%s" % object.getMatrix('localspace').rotationPart().toEuler()
+                print "\t%s" % object.getMatrix('localspace').translationPart()
+                print "world\t%s" % object.getMatrix('worldspace').rotationPart().toEuler()
+                print "\t%s" % object.getMatrix('worldspace').translationPart()
+                print bone
+                if 'getRestMatrix' in dir(bone):	# 2.40a1/2
+                    print "bone\t%s" % bone.getRestMatrix('bonespace').rotationPart().toEuler()
+                    print "\t%s" % bone.getRestMatrix('bonespace').translationPart()
+                    print "world\t%s" % bone.getRestMatrix('worldspace').rotationPart().toEuler()
+                    print "\t%s" % bone.getRestMatrix('worldspace').translationPart()
+                else:	# 2.40
+                    print "bone\t%s" % bone.matrix['BONESPACE'].rotationPart().toEuler()
+                    #crashes print "\t%s" % bone.matrix['BONESPACE'].translationPart()
+                    print "arm\t%s" % bone.matrix['ARMATURESPACE'].rotationPart().toEuler()
+                    print "\t%s" % bone.matrix['ARMATURESPACE'].translationPart()
+                #print "head\t%s" % bone.head
+                #print "tail\t%s" % bone.tail
+                #print "rot\t%s" % bone.quat.toEuler()
+                #print "loc\t%s" % bone.loc
+                print ipo
+                q = Quaternion([ipo.getCurveCurval('QuatW'),
+                                ipo.getCurveCurval('QuatX'),
+                                ipo.getCurveCurval('QuatY'),
+                                ipo.getCurveCurval('QuatZ')])
+                print "ipo\t%s" % q.toEuler()
+                print "\t%s %s" % (q.angle, q.axis)
+                print "\t%s" % Vector([ipo.getCurveCurval('LocX'),
+                                       ipo.getCurveCurval('LocY'),
+                                       ipo.getCurveCurval('LocZ')])
+            print
+
         if bone.parent:
             self.anim=Anim(child, bone.parent)
         else:
@@ -2846,45 +2850,48 @@ class Anim:
         # bone.tail - posn of tail rel to armature pre pose
         # ipo - bone position rel to rest posn post pose
         #
-        # Rotations & transformations are relative to rest position
-        # Transformations are relative to each other (ie cumulative)
+        # In X-Plane:
+        # Transformations are relative to unrotated position and cumulative
+        # Rotations are relative to each other (ie cumulative)
         
         for frame in [1,2]:            
             Blender.Set('curframe', frame)
             mm=Matrix(object.getMatrix('worldspace'))
             rm=mm.rotationPart()
             rm.resize4x4()
+            if bone.parent:
+                # Child offset should be relative to parent
+                mm=rm
 
-            if (ipo.getCurveCurval('LocX')==None or
-                ipo.getCurveCurval('LocY')==None or
-                ipo.getCurveCurval('LocZ')==None):
-                t = Vector(0,0,0)
-            else:
+            if (ipo.getCurve('LocX') and
+                ipo.getCurve('LocY') and
+                ipo.getCurve('LocZ')):
                 t = Vector([ipo.getCurveCurval('LocX'),
                             ipo.getCurveCurval('LocY'),
                             ipo.getCurveCurval('LocZ')])
+            else:
+                t = Vector(0,0,0)
             
-            #t=Vertex(t+bone.getRestMatrix('worldspace').translationPart(), mm)
-            t=Vertex(t*bone.getRestMatrix('worldspace').rotationPart()+
-                     bone.getRestMatrix('worldspace').translationPart(), mm)
-            # Make relative to (unrotated) parents
-            a=self.anim
-            while not a.equals(Anim(None)):
-                t=t-a.t[frame-1]
-                a=a.anim
+            if 'getRestMatrix' in dir(bone):	# 2.40a1/2
+                t=Vertex(t*bone.getRestMatrix('worldspace').rotationPart()+
+                         bone.getRestMatrix('worldspace').translationPart(),mm)
+            else:	# 2.40
+                t=Vertex(t*bone.matrix['ARMATURESPACE'].rotationPart()+
+                         bone.matrix['ARMATURESPACE'].translationPart(),mm)
             self.t.append(t)
 
-            if (ipo.getCurveCurval('QuatW')==None or
-                ipo.getCurveCurval('QuatX')==None or
-                ipo.getCurveCurval('QuatY')==None or
-                ipo.getCurveCurval('QuatZ')==None):
-                self.a.append(0)
-            else:
+            if (ipo.getCurve('QuatW') and
+                ipo.getCurve('QuatX') and
+                ipo.getCurve('QuatY') and
+                ipo.getCurve('QuatZ')):
                 q=Quaternion([ipo.getCurveCurval('QuatW'),
                               ipo.getCurveCurval('QuatX'),
                               ipo.getCurveCurval('QuatY'),
                               ipo.getCurveCurval('QuatZ')])
-                qr= Vertex(q.axis*bone.getRestMatrix('worldspace').rotationPart(), rm)	# In bone space
+                if 'getRestMatrix' in dir(bone):	# 2.40a1/2
+                    qr= Vertex(q.axis*bone.getRestMatrix('worldspace').rotationPart(), rm)	# In bone space
+                else:	# 2.40
+                    qr= Vertex(q.axis*bone.matrix['ARMATURESPACE'].rotationPart(), rm)	# In bone space
                 a = round(q.angle, Vertex.ROUND)
                 if a==0:
                     self.a.append(0)
@@ -2899,6 +2906,8 @@ class Anim:
                     # no common axis - add second axis
                     self.r.append(qr)
                     self.a.append(a)
+            else:
+                self.a.append(0)
 
         # dataref values v1 & v2
         for val in [1,2]:
@@ -2968,9 +2977,11 @@ else:
     try:
         obj.export(scene)
     except ExportError, e:
-        Blender.Window.DrawProgressBar(1, 'Error')
+        Blender.Window.WaitCursor(0)
+        Blender.Window.DrawProgressBar(0, 'ERROR')
         msg="ERROR:\t%s\n" % e.msg
         print msg
         Blender.Draw.PupMenu(msg)
+        Blender.Window.DrawProgressBar(1, 'ERROR')
         if obj.file:
             obj.file.close()

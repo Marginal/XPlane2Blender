@@ -30,6 +30,9 @@
 # 2005-09-23 v2.10
 #  - Main export routines split out
 #
+# 2005-11-11 v2.11
+#  - Don't try to load texture if TEX isn't set
+#
 
 
 import sys
@@ -95,7 +98,7 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
             mesh=object.getData()
             if mesh.hasFaceUV():
                 for face in mesh.faces:
-                    if face.image:
+                    if (face.mode&NMesh.FaceModes.TEX) and face.image:
                         # Normalise pathnames
                         fixedfile=face.image.filename
                         if Blender.sys.dirsep=='\\':
@@ -123,7 +126,7 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
                             if l==-1:
                                 break	# Ugh?
                             fixedfile=fixedfile[:l]+fixedfile[r+2:]
-                        if fixedfile!=face.image.filename:
+                        if 0:	#fixedfile!=face.image.filename:
                             try:
                                 face.image=Image.Load(fixedfile)
                             except IOError:
@@ -183,12 +186,14 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
     try:
         dim=texture.getSize()
     except RuntimeError:
-        raise ExportError("Can't load texture file")
-    for l in dim:
-        while l:
-            l=l/2
-            if l&1 and l>1:
-                raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace to load the new file.")
+        pass
+    	#raise ExportError("Can't load texture file \"%s\"" % texture.filename)
+    else:
+        for l in dim:
+            while l:
+                l=l/2
+                if l&1 and l>1:
+                    raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace to load the new file.")
 
     l=texture.filename.rfind(Blender.sys.dirsep)
     if l!=-1:

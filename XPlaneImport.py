@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.10"
+__version__ = "2.11"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -145,6 +145,11 @@ Limitations:<br>
 # 2005-11-10 v2.10
 #  - Add support for v8 objects. No animation yet.
 #
+# 2005-11-17 v2.11
+#  - Import animations at rest position - no armatures yet.
+#  - Fixed face flags when no texture.
+#  - Added support for alpha and no_alpha pseudo attributes.
+#
 
 import sys
 import Blender
@@ -281,9 +286,10 @@ class Mesh:
     # Flags
     LAYERMASK=7
 
-    def __init__(self, name, faces=[], flags=0):
+    def __init__(self, name, faces=[], layers=1, anim=None):
         self.name=name
-        self.flags=flags
+        self.layers=layers	# LOD
+        self.anim=anim
         self.faces=[]
         self.bmax=Vertex(-sys.maxint,-sys.maxint,-sys.maxint)
         self.bmin=Vertex( sys.maxint, sys.maxint, sys.maxint)
@@ -341,19 +347,23 @@ class Mesh:
         mesh=NMesh.New(self.name)
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
+        mesh.hasFaceUV(1)	# required for face flags
 
-        n=0
-        centre=Vertex(0,0,0)
-        for f in self.faces:
-            for vertex in f.v:
-                n+=1
-                centre.x+=vertex.x
-                centre.y+=vertex.y
-                centre.z+=vertex.z
-        assert n, "Mesh %s has no vertices" % self.name
-        centre.x=round(centre.x/n,1)
-        centre.y=round(centre.y/n,1)
-        centre.z=round(centre.z/n,1)
+        if self.anim:
+            centre=self.anim
+        else:
+            n=0
+            centre=Vertex(0,0,0)
+            for f in self.faces:
+                for vertex in f.v:
+                    n+=1
+                    centre.x+=vertex.x
+                    centre.y+=vertex.y
+                    centre.z+=vertex.z
+            assert n, "Mesh %s has no vertices" % self.name
+            centre.x=round(centre.x/n,1)
+            centre.y=round(centre.y/n,1)
+            centre.z=round(centre.z/n,1)
         
         for f in self.faces:
             face=NMesh.Face()
@@ -386,12 +396,11 @@ class Mesh:
                     mesh.verts.append(nmv)
                     face.v.append(nmv)
 
+            # Have to add them even if no texture
             for uv in f.uv:
                 face.uv.append((uv.s, uv.t))
 
             if f.flags&Face.PANEL:
-                face.mode |= NMesh.FaceModes.TEX
-                mesh.hasFaceUV(1)
                 if not panel:
                     l = filename.rfind(Blender.sys.dirsep)
                     if l!=-1:
@@ -402,20 +411,20 @@ class Mesh:
                                 break
                             except IOError:
                                 pass
+                face.mode |= NMesh.FaceModes.TEX
                 face.image = panel
             elif image:
                 face.mode |= NMesh.FaceModes.TEX
                 face.image = image
-                mesh.hasFaceUV(1)
                             
-            assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
+            #assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
             mesh.faces.append(face)
 
         ob = Object.New("Mesh", self.name)
         ob.link(mesh)
         scene.link(ob)
-        if self.flags&Mesh.LAYERMASK:
-            ob.Layer=(self.flags&Mesh.LAYERMASK)
+        if self.layers&Mesh.LAYERMASK:
+            ob.Layer=(self.layers&Mesh.LAYERMASK)
         cur=Window.GetCursorPos()
         ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
@@ -461,6 +470,7 @@ class OBJimport:
         self.image=None		# texture image, iff scenery has texture
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
+        self.animerr=False
         
         # random stuff
         self.whitespace=[' ','\t','\n']
@@ -484,8 +494,8 @@ class OBJimport:
         self.alpha=False
         self.panel=False
         self.poly=False
-        self.arm=None
-        self.bone=None
+        self.anim=[None]		# point of rotation
+        self.off=[Vertex(0,0,0)]	# for offsetting
 
     #------------------------------------------------------------------------
     def doimport(self):
@@ -552,7 +562,21 @@ class OBJimport:
                 if c == '\n':
                     self.lineno += 1
             elif self.fileformat==8 and c=='#':
-                self.getCR()
+                # Hack!
+                for a in [Token.NAMES[Token.ALPHA],
+                          Token.NAMES[Token.NO_ALPHA]]:
+                    self.file.seek(pos)
+                    c=self.file.read(len(a))
+                    if c==a:
+                        self.file.seek(pos)
+                        c=''
+                        break
+                else:
+                    # normal comment
+                    self.file.seek(pos)
+                    self.getCR()
+                    continue
+                break
             else:
                 break
         input=c
@@ -862,33 +886,20 @@ class OBJimport:
                         self.addFan(scene,t,v,uv)
 
                 elif t==Token.ANIM_BEGIN:
-                    raise ParseError(ParseError.MISC, 'Animation is not supported')
-                    if Blender.Get('version')<239:
-                        raise ParseError(ParseError.MISC, 'Blender version 2.40 or later required for animation')
-                    if self.bone:
-                        if self.bone.name!='Bone':
-                            self.arm.addBone(self.bone)
-                            bone = Armature.Bone.New('Bone')
-                            bone.setParent(self.bone)
-                            self.bone=bone
-                    else:
-                        self.arm = Armature.New()
-                        self.bone = Armature.Bone.New('Bone')
+                    #if Blender.Get('version')<239:
+                    #    raise ParseError(ParseError.MISC, 'Blender version 2.40 or later required for animation')
+                    if not self.animerr:
+                        self.animerr=True
+                        print "Warn:\tIgnoring unsupported Animations"
+                    self.anim.insert(0, self.anim[0])	# default to last
+                    self.off.insert(0, self.off[0])	# cumulative
                     
                 elif t==Token.ANIM_END:
-                    if self.bone:
-                        self.arm.addBone(self.bone)
-                        if self.bone.parent:
-                            self.bone=self.bone.parent
-                        else:
-                            ob = Object.New('Armature', 'Armature')
-                            ob.link(self.arm)
-                            scene.link(ob)
-                            if self.lod:
-                                ob.Layer=OBJimport.LAYER[self.lod]
-                            ob.setLocation(Window.GetCursorPos())
-                            self.arm=None
-                            self.bone=None
+                    if not len(self.off):
+                        raise ParseError(ParseError.MISC,
+                                         'ANIM_END with no matching ANIM_BEGIN')
+                    self.anim.pop(0)
+                    self.off.pop(0)
                     
                 elif t==Token.ANIM_TRANS:
                     p1=self.getVertex()
@@ -898,13 +909,16 @@ class OBJimport:
                     dataref=self.getInput()
                     if dataref.find('/')!=-1:
                         dataref=dataref[:dataref.find('/')+1]
-                    if self.bone.name=='Bone':
-                        self.bone.name=dataref
-                    elif self.bone.name[:len(dataref)]!=dataref:
-                        self.arm.addBone(self.bone)
-                        bone = Armature.Bone.New(dataref)
-                        bone.setParent(self.bone)
-                        self.bone=bone
+                    self.off[0]=self.off[0]+p1
+
+                elif t==Token.ANIM_ROTATE:
+                    p=self.getVertex()
+                    r1=self.getFloat()
+                    r2=self.getFloat()
+                    v1=self.getFloat()
+                    v2=self.getFloat()
+                    dataref=self.getInput()
+                    self.anim[0]=self.off[0]
 
                 elif t==Token.HARD:
                     self.hard = True
@@ -1278,7 +1292,9 @@ class OBJimport:
         if self.lod:
             ob.Layer=OBJimport.LAYER[self.lod]
         cur=Window.GetCursorPos()
-        ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
+        ob.setLocation(v.x+self.off[0].x+cur[0],
+                       v.y+self.off[0].y+cur[1],
+                       v.z+self.off[0].z+cur[2])
         self.nprim+=1
         
     #------------------------------------------------------------------------
@@ -1288,11 +1304,14 @@ class OBJimport:
             print "Info:\tImporting Line at line %s \"%s\"" % (
                 self.lineno, name)
 
-        centre=Vertex(round((v[0].x+v[1].x)/2,1),
-                      round((v[0].y+v[1].y)/2,1),
-                      round((v[0].z+v[1].z)/2,1))
+        if self.anim[0]:
+            centre=self.anim[0]
+        else:
+            centre=Vertex(round((v[0].x+v[1].x)/2,1),
+                          round((v[0].y+v[1].y)/2,1),
+                          round((v[0].z+v[1].z)/2,1))
+        # Orientation
         d=Vertex(abs(v[0].x-v[1].x),abs(v[0].y-v[1].y),abs(v[0].z-v[1].z))
-
         if d.z>max(d.x,d.y):
             e=Vertex(self.linesemi,-self.linesemi,0)
         elif d.y>max(d.z,d.x):
@@ -1308,18 +1327,18 @@ class OBJimport:
         face.mode &= ~(NMesh.FaceModes.TEX|NMesh.FaceModes.TILES)
         face.mode |= (NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.DYNAMIC)
 
-        mesh.verts.append(NMesh.Vert(v[0].x-centre.x+e.x,
-                                     v[0].y-centre.y+e.y,
-                                     v[0].z-centre.z+e.z))
-        mesh.verts.append(NMesh.Vert(v[0].x-centre.x-e.x,
-                                     v[0].y-centre.y-e.y,
-                                     v[0].z-centre.z-e.z))
-        mesh.verts.append(NMesh.Vert(v[1].x-centre.x-e.x,
-                                     v[1].y-centre.y-e.y,
-                                     v[1].z-centre.z-e.z))
-        mesh.verts.append(NMesh.Vert(v[1].x-centre.x+e.x,
-                                     v[1].y-centre.y+e.y,
-                                     v[1].z-centre.z+e.z))
+        mesh.verts.append(NMesh.Vert(v[0].x+self.off[0].x-centre.x+e.x,
+                                     v[0].y+self.off[0].y-centre.y+e.y,
+                                     v[0].z+self.off[0].z-centre.z+e.z))
+        mesh.verts.append(NMesh.Vert(v[0].x+self.off[0].x-centre.x-e.x,
+                                     v[0].y+self.off[0].y-centre.y-e.y,
+                                     v[0].z+self.off[0].z-centre.z-e.z))
+        mesh.verts.append(NMesh.Vert(v[1].x+self.off[0].x-centre.x-e.x,
+                                     v[1].y+self.off[0].y-centre.y-e.y,
+                                     v[1].z+self.off[0].z-centre.z-e.z))
+        mesh.verts.append(NMesh.Vert(v[1].x+self.off[0].x-centre.x+e.x,
+                                     v[1].y+self.off[0].y-centre.y+e.y,
+                                     v[1].z+self.off[0].z-centre.z+e.z))
         for nmv in mesh.verts:
             face.v.append(nmv)
 
@@ -1351,32 +1370,37 @@ class OBJimport:
                 Token.NAMES[token], self.lineno, name)
         nv=len(v)
 
+        flags=0
+        if self.hard:
+            flags |= Face.HARD
+        if self.twoside:
+            flags |= Face.TWOSIDE
+        if self.flat:
+            flags |= Face.FLAT
+        if self.poly:
+            flags |= Face.TILES
+        if self.panel:
+            flags |= Face.PANEL
+        if self.alpha:
+            flags |= Face.ALPHA
+
         faces=[]
         for f in range(1,nv-1):
             face=Face()
+            face.flags=flags
 
-            face.addVertex(v[0])
-            face.addVertex(v[f+1])
-            face.addVertex(v[f])
+            face.addVertex(v[0]+self.off[0])
+            face.addVertex(v[f+1]+self.off[0])
+            face.addVertex(v[f]+self.off[0])
             face.addUV(uv[0])
             face.addUV(uv[f+1])
             face.addUV(uv[f])
 
-            if self.twoside:
-                face.flags |= Face.TWOSIDE
-            if self.flat:
-                face.flags |= Face.FLAT
-            if self.poly:
-                face.flags |= Face.TILES
-                
             faces.append(face)
-            
-        flags=0
-        if self.lod:
-            flags |= OBJimport.LAYER[self.lod]
 
         if faces:
-            self.addToMesh(scene,name,faces,flags)
+            self.addToMesh(scene,name,faces,
+                           OBJimport.LAYER[self.lod],self.anim[0])
             self.nprim+=1
 
     #------------------------------------------------------------------------
@@ -1401,23 +1425,39 @@ class OBJimport:
         nv=len(v)
         assert not nv%2, "Odd %s vertices in \"%s\"" % (nv, name)
 
+        flags=0
+        if self.hard:
+            flags |= Face.HARD
+        if self.twoside:
+            flags |= Face.TWOSIDE
+        if self.flat:
+            flags |= Face.FLAT
+        if self.poly:
+            flags |= Face.TILES
+        if self.panel:
+            flags |= Face.PANEL
+        if self.alpha:
+            flags |= Face.ALPHA
+
         n=len(vorder)	# 3 or 4 vertices
         faces=[]
         for f in range(2,nv,n-2):
             face=Face()
+            face.flags=flags
+
             if n==3:
                 # vorder not used
                 if f%2:
                     for i in range(3):
-                        face.addVertex(v[f-2+i])
+                        face.addVertex(v[f-2+i]+self.off[0])
                         face.addUV(uv[f-2+i])
                 else:
                     for i in range(3):
-                        face.addVertex(v[f-i])
+                        face.addVertex(v[f-i]+self.off[0])
                         face.addUV(uv[f-i])
             else:
                 for i in range(4):
-                    face.addVertex(v[f-2+vorder[i]])
+                    face.addVertex(v[f-2+vorder[i]]+self.off[0])
                     face.addUV(uv[f-2+vorder[i]])
 
             # Some people use quads as tris to get round limitations in v6
@@ -1427,30 +1467,16 @@ class OBJimport:
             if face.removeDuplicateVertices() < 3:
                 continue
             
-            if self.hard:
-                face.flags |= Face.HARD
-            if self.twoside:
-                face.flags |= Face.TWOSIDE
-            if self.flat:
-                face.flags |= Face.FLAT
-            if self.poly:
-                face.flags |= Face.TILES
-            if self.panel:
-                face.flags |= Face.PANEL
-            
             faces.append(face)
 
-        flags=0
-        if self.lod:
-            flags |= OBJimport.LAYER[self.lod]
-
         if faces:
-            self.addToMesh(scene,name,faces,flags)
+            self.addToMesh(scene,name,faces,
+                           OBJimport.LAYER[self.lod],self.anim[0])
             self.nprim+=1
 
     #------------------------------------------------------------------------
     # add faces to existing or new mesh
-    def addToMesh (self,scene,name,faces,flags):
+    def addToMesh (self,scene,name,faces,layers,anim):
         # New faces are added to the existing mesh if:
         #  - they share the same comment, or
         #  - any of the new faces has a common edge with any existing face in
@@ -1459,18 +1485,17 @@ class OBJimport:
         # (and so can be safely added to the same mesh) since they all come
         # from the same X-Plane object).
 
-        if self.curmesh and self.merge:
-            if (self.merge>=2 or
-                (self.comment!='' and self.comment==self.lastcomment)):
-                self.curmesh[-1].addFaces (name, faces)
-                return            
-            if self.curmesh[-1].flags==flags and self.curmesh[-1].abut(faces):
-                self.curmesh[-1].addFaces (name, faces)
-                self.lastcomment=self.comment
-                return
+        if (self.curmesh and
+            self.curmesh[-1].layers==layers and
+            self.curmesh[-1].anim==anim and
+            (self.merge>=2 or
+             (self.comment and self.comment==self.lastcomment) or
+             self.curmesh[-1].abut(faces))):
+            self.curmesh[-1].addFaces (name, faces)
+        else:
+            # No common edge - new mesh required
+            self.curmesh.append(Mesh(name, faces, layers, anim))
 
-        # No common edge - new mesh required
-        self.curmesh.append(Mesh(name, faces, flags))
         self.lastcomment=self.comment
 
     #------------------------------------------------------------------------
@@ -1494,7 +1519,8 @@ class OBJimport:
 
             l=m+1
             while l<len(self.curmesh):
-                if (self.curmesh[l].flags==self.curmesh[m].flags and
+                if (self.curmesh[l].layers==self.curmesh[m].layers and
+                    self.curmesh[l].anim==self.curmesh[m].anim and
                     self.curmesh[l].intersect(self.curmesh[m]) and
                     self.curmesh[l].abut(facesm)):
                     self.curmesh[m].addFaces("Mesh", self.curmesh[l].faces)
@@ -1517,6 +1543,8 @@ def file_callback (filename):
     try:
         obj.doimport()
     except ParseError, e:
+        Blender.Window.WaitCursor(0)
+        Blender.Window.DrawProgressBar(0, 'ERROR')
         if e.type == ParseError.HEADER:
             msg="ERROR:\tThis is not a valid X-Plane v6, v7 or v8 OBJ file\n"
         else:
@@ -1530,9 +1558,9 @@ def file_callback (filename):
                     e.value, obj.lineno)
             else:
                 msg="ERROR:\t%s at line %s\n" % (e.value, obj.lineno)
-        Window.DrawProgressBar(1, "Error")
         print msg
         Blender.Draw.PupMenu(msg)
+        Blender.Window.DrawProgressBar(1, 'ERROR')
     obj.file.close()
     Blender.Redraw()
 

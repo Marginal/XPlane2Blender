@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v7 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.10"
+__version__ = "2.11"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v7 .obj
 format for placement with World-Maker.
@@ -268,6 +268,11 @@ class OBJexport:
         theObjects = scene.getChildren()
 
         print "Starting OBJ export to " + self.filename
+        if not checkFile(self.filename):
+            return
+
+        Blender.Window.WaitCursor(1)
+        Window.DrawProgressBar(0, "Examining textures")
         (self.texture,self.havepanel,self.layermask)=getTexture(theObjects,
                                                                 self.layermask,
                                                                 self.iscockpit,
@@ -276,12 +281,7 @@ class OBJexport:
             self.iscockpit=True
             self.layermask=1
         
-        if not checkFile(self.filename):
-            return
-
         #clock=time.clock()	# Processor time
-        Blender.Window.WaitCursor(1)
-        Window.DrawProgressBar(0, "Examining textures")
 
         self.file = open(self.filename, "w")
         self.writeHeader ()
@@ -923,9 +923,11 @@ else:
     try:
         obj.export(scene)
     except ExportError, e:
-        Blender.Window.DrawProgressBar(1, "Error")
+        Blender.Window.WaitCursor(0)
+        Blender.Window.DrawProgressBar(0, 'ERROR')
         msg="ERROR:\t"+e.msg+"\n"
         print msg
         Blender.Draw.PupMenu(msg)
+        Blender.Window.DrawProgressBar(1, 'ERROR')
         if obj.file:
             obj.file.close()
