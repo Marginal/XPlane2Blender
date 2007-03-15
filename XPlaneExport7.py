@@ -1,15 +1,15 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane v7 Object (.obj)'
+Name: ' X-Plane v7 Object (.obj)'
 Blender: 234
 Group: 'Export'
 Tooltip: 'Export to X-Plane v7 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.00"
+__version__ = "2.01"
 __bpydoc__ = """\
-This script exporst scenery created in Blender to X-Plane v7 .obj
+This script exports scenery created in Blender to X-Plane v7 .obj
 format for placement with World-Maker.
 
 Limitations:<br>

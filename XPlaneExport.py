@@ -156,6 +156,9 @@
 #  - Optimise output order to minimise OpenGL state changes.
 #  - Be much less verbose.
 #
+# 2005-05-09 v2.01
+#  - Fix up relative image pathnames to avoid spurious duplicates.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -183,7 +186,7 @@
 
 import sys
 import Blender
-from Blender import NMesh, Lamp, Draw, Window
+from Blender import NMesh, Lamp, Image, Draw, Window
 #import time
 from XPlaneUtils import Vertex, UV, Face
 
@@ -203,7 +206,7 @@ class Mesh:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=2.00
+    VERSION=2.01
 
     #------------------------------------------------------------------------
     def __init__(self, filename, fileformat):
@@ -321,10 +324,44 @@ class OBJexport:
                 if mesh.hasFaceUV():
                     for face in mesh.faces:
                         if face.image:
+                            # Normalise pathnames
+                            fixedfile=face.image.filename
+                            if fixedfile[0]=='\\':
+                                # Add Windows drive letter
+                                for drive in [Blender.Get('filename'),
+                                              Blender.sys.progname]:
+                                    if drive and drive[0]!='\\':
+                                        f=drive.upper()[:2]+fixedfile
+                                        try:
+                                            file=open(f, 'rb')
+                                        except IOError:
+                                            pass
+                                        else:
+                                            file.close()
+                                            fixedfile=f
+                                            break
+                            if Blender.sys.dirsep=='\\':
+                                # Capitalise Windows drive lettter
+                                fixedfile=fixedfile[0].upper()+fixedfile[1:]
+                            while fixedfile.find('..')!=-1:
+                                # Remove relative stuff
+                                r=fixedfile.rfind('..')
+                                l=fixedfile[:r-1].rfind(Blender.sys.dirsep)
+                                if l==-1:
+                                    break	# Ugh?
+                                fixedfile=fixedfile[:l]+fixedfile[r+2:]
+                            if fixedfile!=face.image.filename:
+                                try:
+                                    face.image=Image.Load(fixedfile)
+                                except IOError:
+                                    pass
+                                else:
+                                    mesh.update()
+
                             if face.image.name.lower().find("panel.")!=-1:
+                                # Check that at least one panel texture is OK
                                 if len(face.v)==3:
                                     raise ExportError("Only quads can use the instrument panel texture,\n\tbut tri using panel texture found in mesh \"%s\"." % object.name)
-                                # Check that at least one panel texture is OK
                                 if not self.havepanel:
                                     self.havepanel=1
                                     self.iscockpit=1
@@ -338,7 +375,9 @@ class OBJexport:
                                             break
                                     else:
                                         panelerr=0
+
                             else:
+                                # Check for multiple textures
                                 if ((not texture) or
                                     (str.lower(texture) ==
                                      str.lower(face.image.filename))):
@@ -896,8 +935,8 @@ class OBJexport:
         self.updateFlags(face.flags&Face.TILES, face.flags&Face.DBLSIDED,
                          face.flags&Face.SMOOTH, layer)
         
-        if (len(strip))==1:            
-            # Oh for fuck's sake, X-Plane 8.00-8.06 loses the plot unless
+        if (len(strip))==1:
+            # Oh for fuck's sake. X-Plane 8.00-8.06 loses the plot unless
             # quad_cockpit polys start with the top or bottom left vertex.
             # We'll choose the vertex with smallest s.
             mins=sys.maxint

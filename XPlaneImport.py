@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane Object (.obj)...'
+Name: ' X-Plane Object (.obj)...'
 Blender: 234
 Group: 'Import'
 Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.00"
+__version__ = "2.01"
 __bpydoc__ = """\
 This script imports X-Plane v6 and v7 .obj scenery files into Blender.
 

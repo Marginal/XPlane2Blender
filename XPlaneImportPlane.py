@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane Plane as scenery (.acf)...'
+Name: ' X-Plane Plane as scenery (.acf)...'
 Blender: 234
 Group: 'Import'
 Tooltip: 'Import an X-Plane airplane (.acf)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.00"
+__version__ = "2.01"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes into Blender, so that
 they can be exported as X-Plane scenery.
