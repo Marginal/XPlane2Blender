@@ -99,6 +99,9 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #  - Warn if objects present in layers other than 1-3.
 #    Suggested by Hervé Duchesne de Lamotte.
 #
+# 2004-11-01 v1.80
+#  - Support for "quad_cockpit" using "Text" button
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -176,6 +179,7 @@ class Face:
     DBLSIDED=4
     SMOOTH=8
     HARD=16
+    COCKPIT=32
     BUCKET=NO_DEPTH|ALPHA
 
     def __init__(self, name):
@@ -202,7 +206,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.74
+    VERSION=1.80
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -287,21 +291,22 @@ class OBJexport:
         nobj=len(theObjects)
         texlist=[]
         self.dolayers=0
-        layers=theObjects[0].Layer
+        layers=0
         for o in range (nobj-1,-1,-1):
             object=theObjects[o]
-            
-            if layers^object.Layer and not self.dolayers:
-                layers=layers&object.Layer
+
+            if layers==0:
+                layers = object.Layer&7
+            elif layers^(object.Layer&7) and not self.dolayers:
                 self.dolayers=1
                 print "Info:\tMultiple Levels Of Detail found"
                 
             objType=object.getType()
-            if objType == "Mesh":
+            if objType == "Mesh" and (object.Layer & 7):
                 mesh=object.getData()
                 if mesh.hasFaceUV():
                     for face in mesh.faces:
-                        if face.image:
+                        if face.image and face.image.name.lower().find("panel."):
                             if ((not texture) or
                                 (str.lower(texture) ==
                                  str.lower(face.image.filename))):
@@ -347,8 +352,10 @@ class OBJexport:
                 if self.texture.find(" ")!=-1:
                     print "Warn:\tTexture file name must not contain spaces. Please fix."
                 return
+            
+        if self.filename.lower().find("_cockpit.obj") == -1:
+            print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
 
-        print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
         l=self.texture.rfind(":")
         if l!=-1:
             self.texture = self.texture[l+1:]
@@ -540,7 +547,9 @@ class OBJexport:
                     twoside=1
                 if f.smooth:
                     face.flags|=Face.SMOOTH
-                if (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
+                if (n==4) and f.image and not f.image.name.lower().find("panel."):
+                    face.flags|=Face.COCKPIT
+                elif (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
                 if f.mode & NMesh.FaceModes.TEX:
                     assert len(f.uv)==n, "Missing UV in \"%s\"" % object.name
@@ -609,7 +618,9 @@ class OBJexport:
                     self.faces[faceindex]=0	# take face off list
                     firstvertex=0
 
-                    if (startface.flags & Face.HARD) and (self.fileformat==7):
+                    if (((startface.flags & Face.HARD) or
+                         (startface.flags & Face.COCKPIT))
+                        and (self.fileformat==7)):
                         pass	# Hard faces can't be part of a Quad_Strip
                     elif len(startface.v)==3 and (self.fileformat==7):
                         # Vertex which is member of most triangles is centre
@@ -768,6 +779,8 @@ class OBJexport:
             if self.fileformat==7:
                 if (n==3):
                     self.file.write ("tri\t")
+                elif (face.flags & Face.COCKPIT):
+                    self.file.write ("quad_cockpit")
                 elif (face.flags & Face.HARD):
                     self.file.write ("quad_hard")
                 else:

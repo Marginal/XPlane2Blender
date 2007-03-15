@@ -93,6 +93,9 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #
 # 2004-10-17 v1.74
 #
+# 2004-11-01 v1.80
+#  - Support for "quad_cockpit" using "Text" button
+#
 
 import sys
 import Blender
@@ -136,6 +139,7 @@ class Token:
     NOCULL	= 24
     CULL	= 25
     POLY_OS	= 26
+    QUAD_COCKPIT= 27
     END6	= 99
     NAMES = [
         "end",
@@ -165,7 +169,9 @@ class Token:
         "ATTR_no_cull",
         "ATTR_nocull",	# Also seen
         "ATTR_cull",
-        "ATTR_poly_os"
+        "ATTR_poly_os",
+        # 8.00+
+        "Quad_cockpit"
         ]
 
 class Vertex:
@@ -205,6 +211,7 @@ class Face:
     HARD=1    
     NO_DEPTH=2
     DBLSIDED=4
+    COCKPIT=8
 
     def __init__(self):
         self.v=[]
@@ -265,14 +272,14 @@ class Mesh:
         return 0
     
     #------------------------------------------------------------------------
-    def doimport(self,scene,image,material):
+    def doimport(self,scene,image,filename):
         mesh=NMesh.New(self.name)
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
         if self.flags&Mesh.DBLSIDED:
             mesh.mode |= NMesh.Modes.TWOSIDED
-        if image:
-            mesh.addMaterial(material)
+        #if image:
+        #    mesh.addMaterial(material)
 
         n=0
         centre=Vertex(0,0,0)
@@ -316,8 +323,24 @@ class Mesh:
 
             for uv in f.uv:
                 face.uv.append((uv.s, uv.t))
-                
-            if image:
+
+            if f.flags&Face.COCKPIT:
+                face.mode |= NMesh.FaceModes.TEX
+                face.transp=NMesh.FaceTranspModes.ALPHA
+                mesh.hasFaceUV(1)                
+                l = filename.rfind(Blender.sys.dirsep)
+                if l!=-1:
+                    for extension in [".bmp", ".png"]:
+                        cockpit=filename[:l+1]+"cockpit"+Blender.sys.dirsep+"-PANELS-"+Blender.sys.dirsep+"Panel"+extension
+                        try:
+                            file = open(cockpit, "rb")
+                        except IOError:
+                            pass
+                        else:
+                            file.close()
+                            face.image = Image.Load(cockpit)
+                            break
+            elif image:
                 face.mode |= NMesh.FaceModes.TEX
                 face.image = image
                 mesh.hasFaceUV(1)
@@ -583,9 +606,9 @@ class OBJimport:
                         print "Info:\tUsing texture file \"%s\"" % texfilename
                     self.image = Image.Load(texfilename)
                 
-                    self.material = Material.New(tex)
-                    self.material.mode |= Material.Modes.TEXFACE
-                    self.material.setAmb(0.25)	# Make more visible
+                    #self.material = Material.New(tex)
+                    #self.material.mode |= Material.Modes.TEXFACE
+                    #self.material.setAmb(0.25)	# Make more visible
 
                     return
             
@@ -604,7 +627,7 @@ class OBJimport:
                     # write meshes
                     self.mergeMeshes()
                     for mesh in self.curmesh:
-                        mesh.doimport(scene,self.image,self.material)
+                        mesh.doimport(scene,self.image,self.filename)
                     return
                 
                 elif t==Token.LIGHT:
@@ -630,7 +653,8 @@ class OBJimport:
 
                 elif t in [Token.QUAD,
                            Token.QUAD_HARD,
-                           Token.QUAD_MOVIE]:
+                           Token.QUAD_MOVIE,
+                           Token.QUAD_COCKPIT]:
                     v = []
                     uv = []
                     for i in range(4):
@@ -733,7 +757,7 @@ class OBJimport:
                     # write meshes
                     self.mergeMeshes()
                     for mesh in self.curmesh:
-                        mesh.doimport(scene,self.image,self.material)
+                        mesh.doimport(scene,self.image,self.filename)
                     return
     
                 elif t==Token.LIGHT:
@@ -945,6 +969,8 @@ class OBJimport:
             name=self.name(Token.NAMES[Token.QUAD])
         elif token==Token.QUAD_MOVIE:
             name=self.name("Movie")
+        elif token==Token.QUAD_COCKPIT:
+            name=self.name("Panel")
         if self.verbose:
             print "Info:\tImporting %s \"%s\"" % (Token.NAMES[token], name)
         nv=len(v)
@@ -965,6 +991,8 @@ class OBJimport:
             
             if token==Token.QUAD_HARD:
                 face.flags |= Face.HARD
+            if token==Token.QUAD_COCKPIT:
+                face.flags |= Face.COCKPIT
             if self.no_depth:
                 face.flags |= Face.NO_DEPTH
             if self.dblsided:
