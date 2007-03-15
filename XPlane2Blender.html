@@ -7,44 +7,51 @@
   <title>XPlane2Blender</title>
   <meta name="author" content="Jonathan Harris">
   <style type="text/css">
-.banner { font-family: Arial,Helvetica,sans-serif; font-weight: bold; text-align: center; background-color: lightskyblue; height: 32px; }
+.banner { font-family: Arial,Helvetica,sans-serif; background-color: lightskyblue; text-align: left; height: 32px; }
+.dnl { font-family: Arial,Helvetica,sans-serif; font-size: small; background-color: lightskyblue; }
 samp { font-family: Arial,Helvetica,sans-serif; }
-h2 { font-family: Arial,Helvetica,sans-serif; text-align: center; }
+h2 { font-family: Arial,Helvetica,sans-serif; }
 h3 { font-family: Arial,Helvetica,sans-serif; }
 h4 { font-family: Arial,Helvetica,sans-serif; }
+h5 { font-family: Arial,Helvetica,sans-serif; }
   </style>
 </head>
 <body>
-<table style="width: 100%;" cellpadding="0">
+<table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">XPlane2Blender</td>
+      <td class="banner">Marginal &raquo; <a href="http://marginal.org.uk/x-planescenery/">X-Plane
+Scenery</a> &raquo; <a href="http://marginal.org.uk/x-planescenery/tools.html">Tools</a> &raquo; XPlane2Blender</td>
     </tr>
   </tbody>
 </table>
-<hr style="width: 100%; height: 2px;">
+<hr>
 <h2>Scenery &amp; Cockpit import/export scripts for Blender</h2>
+<h3>Overview</h3>
 <p><a href="http://www.blender3d.org/">Blender</a>
 is an open source 3D object editor for Windows, Mac and
-UNIX. These Blender scripts export
+UNIX.</p>
+<p> These Blender scripts export
 scenery created in Blender to X-Plane v7 or v8
 <code>.obj</code> format for placement with World-Maker.
 The scripts also import existing X-Plane v6, v7 and v8 <code>.obj</code>
 scenery files and X-Plane v7 and v8 <code>.acf</code>
-airplanes into Blender. All X-Plane scenery primitives are supported
+airplanes into Blender.</p>
+<p>All X-Plane scenery primitives are supported
 apart from <code>smoke_black</code> and <code>smoke_white</code>
 and material attributes.</p>
 <h3>Requirements</h3>
 <p>Requires Windows 98 or later, Mac OS X 10.3 or later, or some
 version(?) of Linux.</p>
 <p>Requires <a href="http://www.blender3d.org/Download/">Blender</a>
-2.40 or later.</p>
+2.40 or later. Mac OS users should download the "Python 2.3"
+version unless you have installed Python 2.4.</p>
 <h3>Tutorials</h3>
 <p>This document is a reference and assumes familiarity
 with Blender. You may find it easier to get started using the following
 tutorials, and come back to this document later:</p>
 <ul>
-  <li><a href="http://marginal.org.uk/x-planescenery/">Using
+  <li><a href="http://marginal.org.uk/x-planescenery/tutorials.html">Using
 Blender to create X-Plane scenery</a></li>
   <li><a href="http://en.wikibooks.org/wiki/Blender_3D/Noob_to_Pro">Blender3D/Noob
 to Pro</a></li>
@@ -98,13 +105,13 @@ Extract the contents of the zip file to this folder.</td>
     </tr>
   </tbody>
 </table>
-<p>(Re)start Blender.This file can be viewed by choosing <samp>Help
--&gt; X-Plane</samp> in Blender.</p>
+<p>(Re)start Blender. This file can be viewed by choosing <samp>Help
+&raquo; X-Plane</samp> in Blender.</p>
 <p>On Mac OS, also run the "Console" application that comes with
 Mac OS X and which is found under "Utilities".</p>
 <p>You can now delete the temporary folder.</p>
 <h3>Importing objects</h3>
-<p><samp>File -&gt; Import -&gt; X-Plane Object</samp></p>
+<p><samp>File &raquo; Import &raquo; X-Plane Object</samp></p>
 <p>Select a <code>.obj</code> file. The scenery is
 imported at the "3d Cursor" position. Any problems with the import are
 reported in the Console window as lines starting "Warn" or "Error".</p>
@@ -115,16 +122,16 @@ meshes for ease and speed of editing in Blender. This means that it can
 be <u>very</u> slow to import large scenery. You may find
 it helpful to manually merge some meshes together after importing; in
 "Object Mode" select the meshes you want to merge and choose <samp>Space
--&gt; Object -&gt; Join Objects</samp>.</p>
+&raquo; Object &raquo; Join Objects</samp>.</p>
 <p>You can import multiple scenery files and re-export them as a
 single file. But note that the X-Plane <code>.obj</code>
 scenery file format only supports the use of one texture bitmap, so
 you'll have to create a single larger texture bitmap file containg all
-required textures. Use <samp>UVs -&gt; Double bitmap size</samp>
+required textures. Use <samp>UVs &raquo; Double bitmap size</samp>
 from the <samp>UV/Image Editor</samp> window to fix up
 texture mappings.</p>
 <h3>Importing planes</h3>
-<p><samp>File -&gt; Import -&gt;
+<p><samp>File &raquo; Import &raquo;
 X-Plane plane as scenery</samp></p>
 <p>Select a <code>.acf</code> file. The plane is
 imported with its reference point at the "3d Cursor" position. Any
@@ -136,9 +143,9 @@ in each of layers 1, 2 and 3, at three levels of detail. See <a href="#Level_Of_
 it as scenery; see <a href="#Tweaking_planes">Tweaking
 planes</a> below.</p>
 <h3>Exporting objects</h3>
-<samp>File -&gt; Export -&gt; X-Plane v7 Object</samp>
+<samp>File &raquo; Export &raquo; X-Plane v7 Object</samp>
 or<br>
-<samp>File -&gt; Export -&gt; X-Plane v8 Object</samp>
+<samp>File &raquo; Export &raquo; X-Plane v8 Object</samp>
 <p>The output filename and location is the same as the current
 Blender filename, but with a <code>.obj</code> extension.
 Always check the Console window for messages reporting any problems
@@ -191,9 +198,12 @@ below) will be smoothed when displayed in X-Plane.</div>
     <ul>
       <li><samp>Tex</samp> button controls whether
 the face has a texture. Create a <code>.bmp</code> or <code>.png
-        </code>file in an image editor and save it in the<code> custom
-object textures </code>folder for scenery, or in the same folder as
-the <code>.acf</code> file for cockpits. Height and width must be powers
+        </code>file in an image editor and save it in the<code>
+custom
+object textures </code>folder for scenery, or in the same folder
+as
+the <code>.acf</code> file for cockpits. Height and width
+must be powers
 of two (eg 256, 512, etc) but the bitmap doesn't have to be square.
 Draw all the textures required by the scenery onto it. Areas of the
 texture that are coloured magenta or that have Alpha transparency (png
@@ -202,7 +212,8 @@ Image Editor</samp> window to control mapping of the texture
 bitmap to the face.</li>
       <li><samp>Tiles</samp> button controls whether
 the face is rendered with "polygon offsetting" (<code>ATTR_poly_os</code>)
-in X-Plane. Use this for faces that lie horizontally on the ground to prevent
+in X-Plane. Use this for faces that lie horizontally on the ground to
+prevent
 artifacts in X-Plane. Don't press this button for other faces.</li>
     </ul>
     <div style="margin-left: 40px;"><samp style="font-weight: bold;">v7: </samp>This button is
@@ -219,7 +230,8 @@ script to turn the Collision button back on for all faces).</small>
         <div style="margin-left: 0px;"><samp style="font-weight: bold;">v7: </samp>Only faces with
 4 edges (ie "<code>quads</code>") are exported as "hard".</div>
         <div style="margin-left: 0px;"><samp style="font-weight: bold;">v7: </samp>X-Plane
-versions prior to 8.20 have a bug where <code>.obj</code> files
+versions prior to 8.20 have a bug where <code>.obj</code>
+files
 that contain hard faces must be placed in WorldMaker with an "object
 heading" of 0. Otherwise the "hard" part of the surface ends up in the
 wrong place.</div>
@@ -238,7 +250,8 @@ press this button for opaque (normal) faces.</li>
 <p>The export script will change the order of faces in the output
 file to optimise for rendering speed and to ensure that faces with
 alpha are rendered after opaque faces. It will preserve the relative
-order of faces that have the same <samp>Texture Face</samp> settings
+order of faces that have the same <samp>Texture Face</samp>
+settings
 as each other.</p>
 <p>Use <a href="http://marginal.org.uk/x-planescenery/normalise.txt">this</a>
 script if you need to reset all faces in the scene to standard settings
@@ -297,13 +310,20 @@ has values between -1 (forward) and +1 (back) in X-Plane; so to get
 X-Plane to use the correct minimum dataref value for the animation add
 a property called <code>yolk_pitch_ratio_v1</code> and
 give it the value -1.</p>
-<p>You can also use custom datarefs for animation (<span style="font-style: italic;">ie</span> datarefs supplied by a plugin that calls
+<p>You can also use custom datarefs for animation (<span style="font-style: italic;">ie</span> datarefs
+supplied by a plugin that calls
 XPLMRegisterDataAccessor); name the bone with the leaf name of the
-dataref and add a string property in the <samp>Logic</samp> panel named after the leaf name of the dataref. Set this property's value to the
-path of the dataref. <i>eg</i> the plugin registers the custom
-dataref  <code>my_org/widget/volume</code>; so to use this dataref
-name the bone <code>volume</code> and add a string property called
-<code>volume</code> in the <samp>Logic</samp> panel with the value
+dataref and add a string property in the <samp>Logic</samp>
+panel named after the leaf name of the dataref. Set this property's
+value to the
+path of the dataref. <i>eg</i> the plugin registers the
+custom
+dataref <code>my_org/widget/volume</code>; so to use this
+dataref
+name the bone <code>volume</code> and add a string
+property called
+<code>volume</code> in the <samp>Logic</samp>
+panel with the value
 <code>my_org/widget/</code>.</p>
 <h3>Creating X-Plane scenery</h3>
 <ul>
@@ -370,7 +390,7 @@ down. One 1024x1024 texture uses 4MB of video memory. Some people are
 running X-Plane on computers with only 32MB of video memory, so one
 1024x1024 texture at highest resolution uses 1/8th of it. Consider
 resizing the texture bitmap file in an image editor to 512x512 or even
-256x256. Use <samp>Image -&gt; Replace</samp> to use
+256x256. Use <samp>Image &raquo; Replace</samp> to use
 the new texture bitmap file.</li>
   <li>Does the model have hidden faces? Some versions of X-Plane
 don't handle hidden faces in v7 scenery objects very well and they also
@@ -390,7 +410,8 @@ of Detail</a>, so only objects in Blender layer 1 are exported.
 If you want to keep objects in your Blender scene for reference but
 which you don't want to export - eg the plane fuselage - then put them
 in layer 4 or greater before exporting.</p>
-<p>Choose <samp>File-&gt;Save As</samp> and save
+<p>Choose <samp>File&raquo;Save As</samp> and
+save
 the blender file in the same folder as your plane's <code>.acf</code>
 file with the name <code><i>airplane</i>_cockpit.blend</code>,
 where <i>airplane</i> is the name of your plane's <code>.acf</code>
@@ -400,7 +421,7 @@ act as a reference and/or starting point for your cockpit. Delete any
 plane parts that you don't need in creating your cockpit - you only
 need to keep the fuselage itself plus any relevant Misc Bodies. After
 import, your cockpit uses the same texture file as your plane, ie <code><i>airplane</i>_paint</code>.
-Choose <samp>Image -&gt; Replace </samp> in a <samp>UV
+Choose <samp>Image &raquo; Replace </samp> in a <samp>UV
 Image Editor</samp> window to use a different texture file, which
 can be named anything you like (but no spaces) and which should live in
 the same folder as your plane's <code>.acf</code> file.</p>
@@ -453,7 +474,7 @@ co-ordinates in both faces.</li>
 alternate faces in the strip. In the case of tris this can also be
 achieved by mapping a single area of the texture across all the tris,
 with the tip of the tris at the centre of the texture area. Use <samp>UVs
--&gt; Copy &amp; Paste</samp> from the<samp>
+&raquo; Copy &amp; Paste</samp> from the<samp>
 UV/Image Editor</samp> window to automate the creation of strips.</p>
 <p>These compound types aren't supported directly by Blender.
 However, the export script automatically tries to spot when it can use
@@ -522,25 +543,31 @@ X-Plane primitives are ignored.</li>
     <code>emission</code> and <code>shiny</code>
 attributes are ignored.</li>
   <li>The importer usually can't work out which faces are
-partially or wholly transparent. You should tell Blender which faces
-are transparent faces by pressing the <samp>Alpha</samp>
+partially or wholly transparent. You should tell Blender which
+faces are transparent by pressing the <samp>Alpha</samp>
 button in <samp>UV Face Select</samp> mode after import.</li>
 </ul>
 <h4>Import plane</h4>
 <ul>
-  <li>Importing planes made with PlaneMaker v8.20 or later is not yet
-supported. Planes made with PlaneMaker v7.40 to v8.17 should work fine.</li>
-  <li>Importing planes made with PlaneMaker v6.x is not supported.
+  <li>Importing planes made with PlaneMaker v6.x is not
+supported.
 Convert a v6 plane to v7 by opening it in PlaneMaker 7.63 and re-saving
 it.</li>
-  <li>Cockpits objects are ignored. You can use <samp>File -&gt; Import -&gt; X-Plane Object</samp> to import cockpits.</li>
+  <li>Wings are simplified to reduce polygon count. Any wing
+curvature <small>(<i>ie</i> the <samp>customize
+chords</samp>
+option in PlaneMaker)</small> is ignored.</li>
+  <li>Cockpits objects are ignored. You can use <samp>File
+&raquo; Import &raquo; X-Plane Object</samp> to import
+cockpits.</li>
   <li>Planes (and their weapons) can use multiple texture bitmap
 files. These are not automagically merged into one file during the
 import.</li>
   <li>The importer can't work out which faces are partially or
 wholly transparent. You should tell Blender which faces are transparent
-faces by pressing the <samp>Alpha</samp> button in <samp>UV
-Face Select</samp> mode after import.</li>
+by pressing the <samp>Alpha</samp> button in <samp>UV
+Face
+Select</samp> mode after import.</li>
   <li>LOD algorithm can be too conservative in layer 2.</li>
 </ul>
 <h4>Export object</h4>
@@ -565,22 +592,23 @@ contents of the Console window. <small>(In Mac OS X, this is the
 "Console" program. In Windows this the window titled "Blender" that
 looks like a Command Prompt).</small></li>
 </ul>
-<h3>Stuff</h3>
-<p>Copyright &copy; 2004, 2005 <a href="mailto:Jonathan%20Harris%20%3Cx-plane@marginal.org.uk%3E">Jonathan
-Harris &lt;x-plane@marginal.org.uk&gt;</a>.<br>
-Version 2.16<br>
-<a href="http://marginal.org.uk/x-planescenery/">http://marginal.org.uk/x-planescenery/</a></p>
-<p><!-- Creative Commons License --> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.0/"><img alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.gif" style="border: 0px solid ;" align="middle"></a>
-This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.0/">Creative
-Commons License</a>.
-<!-- /Creative Commons License --><!-- <rdf:RDF xmlns="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"> <Work rdf:about=""> <dc:type rdf:resource="http://purl.org/dc/dcmitype/Text" /> <license rdf:resource="http://creativecommons.org/licenses/by-sa/2.0/" /> </Work> <License rdf:about="http://creativecommons.org/licenses/by-sa/2.0/"> <permits rdf:resource="http://web.resource.org/cc/Reproduction" /> <permits rdf:resource="http://web.resource.org/cc/Distribution" /> <requires rdf:resource="http://web.resource.org/cc/Notice" /> <requires rdf:resource="http://web.resource.org/cc/Attribution" /> <permits rdf:resource="http://web.resource.org/cc/DerivativeWorks" /> <requires rdf:resource="http://web.resource.org/cc/ShareAlike" /> </License> </rdf:RDF> --></p>
-<hr style="width: 100%; height: 2px;">
-<table style="width: 100%;" cellpadding="0">
+<hr>
+<table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">XPlane2Blender</td>
+      <td class="banner">Version 2.17 &copy; 2004-2006
+      <a href="mailto:x-plane@marginal.org.uk">Jonathan
+Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
   </tbody>
 </table>
+<!--/Creative Commons License-->
+<!-- <rdf:RDF xmlns="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<Work rdf:about="">
+<license rdf:resource="http://creativecommons.org/licenses/by-sa/2.5/" />
+<dc:type rdf:resource="http://purl.org/dc/dcmitype/InteractiveResource" />
+</Work>
+<License rdf:about="http://creativecommons.org/licenses/by-sa/2.5/"><permits rdf:resource="http://web.resource.org/cc/Reproduction"/><permits rdf:resource="http://web.resource.org/cc/Distribution"/><requires rdf:resource="http://web.resource.org/cc/Notice"/><requires rdf:resource="http://web.resource.org/cc/Attribution"/><permits rdf:resource="http://web.resource.org/cc/DerivativeWorks"/><requires rdf:resource="http://web.resource.org/cc/ShareAlike"/></License></rdf:RDF>
+-->
 </body>
 </html>

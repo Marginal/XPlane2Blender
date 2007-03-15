@@ -7,8 +7,19 @@ cd "`dirname "$0"`"
 IFS="
 "
 
+# Find lsregister
+if [ -x /System/Library/Frameworks/ApplicationServices.framework/Frameworks/LaunchServices.framework/Support/lsregister ] ;then
+    LS=/System/Library/Frameworks/ApplicationServices.framework/Frameworks/LaunchServices.framework/Support/lsregister;
+elif [ -x /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister ] ; then
+    # From http://developer.apple.com/documentation/Carbon/Conceptual/MDImporters/Concepts/Troubleshooting.html
+    LS=/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister;
+else
+    echo Can\'t find the lsregister tool!
+    LS=echo;
+fi
+
 # Candidate application locations
-DIRS=$(/System/Library/Frameworks/ApplicationServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -dump | awk 'match($0, "blender.app") {if(sub("[ \t]+path:[ \t]+","")) print $0 "/Contents/MacOS/.blender/scripts"}')
+DIRS=$($LS -dump | awk 'match($0, "blender.app") {if(sub("[ \t]+path:[ \t]+","")) print $0 "/Contents/MacOS/.blender/scripts"}')
 
 # Remove old files from everywhere
 FILES="../Bpymenus
@@ -48,7 +59,6 @@ XPlaneExport8.py
 XPlaneImport.py
 XPlaneImportPlane.py
 XPlaneUtils.py
-XPlaneACF.py
 XPlane2Blender.html"
 if [ -d "$HOME/.blender/scripts" ]; then
     DIRS="$HOME/.blender/scripts"
@@ -59,7 +69,7 @@ DONE=
 for I in $DIRS; do
     if [ -d $I ]; then
 	DONE="$DONE
-$I"
+  $I"
 	cp -f $FILES $I
 	for J in $FILES; do
 	    if ! [ -r $I/$J ]; then
@@ -76,7 +86,7 @@ done
 echo
 if [ "$DONE" ]; then
     echo "Installated scripts in folder:"
-    echo "  $DONE"
+    echo "$DONE"
 else
     echo Failed to find the correct location for the scripts !!!
 fi

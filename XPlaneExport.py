@@ -204,13 +204,15 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
     if iscockpit:
         print "Info:\tUsing algorithms appropriate for a cockpit object."
         return (basename(texture), havepanel, layermask)
-    elif fileformat==7:
-        for prefix in ["custom object textures", "autogen textures"]:
-            l=texture.lower().rfind(prefix)
-            if l!=-1:
-                texture = texture[l+len(prefix)+1:].replace(sep,'/')
-                return (texture, havepanel, layermask)
-    elif fileformat==8:
+
+    # v7 or v7-compatibility mode
+    for prefix in ["custom object textures", "autogen textures"]:
+        l=texture.lower().rfind(prefix)
+        if l!=-1:
+            texture = texture[l+len(prefix)+1:].replace(sep,'/')
+            return (texture, havepanel, layermask)
+        
+    if fileformat==8:
         # texture is relative to .obj file - find common prefix
         a=Blender.Get('filename').split(sep)
         b=texture.split(sep)

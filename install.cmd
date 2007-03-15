@@ -50,7 +50,7 @@ echo Failed to find the correct location for the scripts !!!
 goto end
 
 :copy
-set FILES=helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneImport.py XPlaneImportPlane.py XPlaneUtils.py XPlaneACF.py XPlane2Blender.html
+set FILES=helpXPlane.py uvCopyPaste.py uvResize.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneImport.py XPlaneImportPlane.py XPlaneUtils.py XPlane2Blender.html
 for %%I in (%FILES%) do copy /v /y %%I "%DESTDIR%\" >nul:
 for %%I in (%FILES%) do if not exist "%DESTDIR%\%%I" goto copyfail
 echo.
