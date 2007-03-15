@@ -185,6 +185,9 @@
 # 2006-05-02 v2.22
 #  - Add support back for poly_os / TILES.
 #
+# 2006-07-19 v2.25
+#  - Support for layer group, custom LOD ranges.
+#
 
 import sys
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
@@ -225,7 +228,7 @@ def checkLayers (theObjects, onlylayer1):
                 return
 
 #------------------------------------------------------------------------
-def getTexture (theObjects, layermask, iscockpit, fileformat):
+def getTexture (theObjects, layermask, iscockpit, iscsl, fileformat):
     texture=None
     havepanel=False
     multierr=False
@@ -233,9 +236,14 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
     nobj=len(theObjects)
     texlist=[]
     layers=0
+    if iscsl:
+        lod=[0,1000,4000,100000]	# list of lod limits
+    else:
+        lod=[0,1000,4000,10000]		# list of lod limits
 
     for o in range (nobj-1,-1,-1):
         object=theObjects[o]
+        objType=object.getType()
 
         if layermask==1 and not iscockpit:
             if layers==0:
@@ -243,11 +251,21 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
             elif object.Layer&7 and layers^(object.Layer&7):
                 layermask=7
                 print "Info:\tMultiple Levels Of Detail found"
+
+        if objType == 'Empty' and not iscockpit:
+            for prop in object.getAllProperties():
+                if prop.type in ['INT', 'FLOAT'] and prop.name.lower() in ['lod_0', 'lod_1', 'lod_2', 'lod_3']:
+                    layer=int(prop.name[4])
+                    lod[layer] = int(prop.data)
+                    if layer<3 and lod[layer+1]<=lod[layer]:
+                        lod[layer+1]=lod[layer]+1
+                    if layermask!=7:
+                        print "Info:\tMultiple Levels Of Detail found"
+                        layermask=7
                 
         if not object.Layer&layermask:
             continue
             
-        objType=object.getType()
         if objType == "Mesh":
             mesh=object.getData()
             if mesh.hasFaceUV():
@@ -314,7 +332,7 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
         raise ExportError("At least one instrument panel texture must be within 1024x768.")
 
     if not texture:
-        return (None, False, layermask)
+        return (None, False, layermask, lod)
 
     try:
         tex=Image.Load(texture)
@@ -348,34 +366,32 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
     # try to guess correct texture path
     if iscockpit:
         print "Info:\tUsing algorithms appropriate for a cockpit object."
-        return (basename(texture), havepanel, layermask)
+        return (basename(texture), havepanel, layermask, lod)
 
     # v7 or v7-compatibility mode
     for prefix in ["custom object textures", "autogen textures"]:
         l=texture.lower().rfind(prefix)
         if l!=-1:
             texture = texture[l+len(prefix)+1:].replace(sep,'/')
-            return (texture, havepanel, layermask)
+            return (texture, havepanel, layermask, lod)
         
-    if fileformat==8:
-        # texture is relative to .obj file - find common prefix
-        a=Blender.Get('filename').split(sep)
-        b=texture.split(sep)
-        for i in range(min(len(a),len(b))):
-            if a[i].lower()!=b[i].lower():
-                if i==0: break	# it's hopeless
-                if 'Custom Scenery' in a[i-1:]+b[i-1:]:
-                    break	# Can't step out of scenery package
-                c=''
-                for l in range(i,len(a)-1):
-                    c+='../'
-                for l in range(i,len(b)-1):
-                    c+=b[i]+'/'
-                return (c+basename(texture), havepanel, layermask)
+    # texture is relative to .obj file - find common prefix
+    a=Blender.Get('filename').split(sep)
+    b=texture.split(sep)
+    for i in range(min(len(a),len(b))):
+        if a[i].lower()!=b[i].lower():
+            if i==0: break	# it's hopeless
+            if 'Custom Scenery' in a[i:]+b[i:] or 'Aircraft' in a[i:]+b[i:]:
+                break	# Can't step out of scenery or aircraft package
+            c=''
+            for l in range(i,len(a)-1): c+='../'
+            for l in range(i,len(b)-1): c+=b[l]+'/'
+            if ' ' in c: break	# spaces not allowed
+            return (c+basename(texture), havepanel, layermask, lod)
 
     # just return bare filename
-    print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
-    return (basename(texture), havepanel, layermask)
+    print "Warn:\tCan't guess path for texture file. Please edit the .obj file to fix."
+    return (basename(texture), havepanel, layermask, lod)
 
 #------------------------------------------------------------------------
 def isLine(object, linewidth):
@@ -456,7 +472,7 @@ class OBJexport7:
         self.layermask=1
         self.havepanel=False
         self.texture=None
-        self.linewidth=0.1
+        self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
 
         # attributes controlling export
@@ -480,10 +496,8 @@ class OBJexport7:
 
         Blender.Window.WaitCursor(1)
         Window.DrawProgressBar(0, "Examining textures")
-        (self.texture,self.havepanel,self.layermask)=getTexture(theObjects,
-                                                                self.layermask,
-                                                                self.iscockpit,
-                                                                7)
+        (self.texture,self.havepanel,self.layermask,
+         self.lod)=getTexture(theObjects, self.layermask, self.iscockpit, self.iscsl, 7)
         if self.havepanel:
             self.iscockpit=True
             self.layermask=1
@@ -564,6 +578,10 @@ class OBJexport7:
                         meshes.append(self.sortMesh(object, layer))
                 elif objType == "Lamp":
                     self.writeLamp(object)
+                elif objType == 'Empty':
+                    for prop in object.getAllProperties():
+                        if prop.type in ['INT', 'FLOAT'] and prop.name.startswith('group '):
+                            self.file.write("\nATTR_layer_group\t%s\t%d\t//\n\n" % (prop.name[6:].strip(), int(prop.data)))
                 else:
                     print "Warn:\tIgnoring %s \"%s\"" % (objType.lower(),
                                                          object.name)
@@ -625,22 +643,26 @@ class OBJexport7:
         if self.verbose:
             print "Info:\tExporting Light \"%s\"" % name
 
-        lname=name.lower()
+        if '.' in name:
+            sname=name[:name.index('.')]
+        else:
+            sname=name
+        lname=sname.lower().split()
         c=[0,0,0]
         if self.iscsl:
-            if "nav left" in lname:
+            if sname=='airplane_nav_left' or sname.startswith("Nav Left"):
                 c[0]=c[1]=c[2]=11
                 special=1
-            elif "nav right" in lname:
+            elif sname=='airplane_nav_right' or sname.startswith("Nav Right"):
                 c[0]=c[1]=c[2]=22
                 special=1
-            elif "landing" in lname or "taxi" in lname:
+            elif sname in ['airplane_landing', 'airplane_taxi'] or sname.startswith("Landing 1") or sname.startswith("Landing 2") or sname.startswith("Taxi"):
                 c[0]=c[1]=c[2]=55
                 special=1
-            elif "pulse" in lname:
+            elif sname=='airplane_beacon' or "pulse" in lname:
                 c[0]=c[1]=c[2]=33
                 special=1
-            elif "strobe" in lname:
+            elif sname=='airplane_strobe' or "strobe" in lname:
                 c[0]=c[1]=c[2]=44
                 special=1
             else:
@@ -648,10 +670,10 @@ class OBJexport7:
                 c[1]=lamp.col[1]*10
                 c[2]=lamp.col[2]*10
         else:
-            if "pulse" in lname:
+            if sname=='airplane_beacon' or "pulse" in lname:
                 c[0]=c[1]=c[2]=99
                 special=1
-            elif "strobe" in lname:
+            elif sname=='airplane_strobe' or "strobe" in lname:
                 c[0]=c[1]=c[2]=98
                 special=1
             elif "traffic" in lname:
@@ -1139,15 +1161,9 @@ class OBJexport7:
     def updateLayer(self, layer):
         # Layers
         if self.layermask!=1:
-            if layer==1:
-                self.file.write("\nATTR_LOD 0 1000\t\t// Layer 1\n\n")
-            elif layer==2:
-                self.file.write("\nATTR_LOD 1000 4000\t// Layer 2\n\n")
-            elif self.iscsl:
-                self.file.write("\nATTR_LOD 4000 100000\t// Layer 3\n\n")
-            else:
-                self.file.write("\nATTR_LOD 4000 10000\t// Layer 3\n\n")
-
+            print layer, self.lod
+            self.file.write("\nATTR_LOD\t%d %d\t// Layer %d\n\n" % (
+                self.lod[layer/2], self.lod[layer/2+1], layer/2+1))
         # Reset all attributes
         self.hard=False
         self.twoside=False

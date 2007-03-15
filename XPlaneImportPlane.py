@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.25"
+__version__ = "2.26"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -110,6 +110,11 @@ Limitations:<br>
 #
 # 2006-06-12 v2.24
 #  - Fix for zero-length bodies.
+#
+# 2006-07-19 v2.25
+#  - Use v8.50 named lights. Lights back to shared between layers.
+#  - Fix for wings in layer 3 (broken in 2.21).
+#  - Fix for adjoining wings small enough to be root and tip.
 #
 
 import sys
@@ -280,20 +285,20 @@ class ACFimport:
 
         if self.acf.VIEW_has_navlites:
             # uses values computed during wings
-            self.addLamp("Nav Left",  1.0, 0.0, 0.0,
+            self.addLamp("airplane_nav_left",  1.0, 0.0, 0.0, # was Nav Left
                          Vertex(-(self.navloc.x+0.05),
                                 self.navloc.y, self.navloc.z))
-            self.addLamp("Strobe Left",  1.0, 1.0, 1.0,
+            self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # was Strobe Left
                          Vertex(-(self.navloc.x+0.05),
                                 self.navloc.y-0.1, self.navloc.z))
-            self.addLamp("Nav Right", 0.0, 1.0, 0.0,
+            self.addLamp("airplane_nav_right", 0.0, 1.0, 0.0, # was Nav Right
                          Vertex(self.navloc.x + 0.05,
                                 self.navloc.y, self.navloc.z))
-            self.addLamp("Strobe Right",  1.0, 1.0, 1.0,
+            self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # wasStrobe Right
                          Vertex(self.navloc.x + 0.05,
                                 self.navloc.y-0.1, self.navloc.z))
             if self.acf.HEADER_version<800:    # v7
-                self.addLamp("Tail pulse", 1.0, 0.0, 0.0,
+                self.addLamp("airplane_beacon", 1.0, 0.0, 0.0,# was Tail pulse or Nav Pulse
                              Vertex(self.tailloc.x, self.tailloc.y,
                                     self.tailloc.z + 0.05))
 
@@ -438,15 +443,19 @@ class ACFimport:
         # Find parent in segment and root of segment
         rootp=p		# part number of root
         c=centre	# centre of root
+        considered=[rootp]
+        if not istip: considered.append(child)
         while 1:
             for p2, (c2, t2) in self.wingc.iteritems():
-                if (rootp!=p2 and c.equals(t2, tip_fudge) and
+                if (p2 not in considered and
+                    c.equals(t2, tip_fudge) and
                     abs(self.acf.wing[p2].Ctip-
                         self.acf.wing[rootp].Croot) < tip_fudge and
                     abs(self.acf.wing[p2].dihed1-
                         self.acf.wing[rootp].dihed1) < max_dihed):
                     rootp=p2
                     c=c2
+                    considered.append(rootp)
                     break
             else:
                 break
@@ -489,6 +498,11 @@ class ACFimport:
                     wing.Tafl0!=wing2.Tafl0): continue
                 meshes=self.meshcache[p2]
                 for i in range(len(meshes)):
+                    if i==2:	# layer 3
+                        if not istip: continue
+                        if p!=rootp:
+                            (root, foo) = self.wingc[rootp]
+                            mm=TranslationMatrix(root.toVector(4))
                     ob=self.addMesh(name+ACFimport.MARKERS[i]+imagemkr,
                                     meshes[i], ACFimport.LAYERS[i], mm)
                     if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
@@ -653,15 +667,15 @@ class ACFimport:
 
         # Layer 3
         if not istip:
-            return
+            return	# Only do wing tips
 
         if p==rootp:
             if wing.semilen_SEG*self.scale < ACFimport.THRESH3:
                 return
         else:
             (foo, tip) = self.wingc[p]
-            (centre, foo) = self.wingc[rootp]
-            tip=tip-centre	# tip relative to root
+            (root, foo) = self.wingc[rootp]
+            tip=tip-root	# tip relative to root
 
             if (tip.x*tip.x + tip.y*tip.y + tip.z*tip.z < 
                 ACFimport.THRESH3 * ACFimport.THRESH3):
@@ -673,7 +687,7 @@ class ACFimport:
                 Vertex(0.0,   -self.acf.wing[rootp].Croot*self.scale*3/4, 0.0)]
             lv=[rv[3], rv[2], rv[1], rv[0]]
 
-            mm=TranslationMatrix(centre.toVector(4))	# no rotation
+            mm=TranslationMatrix(root.toVector(4))	# no rotation
 
 
         mesh=NMesh.New(name+ACFimport.LAYER3MKR+imagemkr)
@@ -1059,7 +1073,7 @@ class ACFimport:
 
             mesh=NMesh.New(meshname+mkr)
 
-            # Hack: do body from middle out to help export strip algorithm
+            # Hack: do body from middle out to help v7 export strip algorithm
             ir=range(len(seq)/2-1,len(seq)-1)
             ir.extend(range(len(seq)/2-2,-1,-1))
             jr=range(int(rdim/4),int(rdim/2)+1-jstep,jstep)
@@ -1595,17 +1609,16 @@ class ACFimport:
     
     #------------------------------------------------------------------------
     def addLamp(self, name, r, g, b, centre):
-        for layer in range(3):
-            lamp=Lamp.New("Lamp", name+ACFimport.MARKERS[layer])
-            lamp.col=[r,g,b]
-            lamp.mode |= Lamp.Modes.Sphere	# stop colouring whole plane
-            lamp.dist = 4.0
-            ob = Object.New("Lamp", lamp.name)
-            ob.link(lamp)
-            self.scene.link(ob)
-            ob.Layer=ACFimport.LAYERS[layer]
-            cur=Window.GetCursorPos()
-            ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
+        lamp=Lamp.New("Lamp", name)
+        lamp.col=[r,g,b]
+        lamp.dist = 4.0	# arbitrary - stop colouring whole plane
+        #lamp.mode |= Lamp.Modes.Sphere
+        ob = Object.New("Lamp", lamp.name)
+        ob.link(lamp)
+        self.scene.link(ob)
+        ob.Layer=ACFimport.LAYER1|ACFimport.LAYER2|ACFimport.LAYER3
+        cur=Window.GetCursorPos()
+        ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
 
 
     #------------------------------------------------------------------------
@@ -1820,12 +1833,12 @@ class DEFfmt:
 
     lites=[
         # name          base_value   r    g    b   attach
-        ("Landing 1",	"lanlite1", 1.0, 1.0, 1.0, True),
-        ("Landing 2",	"lanlite2", 1.0, 1.0, 1.0, True),
-        ("Taxi",        "taxilite", 1.0, 1.0, 1.0, True),
-        ("Tail",        "taillite", 1.0, 1.0, 1.0, False),
-        ("Rot 1 pulse", "fuserb1",  1.0, 0.0, 0.0, False),
-        ("Rot 2 pulse", "fuserb2",  1.0, 0.0, 0.0, False),
+        ("airplane_landing",  "lanlite1", 1.0, 1.0, 1.0, True),	# was Landing 1
+        ("airplane_landing",  "lanlite2", 1.0, 1.0, 1.0, True),	# was Landing 2
+        ("airplane_taxi",     "taxilite", 1.0, 1.0, 1.0, True),	# was Taxi
+        ("airplane_nav_tail", "taillite", 1.0, 1.0, 1.0, False),# was Tail
+        ("airplane_beacon",   "fuserb1",  1.0, 0.0, 0.0, False),# was Rot 1 pulse
+        ("airplane_beacon",   "fuserb2",  1.0, 0.0, 0.0, False),# was Rot 2 pulse
         ]
 
     v7parts={

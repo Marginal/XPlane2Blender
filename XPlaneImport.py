@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: ' X-Plane Object (.obj)...'
-Blender: 240
+Blender: 241
 Group: 'Import'
 Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.25"
+__version__ = "2.26"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -21,7 +21,7 @@ Limitations:<br>
 """
 
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.34 or above
+# X-Plane importer for blender 2.41 or above
 #
 # Copyright (c) 2004,2005 Jonathan Harris
 # 
@@ -166,13 +166,23 @@ Limitations:<br>
 # 2006-05-07 v2.23
 #  - Fix for stupid NPOLY bug introduced in 2.22
 #
+# 2006-07-19 v2.25
+#  - Handle bad textures without crashing.
+#  - Support for named lights, layer group, custom LOD ranges.
+#  - Imports animation armature and bones
+#      - doesn't parent objects to bones - see Blender bug #4726
+#      - requires 2.41 because of Blender bug #3712
+#
 
 import sys
 import Blender
-from Blender import Object, NMesh, Lamp, Image, Material, Window
-from XPlaneUtils import Vertex, UV, Face
+from Blender import Armature, Object, NMesh, Lamp, Image, Material, Window
+from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix
+from XPlaneUtils import Vertex, UV, Face, getDatarefs
 from os.path import abspath, curdir, dirname, join, normpath, sep, splitdrive
 #import time
+
+datarefs={}
 
 class ParseError(Exception):
     def __init__(self, type, value=""):
@@ -239,6 +249,11 @@ class Token:
     ANIM_TRANS	= 50
     ALPHA	= 51
     NO_ALPHA	= 52
+    LIGHT_NAMED = 53
+    LIGHT_CUSTOM= 54
+    LAYER_GROUP = 55
+    ANIM_SHOW	= 56
+    ANIM_HIDE	= 57
     END		= 99
     NAMES = [
         "",
@@ -297,6 +312,12 @@ class Token:
         "ANIM_trans",
         "####_alpha",
         "####_no_alpha",
+        # 8.50+
+        "LIGHT_NAMED",
+        "LIGHT_CUSTOM",
+        "ATTR_layer_group",
+        "ANIM_show",
+        "ANIM_hide",
         ]
 
 class Mesh:
@@ -306,7 +327,7 @@ class Mesh:
     def __init__(self, name, faces=[], layers=1, anim=None):
         self.name=name
         self.layers=layers	# LOD
-        self.anim=anim
+        self.anim=anim	# (armob,bonename)
         self.faces=[]
         self.bmax=Vertex(-sys.maxint,-sys.maxint,-sys.maxint)
         self.bmin=Vertex( sys.maxint, sys.maxint, sys.maxint)
@@ -366,22 +387,22 @@ class Mesh:
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
         mesh.hasFaceUV(1)	# required for face flags
 
+        centre=Vertex(0,0,0)
         if self.anim:
-            centre=self.anim
-        else:
-            centre=Vertex(0,0,0)
-            if not subroutine:
-                n=0
-                for f in self.faces:
-                    for vertex in f.v:
-                        n+=1
-                        centre.x+=vertex.x
-                        centre.y+=vertex.y
-                        centre.z+=vertex.z
-                assert n, "Mesh %s has no vertices" % self.name
-                centre.x=round(centre.x/n,1)
-                centre.y=round(centre.y/n,1)
-                centre.z=round(centre.z/n,1)
+            boneloc=Vertex(self.anim[0].getData().bones[self.anim[2]].head['ARMATURESPACE'])
+            centre=boneloc-self.anim[1]
+        elif not subroutine:
+            n=0
+            for f in self.faces:
+                for vertex in f.v:
+                    n+=1
+                    centre.x+=vertex.x
+                    centre.y+=vertex.y
+                    centre.z+=vertex.z
+            assert n, "Mesh %s has no vertices" % self.name
+            centre.x=round(centre.x/n,2)
+            centre.y=round(centre.y/n,2)
+            centre.z=round(centre.z/n,2)
         
         for f in self.faces:
             face=NMesh.Face()
@@ -426,10 +447,13 @@ class Mesh:
                         cockpit=d+sep+"cockpit"+sep+"-PANELS-"+sep+"Panel"+extension
                         try:
                             panel = Image.Load(cockpit)
+                            panel.getSize()	# force load
+                            face.image = panel
                             break
-                        except IOError:
-                            pass
-                face.image = panel
+                        except:
+                            panel=None
+                else:
+                    face.image = panel                    
             elif image:
                 face.image = image
                             
@@ -439,11 +463,20 @@ class Mesh:
         ob = Object.New("Mesh", self.name)
         ob.link(mesh)
         scene.link(ob)
+        if self.anim:
+            #print "%s\t(%s) (%s) (%s)" % (self.anim[2], Vertex(self.anim[0].LocX, self.anim[0].LocY, self.anim[0].LocZ), Vertex(self.anim[0].getData().bones[self.anim[2]].head['ARMATURESPACE']), self.anim[1])
+            ob.setLocation(self.anim[0].LocX+boneloc.x,
+                           self.anim[0].LocY+boneloc.y,
+                           self.anim[0].LocZ+boneloc.z)
+            self.anim[0].makeParent([ob])
+            #ob.parentbonename=self.anim[2]
+        else:
+            cur=Window.GetCursorPos()
+            ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         if self.layers&Mesh.LAYERMASK:
             ob.Layer=(self.layers&Mesh.LAYERMASK)
-        cur=Window.GetCursorPos()
-        ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
+        scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
         return ob
 
 
@@ -487,7 +520,6 @@ class OBJimport:
         self.image=None		# texture image, iff scenery has texture
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
-        self.animerr=False
         
         # random stuff
         self.whitespace=[' ','\t','\n']
@@ -495,7 +527,8 @@ class OBJimport:
         # flags controlling import
         self.comment=""
         self.lastcomment=""
-        self.lod=0
+        self.layer=0
+        self.lod=None		# list of lod limits
         self.fusecount=0
 
         # v8 structures
@@ -511,8 +544,12 @@ class OBJimport:
         self.alpha=False
         self.panel=False
         self.poly=False
-        self.anim=[None]		# point of rotation
-        self.off=[Vertex(0,0,0)]	# for offsetting
+        self.group=None
+        self.armob=None		# armature Object
+        self.arm=None		# Armature
+        self.action=None	# armature Action
+        self.pendingbone=None	# current bone
+        self.off=[]		# offset from current bone
 
     #------------------------------------------------------------------------
     def doimport(self):
@@ -574,7 +611,7 @@ class OBJimport:
             pos = self.file.tell()
             c=self.file.read(1)
             if not c:
-                if self.fileformat<8:
+                if 0: #self.fileformat<8:
                     raise ParseError(ParseError.TOKEN, "<EOF>")
                 else:
                     return Token.END
@@ -823,7 +860,12 @@ class OBJimport:
                     elif self.verbose>1:
                         print "Info:\tUsing texture file \"%s\"" % texname
                     file.close()
-                    self.image = Image.Load(texname)
+                    try:
+                        self.image = Image.Load(texname)
+                        self.image.getSize()	# force load
+                    except:
+                        print "Warn:\tTexture file \"%s\" cannot be read" % texname
+                        self.image=None
                     return
             
         self.image=0
@@ -838,11 +880,29 @@ class OBJimport:
                 t=self.getToken()
 
                 if t==Token.END:
+                    # global attributes
+                    if (self.group or self.lod) and not self.subroutine:
+                        ob = Object.New("Empty", "Attributes")
+                        ob.drawSize=0.1
+                        #ob.drawMode=2	# 2=OB_PLAINAXES
+                        if self.group:
+                            ob.addProperty("group %s"%self.group[0],
+                                           self.group[1])
+                        if self.lod:
+                            for i in range(4):
+                                if self.lod[i]!=[0,1000,4000,10000][i]:
+                                    ob.addProperty("LOD_%d" % i, self.lod[i])
+                        scene.link(ob)
+                        cur=Window.GetCursorPos()
+                        ob.setLocation(cur[0], cur[1], cur[2])
                     # write meshes
                     self.mergeMeshes()
-                    for mesh in self.curmesh:
-                        last=mesh.doimport(scene,self.image,self.filename,
-                                           self.subroutine)
+                    for i in range(len(self.curmesh)):
+                        Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
+                                               "Adding %d%% ..." % (
+                            90+(i*10.0)/len(self.curmesh)))
+                        last=self.curmesh[i].doimport(scene,self.image,self.filename,self.subroutine)
+                    scene.update(1)	# update poses
                     return last
 
                 elif t==Token.VLIGHT:
@@ -869,13 +929,21 @@ class OBJimport:
                         self.idx.append(self.getInt())
 
                 elif t==Token.LIGHTS:
+                    self.addpendingbone()
                     a=self.getInt()
                     b=self.getInt()
                     for i in range(a,a+b):
                         (v,c)=self.vlight[i]
                         self.addLamp(scene,v,c)
 
+                elif t==Token.LIGHT_NAMED:
+                    self.addpendingbone()
+                    name=self.getInput()
+                    v=self.getVertex()
+                    self.addLamp(scene,v,name)
+
                 elif t==Token.LINES:
+                    self.addpendingbone()
                     a=self.getInt()
                     b=self.getInt()
                     for i in range(a,a+b,2):
@@ -887,6 +955,7 @@ class OBJimport:
                         self.addLine(scene,v,c)
 
                 elif t==Token.TRIS:
+                    self.addpendingbone()
                     a=self.getInt()
                     b=self.getInt()
                     for i in range(a,a+b,3):
@@ -911,28 +980,72 @@ class OBJimport:
                             self.addFan(scene,t,v,uv)
 
                 elif t==Token.ANIM_BEGIN:
-                    if not self.animerr:
-                        self.animerr=True
-                        print "Warn:\tIgnoring unsupported Animations"
-                    self.anim.insert(0, self.anim[0])	# default to last
-                    self.off.insert(0, self.off[0])	# cumulative
+                    if not self.arm:
+                        self.off=[Vertex(0,0,0)]
+                        self.bones=[None]
+                        self.armob = Object.New("Armature")
+                        self.arm=Armature.Armature("Armature")
+                        self.arm.drawNames=True
+                        self.arm.drawType=Armature.STICK
+                        self.arm.restPosition=True	# for easier parenting
+                        self.armob.link(self.arm)
+                        scene.link(self.armob)
+                        if self.layer:
+                            self.armob.Layer=OBJimport.LAYER[self.layer]
+                        cur=Window.GetCursorPos()
+                        self.armob.setLocation(cur[0], cur[1], cur[2])
+                        self.action = Armature.NLA.NewAction()
+                        self.action.setActive(self.armob)
+                        self.arm.makeEditable()
+                    else:
+                        self.addpendingbone()
+                        self.off.append(self.off[-1])
+                        self.bones.append(None)
                     
                 elif t==Token.ANIM_END:
-                    if not len(self.anim):
+                    if not len(self.off):
                         raise ParseError(ParseError.MISC,
                                          'ANIM_END with no matching ANIM_BEGIN')
-                    self.anim.pop(0)
-                    self.off.pop(0)
+                    self.addpendingbone()
+                    self.off.pop()
+                    self.bones.pop()
+                    if not self.off:
+                        # Back at top level
+                        self.arm.update()
+                        self.arm=None
+                        self.armob=None
+                        self.action=None
                     
                 elif t==Token.ANIM_TRANS:
                     p1=self.getVertex()
                     p2=self.getVertex()
                     v1=self.getFloat()
                     v2=self.getFloat()
-                    dataref=self.getInput()
-                    if '/' in dataref:
-                        dataref=dataref[:dataref.find('/')+1]
-                    self.off[0]=self.off[0]+p1
+                    dataref=self.getInput().split('/')
+                    self.off[-1]=self.off[-1]+p1
+                    if not self.pendingbone:
+                        if len(self.bones)==1:
+                            # first bone in Armature - move armature location
+                            self.armob.setLocation(self.off[-1].x+self.armob.LocX, self.off[-1].y+self.armob.LocY, self.off[-1].z+self.armob.LocZ)
+                            self.off[-1]=Vertex(0,0,0)
+                        else:
+                            # first bone at this level - adjust previous tail
+                            #self.arm.bones[self.bones[-2]].tail=self.off[-1].toVector(3)
+                            pass
+                        if not p1.equals(p2):
+                            # not just a shift
+                            name=dataref[-1]
+                            if '[' in name: name=name[:name.index('[')]
+                            if len(dataref)>1 and not name in datarefs:
+                                self.armob.addProperty(name, '/'.join(dataref[:-1])+'/')
+                            if v1!=0 and name+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v1', v1)
+                            if v2!=1 and name+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v2', v2)
+                            head=self.off[-1]
+                            #tail=self.off[-1]+(p2-p1).normalize()*0.1
+                            tail=self.off[-1]+Vertex(0,0.1,0)
+                            m1=Matrix().identity().resize4x4()
+                            m2=TranslationMatrix((p2-p1).toVector(4))
+                            self.pendingbone=(dataref[-1], head, tail, m1, m2)
 
                 elif t==Token.ANIM_ROTATE:
                     p=self.getVertex()
@@ -940,8 +1053,27 @@ class OBJimport:
                     r2=self.getFloat()
                     v1=self.getFloat()
                     v2=self.getFloat()
-                    dataref=self.getInput()
-                    self.anim[0]=self.off[0]
+                    dataref=self.getInput().split('/')
+                    while r2>=360 or r2<=-360:
+                        # hack!
+                        r2/=2
+                        v2/=2
+                    name=dataref[-1]
+                    if '[' in name: name=name[:name.index('[')]
+                    if len(dataref)>1 and not name in datarefs:
+                        self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
+                    if v1!=0 and name+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v1', v1)
+                    if v2!=1 and name+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(name+'_v2', v2)
+                    head=self.off[-1]
+                    #tail=self.off[-1]+Vertex(p.y,p.z,p.x)*0.1
+                    tail=self.off[-1]+Vertex(0,0.1,0)
+                    m1=RotationMatrix(r1,4,'r',p.toVector(3))
+                    m2=RotationMatrix(r2,4,'r',p.toVector(3))
+                    if self.pendingbone:
+                        (name, head, tail, o1, o2)=self.pendingbone
+                        m1=m1*o1
+                        m2=m2*o2
+                    self.pendingbone=(dataref[-1], head, tail, m1, m2)
 
                 elif t==Token.HARD:
                     self.hard = True
@@ -977,12 +1109,21 @@ class OBJimport:
                 elif t==Token.NO_ALPHA:
                     self.alpha = False
 
+                elif t==Token.LAYER_GROUP:
+                    self.group=(self.getInput(), self.getInt())
+                    
                 elif t==Token.LOD:
-                    x = self.getFloat()
-                    self.getFloat()
-                    if not self.lod:
+                    x=int(self.getFloat())
+                    y=int(self.getFloat())
+                    if not self.layer:
                         print "Info:\tMultiple Levels Of Detail found"
-                    self.lod+=1
+                    if self.layer==0 and x!=0:
+                        self.lod=[x,1000,4000,10000]
+                    if self.layer<3:
+                        self.layer+=1
+                    if y!=[0,1000,4000,10000][self.layer]:
+                        if not self.lod: self.lod=[0,1000,4000,10000]
+                        self.lod[self.layer]=y
                     # Reset attributes
                     self.hard=False
                     self.twoside=False
@@ -1005,31 +1146,35 @@ class OBJimport:
 
                 else:
                     print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
-                    if t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
-                        n=4
-                    elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
-                               Token.SPECULAR_RGB, Token.EMISSION_RGB]:
-                        n=3
-                    elif t in [Token.SHINY_RAT, Token.SLUNG_LOAD_WEIGHT]:
-                        n=1
-                    elif t in [Token.BLEND, Token.NO_BLEND]:
-                        n=0
-                    else:
-                        raise ParseError(ParseError.TOKEN, Token.NAMES[t])
-
-                    for i in range(n):
-                        self.getFloat()
+                    self.getCR()
                 
         elif self.fileformat==7:
             while 1:
                 t=self.getToken()
 
                 if t==Token.END:
+                    # global attributes
+                    if (self.group or self.lod) and not self.subroutine:
+                        ob = Object.New("Empty", "Attributes")
+                        ob.drawSize=0.1
+                        #ob.drawMode=2	# 2=OB_PLAINAXES
+                        if self.group:
+                            ob.addProperty("group %s"%self.group[0],
+                                           self.group[1])
+                        if self.lod:
+                            for i in range(4):
+                                if self.lod[i]!=[0,1000,4000,10000][i]:
+                                    ob.addProperty("LOD_%d" % i, self.lod[i])
+                        scene.link(ob)
+                        cur=Window.GetCursorPos()
+                        ob.setLocation(cur[0], cur[1], cur[2])
                     # write meshes
                     self.mergeMeshes()
-                    for mesh in self.curmesh:
-                        last=mesh.doimport(scene,self.image,self.filename,
-                                           self.subroutine)
+                    for i in range(len(self.curmesh)):
+                        Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
+                                               "Adding %d%% ..." % (
+                            90+(i*10.0)/len(self.curmesh)))
+                        last=self.curmesh[i].doimport(scene,self.image,self.filename,self.subroutine)
                     return last
                 
                 elif t==Token.LIGHT:
@@ -1156,13 +1301,23 @@ class OBJimport:
                     self.getCR()
                     self.twoside = True
 
-                elif t==Token.LOD:
-                    x = self.getFloat()
-                    self.getFloat()
+                elif t==Token.LAYER_GROUP:
+                    self.group=(self.getInput(), self.getInt())
                     self.getCR()
-                    if not self.lod:
+                    
+                elif t==Token.LOD:
+                    x=int(self.getFloat())
+                    y=int(self.getFloat())
+                    self.getCR()
+                    if not self.layer:
                         print "Info:\tMultiple Levels Of Detail found"
-                    self.lod+=1
+                    if self.layer==0 and x!=0:
+                        self.lod=[x,1000,4000,10000]
+                    if self.layer<3:
+                        self.layer+=1
+                    if y!=[0,1000,4000,10000][self.layer]:
+                        if not self.lod: self.lod=[0,1000,4000,10000]
+                        self.lod[self.layer]=y
                     # Reset attributes
                     self.twoside=False
                     self.flat=False
@@ -1176,7 +1331,9 @@ class OBJimport:
 
                 else:
                     print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
-                    if t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
+                    if t in [Token.LIGHT_NAMED, Token.LIGHT_CUSTOM]:
+                        n=0	# not really
+                    elif t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
                         n=4
                     elif t in [Token.AMBIENT_RGB, Token.DIFUSE_RGB,
                                Token.SPECULAR_RGB, Token.EMISSION_RGB]:
@@ -1199,10 +1356,11 @@ class OBJimport:
                 if t==Token.END:
                     # write meshes
                     self.mergeMeshes()
-                    Blender.Window.WaitCursor(1)
-                    for mesh in self.curmesh:
-                        last=mesh.doimport(scene,self.image,self.filename,
-                                           self.subroutine)
+                    for i in range(len(self.curmesh)):
+                        Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
+                                               "Adding %d%% ..." % (
+                            90+(i*10.0)/len(self.curmesh)))
+                        last=self.curmesh[i].doimport(scene,self.image,self.filename,self.subroutine)
                     return last
     
                 elif t==Token.LIGHT:
@@ -1277,54 +1435,67 @@ class OBJimport:
 
     #------------------------------------------------------------------------
     def addLamp(self, scene, v, c):
-        if c[0]==1.1 and c[1]==1.1 and c[2]==1.1:
-            c[0]=1
-            c[1]=c[2]=0
-            name="Nav Left"
+        if isinstance(c, str):
+            name=c	# named light
+            # try to be helpful - some names that we know about
+            if name in ['airplane_nav_left', 'airplane_beacon'] or name.endswith('_red'):
+                c=[1,0,0]
+            elif name in ['airplane_nav_right', 'taxi_center_light', 'taxi_g'] or name.endswith('_green'):
+                c=[0,1,0]
+            elif name in ['taxi_edge_blue', 'taxi_b'] or name.endswith('_blue'):
+                c=[0,0,1]
+            elif name in ['airplane_strobe', 'airplane_landing', 'airplane_taxi'] or name.endswith('_white'):
+                c=[1,1,1]
+            else:	# dunno
+                c=[0.75,0.75,0.75]
+        elif c[0]==1.1 and c[1]==1.1 and c[2]==1.1:
+            name="airplane_nav_left"
+            c=[1,0,0]
         elif c[0]==2.2 and c[1]==2.2 and c[2]==2.2:
-            c[1]=1
-            c[0]=c[2]=0
-            name="Nav Right"
-        if ((c[0]==9.9 and c[1]==9.9 and c[2]==9.9) or
+            name="airplane_nav_right"
+            c=[0,1,0]
+        elif ((c[0]==9.9 and c[1]==9.9 and c[2]==9.9) or
             (c[0]==3.3 and c[1]==3.3 and c[2]==3.3)):
-            c[0]=1
-            c[1]=c[2]=0
-            name="Pulse"
+            name="airplane_beacon"
+            c=[1,0,0]
         elif ((c[0]==9.8 and c[1]==9.8 and c[2]==9.8) or
               (c[0]==4.4 and c[1]==4.4 and c[2]==4.4)):
-            c[0]=c[1]=c[2]=1
-            name="Strobe"
+            name="airplane_strobe"
+            c=[1,1,1]
         elif c[0]==5.5 and c[1]==5.5 and c[2]==5.5:
-            c[0]=c[1]=c[2]=1
-            name="Landing"
+            name="airplane_landing"
+            c=[1,1,1]
         elif c[0]==9.7 and c[1]==9.7 and c[2]==9.7:
-            c[0]=c[1]=1
-            c[2]=0
             name="Traffic"
+            c=[1,1,0]
         elif c[0]<0 or c[1]<0 or c[2]<0:
-            c[0]=abs(c[0])
-            c[1]=abs(c[1])
-            c[2]=abs(c[2])
             name="Flash"
+            c=[abs(c[0]),abs(c[1]),abs(c[2])]
         else:
-            name="Light"
+            name="Lamp"
 
         if self.verbose>1:
             print "Info:\tImporting Lamp at line %s \"%s\"" % (
                 self.lineno, name)
         lamp=Lamp.New("Lamp", name)
         lamp.col=c
-        lamp.mode |= Lamp.Modes.Sphere	# stop lamp colouring whole object
-        lamp.dist = 4.0
+        lamp.dist=4.0	# arbitrary - stop lamp colouring whole object
+        #amp.mode |= Lamp.Modes.Sphere
         ob = Object.New("Lamp", name)
         ob.link(lamp)
         scene.link(ob)
-        if self.lod:
-            ob.Layer=OBJimport.LAYER[self.lod]
-        cur=Window.GetCursorPos()
-        ob.setLocation(v.x+self.off[0].x+cur[0],
-                       v.y+self.off[0].y+cur[1],
-                       v.z+self.off[0].z+cur[2])
+        if self.layer:
+            ob.Layer=OBJimport.LAYER[self.layer]
+        if self.armob:
+            boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+            loc=Vertex(self.armob.loc)+boneloc-self.off[-1]+v
+            ob.setLocation(loc.x, loc.y, loc.z)
+            self.armob.makeParent([ob])
+            #ob.parentbonename=self.anim[2]
+        else:
+            cur=Window.GetCursorPos()
+            ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
+        scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
         self.nprim+=1
         
     #------------------------------------------------------------------------
@@ -1334,8 +1505,9 @@ class OBJimport:
             print "Info:\tImporting Line at line %s \"%s\"" % (
                 self.lineno, name)
 
-        if self.anim[0]:
-            centre=self.anim[0]
+        if self.armob:
+            boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+            centre=boneloc-self.off[-1]
         else:
             centre=Vertex(round((v[0].x+v[1].x)/2,1),
                           round((v[0].y+v[1].y)/2,1),
@@ -1357,18 +1529,18 @@ class OBJimport:
         face.mode &= ~(NMesh.FaceModes.TEX|NMesh.FaceModes.TILES)
         face.mode |= (NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.DYNAMIC)
 
-        mesh.verts.append(NMesh.Vert(v[0].x+self.off[0].x-centre.x+e.x,
-                                     v[0].y+self.off[0].y-centre.y+e.y,
-                                     v[0].z+self.off[0].z-centre.z+e.z))
-        mesh.verts.append(NMesh.Vert(v[0].x+self.off[0].x-centre.x-e.x,
-                                     v[0].y+self.off[0].y-centre.y-e.y,
-                                     v[0].z+self.off[0].z-centre.z-e.z))
-        mesh.verts.append(NMesh.Vert(v[1].x+self.off[0].x-centre.x-e.x,
-                                     v[1].y+self.off[0].y-centre.y-e.y,
-                                     v[1].z+self.off[0].z-centre.z-e.z))
-        mesh.verts.append(NMesh.Vert(v[1].x+self.off[0].x-centre.x+e.x,
-                                     v[1].y+self.off[0].y-centre.y+e.y,
-                                     v[1].z+self.off[0].z-centre.z+e.z))
+        mesh.verts.append(NMesh.Vert(v[0].x-centre.x+e.x,
+                                     v[0].y-centre.y+e.y,
+                                     v[0].z-centre.z+e.z))
+        mesh.verts.append(NMesh.Vert(v[0].x-centre.x-e.x,
+                                     v[0].y-centre.y-e.y,
+                                     v[0].z-centre.z-e.z))
+        mesh.verts.append(NMesh.Vert(v[1].x-centre.x-e.x,
+                                     v[1].y-centre.y-e.y,
+                                     v[1].z-centre.z-e.z))
+        mesh.verts.append(NMesh.Vert(v[1].x-centre.x+e.x,
+                                     v[1].y-centre.y+e.y,
+                                     v[1].z-centre.z+e.z))
         for nmv in mesh.verts:
             face.v.append(nmv)
 
@@ -1380,11 +1552,19 @@ class OBJimport:
         ob = Object.New("Mesh", name)
         ob.link(mesh)
         scene.link(ob)
-        if self.lod:
-            ob.Layer=OBJimport.LAYER[self.lod]
-        cur=Window.GetCursorPos()
-        ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
+        if self.layer:
+            ob.Layer=OBJimport.LAYER[self.layer]
+        if self.armob:
+            ob.setLocation(self.armob.LocX+boneloc.x,
+                           self.armob.LocY+boneloc.y,
+                           self.armob.LocZ+boneloc.z)
+            self.armob.makeParent([ob])
+            #ob.parentbonename=self.anim[2]
+        else:
+            cur=Window.GetCursorPos()
+            ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
+        scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
         self.nprim+=1
 
     #------------------------------------------------------------------------
@@ -1419,9 +1599,9 @@ class OBJimport:
             face=Face()
             face.flags=flags
 
-            face.addVertex(v[0]+self.off[0])
-            face.addVertex(v[f+1]+self.off[0])
-            face.addVertex(v[f]+self.off[0])
+            face.addVertex(v[0])
+            face.addVertex(v[f+1])
+            face.addVertex(v[f])
             face.addUV(uv[0])
             face.addUV(uv[f+1])
             face.addUV(uv[f])
@@ -1429,8 +1609,12 @@ class OBJimport:
             faces.append(face)
 
         if faces:
-            self.addToMesh(scene,name,faces,
-                           OBJimport.LAYER[self.lod],self.anim[0])
+            if self.armob:
+                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                               (self.armob,self.off[-1],self.bones[-1]))
+            else:
+                self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],
+                               None)
             self.nprim+=1
 
     #------------------------------------------------------------------------
@@ -1479,15 +1663,15 @@ class OBJimport:
                 # vorder not used
                 if f%2:
                     for i in range(3):
-                        face.addVertex(v[f-2+i]+self.off[0])
+                        face.addVertex(v[f-2+i])
                         face.addUV(uv[f-2+i])
                 else:
                     for i in range(3):
-                        face.addVertex(v[f-i]+self.off[0])
+                        face.addVertex(v[f-i])
                         face.addUV(uv[f-i])
             else:
                 for i in range(4):
-                    face.addVertex(v[f-2+vorder[i]]+self.off[0])
+                    face.addVertex(v[f-2+vorder[i]])
                     face.addUV(uv[f-2+vorder[i]])
 
             # Some people use quads as tris to get round limitations in v6
@@ -1500,8 +1684,7 @@ class OBJimport:
             faces.append(face)
 
         if faces:
-            self.addToMesh(scene,name,faces,
-                           OBJimport.LAYER[self.lod],self.anim[0])
+            self.addToMesh(scene,name,faces,OBJimport.LAYER[self.layer],self.anim[0])
             self.nprim+=1
 
     #------------------------------------------------------------------------
@@ -1518,7 +1701,7 @@ class OBJimport:
         if (self.curmesh and
             self.curmesh[-1].layers==layers and
             self.curmesh[-1].anim==anim and
-            (self.merge>=2 or
+            (self.merge>=2 or anim or
              (self.comment and self.comment==self.lastcomment) or
              self.curmesh[-1].abut(faces))):
             self.curmesh[-1].addFaces (name, faces)
@@ -1538,10 +1721,10 @@ class OBJimport:
         # added meshes first on the assumption of locality.
         m=len(self.curmesh)-2
         while m>=0:
-            n=float(m)/len(self.curmesh)
+            n=(m+1.0)/len(self.curmesh)
             if not self.subroutine:
-                Window.DrawProgressBar(1-n/2,"Merging %s%% ..." % (
-                    100-int(50*n)))
+                Window.DrawProgressBar(0.9-0.4*n,"Merging %s%% ..." % (
+                    90-int(40*n)))
 
             # optimisation: take a copy of m's faces to prevent comparing any
             # newly merged faces multiple times
@@ -1560,6 +1743,39 @@ class OBJimport:
                 else:
                     l=l+1
             m=m-1
+
+    #------------------------------------------------------------------------
+    def addpendingbone(self):
+        if not self.pendingbone: return None
+        (origname, head, tail, m1, m2)=self.pendingbone
+        name=origname
+        i=0
+        while name in self.arm.bones.keys():
+            i+=1
+            name="%s.%03d" % (origname, i)
+        bone=Armature.Editbone()
+        bone.name=name
+        i=len(self.bones)-2
+        while i>=0:
+            if self.bones[-2]:
+                bone.parent=self.arm.bones[self.bones[-2]]
+                break
+            i-=1	# bone will be None if just a shift - use grandparent
+        bone.head=head.toVector(3)
+        bone.tail=tail.toVector(3)
+        self.arm.bones[name]=bone
+        self.arm.update()	# to get Pose
+        pose=self.armob.getPose()
+        posebone=pose.bones[name]
+        posebone.localMatrix=m1
+        posebone.insertKey(self.armob, 1, [Object.Pose.ROT,Object.Pose.LOC])
+        pose.update()
+        posebone.localMatrix=m2
+        posebone.insertKey(self.armob, 2, [Object.Pose.ROT,Object.Pose.LOC])
+        pose.update()
+        self.arm.makeEditable()
+        self.pendingbone=None
+        self.bones[-1]=name
 
     #------------------------------------------------------------------------
     def name (self, fallback):
@@ -1593,7 +1809,6 @@ def file_callback (filename):
                 msg='%s at line %s' % (e.value, obj.lineno)
         print "ERROR:\t%s\n" % msg
         Blender.Draw.PupMenu("ERROR: %s" % msg)
-        Blender.Draw.PupMenu(msg)
         Blender.Window.DrawProgressBar(1, 'ERROR')
     obj.file.close()
     Blender.Redraw()
@@ -1601,5 +1816,12 @@ def file_callback (filename):
 #------------------------------------------------------------------------
 # main routine
 #------------------------------------------------------------------------
-
-Blender.Window.FileSelector(file_callback,"Import OBJ")
+try:
+    datarefs=getDatarefs()
+except IOError, e:
+    Window.DrawProgressBar(0, 'ERROR')
+    print "ERROR:\t%s\n" % e.strerror
+    Blender.Draw.PupMenu("ERROR: %s" % e.strerror)
+    Window.DrawProgressBar(1, 'ERROR')
+else:
+    Window.FileSelector(file_callback,"Import OBJ")

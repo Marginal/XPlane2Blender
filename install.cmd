@@ -62,6 +62,7 @@ goto end
 echo.
 echo Failed to install scripts in folder
 echo   %DESTDIR% !!!
+echo Did you extract all of the contents of the zip file?
 goto end
 
 :end

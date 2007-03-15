@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.25"
+__version__ = "2.26"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -86,6 +86,9 @@ Limitations:<br>
 # 2006-04-22 v2.21
 #  - Oops. ATTR_no_blend not such a good idea.
 #
+# 2006-07-19 v2.25
+#  - Support for named lights, layer group, custom LOD ranges.
+#
 
 
 #
@@ -105,13 +108,15 @@ Limitations:<br>
 #
 
 import sys
-from os.path import exists, join
 import Blender
 from Blender import NMesh, Lamp, Image, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, MatMultVec, Vector, Quaternion, Euler
-from XPlaneUtils import Vertex, UV, MatrixrotationOnly
+from XPlaneUtils import Vertex, UV, MatrixrotationOnly, getDatarefs
 from XPlaneExport import *
 #import time
+
+datarefs={}
+
 
 class VT:
     def __init__(self, v, n, uv):
@@ -134,12 +139,12 @@ class VLINE:
         self.c=c
     
     def __str__ (self):
-        return "%s\t%5.2f\t%5.2f\t%5.2f" % (self.v,
-                                            round(self.c[0],2),
-                                            round(self.c[1],2),
-                                            round(self.c[2],2))
+        return "%s\t%6.3f %6.3f %6.3f" % (self.v,
+                                          round(self.c[0],2),
+                                          round(self.c[1],2),
+                                          round(self.c[2],2))
     def equals (self, b):
-        return (self.v.equals(b.v) and self.c.equals(b.c))
+        return (self.v.equals(b.v) and self.c==b.c)
 
 class VLIGHT:
     def __init__(self, v, c):
@@ -147,13 +152,25 @@ class VLIGHT:
         self.c=c
 
     def __str__ (self):
-        return "%s\t%5.2f\t%5.2f\t%5.2f" % (self.v,
-                                            round(self.c[0],2),
-                                            round(self.c[1],2),
-                                            round(self.c[2],2))
+        return "%s\t%6.3f %6.3f %6.3f" % (self.v,
+                                          round(self.c[0],2),
+                                          round(self.c[1],2),
+                                          round(self.c[2],2))
 
     def equals (self, b):
-        return (self.v.equals(b.v) and self.c.equals(b.c))
+        return (self.v.equals(b.v) and self.c==b.c)
+
+class NLIGHT:
+    def __init__(self, v, n):
+        self.v=v
+        self.n=n	# (str) name or (list) custom
+
+    def __str__ (self):
+        return "%s\t%s%s" % (self.n, '\t'*(2-len(self.n)/8), self.v)
+
+    def equals (self, b):
+        return (self.v.equals(b.v) and self.c==b.c)
+
 
 class Prim:
     # Flags in sort order
@@ -168,18 +185,16 @@ class Prim:
     BUCKET2=PANEL|ALPHA
     # LOD comes here
 
-    def __init__ (self):
-        self.i=[]	# indices for lines & tris, VLIGHT for lights
-        self.flags=0
-        self.layer=0
-        self.anim=None
+    def __init__ (self, layer, flags, anim):
+        self.i=[]	# indices for lines & tris, VLIGHT/NLIGHT for lights
+        self.anim=anim
+        self.flags=flags
+        self.layer=layer
 
     def match(self, layer, flags, anim):
         return (self.layer&layer and
                 self.flags==flags and
                 self.anim.equals(anim))
-
-datarefs={}
 
 
 #------------------------------------------------------------------------
@@ -202,7 +217,8 @@ class OBJexport8:
         self.layermask=1
         self.havepanel=False
         self.texture=None
-        self.linewidth=0.1
+        self.group=None
+        self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
 
         # attributes controlling export
@@ -212,6 +228,7 @@ class OBJexport8:
         self.panel=False
         self.alpha=False	# implicit - doesn't appear in output file
         self.layer=0
+        self.lod=None		# list of lod limits
         self.anim=Anim(None)
 
         # Global vertex lists
@@ -223,6 +240,7 @@ class OBJexport8:
         self.tris=[]
         self.lines=[]
         self.lights=[]
+        self.nlights=[]		# named and custom lights
 
         self.animcands=[]	# indices into tris of candidates for reuse
 
@@ -237,10 +255,8 @@ class OBJexport8:
 
         Blender.Window.WaitCursor(1)
         Window.DrawProgressBar(0, 'Examining textures')
-        (self.texture,self.havepanel,self.layermask)=getTexture(theObjects,
-                                                                self.layermask,
-                                                                self.iscockpit,
-                                                                8)
+        (self.texture,self.havepanel,self.layermask,
+         self.lod)=getTexture(theObjects,self.layermask,self.iscockpit,False,8)
         if self.havepanel:
             self.iscockpit=True
             self.layermask=1
@@ -255,6 +271,8 @@ class OBJexport8:
         self.file.close ()
         
         Blender.Set('curframe', frame)
+        #scene.update(1)
+        #scene.makeCurrent()	# see Blender bug #4696
         Window.DrawProgressBar(1, 'Finished')
         #print "%s CPU time" % (time.clock()-clock)
         print "Finished - exported %s primitives\n" % self.nprim
@@ -299,24 +317,27 @@ class OBJexport8:
                     self.sortMesh(object)
             elif objType in ['Lamp', 'Armature']:
                 pass	# these dealt with separately
+            elif objType == 'Empty':
+                for prop in object.getAllProperties():
+                    if prop.type in ['INT', 'FLOAT'] and prop.name.startswith('group '):
+                        self.group=(prop.name[6:].strip(), int(prop.data))
             else:
                 print "Warn:\tIgnoring %s \"%s\"" % (objType.lower(),
                                                      object.name)
 
         # Lights
-        for layer in lseq:
-            for o in range (len(theObjects)-1,-1,-1):
-                object=theObjects[o]
-                if (object.getType()=='Lamp' and object.Layer&layer):
-                    self.sortLamp(object)
+        for o in range (len(theObjects)-1,-1,-1):
+            object=theObjects[o]
+            if (object.getType()=='Lamp' and object.Layer&self.layermask):
+                self.sortLamp(object)
 
-        # Build ((1+Prim.ALPHA*2) * len(anims) * len(lseq)) indices
+        # Build ((1+Prim.ALPHA*2) *len(anims) *len(lseq)) indices
         indices=[]
         offsets=[]
         counts=[]
         progress=0.0
         for layer in lseq:
-            for passhi in [0, Prim.PANEL, Prim.ALPHA, Prim.PANEL|Prim.ALPHA]:
+            for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
                 Window.DrawProgressBar(0.4+progress/(10*len(lseq)),
                                        "Exporting %d%% ..." % (40+progress*10/len(lseq)))
                 progress+=1
@@ -352,7 +373,7 @@ class OBJexport8:
                         counts.append(len(index))
                         indices.extend(index)
 
-        self.nprim=len(self.vt)+len(self.vline)+len(self.lights)
+        self.nprim=len(self.vt)+len(self.vline)+len(self.lights)+len(self.nlights)
         self.file.write("POINT_COUNTS\t%d %d %d %d\n\n" % (len(self.vt),
                                                            len(self.vline),
                                                            len(self.lights),
@@ -383,35 +404,45 @@ class OBJexport8:
         for j in range(n-(n%10), n):
             self.file.write("IDX\t%d\n" % indices[j])
 
+        if self.group:
+            self.file.write("\nATTR_layer_group\t%s\t%d\n" % (
+                self.group[0], self.group[1]))
+            
         # Geometry Commands
         n=0
         for layer in lseq:
-            for passhi in [0, Prim.PANEL, Prim.ALPHA, Prim.PANEL|Prim.ALPHA]:
+            for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
                 for anim in self.anims:
-
-                    # Lights
-                    i=0
-                    while i<len(self.lights):
-                        if self.lights[i].match(layer, passhi, anim):
-                            for j in range(i+1, len(self.lights)):
-                                if not self.lights[j].match(layer,passhi,anim):
-                                    break
-                            else:
-                                j=len(self.lights)	# point past last match
-                            self.updateAttr(0, 0, 1, 0, 0, layer, anim)
-                            self.file.write("%sLIGHTS\t%d %d\n" %
-                                            (anim.ins(), i, j-i))
-                            i=j
-                        else:
-                            i=i+1
-
                     # Lines
                     if counts[n]:
                         self.updateAttr(0, 0, 1, 0, 0, layer, anim)
                         self.file.write("%sLINES\t%d %d\n" %
                                         (anim.ins(), offsets[n], counts[n]))
                     n=n+1
+                    
+                    # Lights
+                    i=0
+                    while i<len(self.lights):
+                        if self.lights[i].match(layer, passhi, anim):
+                            self.updateAttr(0, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, anim)
+                            for j in range(i+1, len(self.lights)):
+                                if not self.lights[j].match(layer,passhi,anim):
+                                    break
+                            else:
+                                j=len(self.lights)	# point past last match
+                            self.file.write("%sLIGHTS\t%d %d\n" %
+                                            (anim.ins(), i, j-i))
+                            i=j
+                        else:
+                            i=i+1
 
+                    # Named lights
+                    for i in range(len(self.nlights)):
+                        if self.nlights[i].match(layer,passhi,anim):
+                            self.updateAttr(0, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, anim)
+                            self.file.write("%sLIGHT_NAMED\t%s\n" %
+                                            (anim.ins(), self.nlights[i].i))
+                        
                     # Tris
                     for passno in range(passhi,passhi+Prim.BUCKET1+1):
                         if counts[n]:
@@ -424,10 +455,11 @@ class OBJexport8:
                             self.file.write("%sTRIS\t%d %d\n" %
                                             (anim.ins(), offsets[n],counts[n]))
                         n=n+1
-
-        # Close animations
-        self.updateAttr(self.hard, self.twoside, self.npoly,
-                        self.panel, self.alpha, self.layer, Anim(None))
+    
+        # Close animations in final layer
+        while not self.anim.equals(Anim(None)):
+            self.anim=self.anim.anim
+            self.file.write("%sANIM_end\n" % self.anim.ins())
 
         self.file.write("\n# Built with Blender %4.2f. Exported with XPlane2Blender %s.\n" % (float(Blender.Get('version'))/100, __version__))
 
@@ -435,10 +467,9 @@ class OBJexport8:
     #------------------------------------------------------------------------
     def sortLamp(self, object):
 
-        light=Prim()
-        (light.anim, mm)=self.makeAnim(object)
-        light.layer=object.Layer
-
+        (anim, mm)=self.makeAnim(object)
+        light=Prim(object.Layer, Prim.ALPHA, anim)
+        
         lamp=object.getData()
         name=object.name
         special=0
@@ -450,7 +481,8 @@ class OBJexport8:
         if self.verbose:
             print "Info:\tExporting Light \"%s\"" % name
 
-        lname=name.lower()
+        if '.' in name: name=name[:name.index('.')]
+        lname=name.lower().split()
         c=[0,0,0]
         if 'pulse' in lname:
             c[0]=c[1]=c[2]=9.9
@@ -465,10 +497,14 @@ class OBJexport8:
             c[0]=-lamp.col[0]
             c[1]=-lamp.col[1]
             c[2]=-lamp.col[2]
-        else:
+        elif 'lamp' in lname:
             c[0]=lamp.col[0]
             c[1]=lamp.col[1]
             c[2]=lamp.col[2]
+        else:	# named light
+            light.i=NLIGHT(Vertex(0,0,0, mm), name)
+            self.nlights.append(light)
+            return
 
         light.i=VLIGHT(Vertex(0,0,0, mm), c)
         self.lights.append(light)
@@ -479,9 +515,8 @@ class OBJexport8:
         if self.verbose:
             print "Info:\tExporting Line \"%s\"" % object.name
 
-        line=Prim()
-        (line.anim, mm)=self.makeAnim(object)
-        line.layer=object.Layer
+        (anim, mm)=self.makeAnim(object)
+        line=Prim(object.Layer, 0, anim)
 
         mesh=object.getData()
         face=mesh.faces[0]
@@ -552,7 +587,7 @@ class OBJexport8:
         if hasanim:
             animcands=list(self.animcands)	# List of candidate tris
             trino=0
-            fudge=Vertex.LIMIT*2		# Be more lenient
+            fudge=Vertex.LIMIT*10		# Be more lenient
             for f in nmesh.faces:
                 n=len(f.v)
                 if not n in [3,4]:
@@ -589,9 +624,7 @@ class OBJexport8:
                     if not n in [3,4]:
                         degenerr+=1
                     elif not (f.mode & NMesh.FaceModes.INVISIBLE):
-                        face=Prim()
-                        face.anim=anim
-                        face.layer=object.Layer
+                        face=Prim(object.Layer, 0, anim)
            
                         if f.mode & NMesh.FaceModes.TEX:
                             if len(f.uv)!=n:
@@ -640,9 +673,7 @@ class OBJexport8:
             if not n in [3,4]:
                 degenerr+=1
             elif not (f.mode & NMesh.FaceModes.INVISIBLE):
-                face=Prim()
-                face.anim=anim
-                face.layer=object.Layer
+                face=Prim(object.Layer, 0, anim)
    
                 if f.mode & NMesh.FaceModes.TEX:
                     if len(f.uv)!=n:
@@ -733,6 +764,10 @@ class OBJexport8:
             a=a.anim
 
         Blender.Set('curframe', 1)
+        #scene=Blender.Scene.getCurrent()
+        #scene.update(1)
+        #scene.makeCurrent()	# see Blender bug #4696
+
         #mm=Matrix(child.getMatrix('localspace')) doesn't work in 2.40alpha
         mm=child.getMatrix('worldspace')
         
@@ -798,12 +833,8 @@ class OBJexport8:
             if self.layermask==1:
                 self.file.write("\n")
             else:
-                if layer==1:
-                    self.file.write("\nATTR_LOD\t0 1000\n")
-                elif layer==2:
-                    self.file.write("\nATTR_LOD\t1000 4000\n")
-                else:
-                    self.file.write("\nATTR_LOD\t4000 10000\n")
+                self.file.write("\nATTR_LOD\t%d %d\n" % (
+                    self.lod[layer/2], self.lod[layer/2+1]))
             self.layer=layer
 
         if not anim.equals(self.anim):
@@ -1000,9 +1031,12 @@ class Anim:
                 return	#null
         ipo=object.getAction().getAllChannelIpos()[bone.name]
 
+        scene=Blender.Scene.getCurrent()
         if 0:	# debug
             for frame in [1,2]:            
                 Blender.Set('curframe', frame)
+                #scene.update(1)
+                #scene.makeCurrent()	# see Blender bug #4696
                 print "Frame\t%s" % frame
                 print child
                 print "local\t%s" % child.getMatrix('localspace').rotationPart().toEuler()
@@ -1055,6 +1089,8 @@ class Anim:
         
         for frame in [1,2]:            
             Blender.Set('curframe', frame)
+            #scene.update(1)
+            #scene.makeCurrent()	# see Blender bug #4696
             mm=Matrix(object.getMatrix('worldspace'))
             # mm.rotationPart() scaled to be unit size for rotation axis
             rm=MatrixrotationOnly(mm, object)
@@ -1154,32 +1190,7 @@ else:
         baseFileName=baseFileName[:l]
     obj=None
     try:
-        err=ExportError("Corrupt DataRefs.txt file. Please re-install.")
-        for sdir in ['uscriptsdir', 'scriptsdir']:
-            if (Blender.Get(sdir) and
-                exists(join(Blender.Get(sdir), 'DataRefs.txt'))):
-                f=file(join(Blender.Get(sdir), 'DataRefs.txt'), 'rU')
-                d=f.readline().split()
-                if len(d)!=7 or d[0]!='2': raise err
-                for line in f:
-                    d=line.split()
-                    if not d: continue
-                    if len(d)<3: raise err
-                    l=d[0].rfind('/')
-                    if l==-1: raise err
-                    n=1
-                    for c in ['int', 'float', 'double']:
-                        if d[1].lower().startswith(c):
-                            if len(d[1])>len(c):
-                                n=int(d[1][len(c)+1:-1])
-                            break
-                    else:	# not a usable dataref
-                        n=0
-                    datarefs[d[0][l+1:]]=(d[0][:l+1], n)
-                break
-        else:
-            raise ExportError("Missing DataRefs.txt file. Please re-install.")
-        
+        datarefs=getDatarefs()
         obj=OBJexport8(baseFileName+'.obj')
         scene = Blender.Scene.getCurrent()
         obj.export(scene)
@@ -1188,6 +1199,14 @@ else:
         Blender.Window.DrawProgressBar(0, 'ERROR')
         print "ERROR:\t%s\n" % e.msg
         Blender.Draw.PupMenu("ERROR: %s" % e.msg)
+        Blender.Window.DrawProgressBar(1, 'ERROR')
+        if obj and obj.file:
+            obj.file.close()
+    except IOError, e:
+        Blender.Window.WaitCursor(0)
+        Blender.Window.DrawProgressBar(0, 'ERROR')
+        print "ERROR:\t%s\n" % e.strerror
+        Blender.Draw.PupMenu("ERROR: %s" % e.strerror)
         Blender.Window.DrawProgressBar(1, 'ERROR')
         if obj and obj.file:
             obj.file.close()

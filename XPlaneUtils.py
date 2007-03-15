@@ -30,16 +30,23 @@
 # 2005-03-01 v2.00
 #  - New file split out from other XPlane*.py scripts.
 #
+# 2006-07-11 v2.25
+#  - Fix for comparing lines and lights.
+#  - Increased output precision to 4 decimals for really small objects.
+#  - Reduced duplicate vertex limit to 0.0001 for really small objects.
+#  - Reduced duplicate UV limit to 4 pixels in 1024.
+#
 
 import sys
 from math import sqrt, sin, cos
+from os.path import exists, join
 import Blender
 from Blender import Types, Image
 from Blender.Mathutils import Matrix, Vector, Euler
 
 class Vertex:
-    LIMIT=0.001	# max distance between vertices for them to be merged
-    ROUND=3	# Precision
+    LIMIT=0.0001	# max distance between vertices for them to be merged
+    ROUND=4	# Precision
     
     def __init__ (self, x, y=None, z=None, mm=None):
         self.faces=[]	# indices into face array
@@ -66,7 +73,7 @@ class Vertex:
             self.x=x
             self.y=y
             self.z=z
-        else:	# apply scale, translate and swap axis
+        else:	# apply scale, translate and swap y and z axes
             self.x=round(mm[0][0]*x + mm[1][0]*y + mm[2][0]*z + mm[3][0],
                          Vertex.ROUND)
             self.y=round(mm[0][2]*x + mm[1][2]*y + mm[2][2]*z + mm[3][2],
@@ -75,10 +82,7 @@ class Vertex:
                           Vertex.ROUND)
             
     def __str__ (self):
-        return "%8.3f %8.3f %8.3f" % (
-            round(self.x, Vertex.ROUND),
-            round(self.y, Vertex.ROUND),
-            round(self.z, Vertex.ROUND))
+        return "%9.4f %9.4f %9.4f" % (self.x, self.y, self.z)
     
     def __add__ (self, right):
         return Vertex(self.x+right.x, self.y+right.y, self.z+right.z)
@@ -135,7 +139,7 @@ class Vertex:
 
 
 class UV:
-    LIMIT=0.008	# = 1 pixel in 128, 2 pixels in 256, etc
+    LIMIT=0.004	# = 1/2 pixel in 128, 1 pixel in 256, 2 pixels in 512, etc
     ROUND=4
 
     def __init__(self, s, t=None):
@@ -255,3 +259,37 @@ def MatrixrotationOnly(mm, object):
                   [mm[1][0]*sy, mm[1][1]*sy, mm[1][2]*sy, 0],
                   [mm[2][0]*sz, mm[2][1]*sz, mm[2][2]*sz, 0],
                   [0,0,0,1])
+
+
+# Read in datarefs
+def getDatarefs():
+    datarefs={}
+    err=IOError(0, "Corrupt DataRefs.txt file. Please re-install.")
+    for sdir in ['uscriptsdir', 'scriptsdir']:
+        if (Blender.Get(sdir) and
+            exists(join(Blender.Get(sdir), 'DataRefs.txt'))):
+            f=file(join(Blender.Get(sdir), 'DataRefs.txt'), 'rU')
+            d=f.readline().split()
+            if len(d)!=7 or d[0]!='2':
+                raise err
+            for line in f:
+                d=line.split()
+                if not d: continue
+                if len(d)<3:
+                    raise err
+                l=d[0].rfind('/')
+                if l==-1:
+                    raise err
+                n=1
+                for c in ['int', 'float', 'double']:
+                    if d[1].lower().startswith(c):
+                        if len(d[1])>len(c):
+                            n=int(d[1][len(c)+1:-1])
+                        break
+                else:	# not a usable dataref
+                    n=0
+                datarefs[d[0][l+1:]]=(d[0][:l+1], n)
+            break
+    else:
+        raise IOError(0, "Missing DataRefs.txt file. Please re-install.")
+    return datarefs
