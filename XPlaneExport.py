@@ -78,6 +78,11 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-08-28 v1.61 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
+#  - Display number of X-Plane objects on import and export
+#
+# 2004-08-29 v1.62 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Import and export Light and Line colours as floats
+#  - Export: Don't generate no_depth attribute - it's broken in X-Plane 7.61
 #
 
 #
@@ -182,7 +187,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.61
+    VERSION=1.62
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -195,6 +200,7 @@ class OBJexport:
         self.filename=filename
         self.texture=""
         self.linewidth=0.1
+        self.nobj=0		# Number of X-Plane objects exported
 
         # flags controlling export
         self.no_depth=0
@@ -223,7 +229,7 @@ class OBJexport:
         self.file.close()
         
         Window.DrawProgressBar(1, "Finished")
-        print "Finished\n"
+        print "Finished - exported %s objects\n" % self.nobj
 
     #------------------------------------------------------------------------
     def checkFile(self):
@@ -239,10 +245,14 @@ class OBJexport:
 
     #------------------------------------------------------------------------
     def writeHeader(self):
-        if self.fileformat==7:
-            self.file.write("I\n700\t// \nOBJ\t// \n\n")
+        if Blender.sys.dirsep=="\\":
+            systype="I"
         else:
-            self.file.write("I\n2\t//\n\n")
+            systype="A"
+        if self.fileformat==7:
+            self.file.write("%s\n700\t// \nOBJ\t// \n\n" % systype)
+        else:
+            self.file.write("%s\n2\t//\n\n" % systype)
         self.file.write("%s\t\t// Texture\n\n\n" % self.texture)
 
     #------------------------------------------------------------------------
@@ -366,6 +376,7 @@ class OBJexport:
     def writeLamp(self, object):
         lamp=object.getData()
         name=lamp.getName()
+        special=0
         
         if lamp.getType() != Lamp.Types.Lamp:
             print "Info:\tIgnoring Area, Spot, Sun or Hemi lamp \"%s\"" % name
@@ -378,28 +389,41 @@ class OBJexport:
         c=[0,0,0]
         if lname.find("pulse")!=-1:
             c[0]=c[1]=c[2]=99
+            special=1
         elif lname.find("strobe")!=-1:
             c[0]=c[1]=c[2]=98
+            special=1
         elif lname.find("traffic")!=-1:
             c[0]=c[1]=c[2]=97
+            special=1
         elif lname.find("flash")!=-1:
-            c[0]=-int(round(lamp.col[0]*10,0))
-            c[1]=-int(round(lamp.col[1]*10,0))
-            c[2]=-int(round(lamp.col[2]*10,0))
+            c[0]=-lamp.col[0]*10,0
+            c[1]=-lamp.col[1]*10,0
+            c[2]=-lamp.col[2]*10,0
         else:
-            c[0]=int(round(lamp.col[0]*10,0))
-            c[1]=int(round(lamp.col[1]*10,0))
-            c[2]=int(round(lamp.col[2]*10,0))
-                    
+            c[0]=lamp.col[0]*10
+            c[1]=lamp.col[1]*10
+            c[2]=lamp.col[2]*10
+
         v=Vertex(0,0,0, object.getMatrix())
         if self.fileformat==7:
             self.file.write("light\t\t\t// %s\n" % name)
-            self.file.write("%s\t  %3d %3d %3d\n\n" % (v, c[0],c[1],c[2]))
+            if special:
+                self.file.write("%s\t %2d     %2d     %2d\n\n" % (
+                    v, c[0],c[1],c[2]))
+            else:
+                self.file.write("%s\t %5.2f  %5.2f  %5.2f\n\n" % (
+                    v, c[0],c[1],c[2]))
         else:
-            self.file.write("1  %3d %3d %3d\t\t// %s\n" % (
-                c[0], c[1], c[2], name))
+            if special:
+                self.file.write("1  %2d %2d %2d\t\t// %s\n" % (
+                    c[0], c[1], c[2], name))
+                self.file.write("1  %5.2f %5.2f %5.2f\t\t// %s\n" % (
+                    c[0], c[1], c[2], name))
             self.file.write("%s\n" % v)
-            
+        self.nobj+=1
+
+
     #------------------------------------------------------------------------
     def writeLine(self, object):
         name=object.name
@@ -426,20 +450,23 @@ class OBJexport:
                   (v[i+2].z+v[(i+3)%4].z)/2)
 
         if len(mesh.materials)>face.mat:
-            c=[int(round(mesh.materials[face.mat].R*10,0)),
-               int(round(mesh.materials[face.mat].G*10,0)),
-               int(round(mesh.materials[face.mat].B*10,0))]
+            c=[mesh.materials[face.mat].R*10,
+               mesh.materials[face.mat].G*10,
+               mesh.materials[face.mat].B*10,]
         else:
             c=[0.5,0,5,0,5]
     
         if self.fileformat==7:
             self.file.write("line\t\t\t// %s\n" % name)
-            self.file.write("%s\t  %3d %3d %3d\n" % (v1, c[0],c[1],c[2]))
-            self.file.write("%s\t  %3d %3d %3d\n\n" % (v2, c[0],c[1],c[2]))
+            self.file.write("%s\t %5.2f  %5.2f  %5.2f\n" % (
+                v1, c[0],c[1],c[2]))
+            self.file.write("%s\t %5.2f  %5.2f  %5.2f\n\n" % (
+                v2, c[0],c[1],c[2]))
         else:
-            self.file.write("2  %3d %3d %3d\t\t// %s\n" % (
+            self.file.write("2  %2d %2d %2d\t\t// %s\n" % (
                 c[0], c[1], c[2], name))
             self.file.write("%s\n%s\n\n" % (v1, v2))
+        self.nobj+=1
 
 
     #------------------------------------------------------------------------
@@ -791,6 +818,7 @@ class OBJexport:
                             break
                 
         self.file.write("\n")
+        self.nobj+=1
 
     #------------------------------------------------------------------------
     def updateLayer(self,layer):
@@ -811,16 +839,17 @@ class OBJexport:
 
         # For readability, write turn-offs before turn-ons
         # Note X-Plane parser requires a comment after attribute statements
-        
-        if self.no_depth and not no_depth:
-            self.file.write("ATTR_depth\t\t//\n\n")
+
+# Grrrr, no_depth is broken in X-Plane 7.61
+#       if self.no_depth and not no_depth:
+#           self.file.write("ATTR_depth\t\t//\n\n")
         if self.dblsided and not dblsided:
             self.file.write("ATTR_cull\t\t//\n\n")
         if self.smooth and not smooth:
             self.file.write("ATTR_shade_flat\t\t//\n\n")
             
-        if no_depth and not self.no_depth:
-            self.file.write("ATTR_no_depth\t\t//\n\n")
+#       if no_depth and not self.no_depth:
+#           self.file.write("ATTR_no_depth\t\t//\n\n")
         if dblsided and not self.dblsided:
             self.file.write("ATTR_no_cull\t\t//\n\n")
         if smooth and not self.smooth:

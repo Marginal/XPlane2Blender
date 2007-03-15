@@ -78,6 +78,11 @@ Tip: 'Import an X-Plane scenery file (.obj)'
 #
 # 2004-08-28 v1.61 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
+#  - Display number of X-Plane objects on import and export
+#
+# 2004-08-29 v1.62 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Import and export Light and Line colours as floats
+#  - Export: Don't generate no_depth attribute - it's broken in X-Plane 7.61
 #
 
 import sys
@@ -322,7 +327,7 @@ class Mesh:
 #-- OBJimport --
 #------------------------------------------------------------------------
 class OBJimport:
-    VERSION=1.61
+    VERSION=1.62
     
     LAYER=[0,1,2,4]
 
@@ -342,6 +347,7 @@ class OBJimport:
         self.image=0		# texture image, iff scenery has texture
         self.material=0		# only valid if self.image
         self.curmesh=[]		# unoutputted meshes
+        self.nobj=0		# Number of X-Plane objects imported
         
         # random stuff
         self.whitespace=[" ","\t","\n","\r"]
@@ -366,7 +372,7 @@ class OBJimport:
         self.readTexture()
         self.readObjects()
         Window.DrawProgressBar(1, "Finished")
-        print "Finished\n"
+        print "Finished - imported %s objects\n" % self.nobj
 
     #------------------------------------------------------------------------
     def getInput(self):
@@ -438,7 +444,7 @@ class OBJimport:
     def getCol(self):
         v=[]
         for i in range(3):
-            v.append(self.getInt())
+            v.append(self.getFloat())
         return v
 
     #------------------------------------------------------------------------
@@ -804,6 +810,7 @@ class OBJimport:
             ob.Layer=OBJimport.LAYER[self.lod]
         cur=Window.GetCursorPos()
         ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
+        self.nobj+=1
         
     #------------------------------------------------------------------------
     def addLine(self,scene,v,c):
@@ -861,6 +868,7 @@ class OBJimport:
         cur=Window.GetCursorPos()
         ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
+        self.nobj+=1
 
     #------------------------------------------------------------------------
     def addTris(self, scene, token, v, uv):
@@ -898,6 +906,7 @@ class OBJimport:
             flags |= OBJimport.LAYER[self.lod]
 
         self.addToMesh(scene,name,faces,flags)
+        self.nobj+=1
 
     #------------------------------------------------------------------------
     def addQuads(self, scene, token, v, uv, vorder):
@@ -945,6 +954,7 @@ class OBJimport:
             flags |= OBJimport.LAYER[self.lod]
 
         self.addToMesh(scene,name,faces,flags)
+        self.nobj+=1
 
     #------------------------------------------------------------------------
     # add faces to existing or new mesh
