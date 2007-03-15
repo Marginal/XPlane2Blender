@@ -87,6 +87,10 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #
 # 2004-09-10 v1.72
 #
+# 2004-10-10 v1.73
+#  - Report line number on input error
+#  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits
+#
 
 
 import sys
@@ -164,7 +168,7 @@ class Token:
         ]
 
 class Vertex:
-    LIMIT=0.01	# max distance between vertices for them to be merged
+    LIMIT=0.001	# max distance between vertices for them to be merged
     ROUND=1	# Precision
     
     def __init__(self, x, y, z):
@@ -345,7 +349,8 @@ class OBJimport:
         #--- class private don't touch ---
         self.filename=filename
         self.linesemi=0.025
-        self.lastpos=0		# for error reporting
+        self.lastpos=0		# for progress reporting
+        self.lineno=0		# for error reporting
         self.filelen=0		# for progress reports
         self.fileformat=0	# 6 or 7
         self.image=0		# texture image, iff scenery has texture
@@ -387,15 +392,19 @@ class OBJimport:
             if not c:
             	raise ParseError(ParseError.TOKEN, "<EOF>")
             elif c in self.whitespace:
+                if c == "\r":
+                    self.lineno += 1
                 # skip to first non-whitespace
                 while 1:
-                    pos=self.file.tell()
-                    c=self.file.read(1)
+                    pos = self.file.tell()
+                    c = self.file.read(1)
                     if not c:
                         if self.verbose>1:
                             print "Input:\t\"%s\"" % input
                         return input
-                    elif c=="/":
+                    elif c == "\r":
+                        self.lineno += 1
+                    elif c == "/":
                         self.getCR()
                     elif not c in self.whitespace:
                         self.file.seek(pos)
@@ -470,18 +479,25 @@ class OBJimport:
     def getCR(self):
         self.comment=""
         while 1:
-            c=self.file.read(1)
-            if c in ["", "\n", "\r"]:
+            c = self.file.read(1)
+            if c == "\r":
+                self.lineno += 1
+                break
+            elif c in ["", "\n"]:
                 break
             self.comment += c
-        self.comment=self.comment[1:].strip()
+        self.comment = self.comment[1:].strip()
         # Export used to attach these prefixes to comments
         for c in ["Mesh: ", "Light: ", "Line: "]:
             if self.comment.find (c) == 0:
                 self.comment=self.comment[len(c):]
-        pos=self.file.tell()
-        while self.file.read(1) in ["\n", "\r"]:
-            pos=self.file.tell()
+        while 1:
+            pos = self.file.tell()
+            c = self.file.read(1)
+            if c == "\r":
+                self.lineno += 1
+            elif c != "\n":
+                break
         self.file.seek(pos)
 
     #------------------------------------------------------------------------
@@ -491,7 +507,7 @@ class OBJimport:
             print "Input:\t\"%s\"" % c
         if c=="A" or c=="I":
             self.getCR()
-            c=self.file.read(1)
+            c = self.file.read(1)
             if self.verbose>1:
                 print "Input:\t\"%s\"" % c
             if c=="2":
@@ -514,10 +530,12 @@ class OBJimport:
 
         # skip to first non-whitespace
         while 1:
-            pos=self.file.tell()
-            c=self.file.read(1)
+            pos = self.file.tell()
+            c = self.file.read(1)
             if not c:
                 raise ParseError(HEADER)
+            if c == "\r":
+                self.lineno += 1
             if not c in self.whitespace:
                 self.file.seek(pos)
                 return
@@ -1038,8 +1056,8 @@ def file_callback (filename):
                 msg="ERROR:\tExpecting a number,"
             else:
                 msg="ERROR:\tParse error,",
-            msg=msg+" found \"%s\" at file offset %s\n" % (
-                e.value, obj.lastpos)
+            msg=msg+" found \"%s\" at line %s\n" % (
+                e.value, obj.lineno)
         Window.DrawProgressBar(1, "Error")
         print msg
         Blender.Draw.PupMenu(msg)

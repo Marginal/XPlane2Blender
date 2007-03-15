@@ -90,6 +90,11 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 # 2004-09-10 v1.72
 #  - Fixed bug with exporting flashing lights.
 #
+# 2004-10-10 v1.73
+#  - Fixed missing data in tri_fans when triangle vertices are within
+#    duplicate vertex limit, which led to corrupt output file
+#  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -114,8 +119,8 @@ import Blender
 from Blender import NMesh, Lamp, Draw, Window
 
 class Vertex:
-    LIMIT=0.01	# max distance between vertices for them to be merged = 1/4in
-    ROUND=2	# Precision, AS ABOVE
+    LIMIT=0.001	# max distance between vertices for them to be merged = 1/4in
+    ROUND=3	# Precision, AS ABOVE
     
     def __init__(self, x, y, z, mm=0):
         self.faces=[]	# indices into face array
@@ -129,7 +134,7 @@ class Vertex:
             self.z=-(mm[0][1]*x + mm[1][1]*y + mm[2][1]*z + mm[3][1])
             
     def __str__(self):
-        return "%7.2f %7.2f %7.2f" % (self.x, self.y, self.z)
+        return "%8.3f %8.3f %8.3f" % (self.x, self.y, self.z)
     
     def equals (self, v, fudge=LIMIT):
         if ((abs(self.x-v.x) < fudge) and
@@ -179,7 +184,7 @@ class Face:
     def __str__(self):
         s="<"
         for v in self.v:
-            s=s+("[%4.1f %4.1f %4.1f]," % (v.x, v.y, v.z))
+            s=s+("[%5.2f %5.2f %5.2f]," % (v.x, v.y, v.z))
         return s[:-1]+">"
 
     def addVertex(self, v):
@@ -193,7 +198,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.72
+    VERSION=1.73
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -526,39 +531,44 @@ class OBJexport:
                 if f.mode & NMesh.FaceModes.TEX:
                     assert len(f.uv)==n, "Missing UV in \"%s\"" % object.name
 
-                # Remove any redundant vertices
                 v=[]
                 for i in range(n):
                     vertex=Vertex(f.v[i][0],f.v[i][1],f.v[i][2],mm)
-                    for j in range(len(v)):
-                        if vertex.equals(v[j]):
-                            v[j].x=(v[j].x+vertex.x)/2
-                            v[j].y=(v[j].y+vertex.y)/2
-                            v[j].z=(v[j].z+vertex.z)/2
-                            break
-                    else:
-                        v.append(vertex)
-                        if f.mode & NMesh.FaceModes.TEX:
-                            face.addUV(UV(f.uv[i][0],f.uv[i][1]))
-                        else:	# File format requires something - using (0,0)
-                            face.addUV(UV(0,0))
-                if len(v)<3:
-                    continue
-                
-                self.faces.append(face)
-                for vertex in v:
                     for q in self.verts:
                         if vertex.equals(q):
-                            q.x=(q.x+vertex.x)/2
-                            q.y=(q.y+vertex.y)/2
-                            q.z=(q.z+vertex.z)/2
-                            q.addFace(len(self.faces)-1)
+                            q.x = (q.x + vertex.x) / 2
+                            q.y = (q.y + vertex.y) / 2
+                            q.z = (q.z + vertex.z) / 2
                             face.addVertex(q)
                             break
                     else:
                         self.verts.append(vertex)
-                        vertex.addFace(len(self.faces)-1)
                         face.addVertex(vertex)
+
+                    if f.mode & NMesh.FaceModes.TEX:
+                        face.addUV(UV(f.uv[i][0],f.uv[i][1]))
+                    else:	# File format requires something - using (0,0)
+                        face.addUV(UV(0,0))
+
+                # merge duplicate vertices
+                i=0
+                while i < len(face.v):
+                    for j in range (len(face.v)):
+                        if i!=j and face.v[i]==face.v[j]:
+                            face.v.pop(j)
+                            face.uv[i].s = (face.uv[i].s + face.uv[j].s) / 2
+                            face.uv[i].t = (face.uv[i].t + face.uv[j].t) / 2
+                            face.uv.pop(j)
+                            break
+                    i+=1
+                        
+                if len(face.v) < 3:
+                    continue
+
+                self.faces.append(face)
+                for vertex in face.v:
+                    vertex.addFace(len(self.faces)-1)
+                
                 if self.debug: print face
 
 
@@ -777,7 +787,7 @@ class OBJexport:
             # incorrectly (wrong normal?) under some situations.
             # Bug appears reliably to be avoided if the tri_fan is regular,
             # but that's hard to work out. So assume it is regular if it is
-            # closed. Split back into tris unless it is closed.
+            # closed. Split back into tris if it is not closed.
             if n==3 and len(strip)>1:
                 # tri_fan is closed if first and last faces share two vertices
                 common=0

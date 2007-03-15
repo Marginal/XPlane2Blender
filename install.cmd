@@ -3,6 +3,18 @@
 echo Installing Blender scripts . . .
 echo.
 
+rem Remove old versions
+set FILES=..\Bpymenus uvCopyPaste.py XPlane2Blender.html XPlaneExport.py XPlaneImport.py XPlaneReadme.txt
+for %%I in (%FILES%) do if exist "%HOME%\.blender\scripts\%%I" del "%HOME%\.blender\scripts\%%I"
+for %%I in (%FILES%) do if exist "%ProgramFiles%\Blender Foundation\Blender\.blender\scripts\%%I" del "%ProgramFiles%\Blender Foundation\Blender\.blender\scripts\%%I"
+for %%I in (%FILES%) do if exist "%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts\%%I" del "%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts\%%I"
+
+:home
+if "%HOME%"=="" goto prog
+set DESTDIR=%HOME%\.blender\scripts\
+if not exist "%DESTDIR%" goto prog
+goto copy
+
 :prog
 if "%ProgramFiles%"=="" goto appdata
 set DESTDIR=%ProgramFiles%\Blender Foundation\Blender\.blender\scripts\
@@ -10,14 +22,8 @@ if not exist "%DESTDIR%" goto appdata
 goto copy
 
 :appdata
-if "%USERPROFILE%"=="" goto home
+if "%USERPROFILE%"=="" goto destfail
 set DESTDIR=%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts\
-if not exist "%DESTDIR%" goto home
-goto copy
-
-:home
-if "%HOME%"=="" goto destfail
-set DESTDIR=%HOME%\.blender\scripts\
 if not exist "%DESTDIR%" goto destfail
 goto copy
 
@@ -26,20 +32,9 @@ echo Failed to find appropriate location for Blender scripts !!!
 goto end
 
 :copy
-if exist "%DESTDIR%..\Bpymenus"         del "%DESTDIR%..\Bpymenus"
-if exist "%DESTDIR%uvCopyPaste.py"      del "%DESTDIR%uvCopyPaste.py"
-if exist "%DESTDIR%XPlane2Blender.html" del "%DESTDIR%XPlane2Blender.html"
-if exist "%DESTDIR%XPlaneExport.py"     del "%DESTDIR%XPlaneExport.py"
-if exist "%DESTDIR%XPlaneImport.py"     del "%DESTDIR%XPlaneImport.py"
-if exist "%DESTDIR%XPlaneReadme.txt"    del "%DESTDIR%XPlaneReadme.txt"
-copy /v /y uvCopyPaste.py                   "%DESTDIR%" >nul:
-copy /v /y XPlane2Blender.html              "%DESTDIR%" >nul:
-copy /v /y XPlaneExport.py                  "%DESTDIR%" >nul:
-copy /v /y XPlaneImport.py                  "%DESTDIR%" >nul:
-if not exist "%DESTDIR%uvCopyPaste.py"      goto copyfail
-if not exist "%DESTDIR%XPlane2Blender.html" goto copyfail
-if not exist "%DESTDIR%XPlaneExport.py"     goto copyfail
-if not exist "%DESTDIR%XPlaneImport.py"     goto copyfail
+set FILES=uvCopyPaste.py XPlane2Blender.html XPlaneExport.py XPlaneImport.py
+for %%I in (%FILES%) do copy /v /y %%I "%DESTDIR%" >nul:
+for %%I in (%FILES%) do if not exist "%DESTDIR%%%I" goto copyfail
 echo Installation successful.
 goto end
 
