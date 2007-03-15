@@ -363,18 +363,23 @@ undercarriage is sitting directly on the ground.
 Click to set the plane's position.</li>
 </ul>
 <p>The main texture bitmap file is named <code><i>airplane</i>_paint</code>.
-Most planes also use textures from a second bitmap file named <code><i>airplane</i>_paint2</code>.
-If your imported plane uses weapons then each weapon will also use an
-additional bitmap file. However the X-Plane <code>.obj</code>
-scenery file formats only support the use of a single texture bitmap
-file. Meshes that use textures from an additional bitmap file are
-imported with "<code>*</code>" after their name.</p>
-<p>Open an <samp>Outliner</samp> window, and for
-each listed mesh that has a name ending with "<code>*</code>",
+Most planes also use textures from a second bitmap file named
+<code><i>airplane</i>_paint2</code>. Objects that use textures from
+the second bitmap file are imported with "<code>*</code>" after their
+name to make them easier to identify.</p>
+<p>If your imported plane uses weapons or objects then each of
+these will use an additional bitmap file. Weapons are imported
+with their names starting with "<code>W<i>nn</i></code>" and objects
+with their names starting with "<code>O<i>nn</i></code>".</p>
+<p>The X-Plane <code>.obj</code> scenery file formats only
+support the use of a single texture bitmap file. Open an
+<samp>Outliner</samp> window, and for each listed mesh that has a name
+starting with "<code>W<i>nn</i></code>" or "<code>O<i>nn</i></code>"
+or ending with "<code>*</code>",
 either:</p>
 <ul>
   <li>Delete the mesh,</li>
-  <li>Or copy the required textures to an unused area in <code><i>airplane</i>_paint</code>,
+  <li>Or copy the required textures to an unused area in <code><i>airplane</i>_paint</code>
 and use the <samp>UV Image Editor</samp> window to map the
 new textures in <code><i>airplane</i>_paint</code>
 to the mesh's faces.</li>
@@ -410,8 +415,7 @@ of Detail</a>, so only objects in Blender layer 1 are exported.
 If you want to keep objects in your Blender scene for reference but
 which you don't want to export - eg the plane fuselage - then put them
 in layer 4 or greater before exporting.</p>
-<p>Choose <samp>File&raquo;Save As</samp> and
-save
+<p>Choose <samp>File &raquo; Save As</samp> and save
 the blender file in the same folder as your plane's <code>.acf</code>
 file with the name <code><i>airplane</i>_cockpit.blend</code>,
 where <i>airplane</i> is the name of your plane's <code>.acf</code>
@@ -429,8 +433,7 @@ the same folder as your plane's <code>.acf</code> file.</p>
 <ul>
   <li>Layout the 2D panel in PlaneMaker as normal. But bear in
 mind that only the top 768 lines of the 2D panel can be used in the 3D
-cockpit in X-Plane versions prior to 8.20. This is fixed in X-Plane
-v8.20.</li>
+cockpit in X-Plane versions prior to 8.20.</li>
   <li>Run X-Plane and load your aircraft. Press the <samp style="font-weight: bold;">Up</samp> arrow to ensure
 that you're looking at the top of the 2D panel. Take a screenshot (on a
 PC press <samp style="font-weight: bold;">Alt&nbsp;PrtSc</samp>).</li>
@@ -449,8 +452,8 @@ need to be distributed with your finished plane.</li>
 </ul>
 <p>Note that X-Plane versions prior to 8.20 only display the 3D
 cockpit when running at the default 1024x768 resolution. You may want
-to mention this in the Readme with your plane if your plane works with
-X-Plane versions prior to 8.20. This is fixed in X-Plane v8.20.</p>
+to mention this in the Readme with your plane if your plane is
+intended to work in X-Plane versions prior to 8.20..</p>
 <h3>Optimising for X-Plane</h3>
 <h4><a name="strips"></a>Strips</h4>
 <p>As well as basic 3- and 4-edged faces ("<code>tri</code>"s
@@ -560,9 +563,9 @@ option in PlaneMaker)</small> is ignored.</li>
   <li>Cockpits objects are ignored. You can use <samp>File
 &raquo; Import &raquo; X-Plane Object</samp> to import
 cockpits.</li>
-  <li>Planes (and their weapons) can use multiple texture bitmap
-files. These are not automagically merged into one file during the
-import.</li>
+  <li>Planes (and their weapons & misc objects) can use multiple
+texture bitmap files. These are not automagically merged into one file
+during the import.</li>
   <li>The importer can't work out which faces are partially or
 wholly transparent. You should tell Blender which faces are transparent
 by pressing the <samp>Alpha</samp> button in <samp>UV
@@ -596,7 +599,7 @@ looks like a Command Prompt).</small></li>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.17 &copy; 2004-2006
+      <td class="banner">Version 2.18 &copy; 2004-2006
       <a href="mailto:x-plane@marginal.org.uk">Jonathan
 Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>

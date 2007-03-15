@@ -44,10 +44,10 @@
 #
 
 import sys
+from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
 import Blender
 from Blender import NMesh, Lamp, Image, Draw, Window
 from XPlaneUtils import Vertex
-from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
 
 class ExportError(Exception):
     def __init__(self, msg):

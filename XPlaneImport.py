@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.17"
+__version__ = "2.18"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -377,8 +377,9 @@ class Mesh:
         
         for f in self.faces:
             face=NMesh.Face()
-            face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TEX|
-                           NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
+            face.mode |= NMesh.FaceModes.TEX	# Need this for other flags
+            face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TILES|
+                           NMesh.FaceModes.DYNAMIC)
             if not f.flags&Face.HARD:
                 face.mode |= NMesh.FaceModes.DYNAMIC
             if f.flags&Face.TWOSIDE:
@@ -420,10 +421,8 @@ class Mesh:
                             break
                         except IOError:
                             pass
-                face.mode |= NMesh.FaceModes.TEX
                 face.image = panel
             elif image:
-                face.mode |= NMesh.FaceModes.TEX
                 face.image = image
                             
             #assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
@@ -437,6 +436,7 @@ class Mesh:
         cur=Window.GetCursorPos()
         ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
+        return ob
 
 
 #------------------------------------------------------------------------
@@ -446,10 +446,13 @@ class OBJimport:
     LAYER=[0,1,2,4]
 
     #------------------------------------------------------------------------
-    def __init__(self, filename):
+    def __init__(self, filename, subroutine=False):
         #--- public you can change these ---
-        self.verbose=0	# level of verbosity in console: 0-none, 1-some, 2-most
-        self.merge=1	# merge primitives into meshes: 0-no, 1-abut, 2-force
+        self.verbose=1	# level of verbosity in console: 1-some,2-chat,3-debug
+        self.merge=1	# merge primitives into meshes: 0-no,1-abut,2-force
+        if subroutine:	# Object is being merged into something else
+            self.verbose=0
+            self.merge=2
         
         #--- class private don't touch ---
         if filename[0:2] in ['//', '\\\\']:
@@ -504,7 +507,8 @@ class OBJimport:
     #------------------------------------------------------------------------
     def doimport(self):
         #clock=time.clock()	# Processor time
-        print "Starting OBJ import from " + self.filename
+        if self.verbose:
+            print "Starting OBJ import from " + self.filename
         Blender.Window.WaitCursor(1)
     
         self.file = open(self.filename, 'rU')
@@ -513,10 +517,12 @@ class OBJimport:
         self.file.seek(0)
         Window.DrawProgressBar(0, "Opening ...")
         self.readHeader()
-        self.readObjects()
+        ob=self.readObjects()
         Window.DrawProgressBar(1, "Finished")
-        print "Finished - imported %s primitives\n" % self.nprim
+        if self.verbose:
+            print "Finished - imported %s primitives\n" % self.nprim
         #print "%s CPU time\n" % (time.clock()-clock)
+        return ob
 
     #------------------------------------------------------------------------
     def getInput(self):
@@ -545,7 +551,7 @@ class OBJimport:
                         self.lineno += 1
                     else:
                         self.file.seek(pos)	# stay on this line
-                if self.verbose>1:
+                if self.verbose>2:
                     print "Input:\t\"%s\"" % input
                 return input
             else:
@@ -600,7 +606,7 @@ class OBJimport:
                 break
             input=input+c
             
-        if self.verbose>1:
+        if self.verbose>2:
             print "Token:\t\"%s\"" % input
 
         if self.fileformat>6:
@@ -702,19 +708,19 @@ class OBJimport:
     #------------------------------------------------------------------------
     def readHeader(self):
         c=self.file.read(1)
-        if self.verbose>1:
+        if self.verbose>2:
             print "Input:\t\"%s\"" % c
         if not c in ['A', 'I']:
             raise ParseError(ParseError.HEADER)
         
         self.getCR()
         c = self.file.read(1)
-        if self.verbose>1:
+        if self.verbose>2:
             print "Input:\t\"%s\"" % c
         if c=="2":
             self.getCR()
             self.fileformat=6
-            if self.verbose:
+            if self.verbose>1:
                 print "Info:\tThis is an X-Plane v6 format file"
         elif c=="7" and self.file.read(2)=="00":
             self.getCR()
@@ -722,7 +728,7 @@ class OBJimport:
                 raise ParseError(ParseError.HEADER)
             self.getCR()
             self.fileformat=7
-            if self.verbose:
+            if self.verbose>1:
                 print "Info:\tThis is an X-Plane v7 format file"
         elif c=="8" and self.file.read(2)=="00":
             self.getCR()
@@ -730,7 +736,7 @@ class OBJimport:
                 raise ParseError(ParseError.HEADER)
             self.getCR()
             self.fileformat=8
-            if self.verbose:
+            if self.verbose>1:
                 print "Info:\tThis is an X-Plane v8 format file"
         else:
             raise ParseError(ParseError.HEADER)
@@ -774,7 +780,7 @@ class OBJimport:
 
         if tex.lower() in ['', 'none']:
             self.image=0
-            if self.verbose:
+            if self.verbose>1:
                 print "Info:\tNo texture"
             return
 
@@ -803,7 +809,7 @@ class OBJimport:
                         texname=newname
                         print "Info:\tCreated new texture file \"%s\"" % (
                             texname)
-                    elif self.verbose:
+                    elif self.verbose>1:
                         print "Info:\tUsing texture file \"%s\"" % texname
                     file.close()
                     self.image = Image.Load(texname)
@@ -824,8 +830,8 @@ class OBJimport:
                     # write meshes
                     self.mergeMeshes()
                     for mesh in self.curmesh:
-                        mesh.doimport(scene,self.image,self.filename)
-                    return
+                        last=mesh.doimport(scene,self.image,self.filename)
+                    return last
 
                 elif t==Token.VLIGHT:
                     v=self.getVertex()
@@ -1015,8 +1021,8 @@ class OBJimport:
                     # write meshes
                     self.mergeMeshes()
                     for mesh in self.curmesh:
-                        mesh.doimport(scene,self.image,self.filename)
-                    return
+                        last=mesh.doimport(scene,self.image,self.filename)
+                    return last
                 
                 elif t==Token.LIGHT:
                     self.getCR()
@@ -1190,8 +1196,8 @@ class OBJimport:
                     self.mergeMeshes()
                     Blender.Window.WaitCursor(1)
                     for mesh in self.curmesh:
-                        mesh.doimport(scene,self.image,self.filename)
-                    return
+                        last=mesh.doimport(scene,self.image,self.filename)
+                    return last
     
                 elif t==Token.LIGHT:
                     c=self.getCol()
@@ -1284,7 +1290,7 @@ class OBJimport:
         else:
             name="Light"
 
-        if self.verbose:
+        if self.verbose>1:
             print "Info:\tImporting Lamp at line %s \"%s\"" % (
                 self.lineno, name)
         lamp=Lamp.New("Lamp", name)
@@ -1305,7 +1311,7 @@ class OBJimport:
     #------------------------------------------------------------------------
     def addLine(self,scene,v,c):
         name=self.name("Line")
-        if self.verbose:
+        if self.verbose>1:
             print "Info:\tImporting Line at line %s \"%s\"" % (
                 self.lineno, name)
 
@@ -1370,7 +1376,7 @@ class OBJimport:
             name="Mesh"
         else:
             name=self.name(Token.NAMES[token])
-        if self.verbose:
+        if self.verbose>1:
             print "Info:\tImporting %s at line %s \"%s\"" % (
                 Token.NAMES[token], self.lineno, name)
         nv=len(v)
@@ -1424,7 +1430,7 @@ class OBJimport:
             name=self.name("Movie")
         elif token==Token.QUAD_COCKPIT:
             name=self.name("Panel")
-        if self.verbose:
+        if self.verbose>1:
             print "Info:\tImporting %s at line %s \"%s\"" % (
                 Token.NAMES[token], self.lineno, name)
         nv=len(v)
@@ -1551,19 +1557,21 @@ def file_callback (filename):
         Blender.Window.WaitCursor(0)
         Blender.Window.DrawProgressBar(0, 'ERROR')
         if e.type == ParseError.HEADER:
-            msg="ERROR:\tThis is not a valid X-Plane v6, v7 or v8 OBJ file\n"
+            msg='This is not a valid X-Plane v6, v7 or v8 OBJ file'
         else:
             if e.type == ParseError.TOKEN:
-                msg="ERROR:\tExpecting a Token, found \"%s\" at line %s\n" % (
+                msg='Expecting a Token, found "%s" at line %s' % (
                     e.value, obj.lineno)
             elif e.type == ParseError.INTEGER:
-                msg="ERROR:\tExpecting an integer, found \"%s\" at line %s\n" % (e.value, obj.lineno)
+                msg='Expecting an integer, found "%s" at line %s' % (
+                    e.value, obj.lineno)
             elif e.type == ParseError.FLOAT:
-                msg="ERROR:\tExpecting a number, found \"%s\" at line %s\n" % (
+                msg='Expecting a number, found "%s" at line %s\n' % (
                     e.value, obj.lineno)
             else:
-                msg="ERROR:\t%s at line %s\n" % (e.value, obj.lineno)
-        print msg
+                msg='%s at line %s' % (e.value, obj.lineno)
+        print "ERROR:\t%s\n" % msg
+        Blender.Draw.PupMenu("ERROR: %s" % msg)
         Blender.Draw.PupMenu(msg)
         Blender.Window.DrawProgressBar(1, 'ERROR')
     obj.file.close()

@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v7 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.17"
+__version__ = "2.18"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v7 .obj
 format for placement with World-Maker.
@@ -928,9 +928,8 @@ else:
     except ExportError, e:
         Blender.Window.WaitCursor(0)
         Blender.Window.DrawProgressBar(0, 'ERROR')
-        msg="ERROR:\t"+e.msg+"\n"
-        print msg
-        Blender.Draw.PupMenu(msg)
+        print "ERROR:\t%s\n" % e.msg
+        Blender.Draw.PupMenu("ERROR: %s" % e.msg)
         Blender.Window.DrawProgressBar(1, 'ERROR')
         if obj.file:
             obj.file.close()

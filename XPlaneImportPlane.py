@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.17"
+__version__ = "2.18"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes into Blender, so that
 they can be exported as X-Plane scenery.
@@ -84,13 +84,18 @@ Limitations:<br>
 #  - Airfoil width read from .afl file.
 #
 # 2005-05-10 v2.02
-#  - Add '*' to mesh names for parts that use non-primary texture.
+#  - Add '*' to mesh names for parts that use secondary texture.
 #
 # 2005-05-14 v2.05
 #  - Add support for v8.15 format planes.
 #
 # 2006-02-01 v2.17
 #  - Add support for v8.30 format planes.
+#
+# 2006-02-28 v2.18
+#  - Add support for v8.40 format planes (Misc Objects).
+#  - Add thrust vectoring to props and nacelles
+#  - PNG takes precedence over BMP
 #
 
 import sys
@@ -99,7 +104,10 @@ from Blender import Object, NMesh, Lamp, Image, Material, Window, Mathutils
 from Blender.Mathutils import Vector, Matrix, RotationMatrix, TranslationMatrix
 from struct import unpack
 from math import hypot, pi, sin, cos
+from os.path import basename, dirname, join
+
 from XPlaneUtils import Vertex, UV, findTex
+from XPlaneImport import OBJimport
 
 class ParseError(Exception):
     def __init__(self, msg):
@@ -125,7 +133,7 @@ class ACFimport:
 
     #------------------------------------------------------------------------
     def __init__(self, filename, isscenery):
-        self.debug=0	# extra debug info in console. >=2:dump txt file
+        self.debug=0	# 1: extra debug info in console. 2: also dump txt file
         self.isscenery=isscenery
         if self.isscenery:
             self.scale=0.3048		# foot->metre constant
@@ -151,13 +159,13 @@ class ACFimport:
         self.cur=Vertex(cur[0], cur[1], cur[2])
         
         texfilename=self.filename[:self.filename.rindex('.')]+'_paint'
-        for extension in [".bmp", ".png"]:
+        for extension in ['.png', '.bmp']:	# PNG takes precedence in 8.x
             try:
                 file = open(texfilename+extension, "rb")
             except IOError:
                 pass
             else:
-                for extension2 in [".bmp", ".png"]:
+                for extension2 in ['.png', '.bmp']:
                     try:
                         self.image2 = Image.Load(texfilename+'2'+extension2)
                     except IOError:
@@ -191,14 +199,14 @@ class ACFimport:
 
         if self.isscenery:
             n=(DEFfmt.partDIM+DEFfmt.wattDIM+DEFfmt.gearDIM+DEFfmt.doorDIM+
-               len(DEFfmt.lites)+1)
+               DEFfmt.objsDIM+len(DEFfmt.lites)+1)
         else:
             n=DEFfmt.partDIM
         i=0
 
         for (name, p) in DEFfmt.parts:
             i=i+1
-            Window.DrawProgressBar(0.125+i/(n*7/8.0), "Importing bodies ...")
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing bodies ...")
             self.doBody(name, p)
 
         if not self.isscenery:
@@ -206,7 +214,7 @@ class ACFimport:
 
         for p in range(DEFfmt.engnDIM):
             i=i+1
-            Window.DrawProgressBar(0.125+i*7/8.0, "Importing props ...")
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing props ...")
             self.doProp(p)
 
         # Need to do wings in two passes
@@ -215,27 +223,32 @@ class ACFimport:
 
         for (name, p) in DEFfmt.wings:
             i=i+1
-            Window.DrawProgressBar(0.125+i*7/8.0, "Importing wings ...")
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing wings ...")
             self.doWing2(name, p)
                 
         for p in range(DEFfmt.gearDIM):
             i=i+1
-            Window.DrawProgressBar(0.125+i*7/8.0, "Importing gear ...")
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing gear ...")
             self.doGear(p)
 
         for p in range(0,-DEFfmt.wattDIM,-1):
             i=i+1
-            Window.DrawProgressBar(0.125+i*7/8.0, "Importing weapons ...")
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing weapons ...")
             self.doBody(None, p)
 
-        for p in range(DEFfmt.doorDIM):
+        for p in range(DEFfmt.doorDIM):		# Skip speedbrakes
             i=i+1
-            Window.DrawProgressBar(0.125+i*7/8.0, "Importing doors ...")
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing doors ...")
             self.doDoor(p)
+
+        for p in range(DEFfmt.objsDIM):
+            i=i+1
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing OBJs ...")
+            self.doObjs(p)
                      
         for (name, part, r, g, b,) in DEFfmt.lites:
             i=i+1
-            Window.DrawProgressBar(0.125+i*7/8.0, "Importing lights ...")
+            Window.DrawProgressBar(0.25+0.75*i/n, "Importing lights ...")
             if eval("self.acf.VIEW_has_%s" % part):
                 self.doLight(name, r, g, b,
                              Vertex(eval("self.acf.VIEW_%s_xyz" % part),
@@ -284,6 +297,8 @@ class ACFimport:
                                      self.mm)+self.cur).toVector(4))
         mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
         mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
+        if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
+            mm=RotationMatrix(self.acf.VTOL_vect_min_disc, 4, 'x')*mm
 
         v=[Vertex(0,
                   sin(twist)*
@@ -595,15 +610,15 @@ class ACFimport:
             # Weapon locations are special
             watt=self.acf.watt[-p]
             wpnname=watt.watt_name
+            if not wpnname: return
             wpn=self.wpn(wpnname)
-            if not wpn:
-                return
+            if not wpn: return
             part=wpn.part
             l=wpnname.lower().rfind('.wpn')
             if l!=-1:
                 wpnname=wpnname[:l]
             image=findTex(self.filename, wpnname, ['Weapons'])
-            imagemkr=ACFimport.IMAGE2MKR
+            imagemkr=''
             name="W%02d %s" % (1-p, wpnname)
             
             mm=TranslationMatrix((Vertex(watt.watt_x,
@@ -667,10 +682,13 @@ class ACFimport:
                 mm=RotationMatrix(part.part_the, 4, 'x')*mm
 
             if p in range(DEFfmt.partNace1, DEFfmt.partNace8+1):
-                # Nacelles also affected by engine cant
+                # Nacelles also affected by engine cant and vector
                 engn=self.acf.engn[p-DEFfmt.partNace1]
+                wing=self.acf.wing[p-DEFfmt.partNace1]
                 mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
                 mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
+                if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
+                    mm=RotationMatrix(self.acf.VTOL_vect_min_nace, 4, 'x')*mm
         
         if self.debug: print name
 
@@ -690,7 +708,7 @@ class ACFimport:
                 break
                 
             # Special case: Plane-Maker>=7.30 replicates part 11 offset 0.001'
-            if i>11:
+            if i==12:	# was >11
                 for j in seq:
                     if not Vertex(part.geo_xyz[i][j]).equals(
                         Vertex(part.geo_xyz[i-1][j]), 0.001):
@@ -1262,16 +1280,19 @@ class ACFimport:
                              DEFfmt.gear_door_attached]:
             return
 
-        name="Door %s" % (p+1)
-        
         mm=TranslationMatrix((Vertex(door.xyz,self.mm)+self.cur).toVector(4))
-        mm=RotationMatrix(-door.axi_rot, 4, 'z')*mm
+        if p<DEFfmt.doorDIM:
+            name="Door %s" % (p+1)
+            mm=RotationMatrix(-door.axi_rot, 4, 'z')*mm
+        else:		# Speedbrake - roll not heading
+            name="Speedbrake %s" % (p+1)
+            mm=RotationMatrix(-door.axi_rot, 4, 'y')*mm
         if self.acf.HEADER_version<800:	# v7
             mm=RotationMatrix(-door.ext_ang, 4, 'y')*mm
         else:
             mm=RotationMatrix(door.ext_ang, 4, 'x')*mm
             
-        # just use 4 corners
+        # just use 4 corners - XXX should adjust UVs for non-rectangular
         v=[]
         for j in [door.geo[0][0],door.geo[0][3],door.geo[3][3],door.geo[3][0]]:
             v.append(Vertex(j, self.mm))
@@ -1289,6 +1310,39 @@ class ACFimport:
                       UV(door.out_s1,door.out_t1),
                       UV(door.out_s1,door.out_t2)], self.image)
         self.addMesh(mesh, ACFimport.LAYER1, mm)
+
+
+    #------------------------------------------------------------------------
+    def doObjs(self, p):
+
+        if self.acf.HEADER_version<840: return	# New in 8.40
+        obj=self.acf.objs[p]
+        if not obj.obj_name: return
+        object=OBJimport(join(dirname(self.filename), 'objects', obj.obj_name),
+                         True)
+        try:
+            ob=object.doimport()
+        except:
+            print "Warn:\tCouldn't read object \"%s\"" % obj.obj_name
+            return
+        ob.setName("O%02d %s" % (p, basename(obj.obj_name)))
+        
+        mm=TranslationMatrix((Vertex(obj.obj_x,
+                                     obj.obj_y,
+                                     obj.obj_z,
+                                     self.mm)+self.cur).toVector(4))
+        if obj.obj_con in range(14,24):
+            # Rotation modified by gear angle
+            gear=self.acf.gear[obj.obj_con-14]
+            mm=RotationMatrix(-obj.obj_psi, 4, 'z')*mm
+            mm=RotationMatrix(obj.obj_phi-gear.latE, 4, 'y')*mm
+            mm=RotationMatrix(obj.obj_the+gear.lonE-90, 4, 'x')*mm
+        else:
+            mm=RotationMatrix(-obj.obj_psi, 4, 'z')*mm
+            mm=RotationMatrix(obj.obj_phi, 4, 'y')*mm
+            mm=RotationMatrix(obj.obj_the, 4, 'x')*mm
+
+        ob.setMatrix(mm)
 
 
     #------------------------------------------------------------------------
@@ -1335,23 +1389,13 @@ class ACFimport:
             return
     
         face=NMesh.Face()
-        face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TEX|
-                       NMesh.FaceModes.TILES)
-        face.mode |= NMesh.FaceModes.DYNAMIC
+        face.mode |= NMesh.FaceModes.TEX|NMesh.FaceModes.DYNAMIC
+        face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TILES)
         if dbl:
             face.mode |= NMesh.FaceModes.TWOSIDE
         #face.transp=NMesh.FaceTranspModes.ALPHA
         face.smooth=1
         
-        # Have to add them even if no texture
-        for rv in uv:
-            face.uv.append((rv.s, rv.t))
-
-        if image:
-            face.mode |= NMesh.FaceModes.TEX
-            face.image = image
-            # mesh.hasFaceUV(1) - redundant
-    
         for rv in v:
             for nmv in mesh.verts:
                 if rv.equals(Vertex(nmv.co[0],
@@ -1367,6 +1411,13 @@ class ACFimport:
                 mesh.verts.append(nmv)
                 face.v.append(nmv)
                             
+        # Have to add them even if no texture
+        for rv in uv:
+            face.uv.append((rv.s, rv.t))
+
+        if image:
+            face.image = image
+    
         mesh.faces.append(face)
     
 
@@ -1442,8 +1493,6 @@ class ACFimport:
 
     #------------------------------------------------------------------------
     def wpn(self, wpnname):
-        if not wpnname:
-            return None
         wpndir=self.filename
         for l in range(5):
             q=wpndir[:-1].rfind(Blender.sys.dirsep)
@@ -1475,7 +1524,9 @@ class DEFfmt:
     partDIM=95		# number of Parts (incl wings)
     gearDIM=10		# number of Gear
     wattDIM=24		# number of Weapons
-    doorDIM=24		# number of Doors+Speedbrakes
+    doorDIM=20		# number of Doors
+    sbrkDIM=4		# number of Speedbrakes
+    objsDIM=24		# number of Misc Objects
 
     partFuse=56		# used in LOD calculation
     partNace1=77	# used in texture mapping
@@ -1687,16 +1738,16 @@ class DEFfmt:
         ("Nacelle 6",		82),
         ("Nacelle 7",		83),
         ("Nacelle 8",		84),
-        ("W-Fairing 1",		85),
-        ("W-Fairing 2",		86),
-        ("W-Fairing 3",		87),
-        ("W-Fairing 4",		88),
-        ("W-Fairing 5",		89),
-        ("W-Fairing 6",		90),
-        ("W-Fairing 7",		91),
-        ("W-Fairing 8",		92),
-        ("W-Fairing 9",		93),
-        ("W-Fairing 10",	94),
+        ("Fairing 1",		85),
+        ("Fairing 2",		86),
+        ("Fairing 3",		87),
+        ("Fairing 4",		88),
+        ("Fairing 5",		89),
+        ("Fairing 6",		90),
+        ("Fairing 7",		91),
+        ("Fairing 8",		92),
+        ("Fairing 9",		93),
+        ("Fairing 10",		94),
         ]
 
 
@@ -2268,7 +2319,7 @@ xflt, "OVERFLOW_xflt_overflow[20]",
     #------------------------------------------------------------------------
     # Derived from hl_acf_structs.h
     # with help from Michael Ista
-    acf830 = [
+    acf8000 = [
 #xchr, "HEADER_platform",
 #xint, "HEADER_version",
 xint, "HEADER_is_hm",
@@ -2785,8 +2836,15 @@ xstruct, "wing[56]",
 xstruct, "part[95]",
 xstruct, "gear[10]",
 xstruct, "watt[24]",	# was after sbrk, but is actually here!
-xstruct, "door[24]",	# doorstruct used for speeddbrakes and doors!
+xstruct, "door[24]",	# doorstruct used for speedbrakes and doors!
     ]
+    acf810=acf8000
+    acf815=acf8000
+    acf830=acf8000
+    acf840=list(acf8000)
+    acf840.extend([
+xstruct, "objs[24]",	# Misc Objects
+    ])
 
     engn8000 = [
 xint, "engn_type",
@@ -2815,6 +2873,7 @@ xflt, "bladesweep[10]",
     engn810=engn8000
     engn815=engn8000
     engn830=engn8000
+    engn840=engn8000
 
     wing8000 = [
 xint, "is_left",
@@ -2911,6 +2970,7 @@ xflt, "overflow_dat[100]",
     ])
     wing815=wing810
     wing830=wing810
+    wing840=wing810
 
     part8000 = [
 xint, "part_eq",
@@ -2953,6 +3013,7 @@ xchr, "locked[20][18]",
     part810=part8000
     part815=part8000
     part830=part8000
+    part840=part8000
 
     gear8000=[
 xint, "gear_type",
@@ -2986,6 +3047,7 @@ xflt, "z_nodef",
     gear810=gear8000
     gear815=gear8000
     gear830=gear8000
+    gear840=gear8000
 
     watt8000=[
 xchr, "watt_name[40]",
@@ -3001,6 +3063,7 @@ xflt, "watt_phi",
     watt810=watt8000
     watt815=watt8000
     watt830=watt8000
+    watt840=watt8000
 
     door8000=[
 xint, "type",
@@ -3024,7 +3087,20 @@ xflt, "out_t2",
     door810=door8000
     door815=door8000
     door830=door8000
+    door840=door8000
 
+    objs840=[	# same as watt. variable names may not match Laminar's
+xchr, "obj_name[40]",
+xint, "obj_prt",
+xint, "obj_con",
+xflt, "obj_x",
+xflt, "obj_psi",
+xflt, "obj_y",
+xflt, "obj_the",
+xflt, "obj_z",
+xflt, "obj_phi",
+    ]
+    
     # Derived from WPN740.def by Stanislaw Pusep
     #   http://sysd.org/xplane/acftools/WPN740.def
     # and from X-Plane v7 docs
@@ -3270,23 +3346,23 @@ class ACF:
         (self.HEADER_version,)=unpack(fmt+'i', acffile.read(4))
         if self.HEADER_version==1:
             defs=DEFfmt.wpn740
-        elif self.HEADER_version<700 or self.HEADER_version>=900:
+        elif self.HEADER_version==800:
+            defs=DEFfmt.wpn800
+        elif ((self.HEADER_version<700 or self.HEADER_version>=900) and
+              self.HEADER_version!=8000):
             acffile.close()
             raise ParseError("This isn't a v7 or v8 X-Plane file!")
         elif self.HEADER_version<800:
-            if self.HEADER_version in [700,740]:
+            if self.HEADER_version in [700, 740]:
                 defs=DEFfmt.acf740
             else:
                 acffile.close()
                 raise ParseError("This is a %4.2f format plane! Please re-save it in PlaneMaker 7.63." % (self.HEADER_version/100.0))
-        else:	# v8
-            if self.HEADER_version in [8000,810,815,830]:
-                defs=DEFfmt.acf830
-            elif self.HEADER_version==800:
-                defs=DEFfmt.wpn800
-            else:
-                acffile.close()
-                raise ParseError("Can't read %4.2f format planes!" % (self.HEADER_version/100.0))
+        elif self.HEADER_version in [8000,810,815,830,840]:
+            defs=eval("DEFfmt.acf%s" % self.HEADER_version)
+        else:
+            acffile.close()
+            raise ParseError("Can't read %4.2f format planes!" % (self.HEADER_version/100.0))
         if dmp:
             dmp.write("%6x:\tHEADER_version:\t%s\n" % (1,self.HEADER_version))
 
@@ -3297,7 +3373,7 @@ class ACF:
         if self.HEADER_version>=800:
             return
 
-        # weapon
+        # v7 weapon
         if self.HEADER_version==1:
             self.part=(v7wpn(self))
             return
@@ -3354,7 +3430,7 @@ class ACF:
         self.door=[]
         for n in range(10):
             self.door.append(v7door(self, n))
-        for n in range(10,DEFfmt.doorDIM):
+        for n in range(10,DEFfmt.doorDIM+DEFfmt.sbrkDIM):
             self.door.append(v7door(None))
 
         # misc
@@ -3410,7 +3486,7 @@ class ACF:
         n=len(defs)
         for i in range(0,n,2):
             if prg:
-                Window.DrawProgressBar(i/(n*8.0), "Reading data ...")
+                Window.DrawProgressBar(i/(4.0*n), "Reading data ...")
             off=acffile.tell()
             t=defs[i]	# Data type
             
@@ -3477,6 +3553,7 @@ class v7wing:
         self.semilen_JND=acf.PARTS_semilen_JND[v7]
         self.dihed1=acf.PARTS_dihed1[v7]
         self.sweep1=acf.PARTS_sweep1[v7]
+        self.inc_vect=acf.PARTS_inc_vect[v7]
 
 class v7part:
     def __init__(self, acf, v7=0, s_dim=0, r_dim=0, tex=0,
@@ -3601,10 +3678,9 @@ def file_callback (filename):
     try:
         acf=ACFimport(filename, 1)
     except ParseError, e:
-        Blender.Window.DrawProgressBar(1, "Error")
-        msg="ERROR:\t" + e.msg
-        print(msg)
-        Blender.Draw.PupMenu(msg)
+        Blender.Window.DrawProgressBar(1, "ERROR")
+        print("ERROR:\t%s\n" % e.msg)
+        Blender.Draw.PupMenu("ERROR: %s" % e.msg)
         return
     acf.doImport()
     Blender.Window.DrawProgressBar(1, "Finished")

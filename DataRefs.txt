@@ -1,0 +1,1973 @@
+2 840 Fri Mar 03 21:32:00 2006
+
+sim/aircraft/acf_struct	int[10]	y	Pointers	Pointers to the individual aircraft structures.
+sim/aircraft/view/acf_tailnum	char[40]	y	string	Tail number
+sim/aircraft/view/acf_author	char[500]	y	[0]	string
+sim/aircraft/view/acf_descrip	char[500]	y	string	Brief description of the plane
+sim/aircraft/view/acf_size_x	float	y	???	???
+sim/aircraft/view/acf_size_z	float	y	???	shadow size, and viewing distance size
+sim/aircraft/view/acf_HUD_type	int	y	enum	HUD type
+sim/aircraft/view/acf_asi_kts	int	y	enum	air speed indicator knots calibration
+sim/aircraft/view/acf_cockpit_type	int	y	enum	cockpit panel type
+sim/aircraft/view/acf_has_SC_fd	int	y	bool	has single cue flight director?
+sim/aircraft/view/acf_has_stallwarn	int	y	bool	has audio stall warning?
+sim/aircraft/view/acf_has_litemap_tex	int	y	enum	Do we have a lite mappe texture for this?
+sim/aircraft/view/acf_peX	float	y	pos	Position of pilot's head relative to CG, X
+sim/aircraft/view/acf_peY	float	y	pos	Position of pilot's head relative to CG, Y
+sim/aircraft/view/acf_peZ	float	y	pos	Position of pilot's head relative to CG, Z
+sim/aircraft/view/acf_Vso	float	y	kias	Various speed maxes for the aircraft.
+sim/aircraft/view/acf_Vs	float	y	???	???
+sim/aircraft/view/acf_Vfe	float	y	???	???
+sim/aircraft/view/acf_Vno	float	y	???	???
+sim/aircraft/view/acf_Vne	float	y	???	???
+sim/aircraft/view/acf_Mmo	float	y	???	???
+sim/aircraft/view/acf_Gneg	float	y	???	???
+sim/aircraft/view/acf_Gpos	float	y	???	???
+sim/aircraft/view/acf_est_Vs	float	y	???	???
+sim/aircraft/view/acf_yawstringx	float	y	???	The yaw string, that thing that no one knows how to get rid of.
+sim/aircraft/view/acf_yawstringy	float	y	???	???
+sim/aircraft/view/acf_HUD_cntrx	float	y	pixels	HUD positioning
+sim/aircraft/view/acf_HUD_cntry	float	y	???	???
+sim/aircraft/view/acf_HUD_delx	float	y	???	???
+sim/aircraft/view/acf_HUD_dely	float	y	???	???
+sim/aircraft/view/acf_has_lanlite1	int	y	bool	Lighting Info
+sim/aircraft/view/acf_lanlite1X	float	y	Meters	Position relative to CG
+sim/aircraft/view/acf_lanlite1Y	float	y	???	???
+sim/aircraft/view/acf_lanlite1Z	float	y	???	???
+sim/aircraft/view/acf_lanlite_the	float	y	???	???
+sim/aircraft/view/acf_has_lanlite2	int	y	???	???
+sim/aircraft/view/acf_lanlite2X	float	y	???	???
+sim/aircraft/view/acf_lanlite2Y	float	y	???	???
+sim/aircraft/view/acf_lanlite2Z	float	y	???	???
+sim/aircraft/view/acf_has_lanlite3	int	y	???	???
+sim/aircraft/view/acf_lanlite3X	float	y	???	???
+sim/aircraft/view/acf_lanlite3Y	float	y	???	???
+sim/aircraft/view/acf_lanlite3Z	float	y	???	???
+sim/aircraft/view/acf_has_fuserb1	int	y	???	???
+sim/aircraft/view/acf_fuserb1X	float	y	???	???
+sim/aircraft/view/acf_fuserb1Y	float	y	???	???
+sim/aircraft/view/acf_fuserb1Z	float	y	???	???
+sim/aircraft/view/acf_has_fuserb2	int	y	???	???
+sim/aircraft/view/acf_fuserb2X	float	y	???	???
+sim/aircraft/view/acf_fuserb2Y	float	y	???	???
+sim/aircraft/view/acf_fuserb2Z	float	y	???	???
+sim/aircraft/view/acf_has_taillite	int	y	???	???
+sim/aircraft/view/acf_tailliteX	float	y	???	???
+sim/aircraft/view/acf_tailliteY	float	y	???	???
+sim/aircraft/view/acf_tailliteZ	float	y	???	???
+sim/aircraft/view/acf_has_navlites	int	y	???	???
+sim/aircraft/panel/acf_ins_type	int[200]	y	???	instrument definition
+sim/aircraft/panel/acf_ins_size	float[200]	y	???	1.0 is DEFAULT.. not pixels because confusion of width vs height, which dimension we are referring to, etc.
+sim/aircraft/panel/acf_ins_x	float[200]	y	  [0]	???
+sim/aircraft/panel/acf_ins_y	float[200]	y	  [0]	???
+sim/aircraft/panel/acf_ins_delx	float[200]	y	  [0]	???
+sim/aircraft/panel/acf_ins_dely	float[200]	y	  [0]	???
+sim/aircraft/forcefeedback/acf_ff_hydraulic	int	y	???	???
+sim/aircraft/forcefeedback/acf_ff_stickshaker	int	y	???	???
+sim/aircraft/engine/acf_num_engines	int	y	???	???
+sim/aircraft/engine/acf_auto_featherEQ	int	y	???	???
+sim/aircraft/engine/acf_throtmax_FWD	float	y	???	???
+sim/aircraft/engine/acf_throtmax_REV	float	y	???	???
+sim/aircraft/engine/acf_RSC_idlespeed_eng	float	y	???	???
+sim/aircraft/engine/acf_RSC_redline_eng	float	y	???	???
+sim/aircraft/engine/acf_RSC_mingreen_eng	float	y	???	???
+sim/aircraft/engine/acf_RSC_maxgreen_eng	float	y	???	???
+sim/aircraft/engine/acf_pmax	float	y	???	???
+sim/aircraft/engine/acf_tmax	float	y	???	???
+sim/aircraft/engine/acf_burnerinc	float	y	???	???
+sim/aircraft/engine/acf_critalt	float	y	???	Critical altitude for props
+sim/aircraft/engine/acf_mpmax	float	y	???	???
+sim/aircraft/engine/acf_gear_rat	float	y	???	This is for backward compatibility, you can use acf_prop_gear_rat from v700 onwards
+sim/aircraft/engine/acf_face_jet	float	y	???	???
+sim/aircraft/engine/acf_face_rocket	float	y	???	???
+sim/aircraft/engine/acf_spooltime_jet	float	y	???	???
+sim/aircraft/engine/acf_max_mach_eff	float	y	???	???
+sim/aircraft/engine/acf_fmax_sl	float	y	???	???
+sim/aircraft/engine/acf_fmax_opt	float	y	???	???
+sim/aircraft/engine/acf_fmax_vac	float	y	???	???
+sim/aircraft/engine/acf_h_opt	float	y	???	???
+sim/aircraft/engine/aacf_tip_mach_des_50	float	y	???	???
+sim/aircraft/engine/aacf_tip_mach_des_100	float	y	???	???
+sim/aircraft/engine/aacf_rotor_mi_rat	float	y	???	???
+sim/aircraft/engine/aacf_tip_weight	float	y	???	???
+sim/aircraft/engine/acf_max_ITT	float	y	???	Max internal turbine temperature the plane can have before engine failure.
+sim/aircraft/engine/acf_max_EGT	float	y	???	Max exhauast gas temperature the plane can have before engine failure.
+sim/aircraft/engine/acf_max_CHT	float	y	???	MAx cylinder head temperature the plane can have before engine failure.
+sim/aircraft/engine/acf_max_OILP	float	y	???	Max Oil Pressure the plane can have before engine failure.
+sim/aircraft/engine/acf_max_OILT	float	y	???	Max Oil Temperature the plane can have before engine failure.
+sim/aircraft/engine/acf_max_FUELP	float	y	???	Max Fuel Pressure the plane can have before engine failure.
+sim/aircraft/prop/acf_en_type	int[8]	y	???	engine type... diff types allowed for B-36, NASP concepts, Mars liquid rocket take-off assist, etc. etc. etc.
+sim/aircraft/prop/acf_revthrust_eq	int	y	???	better organization to do it this way, NOTE : Used to be i8 in version 6
+sim/aircraft/prop/acf_prop_type	int[8]	y	???	prop type
+sim/aircraft/prop/acf_prop_gear_rat	float[8]	y	???	prop to engine or common power source
+sim/aircraft/prop/acf_prop_dir	float[8]	y	???	1.0=CW, -1.0=CCW, float so we can multiply effects by floats
+sim/aircraft/prop/acf_num_blades	float[8]	y	???	float so we can multiply effects by floats
+sim/aircraft/prop/acf_SFC	float[8]	y	???	SFC
+sim/aircraft/prop/acf_min_pitch	float[8]	y	???	by governor
+sim/aircraft/prop/acf_max_pitch	float[8]	y	???	by governor
+sim/aircraft/prop/acf_reversed_pitch	float	y	???	in reverse
+sim/aircraft/prop/acf_sidecant	float[8]	y	???	this is physical geometry,
+sim/aircraft/prop/acf_vertcant	float[8]	y	???	built into planes & helos and changed with thrust vector
+sim/aircraft/prop/acf_prop_mass	float[8]	y	???	mass of prop
+sim/aircraft/prop/acf_miprop_rpm	float[8]	y	???	MI for changing prop RPM
+sim/aircraft/prop/acf_discarea	float[8]	y	???	for "total" propwash
+sim/aircraft/prop/acf_ringarea	float[80]	y	???	area each ring of prop
+sim/aircraft/prop/acf_bladesweep	float[80]	y	???	blade sweep for scimitar props
+sim/aircraft/prop/acf_des_rpm_prp	float[8]	y	???	design point
+sim/aircraft/prop/acf_des_kts_prp	float[8]	y	???	design point
+sim/aircraft/prop/acf_des_kts_acf	float[8]	y	???	design point
+sim/aircraft/prop/acf_part_eq	int[73]	y	???	???
+sim/aircraft/parts/acf_Rafl0	char[2920]	y	string[40]	array of airfoil names, per part
+sim/aircraft/parts/acf_Rafl1	char[2920]	y	string[40]	file, not path
+sim/aircraft/parts/acf_Tafl0	char[2920]	y	string[40]	file, not path
+sim/aircraft/parts/acf_Tafl1	char[2920]	y	string[40]	file, not path
+sim/aircraft/parts/acf_els	int[73]	y	???	???
+sim/aircraft/parts/acf_Xarm	float[73]	y	???	???
+sim/aircraft/parts/acf_Yarm	float[73]	y	???	???
+sim/aircraft/parts/acf_Zarm	float[73]	y	???	???
+sim/aircraft/parts/acf_X_body_aero	float[73]	y	???	body aero center offset from it's reference
+sim/aircraft/parts/acf_Y_body_aero	float[73]	y	???	used for force build-up
+sim/aircraft/parts/acf_Z_body_aero	float[73]	y	???	???
+sim/aircraft/parts/acf_Croot	float[73]	y	???	???
+sim/aircraft/parts/acf_Ctip	float[73]	y	???	???
+sim/aircraft/parts/acf_dihed1	float[73]	y	???	???
+sim/aircraft/parts/acf_sweep1	float[73]	y	???	???
+sim/aircraft/parts/acf_sweep2	float[73]	y	???	???
+sim/aircraft/parts/acf_sweepnow	float[73]	y	???	???
+sim/aircraft/parts/acf_varsweepEQ	int	y	???	NOTE : This used to be i57 in v6 - eliminated in 832 - now per-wing
+sim/aircraft/parts/acf_semilen_SEG	float[73]	y	???	semilen this segment only
+sim/aircraft/parts/acf_semilen_JND	float[73]	y	???	semilen of the JOINED wing segments, all JOINED SEGMENTS, for AR and CDi and ground effect, etc.
+sim/aircraft/parts/acf_e	float[73]	y	???	???
+sim/aircraft/parts/acf_AR	float[73]	y	???	???
+sim/aircraft/parts/acf_al_D_al0	float[73]	y	???	???
+sim/aircraft/parts/acf_cl_D_cl0	float[73]	y	???	???
+sim/aircraft/parts/acf_cm_D_cm0	float[73]	y	???	???
+sim/aircraft/parts/acf_delta_fac	float[73]	y	???	???
+sim/aircraft/parts/acf_spec_wash	float[73]	y	???	???
+sim/aircraft/parts/acf_alpha_max	float[73]	y	???	???
+sim/aircraft/parts/acf_slat_effect	float[73]	y	???	???
+sim/aircraft/parts/acf_s	float[730]	y	???	s for each element for foils, and FRONT, SIDE, TOP for BODIES.
+sim/aircraft/parts/acf_mac	float[730]	y	???	???
+sim/aircraft/parts/acf_anginc	float[730]	y	???	???
+sim/aircraft/parts/acf_ail1	int[730]	y	???	???
+sim/aircraft/parts/acf_ail2	int[730]	y	???	???
+sim/aircraft/parts/acf_splr	int[730]	y	???	???
+sim/aircraft/parts/acf_flap	int[730]	y	???	???
+sim/aircraft/parts/acf_flap2	int[730]	y	???	???
+sim/aircraft/parts/acf_flapEQ	int	y	???	???
+sim/aircraft/parts/acf_slat	int[730]	y	???	???
+sim/aircraft/parts/acf_slatEQ	int	y	???	???
+sim/aircraft/parts/acf_sbrk	int[730]	y	???	???
+sim/aircraft/parts/acf_sbrkEQ	int	y	???	???
+sim/aircraft/parts/acf_drud	int[730]	y	???	???
+sim/aircraft/parts/acf_elev	int[730]	y	???	???
+sim/aircraft/parts/acf_rudd	int[730]	y	???	???
+sim/aircraft/parts/acf_rudd2	int[730]	y	???	???
+sim/aircraft/parts/acf_in_downwash	int[53290]	y	???	???
+sim/aircraft/parts/acf_body_r	float[73]	y	meters	Radius of part I think
+sim/aircraft/parts/acf_gear_type	int[73]	y	???	???
+sim/aircraft/parts/acf_gear_latE	float[73]	y	???	???
+sim/aircraft/parts/acf_gear_lonE	float[73]	y	???	???
+sim/aircraft/parts/acf_gear_axiE	float[73]	y	???	extended
+sim/aircraft/parts/acf_gear_latR	float[73]	y	???	???
+sim/aircraft/parts/acf_gear_lonR	float[73]	y	???	???
+sim/aircraft/parts/acf_gear_axiR	float[73]	y	???	retracted
+sim/aircraft/parts/acf_gear_latN	float[73]	y	???	???
+sim/aircraft/parts/acf_gear_lonN	float[73]	y	???	???
+sim/aircraft/parts/acf_gear_axiN	float[73]	y	???	now
+sim/aircraft/parts/acf_gear_leglen	float[73]	y	???	gear param
+sim/aircraft/parts/acf_gear_tirrad	float[73]	y	???	gear param
+sim/aircraft/parts/acf_gearcon	float[73]	y	???	gear param
+sim/aircraft/parts/acf_geardmp	float[73]	y	???	gear param
+sim/aircraft/parts/acf_gearstatdef	float[73]	y	???	static deflection... the gear TIRE LOCATION IS OFFSET DOWN BY THIS MUCH IN X-PLANE since people ALWAYS enter gear location UNDER STATIC DEFLECTION!
+sim/aircraft/parts/acf_gear_def	float[73]	y	???	current deflection
+sim/aircraft/parts/acf_gear_deploy	float[73]	y	???	landing gear deployment, 0.0->1.0
+sim/aircraft/parts/acf_gear_xnodef	float[73]	y	???	gear unloaded location
+sim/aircraft/parts/acf_gear_ynodef	float[73]	y	???	gear unloaded location
+sim/aircraft/parts/acf_gear_znodef	float[73]	y	???	gear unloaded location
+sim/aircraft/bodies/acf_fuse_cd	float	y	??? cd for fuselage	???
+sim/aircraft/bodies/acf_fuse_cd_array	float[73]	y	??? cd for all parts	???
+sim/aircraft/controls/acf_ail1_crat	float	y	???	???
+sim/aircraft/controls/acf_ail1_up	float	y	???	???
+sim/aircraft/controls/acf_ail1_dn	float	y	???	???
+sim/aircraft/controls/acf_RSC_idlespeed_prp	float	y	???	???
+sim/aircraft/controls/acf_RSC_redline_prp	float	y	???	???
+sim/aircraft/controls/acf_ail2_crat	float	y	???	???
+sim/aircraft/controls/acf_ail2_up	float	y	???	???
+sim/aircraft/controls/acf_ail2_dn	float	y	???	???
+sim/aircraft/controls/acf_RSC_mingreen_prp	float	y	???	???
+sim/aircraft/controls/acf_RSC_maxgreen_prp	float	y	???	???
+sim/aircraft/controls/acf_elev_crat	float	y	???	???
+sim/aircraft/controls/acf_elev_up	float	y	???	???
+sim/aircraft/controls/acf_elev_dn	float	y	???	???
+sim/aircraft/controls/acf_trq_max_eng	float	y	???	???
+sim/aircraft/controls/acf_trq_max_prp	float	y	???	NOTE : This is now the same as acf_trq_max_en in v7
+sim/aircraft/controls/acf_rudd_crat	float	y	???	???
+sim/aircraft/controls/acf_rudd_lr	float	y	???	???
+sim/aircraft/controls/acf_rud2_crat	float	y	???	???
+sim/aircraft/controls/acf_rud2_lr	float	y	???	???
+sim/aircraft/controls/acf_splr_crat	float	y	???	???
+sim/aircraft/controls/acf_splr_up	float	y	???	???
+sim/aircraft/controls/acf_sbrk_crat	float	y	???	???
+sim/aircraft/controls/acf_sbrk_up	float	y	???	???
+sim/aircraft/controls/acf_flap_crat	float	y	???	???
+sim/aircraft/controls/acf_flap2_crat	float	y	???	???
+sim/aircraft/controls/acf_flap_dn	float[8]	y	???	???
+sim/aircraft/controls/acf_flap2_dn	float[8]	y	???	???
+sim/aircraft/controls/acf_hstb_trim_up	float	y	???	???
+sim/aircraft/controls/acf_hstb_trim_dn	float	y	???	???
+sim/aircraft/controls/acf_flap_type	float	y	???	???
+sim/aircraft/controls/acf_flap2_type	float	y	???	???
+sim/aircraft/controls/acf_con_smooth	float	y	???	???
+sim/aircraft/controls/acf_flap_cl	float	y	???	???
+sim/aircraft/controls/acf_flap_cd	float	y	???	???
+sim/aircraft/controls/acf_flap_cm	float	y	???	???
+sim/aircraft/controls/acf_flap2_cl	float	y	???	???
+sim/aircraft/controls/acf_flap2_cd	float	y	???	???
+sim/aircraft/controls/acf_flap2_cm	float	y	???	???
+sim/aircraft/controls/acf_flap_detents	int	y	???	???
+sim/aircraft/controls/acf_flap_deftime	float	y	???	???
+sim/aircraft/controls/acf_slat_inc	float	y	???	???
+sim/aircraft/controls/acf_blown_flap_add_speed	float	y	???	???
+sim/aircraft/controls/acf_blown_flap_throt_red	float	y	???	???
+sim/aircraft/controls/acf_blown_flap_min_engag	float	y	???	???
+sim/aircraft/controls/acf_takeoff_trim	float	y	???	???
+sim/aircraft/controls/acf_min_trim_elev	float	y	???	???
+sim/aircraft/controls/acf_max_trim_elev	float	y	???	???
+sim/aircraft/controls/acf_elev_trim_speedrat	float	y	???	???
+sim/aircraft/controls/acf_elev_tab	float	y	???	???
+sim/aircraft/controls/acf_min_trim_ailn	float	y	???	???
+sim/aircraft/controls/acf_max_trim_ailn	float	y	???	???
+sim/aircraft/controls/acf_ailn_trim_speedrat	float	y	???	???
+sim/aircraft/controls/acf_ailn_tab	float	y	???	???
+sim/aircraft/controls/acf_min_trim_rudd	float	y	???	???
+sim/aircraft/controls/acf_max_trim_rudd	float	y	???	???
+sim/aircraft/controls/acf_rudd_trim_speedrat	float	y	???	???
+sim/aircraft/controls/acf_rudd_tab	float	y	???	???
+sim/aircraft/gear/acf_gear_retract	int	y	???	???
+sim/aircraft/gear/acf_is_taildragger	int	y	???	???
+sim/aircraft/gear/acf_gear_is_skid	int	y	???	???
+sim/aircraft/gear/acf_nw_steerdeg1	float	y	???	???
+sim/aircraft/gear/acf_nw_steerdeg2	float	y	???	???
+sim/aircraft/gear/acf_nw_cutoff_speed	float	y	???	???
+sim/aircraft/gear/acf_water_rud_longarm	float	y	???	???
+sim/aircraft/gear/acf_water_rud_area	float	y	???	???
+sim/aircraft/gear/acf_water_rud_maxdef	float	y	???	???
+sim/aircraft/gear/acf_h_eqlbm	float	y	???	???
+sim/aircraft/gear/acf_the_eqlbm	float	y	???	???
+sim/aircraft/gear/acf_gear_door_typ	int[10]	y	      	???
+sim/aircraft/gear/acf_gear_door_loc	float[30]	y	???	door location (for reference-point of door)
+sim/aircraft/gear/acf_gear_door_geo	float[120]	y	???	door geo, 4 corners
+sim/aircraft/gear/acf_gear_door_axi_rot	float[10]	y	???	door axis of rotation ("heading" of axis)
+sim/aircraft/gear/acf_gear_door_ext_ang	float[10]	y	???	door extended angle
+sim/aircraft/gear/acf_gear_door_ret_ang	float[10]	y	??? door retracted angle	???
+sim/aircraft/gear/acf_gear_door_ang_now	float[10]	y	???	door current angle, not in flite since it is geo and this is a nice place to keep all the door geo.
+sim/aircraft/weight/acf_cgY	float	y	???	???
+sim/aircraft/weight/acf_cgZ	float	y	???	???
+sim/aircraft/weight/acf_Jxx_unitmass	float	y	???	???
+sim/aircraft/weight/acf_Jyy_unitmass	float	y	???	???
+sim/aircraft/weight/acf_Jzz_unitmass	float	y	???	???
+sim/aircraft/weight/acf_m_empty	float	y	???	???
+sim/aircraft/weight/acf_m_displaced	float	y	???	???
+sim/aircraft/weight/acf_m_max	float	y	???	???
+sim/aircraft/weight/acf_m_fuel_tot	float	y	lbs	Weight of total fuel - appears to be in lbs.
+sim/aircraft/weight/acf_m_jettison	float	y	???	???
+sim/aircraft/weight/acf_m_displaced_y	float	y	???	???
+sim/aircraft/specialcontrols/acf_jato_theta	float	y	???	???
+sim/aircraft/specialcontrols/acf_jato_thrust	float	y	???	???
+sim/aircraft/specialcontrols/acf_jato_dur	float	y	???	???
+sim/aircraft/specialcontrols/acf_jato_sfc	float	y	???	???
+sim/aircraft/specialcontrols/acf_jato_Y	float	y	???	???
+sim/aircraft/specialcontrols/acf_jato_Z	float	y	???	???
+sim/aircraft/specialcontrols/acf_brake_area	float	y	???	???
+sim/aircraft/specialcontrols/acf_brake_Y	float	y	???	???
+sim/aircraft/specialcontrols/acf_brake_Z	float	y	???	???
+sim/aircraft/specialcontrols/acf_chute_area	float	y	???	???
+sim/aircraft/specialcontrols/acf_chute_Y	float	y	???	???
+sim/aircraft/specialcontrols/acf_chute_Z	float	y	???	???
+sim/aircraft/specialcontrols/acf_ail1pitch	float	y	???	???
+sim/aircraft/specialcontrols/acf_ail1flaps	float	y	???	???
+sim/aircraft/specialcontrols/acf_ail2pitch	float	y	???	???
+sim/aircraft/specialcontrols/acf_ail2flaps	float	y	???	???
+sim/aircraft/specialcontrols/acf_stabroll	float	y	???	???
+sim/aircraft/specialcontrols/acf_stabhdng	float	y	???	???
+sim/aircraft/specialcontrols/acf_ail2vmax	float	y	???	???
+sim/aircraft/specialcontrols/acf_tvec_ptch	float	y	???	???
+sim/aircraft/specialcontrols/acf_tvec_roll	float	y	???	???
+sim/aircraft/specialcontrols/acf_tvec_hdng	float	y	???	???
+sim/aircraft/specialcontrols/acf_diff_thro_with_hdng	float	y	???	???
+sim/aircraft/specialcontrols/acf_arrestingEQ	int	y	???	???
+sim/aircraft/specialcontrols/acf_antiiceEQ	int	y	???	???
+sim/aircraft/specialcontrols/acf_warn1EQ	int	y	???	???
+sim/aircraft/specialcontrols/acf_gearhornEQ	int	y	???	???
+sim/aircraft/specialcontrols/acf_autosbrkEQ	int	y	???	???
+sim/aircraft/specialcontrols/acf_autofbrkEQ	int	y	???	???
+sim/aircraft/specialcontrols/acf_autosweepEQ	int	y	???	???
+sim/aircraft/specialcontrols/acf_autoslatEQ	int	y	???	???
+sim/aircraft/vtolcontrols/acf_vectEQ	int	y	???	???
+sim/aircraft/vtolcontrols/acf_vectarmZ	float	y	???	???
+sim/aircraft/vtolcontrols/acf_cyclic_elev	float	y	???	???
+sim/aircraft/vtolcontrols/acf_cyclic_ailn	float	y	???	???
+sim/aircraft/vtolcontrols/acf_delta3	float	y	???	???
+sim/aircraft/vtolcontrols/acf_puffL	float	y	???	???
+sim/aircraft/vtolcontrols/acf_puffM	float	y	???	???
+sim/aircraft/vtolcontrols/acf_puffN	float	y	???	???
+sim/aircraft/vtolcontrols/acf_tail_with_coll	float	y	???	???
+sim/aircraft/vtolcontrols/acf_diff_coll_with_roll	float	y	???	???
+sim/aircraft/vtolcontrols/acf_diff_coll_with_hdng	float	y	???	???
+sim/aircraft/vtolcontrols/acf_diff_cycl_with_hdng_lon	float	y	???	???
+sim/aircraft/vtolcontrols/acf_auto_rpm_with_tvec	int	y	???	???
+sim/aircraft/vtolcontrols/acf_rotor_trim_max_fwd	float	y	???	???
+sim/aircraft/vtolcontrols/acf_rotor_trim_max_aft	float	y	???	???
+sim/aircraft/artstability/acf_AShiV	float	y	???	???
+sim/aircraft/artstability/acf_ASloV	float	y	???	???
+sim/aircraft/artstability/acf_ASmaxp_lo	float	y	???	???
+sim/aircraft/artstability/acf_ASp_lo_rate	float	y	???	???
+sim/aircraft/artstability/acf_ASmaxp_hi	float	y	???	???
+sim/aircraft/artstability/acf_ASp_hi_pos	float	y	???	???
+sim/aircraft/artstability/acf_ASmaxh_lo	float	y	???	???
+sim/aircraft/artstability/acf_ASh_lo_rate	float	y	???	???
+sim/aircraft/artstability/acf_ASmaxh_hi	float	y	???	???
+sim/aircraft/artstability/acf_ASh_hi_pos	float	y	???	???
+sim/aircraft/artstability/acf_ASmaxr_lo	float	y	???	???
+sim/aircraft/artstability/acf_ASr_lo_rate	float	y	???	???
+sim/aircraft/artstability/acf_ASmaxr_hi	float	y	???	???
+sim/aircraft/artstability/acf_ASr_hi_rate	float	y	???	???
+sim/aircraft/artstability/acf_has_clutch	int	y	???	???
+sim/aircraft/artstability/acf_has_idlespeed	int	y	???	???
+sim/aircraft/overflow/acf_element_len	float[73]	y	???	length of each element... quicker to find once and use over and over when finding element locs.
+sim/aircraft/overflow/acf_gear_door_size	float	y	???	size of gear-door editing region
+sim/aircraft/overflow/acf_stab_delinc_to_Vne	float	y	???	amount the stab moves in trim automatically as you go to redline.
+sim/aircraft/overflow/acf_Vmca	float	y	???	???
+sim/aircraft/overflow/acf_Vyse	float	y	???	v-speeds
+sim/aircraft/overflow/acf_flap_arm	float	y	???	flapping hinge arm
+sim/aircraft/overflow/acf_cgZ_fwd	float	y	???	???
+sim/aircraft/overflow/acf_cgZ_aft	float	y	???	cg limits
+sim/aircraft/overflow/acf_gear_cyc_time	float[73]	y	???	gear cycle time... different for different gear in some cases, NOTE : This used to be f5 in v6
+sim/aircraft/overflow/acf_refuel_X	float	y	???	???
+sim/aircraft/overflow/acf_refuel_Y	float	y	???	???
+sim/aircraft/overflow/acf_refuel_Z	float	y	???	refueling port location
+sim/aircraft/overflow/acf_gear_steers	int[73]	y	???	this gear turns with rudder input
+sim/aircraft/overflow/acf_hybrid_gear	int	y	???	this is an indication that we have skids on a plane (legit use is tailskid on a jet, etc), NOTE : This used to be b1 in v6
+sim/aircraft/overflow/acf_vardihedEQ	int	y	???	variable dihedral, NOTE : This used to be i57 in v6 - eliminated in 840 - now per wing
+sim/aircraft/overflow/acf_dihed2	float[73]	y	???	variable dihedral
+sim/aircraft/overflow/acf_dihednow	float[73]	y	???	variable dihedral
+sim/aircraft/overflow/jett_X	float	y	???	???
+sim/aircraft/overflow/jett_Y	float	y	???	???
+sim/aircraft/overflow/jett_Z	float	y	???	???
+sim/aircraft/overflow/acf_puffX	float	y	???	???
+sim/aircraft/overflow/acf_puffY	float	y	???	???
+sim/aircraft/overflow/acf_puffZ	float	y	???	manuevering rocket forces
+sim/aircraft/overflow/acf_Vle	float	y	???	Vle
+sim/aircraft/overflow/acf_ASp_hi_rate	float	y	???	???
+sim/aircraft/overflow/acf_ASh_hi_rate	float	y	???	astab stuff i should have had in there the first time!
+sim/aircraft/overflow/acf_spooltime_prop	float	y	???	turboprops have some spool time as well!
+sim/aircraft/overflow/acf_elevflaps	float	y	???	elevator align with flaps
+sim/aircraft/overflow/acf_tank_X	float[3]	y	???	fuel tank locations
+sim/aircraft/overflow/acf_tank_Y	float[3]	y	???	fuel tank locations
+sim/aircraft/overflow/acf_tank_Z	float[3]	y	???	fuel tank locations
+sim/aircraft/overflow/acf_tank_rat	float[3]	y	???	fuel tank ratio per tank
+sim/aircraft/overflow/acf_stall_warn_alpha	float	y	???	alpha of stall warning... user must specify since warning different for different planes.
+sim/aircraft/overflow/acf_mass_shift	float	y	???	hang-gliders and wright gliders
+sim/aircraft/overflow/acf_mass_shift_dx	float	y	???	hang-gliders and wright gliders
+sim/aircraft/overflow/acf_mass_shift_dz	float	y	???	hang-gliders and wright gliders
+sim/aircraft/overflow/acf_feathered_pitch	float	y	???	let people decide feathered pitch to get right for their plane.
+sim/aircraft/overflow/acf_ASmaxg_hi	float	y	???	astab stuff I should have had in there the first time!
+sim/aircraft/overflow/acf_ASg_hi_pos	float	y	???	???
+sim/aircraft/overflow/acf_ASg_hi_rate	float	y	???	astab stuff I should have had in there the first time!
+sim/aircraft/overflow/acf_wing_tilt_ptch	float	y	???	wing-tilt steering
+sim/aircraft/overflow/acf_wing_tilt_roll	float	y	???	wing-tilt steering
+sim/aircraft/overflow/acf_max_press_diff	float	y	???	max pressurization of the fuselage
+sim/aircraft/overflow/acf_diff_coll_with_ptch	float	y	???	used by x-19
+sim/aircraft/overflow/acf_flap_roll	float	y	???	???
+sim/aircraft/overflow/acf_flap_ptch	float	y	???	flap actuation... like for reallyh high-lift guys still manuevering at low speeds.
+sim/aircraft/overflow/acf_lift_fan_rat	float	y	???	lift fan
+sim/aircraft/overflow/acf_diff_cycl_with_hdng_lat	float	y	???	ch-47 chinook performance
+sim/aircraft/overflow/acf_phase_tvect_out_at_90	int	y	???	phase thrust-vectoring manuevering in as we go from 90 to 0, going from hover with puffers to f-22 dogfight
+sim/aircraft/overflow/acf_roll_co	float	y	???	???
+sim/aircraft/overflow/acf_brake_co	float	y	???	rolling and braking
+sim/aircraft/overflow/acf_drive_by_wire	int	y	???	engine always runs at optimum mixture... like FADEC or auto conversions.
+sim/aircraft/overflow/acf_is_glossy	int	y	???	plane has specularity lighting.
+sim/aircraft/overflow/acf_num_tanks	int	y	???	number fuel tanks
+sim/aircraft/overflow/acf_has_refuel	int	y	???	refueling port
+sim/aircraft/overflow/acf_draw_geo_frnt_views	int	y	???	draw craft geo in front views... turn off to save frame-rate for airliners
+sim/aircraft/overflow/acf_draw_geo_side_views	int	y	???	draw craft geo in side  views... WARNING: probably ot a good idea to mod these datarefs!
+sim/aircraft/overflow/acf_jett_is_slung	int	y	???	jettisonable load is slung now
+sim/aircraft/overflow/acf_eng_mass	float[8]	y	???	mass of each engine for distribution and loss on engine seperation. NOTE : This used to be f57 in v6
+sim/aircraft/overflow/acf_phase_tvect_out_at_00	int	y	???	phase thrust-vectoring manuevering out as we go from 90 to 0 deg tvec, going from manuever-to-hover to regular thrust
+sim/aircraft/overflow/acf_auto_trimEQ	int	y	???	auto-trim out any flight loads... numerous planes have this.
+sim/aircraft/overflow/acf_has_DC_fd	int	y	???	has dual-cue flight-dir
+sim/aircraft/overflow/acf_flaps_with_gearEQ	int	y	???	the Jatviggen does flaps with gear automatically
+sim/aircraft/overflow/acf_rev_on_touchdown	int	y	???	viggen does this!
+sim/aircraft/overflow/acf_flaps_with_vecEQ	int	y	???	bring in the flaps with thrust vector
+sim/aircraft/overflow/acf_blow_all_controls	int	y	???	blow all the flight controls for low-speed handling
+sim/aircraft/overflow/acf_warn2EQ	int	y	???	bitchin betty 2... for fighters
+sim/aircraft/overflow/acf_num_thrustpoints	int	y	???	number props can be different than number of engines - * This can crash Xplane, use at your own risk
+sim/aircraft/overflow/acf_props_linked	int	y	???	link the props for the VTOLs and helos
+sim/aircraft/overflow/acf_Xwpn_att	float[24]	y	???	???
+sim/aircraft/overflow/acf_Ywpn_att	float[24]	y	???	???
+sim/aircraft/overflow/acf_Zwpn_att	float[24]	y	???	???
+sim/aircraft/overflow/acf_cus_rnd_use	int[50]	y	???	???
+sim/aircraft/overflow/acf_cus_rnd_lo_val	float[50]	y	???	???
+sim/aircraft/overflow/acf_cus_rnd_hi_val	float[50]	y	???	???
+sim/aircraft/overflow/acf_cus_rnd_lo_ang	float[50]	y	???	???
+sim/aircraft/overflow/acf_cus_rnd_hi_ang	float[50]	y	???	???
+sim/aircraft/overflow/acf_has_nav	int[6]	y	???	what nav systems the plane has for setting up the otto
+sim/aircraft/overflow/acf_has_radar	int	y	???	???
+sim/aircraft/overflow/acf_has_beta	int	y	???	???
+sim/aircraft/overflow/acf_cus_rnd_mirror	int[50]	y	???	mirror the angles on even-number engines on the twins
+sim/aircraft/overflow/acf_cus_rnd_label	int[50]	y	???	draw labels on the instruments... many do not label the scales, only draw digital numbers.
+sim/aircraft/overflow/acf_cus_dig_use	int[50]	y	???	???
+sim/aircraft/overflow/acf_cus_dig_offset	float[50]	y	???	???
+sim/aircraft/overflow/acf_cus_dig_scale	float[50]	y	???	???
+sim/aircraft/overflow/acf_cus_dig_dig	int[50]	y	???	???
+sim/aircraft/overflow/acf_cus_dig_dec	int[50]	y	???	???
+sim/aircraft/overflow/acf_inc_ail	int[730]	y	???	???
+sim/aircraft/overflow/acf_inc_ail2	int[730]	y	???	???
+sim/aircraft/overflow/acf_inc_vec	int[730]	y	???	???
+sim/aircraft/overflow/acf_tow_hook_Y	float	y	???	???
+sim/aircraft/overflow/acf_tow_hook_Z	float	y	???	???
+sim/aircraft/overflow/acf_win_hook_Y	float	y	???	???
+sim/aircraft/overflow/acf_win_hook_Z	float	y	???	???
+sim/aircraft/overflow/acf_nosewheel_k	float	y	???	tail wheel spring constant (per degree offset from centered)
+sim/aircraft/overflow/acf_vectarmY	float	y	???	prop needs offset in z and y from the pivot point... z for V-22, y for motorgliders
+sim/aircraft/overflow/acf_hide_prop_at_90_vect	int	y	???	for those motorgliders or prop/jet combos or what have you that hide their props when not in use
+sim/airfoils/afl_clB	float[292]	y	???	???
+sim/airfoils/afl_Lpow	float	y	???	???
+sim/airfoils/afl_Lstall	float	y	???	???
+sim/airfoils/afl_Ldrop1	float	y	???	???
+sim/airfoils/afl_Lpowstl	float	y	???	???
+sim/airfoils/afl_Ldrop2	float	y	???	???
+sim/airfoils/afl_Dmin	float	y	???	???
+sim/airfoils/afl_DminCL	float	y	???	???
+sim/airfoils/afl_Dal10	float	y	???	???
+sim/airfoils/afl_Dpow	float	y	???	???
+sim/airfoils/afl_Bloc	float	y	???	???
+sim/airfoils/afl_Bwidth	float	y	???	???
+sim/airfoils/afl_Bdepth	float	y	???	???
+sim/airfoils/afl_Bpower	float	y	???	???
+sim/airfoils/afl_cmal2	float	y	???	???
+sim/airfoils/afl_cmal3	float	y	???	???
+sim/airfoils/afl_cm1	float	y	???	???
+sim/airfoils/afl_cm2	float	y	???	???
+sim/airfoils/afl_cm3	float	y	???	???
+sim/airfoils/afl_cm4	float	y	???	???
+sim/airfoils/afl_almin	float	y	???	These are for backward compatibilty, should use afl_almin_array from v7 onwards
+sim/airfoils/afl_almax	float	y	???	These are for backward compatibilty, should use afl_almax_array from v7 onwards
+sim/airfoils/afl_almin_array	float[292]	y	???	???
+sim/airfoils/afl_almax_array	float[292]	y	???	???
+sim/airfoils/afl_re_num	float[292]	y	???	???
+sim/airfoils/afl_t_rat	float[146]	y	???	???
+sim/airfoils/afl_mach_div	float[146]	y	???	???
+sim/airfoils/afl_clM	float[292]	y	???	???
+sim/airfoils/afl_cl	float[210532]	y	???	???
+sim/airfoils/afl_cd	float[210532]	y	???	???
+sim/airfoils/afl_cm	float[210532]	y	???	???
+sim/cockpit/autopilot/autopilot_mode	int	y	enum	The autopilot master mode (off=0, flight director=1, on=2)
+sim/cockpit/autopilot/airspeed_mode	int	n	enum	Airspeed mode for the autopilot. DEPRECATED
+sim/cockpit/autopilot/heading_mode	int	n	enum	Lateral navigation mode (GPS, heading, L-Nav approach). DEPRECATED
+sim/cockpit/autopilot/altitude_mode	int	n	enum	Vertical navigation (alt hold, VVI hold, V-Nav approach). DEPRECATED
+sim/cockpit/autopilot/backcourse_on	int	y	boolean	Back course selection
+sim/cockpit/autopilot/approach_selector	int	y	enum	Nav1 or Nav2 approach selection
+sim/cockpit/autopilot/altitude	float	y	ftmsl	Altitude dialed into the AP
+sim/cockpit/autopilot/current_altitude	float	y	ftmsl	Currently held altitude (remembered until you hit flchg)
+sim/cockpit/autopilot/vertical_velocity	float	y	fpm	Vertical speed to hold
+sim/cockpit/autopilot/airspeed	float	y	knots_mach	Airspeed to hold, this changes from knots to a mach number
+sim/cockpit/autopilot/heading	float	y	degt	The heading to fly (true, legacy)
+sim/cockpit/autopilot/heading_mag	float	y	degm	The heading to fly (magnetic, preferred) pilot
+sim/cockpit/autopilot/heading_mag2	float	y	degm	The heading to fly (magnetic, preferred) copilot
+sim/cockpit/autopilot/airspeed_is_mach	int	n	boolean	Is our airspeed a mach number
+sim/cockpit/autopilot/flight_director_pitch	float	y	degrees	The recommended pitch from the Flight Director.  Use override_flightdir
+sim/cockpit/autopilot/flight_director_roll	float	y	degrees	The recommended roll from the Flight Director.  Use override_flightdir
+sim/cockpit/autopilot/autopilot_state	int	y	flags	Various autopilot engage modes, etc.
+sim/cockpit/autopilot/heading_roll_mode	int	y	enum	Bank limit - 0 = auto, 1-6 = 5-30 degrees of bank
+sim/cockpit/autopilot/mode_hnav	int	y	???	???
+sim/cockpit/autopilot/mode_gls	int	y	???	???
+sim/cockpit/autopilot/alt_hold_ft_fms	float	y	???	???
+sim/cockpit/autopilot/syn_hold_deg	float	y	???	???
+sim/cockpit/electrical/battery_on	int	y	bool	Is the main battery on
+sim/cockpit/electrical/battery_array_on	int[8]	y	bool	Is the battery selected on
+sim/cockpit/electrical/battery_EQ	int	n	bool	Does this cockpit have a battery switch
+sim/cockpit/electrical/avionics_on	int	y	bool	Is there power to the avionics
+sim/cockpit/electrical/avionics_EQ	int	y	bool	Does this cockpit have an avionics switch
+sim/cockpit/electrical/generator_on	int[8]	y	bool	Is the generator on (to charge batteries) - one for each engine
+sim/cockpit/electrical/generator_EQ	int	y	bool	Does this cockpit have generator switches?
+sim/cockpit/electrical/generator_apu_on	int	y	bool	Is the APU Generator on
+sim/cockpit/electrical/generator_apu_amps	float	y	amps	APU Generator amps
+sim/cockpit/electrical/HUD_on	int	y	bool	Is the HUD on
+sim/cockpit/electrical/HUD_brightness	float	y	ratio	HUD brightness level (0-1)
+sim/cockpit/electrical/beacon_lights_on	int	y	bool	Beacon Light
+sim/cockpit/electrical/landing_lights_on	int	y	bool	Landing Light
+sim/cockpit/electrical/nav_lights_on	int	y	bool	Navigation Light
+sim/cockpit/electrical/strobe_lights_on	int	y	bool	Strobe Light
+sim/cockpit/electrical/taxi_light_on	int	y	bool	Taxi Lights
+sim/cockpit/electrical/cockpit_lights_on	int	n	bool	Are cockpit lights on.  (NOTE - previous docs were wrong, this is always read-only)
+sim/cockpit/electrical/cockpit_lights	float	y	ratio	Cockpit light level
+sim/cockpit/electrical/instrument_brightness	float	y	ratio	Instrument LED lighting level
+sim/cockpit/electrical/sunglasses_on	int	y	bool	Sunglasses on?
+sim/cockpit/electrical/night_vision_on	int	y	bool	Night vision goggles on?
+sim/cockpit/electrical/ah_bar	float	y	???	Cockpit light reostat - this appears to be legacy and no longer used.
+sim/cockpit/engine/inverter_on	int[8]	y	bool	Is the inverter providing power (one per engine)
+sim/cockpit/engine/inverter_eq	int	y	bool	Does this cockpit have inverter switches?
+sim/cockpit/engine/fuel_pump_on	int[8]	y	bool	Is the fuel pump on (one per engine)
+sim/cockpit/engine/fuel_pump_EQ	int	y	bool	Does this cockpit have fuel pumps?
+sim/cockpit/engine/fadec_on	int[8]	y	bool	Is the fadec on (one per engine)
+sim/cockpit/engine/idle_speed	int[8]	y	bool	Idle speed (per engine)
+sim/cockpit/engine/fuel_tank_selector	int	y	???	Which fuel tank is open for flight
+sim/cockpit/engine/fuel_tank_transfer	int	y	???	Which fuel tank is open for transfers (destination)
+sim/cockpit/engine/fuel_tank_transfer_from	int	y	???	Which fuel tank is open for transfers (source)
+sim/cockpit/engine/ignition_on	int[8]	y	enum	ignition key position
+sim/cockpit/engine/igniters_on	int[8]	y	boolean	starter ignition
+sim/cockpit/engine/starter_duration	float[8]	y	seconds	time since ignition was pressed or something
+sim/cockpit/engine/clutch_engage	int	y	???	Clutch engaged
+sim/cockpit/engine/APU_switch	int	y	enum	APU starter switch 0 = off, 1 = on, 2 = start
+sim/cockpit/engine/APU_running	int	y	boolean	APU running - 1 = on, 0 = off.
+sim/cockpit/engine/APU_N1	float	y	???	???
+sim/cockpit/gps/course	float	n	???	The currently programmed GPS course (true degrees)
+sim/cockpit/gps/destination_type	int	y	???	The current type of navaid we're flying to
+sim/cockpit/gps/destination_index	int	y	???	The index of the navaid we're flying to
+sim/cockpit/gps/airport_index	int	y	???	The index of the last set airport
+sim/cockpit/gps/vor_index	int	y	???	The index of the last set VOR
+sim/cockpit/gps/ndb_index	int	y	???	The index of the last set NDB
+sim/cockpit/gps/fix_index	int	y	???	The index of the last set fix
+sim/cockpit/gyros/the_vac_ind_deg	float	y	degrees	The indicated pitch on the panel for vaccum instruments
+sim/cockpit/gyros/psi_vac_ind_degm	float	y	degrees	The indicated heading on the panel for vacuum instruments
+sim/cockpit/gyros/phi_vac_ind_deg	float	y	degrees	The indicated roll on the panel for vacuum instruments
+sim/cockpit/gyros/the_ele_ind_deg	float	y	degrees	The indicated pitch on the panel for vaccum instruments
+sim/cockpit/gyros/psi_ele_ind_degm	float	y	degrees	The indicated heading on the panel for vacuum instruments
+sim/cockpit/gyros/phi_ele_ind_deg	float	y	degrees	The indicated roll on the panel for vacuum instruments
+sim/cockpit/gyros/dg_drift_vac_deg	float	y	degrees A delta between the plane's heading and the DG for vacuum powered DGs	???
+sim/cockpit/gyros/dg_drift_ele_deg	float	y	degrees A delta between the plane's heading and the DG for electric powered DGs	???
+sim/cockpit/gyros/gyr_force	float[4]	y	???	???
+sim/cockpit/gyros/gyr_spin	float[4]	y	???	???
+sim/cockpit/misc/has_radar	float	n	???	Does this aircraft have weather radar?
+sim/cockpit/misc/outer_marker_lit	int	y	???	Is the outer marker beacon lit right now
+sim/cockpit/misc/middle_marker_lit	int	y	???	Is the middle marker beacon lit right now
+sim/cockpit/misc/inner_marker_lit	int	y	???	Is the inner marker beacon lit right now
+sim/cockpit/misc/barometer_setting	float	y	???	The pilots altimeter setting
+sim/cockpit/misc/barometer_setting2	float	y	???	The copilots altimeter setting
+sim/cockpit/misc/radio_altimeter_minimum	float	y	Feet	The decision height for the radio altimeter
+sim/cockpit/misc/show_path	float	y	???	Show our path as we fly?
+sim/cockpit/misc/vacuum	float	y	???	Vacuum Ratio
+sim/cockpit/misc/vacuum2	float	y	???	Vacuum 2 Ratio
+sim/cockpit/misc/ah_adjust	float	y	pixels	Adjustment to the artificial horizon bars
+sim/cockpit/pressure/bleed_air_on	int	y	bool	Bleeding air is on (legacy)
+sim/cockpit/pressure/bleed_air_mode	int	y	enum	0=off,1=L,2=B,3=R,4=APU
+sim/cockpit/pressure/cabin_altitude_set_m_msl	float	y	???	The desired cabin altitude (BEFORE 730 this was incorrectly int type)
+sim/cockpit/pressure/cabin_vvi_set_m_msec	float	y	???	The desired cabin altitude rate change (BEFORE 730 this was incorrectly int type)
+sim/cockpit/pressure/cabin_altitude_actual_m_msl	float	n	???	The real cabin altitude (BEFORE 730 this was incorrectly int type)
+sim/cockpit/pressure/cabin_vvi_actual_m_msec	float	n	???	The real cabin altitude rate change (BEFORE 730 this was incorrectly int type)
+sim/cockpit/pressure/pressure_test_timeout	float	y	???	Timeout for some kind of pressure test/
+sim/cockpit/pressure/max_allowable_altitude	float	y	???	Max altitude the plane can keep pressure at?
+sim/cockpit/pressure/dump_all	int	y	bool	Pressure dump switch
+sim/cockpit/pressure/dump_to_alt	int	y	bool	Pressure dump to altitude switch
+sim/cockpit/radios/nav1_freq_hz	int	y	Hz	The current frequency of the nav1 radio.
+sim/cockpit/radios/nav2_freq_hz	int	y	Hz	The current frequency of the nav2 radio.
+sim/cockpit/radios/com1_freq_hz	int	y	Hz	The current frequency of the copm1 radio.
+sim/cockpit/radios/com2_freq_hz	int	y	Hz	The current frequency of the com2 radio.
+sim/cockpit/radios/adf1_freq_hz	int	y	Hz	The current frequency of the first automatic direction finder.
+sim/cockpit/radios/adf2_freq_hz	int	y	Hz	The current frequency of the second automatic direction finder.
+sim/cockpit/radios/dme_freq_hz	int	y	Hz	The current frequency of the standalone DME receiver.
+sim/cockpit/radios/nav1_stdby_freq_hz	int	y	Hz	The standby frequency for the radio mentioned above for flip/flop radios.
+sim/cockpit/radios/nav2_stdby_freq_hz	int	y	Hz	The standby frequency for the radio mentioned above for flip/flop radios.
+sim/cockpit/radios/com1_stdby_freq_hz	int	y	Hz	The standby frequency for the radio mentioned above for flip/flop radios.
+sim/cockpit/radios/com2_stdby_freq_hz	int	y	Hz	The standby frequency for the radio mentioned above for flip/flop radios.
+sim/cockpit/radios/adf1_stdby_freq_hz	int	y	Hz	The standby frequency for the radio mentioned above for flip/flop radios.
+sim/cockpit/radios/adf2_stdby_freq_hz	int	y	Hz	The standby frequency for the radio mentioned above for flip/flop radios.
+sim/cockpit/radios/dme_stdby_freq_hz	int	y	Hz	The standby frequency for the radio mentioned above for flip/flop radios.<p>NOTE: X-Plane does not currently feature a flip-flop standalone DME instrument, but the data exists.
+sim/cockpit/radios/nav1_obs_degt	float	y	degt	The 'obs' heading programmed into VOR and HSI gauges that follow nav radio 1. (true: legacy)
+sim/cockpit/radios/nav2_obs_degt	float	y	degt	The 'obs' heading programmed into VOR and HSI gauges that follow nav radio 2. (true: legacy)
+sim/cockpit/radios/adf1_obs_card	float	y	degt	ADF 1 (true degs, old) (Never worked, do not use)
+sim/cockpit/radios/adf2_obs_card	float	y	degt	ADF 2 (true degs, old) (Never worked, do not use)
+sim/cockpit/radios/nav1_obs_degm	float	y	degm	The 'obs' heading programmed into VOR and HSI gauges that follow nav radio 1. (mag: modern) pilot
+sim/cockpit/radios/nav1_obs_degm2	float	y	degm	The 'obs' heading programmed into VOR and HSI gauges that follow nav radio 1. (mag: modern) copilot
+sim/cockpit/radios/nav2_obs_degm	float	y	degm	The 'obs' heading programmed into VOR and HSI gauges that follow nav radio 2. (mag: modern) pilot
+sim/cockpit/radios/nav2_obs_degm2	float	y	degm	The 'obs' heading programmed into VOR and HSI gauges that follow nav radio 2. (mag: modern) copilot
+sim/cockpit/radios/adf1_obs_card_mag	float	y	degm	ADF 1 (mag degs, new)  (Never worked, do not use)
+sim/cockpit/radios/adf2_obs_card_mag	float	y	degm	ADF 2 (mag degs, new)  (Never worked, do not use)
+sim/cockpit/radios/nav1_dir_degt	float	y	deg	The relative bearing to the beacon indicated by nav1.  Set override with override_navneedles
+sim/cockpit/radios/nav2_dir_degt	float	y	deg	The relative bearing to the beacon indicated by nav2.  Set override with override_navneedles
+sim/cockpit/radios/adf1_dir_degt	float	y	deg	The relative bearing to the beacon indicated by adf1.  Use override_adf to stg.
+sim/cockpit/radios/adf2_dir_degt	float	y	deg	The relative bearing to the beacon indicated by adf2.  Use override_adf to stg.
+sim/cockpit/radios/gps_dir_degt	float	n	deg	The relative bearing to the GPS destination.
+sim/cockpit/radios/dme_dir_degt	float	n	deg	The relative bearing to whatever becaon the standalone DME is programmed for.
+sim/cockpit/radios/nav1_hdef_deg	float	n	degt	The deflection from the aircraft to the tuned in course in degrees.
+sim/cockpit/radios/nav2_hdef_deg	float	n	degt	The deflection from the aircraft to the tuned in course in degrees.
+sim/cockpit/radios/gps_hdef_deg	float	n	degt	The deflection from the aircraft to the tuned in course in degrees.
+sim/cockpit/radios/nav1_hdef_dot	float	y	prcnt	The deflection from the aircraft to the tuned in course in 'dots' on a VOR compass - pilot.  override_navneedles
+sim/cockpit/radios/nav1_hdef_dot2	float	y	prcnt	The deflection from the aircraft to the tuned in course in 'dots' on a VOR compass - copilot.  override_navneedles
+sim/cockpit/radios/nav2_hdef_dot	float	y	prcnt	The deflection from the aircraft to the tuned in course in 'dots' on a VOR compass - pilot.  override_navneedles
+sim/cockpit/radios/nav2_hdef_dot2	float	y	prcnt	The deflection from the aircraft to the tuned in course in 'dots' on a VOR compass - copilot.  override_navneedles
+sim/cockpit/radios/gps_hdef_dot	float	y	prcnt	The deflection from the aircraft to the tuned in course in 'dots' on a VOR compass - pilot.  override_navneedles
+sim/cockpit/radios/gps_hdef_dot2	float	y	prcnt	The deflection from the aircraft to the tuned in course in 'dots' on a VOR compass - copilot.  override_navneedles
+sim/cockpit/radios/nav1_vdef_deg	float	n	degt	The deflection from the aircraft to the tuned in glide slope in degrees.
+sim/cockpit/radios/nav2_vdef_deg	float	n	degt	The deflection from the aircraft to the tuned in glide slope in degrees.
+sim/cockpit/radios/gps_vdef_deg	float	y	degt	The deflection from the aircraft to the tuned in glide slope in degrees.
+sim/cockpit/radios/nav1_vdef_dot	float	y	prcnt	The deflection from the aircraft to the tuned in glide slope in dots on an ILS gauge - pilot.  override_navneedles
+sim/cockpit/radios/nav1_vdef_dot2	float	y	prcnt	The deflection from the aircraft to the tuned in glide slope in dots on an ILS gauge - copilot.  override_navneedles
+sim/cockpit/radios/nav2_vdef_dot	float	y	prcnt	The deflection from the aircraft to the tuned in glide slope in dots on an ILS gauge - pilot.  override_navneedles
+sim/cockpit/radios/nav2_vdef_dot2	float	y	prcnt	The deflection from the aircraft to the tuned in glide slope in dots on an ILS gauge - copilot.  override_navneedles
+sim/cockpit/radios/gps_vdef_dot	float	y	prcnt	The deflection from the aircraft to the tuned in glide slope in dots on an ILS gauge - pilot. override_navneedles
+sim/cockpit/radios/gps_vdef_dot2	float	y	prcnt	The deflection from the aircraft to the tuned in glide slope in dots on an ILS gauge - copilot. override_navneedles
+sim/cockpit/radios/nav1_fromto	int	y	enum	Whether we are heading to or from (or over) our nav1 beacon - pilot.
+sim/cockpit/radios/nav1_fromto2	int	y	enum	Whether we are heading to or from (or over) our nav1 beacon - copilot.
+sim/cockpit/radios/nav2_fromto	int	y	enum	Whether we are heading to or from (or over) our nav2 beacon - pilot.
+sim/cockpit/radios/nav2_fromto2	int	y	enum	Whether we are heading to or from (or over) our nav2 beacon - copilot.
+sim/cockpit/radios/gps_fromto	int	y	enum	Whether we are heading to or from (or over) our nav2 beacon - pilot.
+sim/cockpit/radios/gps_fromto2	int	y	enum	Whether we are heading to or from (or over) our nav2 beacon - copilot.
+sim/cockpit/radios/nav1_CDI	int	n	bool	Are we receiving an expected glide slope for nav1
+sim/cockpit/radios/nav2_CDI	int	n	bool	Are we receiving an expected glide slope for nav2
+sim/cockpit/radios/nav1_dme_dist_m	float	y	meters	Our distance in meters from the beacon tuned in on nav1.  override_navneedles
+sim/cockpit/radios/nav2_dme_dist_m	float	y	meters	Our distance in meters from the beacon tuned in on nav2.  override_navneedles
+sim/cockpit/radios/adf1_dme_dist_m	float	y	meters	Our distance in meters from the beacon tuned in on adf1.  override_dme
+sim/cockpit/radios/adf2_dme_dist_m	float	y	meters	Our distance in meters from the beacon tuned in on adf2.  override_dme
+sim/cockpit/radios/gps_dme_dist_m	float	y	meters	Our distance in meters from the beacon tuned in on the GPS.  override_gps
+sim/cockpit/radios/standalone_dme_dist_m	float	y	meters	Our distance in meters from the beacon tuned in on the standalone DME receiver. override_dme
+sim/cockpit/radios/nav1_dme_speed_kts	float	y	knots	Our closing speed to the beacon tuned in on nav1. override_dme
+sim/cockpit/radios/nav2_dme_speed_kts	float	y	knots	Our closing speed to the beacon tuned in on nav2. override_dme
+sim/cockpit/radios/adf1_dme_speed_kts	float	y	knots	Our closing speed to the beacon tuned in on adf1. override_dme
+sim/cockpit/radios/adf2_dme_speed_kts	float	y	knots	Our closing speed to the beacon tuned in on adf2. override_dme
+sim/cockpit/radios/gps_dme_speed_kts	float	y	knots	Our closing speed to the beacon tuned in on the GPS. override_dme
+sim/cockpit/radios/standalone_dme_speed_kts	float	y	knots	Our closing speed to the beacon tuned in on the standalone DME receiver. override_dme
+sim/cockpit/radios/nav1_dme_time_secs	float	y	secs	Our time to reach the beacon tuned in on nav1. override_dme
+sim/cockpit/radios/nav2_dme_time_secs	float	y	secs	Our time to reach the beacon tuned in on nav2. override_dme
+sim/cockpit/radios/adf1_dme_time_secs	float	y	secs	Our time to reach the beacon tuned in on adf1. override_dme
+sim/cockpit/radios/adf2_dme_time_secs	float	y	secs	Our time to reach the beacon tuned in on adf2. override_dme
+sim/cockpit/radios/gps_dme_time_secs	float	y	secs	Our time to reach the beacon tuned in on the GPS. override_dme
+sim/cockpit/radios/standalone_dme_time_secs	float	y	secs	Our time to reach the beacon tuned in on the standalone DME. override_dme
+sim/cockpit/radios/nav1_course_degt	float	n	degt	The localizer course for Nav1 or tuned in radial for a VOR. (True, legacy) - pilot
+sim/cockpit/radios/nav1_course_degt2	float	n	degt	The localizer course for Nav1 or tuned in radial for a VOR. (True, legacy) - copilot
+sim/cockpit/radios/nav2_course_degt	float	n	degt	The localizer course for Nav2 or tuned in radial for a VOR. (True, legacy) - pilot
+sim/cockpit/radios/nav2_course_degt2	float	n	degt	The localizer course for Nav2 or tuned in radial for a VOR. (True, legacy) - copilot
+sim/cockpit/radios/gps_course_degt	float	n	degt	The localizer course for GPS or tuned in radial for a VOR (True, legacy) - pilot
+sim/cockpit/radios/gps_course_degt2	float	n	degt	The localizer course for GPS or tuned in radial for a VOR (True, legacy) - copilot
+sim/cockpit/radios/nav1_course_degm	float	n	degm	The localizer course for Nav1 or tuned in radial for a VOR. (Magnetic, new) - pilot
+sim/cockpit/radios/nav1_course_degm2	float	n	degm	The localizer course for Nav1 or tuned in radial for a VOR. (Magnetic, new) - copilot
+sim/cockpit/radios/nav2_course_degm	float	n	degm	The localizer course for Nav2 or tuned in radial for a VOR. (Magnetic, new) - pilot
+sim/cockpit/radios/nav2_course_degm2	float	n	degm	The localizer course for Nav2 or tuned in radial for a VOR. (Magnetic, new) - copilot
+sim/cockpit/radios/gps_course_degtm	float	n	degm	The localizer course for GPS or tuned in radial for a VOR (Magnetic, new) - pilot
+sim/cockpit/radios/gps_course_degtm2	float	n	degm	The localizer course for GPS or tuned in radial for a VOR (Magnetic, new) - copilot
+sim/cockpit/radios/nav1_slope_degt	float	n	deg	The glide slope slope for nav1.
+sim/cockpit/radios/nav2_slope_degt	float	n	deg	The glide slope slope for nav2.
+sim/cockpit/radios/transponder_code	int	y	code	Our transponder code.
+sim/cockpit/radios/transponder_id	int	n	bool	Whether we are squawking ident right now.
+sim/cockpit/radios/transponder_light	int	n	???	Whether the transponder is lit
+sim/cockpit/radios/transponder_brightness	float	y	ratio	Transponder light brightness ratio from 0 to 1
+sim/cockpit/radios/transponder_mode	int	y	enum	Transponder mode (off=0,stdby=1,on=2,test=3)
+sim/cockpit/radios/nav1_cardinal_dir	float	y	degm	Magnetic heading of the compass card for VOR 1 - pilot.
+sim/cockpit/radios/nav1_cardinal_dir2	float	y	degm	Magnetic heading of the compass card for VOR 1 - copilot.
+sim/cockpit/radios/nav2_cardinal_dir	float	y	degm	Magnetic heading of the compass card for VOR 2 - pilot.
+sim/cockpit/radios/nav2_cardinal_dir2	float	y	degm	Magnetic heading of the compass card for VOR 2 - copilot.
+sim/cockpit/radios/adf1_cardinal_dir	float	y	degm	Magnetic heading of the compass card for ADF 1 - pilot.
+sim/cockpit/radios/adf1_cardinal_dir2	float	y	degm	Magnetic heading of the compass card for ADF 1 - copilot.
+sim/cockpit/radios/adf2_cardinal_dir	float	y	degm	Magnetic heading of the compass card for ADF 2 - pilot.
+sim/cockpit/radios/adf2_cardinal_dir2	float	y	degm	Magnetic heading of the compass card for ADF 2 - copilot.
+sim/cockpit/radios/vac_start_time	float	y	???	used to be used to spool gyro
+sim/cockpit/radios/vac_stop_time	float	y	???	but now RPM is tracked
+sim/cockpit/radios/nav1_has_dme	int	y	bool	Does this nav aid have DME?  Use override_dme to set
+sim/cockpit/radios/nav2_has_dme	int	y	bool	Does this nav aid have DME?  Use override_dme to set
+sim/cockpit/radios/adf1_has_dme	int	y	bool	Does this adf aid have DME?  Use override_dme to set
+sim/cockpit/radios/adf2_has_dme	int	y	bool	Does this adf aid have DME?  Use override_dme to set
+sim/cockpit/radios/dme5_has_dme	int	y	bool	Does this adf aid have DME?  Use override_dme to set
+sim/cockpit/radios/obs_mag	float	y	???	OBS
+sim/cockpit/radios/gear_audio_working	int	y	???	Suppresses Gear Audio
+sim/cockpit/radios/marker_audio_working	int	y	???	Suppresses Marker Audio
+sim/cockpit/radios/nav_type	int[6]	y	????	Type of NAVAID that is tuned in
+sim/cockpit/radios/ap_src	int	y	???	???
+sim/cockpit/switches/DME_radio_selector	int	y	???	Which nav radio is the slaved DME connected to
+sim/cockpit/switches/DME_distance_or_time	int	y	???	Is the standalone DME showing distance or groundspeed/time
+sim/cockpit/switches/HSI_selector	int	y	???	Is the HSI showing nav1, nav2, or GPS
+sim/cockpit/switches/HSI_selector2	int	y	???	Is the HSI showing nav1, nav2, or GPS
+sim/cockpit/switches/RMI_selector	int	y	???	Is the RMI showing nav1, nav2, or GPS
+sim/cockpit/switches/RMI_selector2	int	y	???	Is the RMI showing nav1, nav2, or GPS
+sim/cockpit/switches/RMI_l_vor_adf_selector	int	y	???	Is the left side of a VOR/ADF RMI showing the VOR or ADF
+sim/cockpit/switches/RMI_l_vor_adf_selector2	int	y	???	Is the left side of a VOR/ADF RMI showing the VOR or ADF
+sim/cockpit/switches/RMI_r_vor_adf_selector	int	y	???	Is the right side of a VOR/ADF RMI showing the VOR or ADF
+sim/cockpit/switches/RMI_r_vor_adf_selector2	int	y	???	Is the right side of a VOR/ADF RMI showing the VOR or ADF
+sim/cockpit/switches/EFIS_dme_1_selector	int	y	???	Is the first EFIS DME showing nothing, dist to VOR, or dist to ADF
+sim/cockpit/switches/EFIS_dme_2_selector	int	y	???	Is the second EFIS DME showing nothing, dist to VOR, or dist to ADF
+sim/cockpit/switches/marker_panel_out	int	y	???	Settings for the marker beacon audio panel
+sim/cockpit/switches/audio_panel_out	int	y	???	Settings for the com radio audio panel
+sim/cockpit/switches/pitot_heat_on	int	y	bool	Is the pitot heat on
+sim/cockpit/switches/pitot_heat_on2	int	y	bool	Is the backup pitot heat on
+sim/cockpit/switches/anti_ice_on	int	y	bool	Is the anti-icing system on.  This turns on EVERY anti-ice system.
+sim/cockpit/switches/anti_ice_auto_ignite	int	y	bool	Not sure what this anti-ice system is
+sim/cockpit/switches/anti_ice_inert_sep	int	y	bool	Or this one either
+sim/cockpit/switches/anti_ice_inlet_heat	int	y	bool	Turns on inlet heating.
+sim/cockpit/switches/anti_ice_prop_heat	int	y	bool	Turns on prop heat
+sim/cockpit/switches/anti_ice_surf_heat	int	y	bool	Turns on surface heat on the wings
+sim/cockpit/switches/anti_ice_surf_boot	int	y	bool	Turns on the wing-surface anti-ice boot (knocks ice off I think).
+sim/cockpit/switches/anti_ice_window_heat	int	y	bool	Turns on anti-icing fr the windshield
+sim/cockpit/switches/anti_ice_AOA_heat	int	y	bool	Turns on anti-icing for alpha vane heater
+sim/cockpit/switches/ice_detect	int	y	bool	Turns on ice detect
+sim/cockpit/switches/auto_brake_settings	int	y	???	Settings for the autobrake control
+sim/cockpit/switches/auto_feather_mode	int	y	???	Settings for auto-feathering mode
+sim/cockpit/switches/auto_fea_EQ	int	y	???	Does this plane have an auto-feather switch?
+sim/cockpit/switches/yaw_damper_on	int	y	???	Is the yaw damper on
+sim/cockpit/switches/art_stab_on	int	y	???	Is the artificial stability system on?
+sim/cockpit/switches/pre_rotating	int	y	???	???
+sim/cockpit/switches/pre_rotate_level	int	y	???	???
+sim/cockpit/switches/parachute_on	int	y	???	Is the parachute deployed
+sim/cockpit/switches/jato_on	int	y	???	Are jatos on
+sim/cockpit/switches/prop_sync_on	int	y	???	Is prop sync on
+sim/cockpit/switches/puffers_on	int	y	???	Are puffers on
+sim/cockpit/switches/water_scoop	int	y	???	Is water scoop active
+sim/cockpit/switches/arresting_gear	int	y	???	Is the arresting gear deployed
+sim/cockpit/switches/dumping_fuel	int	y	???	Are we dumping fuel
+sim/cockpit/switches/tot_ener_audio	int	y	???	???
+sim/cockpit/switches/EFIS_map_mode	int	y	???	Is the moving map showing the map or another HSI
+sim/cockpit/switches/EFIS_map_submode	int	y	enum	0=app,1=vor,2=map,3=nav,4=pln specific mode of the map (or HSI)
+sim/cockpit/switches/EFIS_map_range_selector	int	y	???	The display range for the moving map
+sim/cockpit/switches/ECAM_mode	int	y	???	The display mode for the ECAM
+sim/cockpit/switches/gear_handle_status	int	y	boolean	Gear handle is up or down?
+sim/cockpit/switches/EFIFS_shows_weather	int	y	boolean	Does the EFIS display show storms/weather?
+sim/cockpit/switches/EFIS_shows_tcas	int	y	boolean	Does the EFIS show other aircraft?
+sim/cockpit/switches/EFIS_shows_airports	int	y	boolean	Does the EFIS show other airports?
+sim/cockpit/switches/EFIS_shows_waypoints	int	y	boolean	Does the EFIS show waypoints?
+sim/cockpit/switches/EFIS_shows_VORs	int	y	boolean	Does the EFIS show VORs?
+sim/cockpit/switches/EFIS_shows_NDBs	int	y	boolean	Does the EFIS show NDBs?
+sim/cockpit/switches/HITS_mode	int	y	enum	What mode is the HITS display in
+sim/cockpit/switches/argus_mode	int	y	enum	What mode is the Argus 2000 in
+sim/cockpit/warnings/ECAM_warning_on	int	y	???	Is there a warning lit on the ECAM
+sim/cockpit/warnings/warning_suppression_timeout	float	y	???	Time when master warning goes on again (after supression)
+sim/cockpit/warnings/master_caution_timeout	float	y	???	Time master caution will go out
+sim/cockpit/warnings/master_caution_on	float	y	???	Master caution is lit (because not accepted)
+sim/cockpit/warnings/master_accept_on	float	y	???	Master accept is lit (because it is not pressed)
+sim/cockpit/warnings/annunciator_test_timeout	float	y	???	Time annunciator test will end
+sim/cockpit/warnings/annunciators/master_caution	int	y	boolean	Master caution light on/off
+sim/cockpit/warnings/annunciators/master_warning	int	y	boolean	Master warning
+sim/cockpit/warnings/annunciators/master_accept	int	y	boolean	Master accept light on/off
+sim/cockpit/warnings/annunciators/autopilot_disconnect	int	y	boolean	autopilot has been disconnected
+sim/cockpit/warnings/annunciators/low_vacuum	int	y	boolean	low vaccum pressure
+sim/cockpit/warnings/annunciators/low_voltage	int	y	boolean	low battery voltage
+sim/cockpit/warnings/annunciators/fuel_quantity	int	y	boolean	running out of fuel
+sim/cockpit/warnings/annunciators/hydraulic_pressure	int	y	boolean	hydraulic pressure low
+sim/cockpit/warnings/annunciators/fuel_pressure	int	y	boolean	fuel pressure low
+sim/cockpit/warnings/annunciators/oil_pressure	int	y	boolean	oil pressure low
+sim/cockpit/warnings/annunciators/oil_temperature	int	y	boolean	oil temperature too high
+sim/cockpit/warnings/annunciators/inverter	int	y	boolean	inverters are off or broken
+sim/cockpit/warnings/annunciators/generator	int	y	boolean	generators are off or broken
+sim/cockpit/warnings/annunciators/chip_detect	int	y	boolean	a chip has been detected in, um, a prop or turbine?
+sim/cockpit/warnings/annunciators/engine_fire	int	y	boolean	yer engines are on fire, fer cryin out loud
+sim/cockpit/warnings/annunciators/auto_ignition	int	y	boolean	auto iginition ???
+sim/cockpit/warnings/annunciators/speedbrake	int	y	boolean	???
+sim/cockpit/warnings/annunciators/GPWS	int	y	boolean	???
+sim/cockpit/warnings/annunciators/ice	int	y	boolean	???
+sim/cockpit/warnings/annunciators/lo_rotor	int	y	boolean	???
+sim/cockpit/warnings/annunciators/hi_rotor	int	y	boolean	???
+sim/cockpit/warnings/annunciators/reverse	int	y	boolean	???
+sim/cockpit/weapons/guns_armed	int	y	???	Are guns armed
+sim/cockpit/weapons/rockets_armed	int	y	???	Are rockets armed
+sim/cockpit/weapons/missiles_armed	int	y	???	Are missiles armed
+sim/cockpit/weapons/bombs_armed	int	y	???	Are bombs armed
+sim/cockpit/weapons/firing_mode	int	y	???	Firing mode (single, ripple, etc. for bombs)
+sim/cockpit/weapons/firing_rate	int	y	???	Firing rate (for bombs)
+sim/cockpit/weapons/plane_target_index	int	y	???	Index of plane that is being targeted
+sim/cockpit/avidyne/lft_hil	int	y	???	???
+sim/cockpit/avidyne/rgt_hil	int	y	???	???
+sim/cockpit/avidyne/alt_hil	int	y	???	???
+sim/cockpit/avidyne/src	int[3]	y	???	???
+sim/cockpit/avidyne/hsi_mode	int	y	???	???
+sim/cockpit/avidyne/map_range_sel	int	y	???	???
+sim/flightmodel/controls/sbrkrat	float	y	???	Requested speed brake deployment
+sim/flightmodel/controls/flaprqst	float	y	???	Requested flap deployment
+sim/flightmodel/controls/slatrqst	float	y	???	Requested Slat deplyoment - note that in XP8 you cannot independently control slats.
+sim/flightmodel/controls/ail_trim	float	y	???	Aileron Trim
+sim/flightmodel/controls/dist	float	y	meters	Distance Travelled
+sim/flightmodel/controls/elv_trim	float	y	???	Elevation Trim
+sim/flightmodel/controls/flaprat	float	y	???	Actual flap 1 deplyoment
+sim/flightmodel/controls/flap2rat	float	y	???	Actual flap 2 deplyoment
+sim/flightmodel/controls/l_brake_add	float	y	part	Left Brake
+sim/flightmodel/controls/r_brake_add	float	y	part	Right Brake
+sim/flightmodel/controls/lail1def	float	y	degrees	Deflection Left Aileron 1
+sim/flightmodel/controls/lail2def	float	y	degrees	Deflection Left Aileron 2
+sim/flightmodel/controls/rail1def	float	y	degrees	Deflection Right Aileron 1
+sim/flightmodel/controls/rail2def	float	y	degrees	Deflection Right Aileron 2
+sim/flightmodel/controls/ldruddef	float	y	degrees	Deflection Left Rudder
+sim/flightmodel/controls/rdruddef	float	y	degrees	Deflection Right Rudder
+sim/flightmodel/controls/lsplrdef	float	y	degrees	Deflection Left Spoiler
+sim/flightmodel/controls/rsplrdef	float	y	degrees	Deflection Right Spoiler
+sim/flightmodel/controls/ail1_def	float[73]	y	degrees	Deflection Aileron 1
+sim/flightmodel/controls/ail2_def	float[73]	y	degrees	Deflection Aileron 2
+sim/flightmodel/controls/splr_def	float[73]	y	degrees	Deflection Spoilers
+sim/flightmodel/controls/splr2_def	float[73]	y	degrees	Deflection Spoilers 2
+sim/flightmodel/controls/yawb_def	float[73]	y	degrees	???
+sim/flightmodel/controls/rudd_def	float[73]	y	degrees	Deflection Rudders
+sim/flightmodel/controls/rudd2_def	float[73]	y	degrees	Deflection Rudders
+sim/flightmodel/controls/elv1_def	float[73]	y	degrees	Deflection Elevators
+sim/flightmodel/controls/elv2_def	float[73]	y	degrees	Deflection Elevators
+sim/flightmodel/controls/fla1_def	float[73]	y	degrees	Deflection Flaps
+sim/flightmodel/controls/fla2_def	float[73]	y	degrees	Deflection Flaps
+sim/flightmodel/controls/sbrkrqst	float	y	???	Speed Brake
+sim/flightmodel/controls/vectrqst	float	y	???	Vector
+sim/flightmodel/controls/swdi	float	y	???	Sweep Ratio
+sim/flightmodel/controls/swdirqst	float	y	???	Sweep
+sim/flightmodel/controls/slatrat	float	y	???	Slat Ratio
+sim/flightmodel/controls/nosewheel_steer	float	n	???	Nose Wheel Steering
+sim/flightmodel/controls/parkbrake	float	y	   	???
+sim/flightmodel/controls/rot_trim	float	y	???	Rotor Trim
+sim/flightmodel/controls/rud_trim	float	y	???	Rudder Trim
+sim/flightmodel/controls/incid_rqst	float	y	???	???
+sim/flightmodel/controls/dihed_rqst	float	y	???	???
+sim/flightmodel/controls/vect_rat	float	y	???	???
+sim/flightmodel/controls/incid_rat	float	y	???	???
+sim/flightmodel/controls/dihed_rat	float	y	???	???
+sim/flightmodel/cyclic/cyclic_ailn_blad_alph	float[8]	n	??? Blade alpha	???
+sim/flightmodel/cyclic/cyclic_ailn_disc_tilt	float[8]	n	???	Disc tilt
+sim/flightmodel/cyclic/cyclic_elev_blad_alph	float[8]	n	???	Blade alpha
+sim/flightmodel/cyclic/cyclic_elev_disc_tilt	float[8]	n	???	Disc tilt
+sim/flightmodel/cyclic/cyclic_elev_command	float[8]	n	???	???
+sim/flightmodel/cyclic/cyclic_ailn_command	float[8]	n	???	???
+sim/flightmodel/cyclic/sidecant	float[8]	y	???	???
+sim/flightmodel/cyclic/vertcant	float[8]	y	???	???
+sim/flightmodel/cyclic/disc_ang	float[8]	n	???	???
+sim/flightmodel/engine/ENGN_N2_	float[8]	y	percent	N2 speed as percent of max (per engine)
+sim/flightmodel/engine/ENGN_EGT	float[8]	y	ratio	Exhaust Gas Temperature per engine (ratio from min to max, min = 0, max = 700)
+sim/flightmodel/engine/ENGN_ITT	float[8]	y	ratio	Interturbine Temperature per engine (ratio from min to max, min = 0, max = 700)
+sim/flightmodel/engine/ENGN_CHT	float[8]	y	ratio	Cylinder Head Temperature (ratio from min to max)
+sim/flightmodel/engine/ENGN_EGT_c	float[8]	y	degc	EGT (per engine) in degrees celsius
+sim/flightmodel/engine/ENGN_ITT_c	float[8]	y	degc	ITT (per engine) in degrees celsius
+sim/flightmodel/engine/ENGN_CHT_c	float[8]	y	degc	CHT (per engine in degrees celsius
+sim/flightmodel/engine/ENGN_bat_amp	float[8]	y	???	Battery amps (per engine)
+sim/flightmodel/engine/ENGN_bat_volt	float[8]	y	???	Batery volts (per engine)
+sim/flightmodel/engine/ENGN_cowl	float[8]	y	ratio	Cowl flaps control (per engine) 0 = closed, 1 = open
+sim/flightmodel/engine/ENGN_EPR	float[8]	y	EPR	Engine Pressure Ratio (per engine)
+sim/flightmodel/engine/ENGN_FF_	float[8]	y	kg/s	Fuel flow (per engine) in kg/second
+sim/flightmodel/engine/ENGN_gen_amp	float[8]	y	???	Generator amps (per engine)
+sim/flightmodel/engine/ENGN_heat	float[8]	y	ratio	Carb Heat Control (per engine), 0 = off, 1 = on
+sim/flightmodel/engine/ENGN_mixt	float[8]	y	ratio	Mixture Control (per engine), 0 = cutoff, 1 = full rich
+sim/flightmodel/engine/ENGN_MPR	float[8]	y	???	MPR (per engine)
+sim/flightmodel/engine/ENGN_N1_	float[8]	y	percent	N1 speed as percent of max (per engine)
+sim/flightmodel/engine/ENGN_oil_press_psi	float[8]	y	degc	Oil pressure (per engine) in PSI
+sim/flightmodel/engine/ENGN_oil_temp_c	float[8]	n	psi	Oil temp (per engine) in degs C
+sim/flightmodel/engine/ENGN_oil_press	float[8]	y	ratio	Oil pressure (per engine) as ratio of max
+sim/flightmodel/engine/ENGN_oil_temp	float[8]	n	ratio	Oil temp (per engine) a ratio of max
+sim/flightmodel/engine/ENGN_power	float[8]	y	???	Power (per engine)
+sim/flightmodel/engine/ENGN_prop	float[8]	y	rad/sec	Commanded Prop Speed (per engine)
+sim/flightmodel/engine/ENGN_sigma	float[8]	y	???	Sigma (per engine)
+sim/flightmodel/engine/ENGN_thro	float[8]	y	ratio	Throttle (per engine) as set by user, 0 = idle, 1 = max
+sim/flightmodel/engine/ENGN_thro_use	float[8]	y	ratio 	Throttle (per engine) when overridden by you, plus with thrust vectors
+sim/flightmodel/engine/ENGN_thro_override	float	y	ratio 	An override from 0.0 to max fwd thrust for overriding all throttles.  Set to -999.0 to disengage.
+sim/flightmodel/engine/ENGN_TRQ	float[8]	y	NewtonMeters	Torque (per engine)
+sim/flightmodel/engine/ENGN_running	int[8]	y	boolean	Engine on and using fuel (only reliable in 740 and later)
+sim/flightmodel/engine/ENGN_burning	int[8]	y	boolean	Afterburner on (only reliable in 740 and later)
+sim/flightmodel/engine/ENGN_propmode	int[8]	y	enum	Prop mode: feather=0,normal=1,beta=2,reverse=3
+sim/flightmodel/engine/ENGN_burnrat	float[8]	y	???	???
+sim/flightmodel/engine/ENGN_oil_quan	float[8]	y	???	???
+sim/flightmodel/engine/ENGN_mixt_pow_rat	float[8]	y	???	???
+sim/flightmodel/engine/ENGN_oil_lube_rat	float[8]	y	??? 	???
+sim/flightmodel/engine/ENGN_crbice	float[8]	y	ratio	Amount of carb ice buildup (0-1)
+sim/flightmodel/engine/ENGN_tacrad	float[8]	y	rad/sec	Engine speed in radians/second
+sim/flightmodel/engine/ENGN_omegadot	float[8]	y	???	???
+sim/flightmodel/engine/POINT_pitch_deg	float[8]	y	degrees	Prop Pitch
+sim/flightmodel/engine/POINT_prop_eff	float[8]	y	???	Efficiency
+sim/flightmodel/engine/POINT_tacrad	float[8]	y	rad/sec	Prop speed in radians/second
+sim/flightmodel/engine/POINT_thrust	float[8]	y	???	Thrust
+sim/flightmodel/engine/POINT_rock_TRQ	float[8]	y	???	???
+sim/flightmodel/engine/POINT_drag_TRQ	float[8]	y	???	???
+sim/flightmodel/engine/POINT_omegadot	float[8]	y	???	???
+sim/flightmodel/engine/POINT_cone_rad	float[8]	y	???	???
+sim/flightmodel/engine/POINT_side_wash	float[8]	n	???	???
+sim/flightmodel/engine/POINT_XYZ	float[24]	n	???	???
+sim/flightmodel/engine/POINT_pitch_deg_use	float[8]	y	???	???
+sim/flightmodel/engine/POINT_prop_ang_deg	float[8]	n	???	???
+sim/flightmodel/failures/frm_ice	float	y	ratio	Ratio of icing on wings/airframe
+sim/flightmodel/failures/pitot_ice	float	y	ratio	Ratio of icing on pitot tube
+sim/flightmodel/failures/pitot_ice2	float	y	ratio	Ratio of icing on pitot tube2
+sim/flightmodel/failures/prop_ice	float	y	ratio	Ratio of icing on the prop
+sim/flightmodel/failures/inlet_ice	float	y	ratio	Ratio of icing on the air inlets?
+sim/flightmodel/failures/window_ice	float	y	ratio	Ratio of icing on the windshield
+sim/flightmodel/failures/aoa_ice	float	y	ratio	Ratio of icing on alpha vane
+sim/flightmodel/failures/stallwarning	int	y	???	Stall Warning
+sim/flightmodel/failures/over_g	int	y	???	???
+sim/flightmodel/failures/over_vne	int	y	???	???
+sim/flightmodel/failures/over_vfe	int	y	???	???
+sim/flightmodel/failures/over_vle	int	y	???	???
+sim/flightmodel/failures/onground_any	int	n	???	???
+sim/flightmodel/failures/onground_all	int	n	???	???
+sim/flightmodel/failures/smoking	int	y	???	???
+sim/flightmodel/failures/lo_rotor_warning	int	y	???	Lo Rotor Warning
+sim/flightmodel/forces/fnrml_aero	float	n	???	???
+sim/flightmodel/forces/faxil_aero	float	n	???	???
+sim/flightmodel/forces/fside_aero	float	n	???	???
+sim/flightmodel/forces/fnrml_prop	float	n	???	???
+sim/flightmodel/forces/faxil_prop	float	n	???	???
+sim/flightmodel/forces/fside_prop	float	n	???	???
+sim/flightmodel/forces/g_nrml	float	n	???	???
+sim/flightmodel/forces/g_axil	float	n	???	???
+sim/flightmodel/forces/g_side	float	n	???	???
+sim/flightmodel/forces/faxil_gear	float	n	???	???
+sim/flightmodel/forces/fside_gear	float	n	???	???
+sim/flightmodel/forces/fnrml_gear	float	n	???	???
+sim/flightmodel/forces/vx_air_on_acf	float	n	???	???
+sim/flightmodel/forces/vy_air_on_acf	float	n	???	???
+sim/flightmodel/forces/vz_air_on_acf	float	n	???	???
+sim/flightmodel/forces/vx_acf_axis	float	n	???	???
+sim/flightmodel/forces/vy_acf_axis	float	n	???	???
+sim/flightmodel/forces/vz_acf_axis	float	n	???	???
+sim/flightmodel/forces/Q_rotor_rad	float[8]	y	???	???
+sim/flightmodel/forces/R_rotor_rad	float[8]	y	???	???
+sim/flightmodel/forces/vs	float	y	???	???
+sim/flightmodel/forces/ve	float	y	???	???
+sim/flightmodel/forces/lift_path_axis	float	y	   ??? ???	???
+sim/flightmodel/forces/drag_path_axis	float	y	   ??? ???	???
+sim/flightmodel/forces/side_path_axis	float	y	   ??? ???	???
+sim/flightmodel/jetwash/DVinc	float[8]	n	???	DVinc
+sim/flightmodel/jetwash/ringDVinc	float[80]	n	???	ringDVinc
+sim/flightmodel/misc/ett_size	float	y	???	??? Slung/jettisonable load size (this should read JETT size but has a typo) hrm weigiht?!
+sim/flightmodel/misc/jett_len	float	y	???	??? slung jettisonable load length (length of cable??!)
+sim/flightmodel/misc/g_total	float	n	???	???
+sim/flightmodel/misc/nosewheel_speed	float	n	???	???
+sim/flightmodel/misc/wing_tilt_ptch	float	y	???	???
+sim/flightmodel/misc/wing_tilt_roll	float	y	???	???
+sim/flightmodel/misc/ai_app_mode	int	y	???	???
+sim/flightmodel/misc/jato_left	float	y	???	???
+sim/flightmodel/misc/displace_rat	float	y	???	???
+sim/flightmodel/misc/h_ind	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/h_ind2	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/machno	float	n	???	???
+sim/flightmodel/misc/Qstatic	float	n	psf	Ambient Q
+sim/flightmodel/misc/turnrate_roll	float	n	???	???
+sim/flightmodel/misc/turnrate_roll2	float	n	???	???
+sim/flightmodel/misc/turnrate_noroll	float	n	???	???
+sim/flightmodel/misc/turnrate_noroll2	float	n	???	???
+sim/flightmodel/misc/slip	float	n	???	???
+sim/flightmodel/misc/time_jett_over	float	y	???	???
+sim/flightmodel/misc/rocket_mode	int	y	???	???
+sim/flightmodel/misc/rocket_timeout	float	y	???	???
+sim/flightmodel/misc/prop_ospeed_test_timeout	float	y	???	???
+sim/flightmodel/misc/blown_flap_engage_rat	float	y	???	???
+sim/flightmodel/misc/lift_fan_total_power	float	y	???	???
+sim/flightmodel/misc/stab_ptch_test	int	n	???	Computed stability derivative - pitch
+sim/flightmodel/misc/stab_hdng_test	int	n	??? Computed Stability drivative - heading	???
+sim/flightmodel/misc/cgz_ref_to_default	float	n	???	???
+sim/flightmodel/misc/i	int	y	index  Env quad the plane is over.	???
+sim/flightmodel/misc/j	int	y	index  Made obsolete by new scenery system.	???
+sim/flightmodel/misc/Q_centroid_MULT	float[292]	n	???	???
+sim/flightmodel/misc/C_m	float	y	???	???
+sim/flightmodel/misc/C_n	float	y	???	???
+sim/flightmodel/misc/cl_overall	float	y	???	???
+sim/flightmodel/misc/cd_overall	float	y	 	???
+sim/flightmodel/misc/l_o_d	float	y	   	???
+sim/flightmodel/ground/surface_texture_type	int	y	enum tbd - writable only with override_groundplane	???
+sim/flightmodel/ground/plugin_ground_center	float[3]	y	meters	Location of a pt on the ground in local corods
+sim/flightmodel/ground/plugin_ground_slope_normal	float[3]	y	vector	Normal vector of the terrain (must be normalized)
+sim/flightmodel/ground/plugin_ground_terrain_velocity	float[3]	y	m/s 	speed of deck moving under us (this is a velocity vector)
+sim/flightmodel/movingparts/gear1def	float	n	???	landing gear1 def
+sim/flightmodel/movingparts/gear2def	float	n	???	landing gear2 def
+sim/flightmodel/movingparts/gear3def	float	n	???	landing gear3 def
+sim/flightmodel/movingparts/gear4def	float	n	???	landing gear4 def
+sim/flightmodel/movingparts/gear5def	float	n	???	landing gear5 def
+sim/flightmodel/movingparts/wing_sweep1	float	n	???	wing sweep 1
+sim/flightmodel/movingparts/wing_sweep2	float	n	???	wing sweep 2
+sim/flightmodel/movingparts/wing_sweep3	float	n	???	wing sweep 3
+sim/flightmodel/movingparts/tvect	float	n	???	thrust vector
+sim/flightmodel/parts/v_el	float[2920]	n	???	73x10x4 speed is DIFFERENT FOR EACH BLADE!
+sim/flightmodel/parts/alpha_el	float[2920]	n	???  	73x10x4 alpha is DIFFERENT FOR EACH BLADE!
+sim/flightmodel/parts/downwash_deg	float[730]	n	???	73x10
+sim/flightmodel/parts/propwash_rat	float[730]	n	???	73x10
+sim/flightmodel/parts/del_dir	float[2920]	n	???	73x10x4 corkscrew path is DIFFERENT FOR EACH BLADE!
+sim/flightmodel/parts/CL_grndeffect	float[73]	n	???	73
+sim/flightmodel/parts/CD_grndeffect	float[73]	n	???	73
+sim/flightmodel/parts/wash_grndeffect	float[73]	n	???	73
+sim/flightmodel/parts/Q_centroid_loc	float[292]	n	???	73x4 centroid is TOTALLY DIFFERENT FOR EACH BLADE on helos and gyros!
+sim/flightmodel/parts/Q_centroid_MULT	float[292]	n	???	73x4 centroid is TOTALLY DIFFERENT FOR EACH BLADE on helos and gyros!
+sim/flightmodel/parts/stalled	float[73]	n	???	73
+sim/flightmodel/parts/tire_locked	float[73]	n	???	73
+sim/flightmodel/parts/tire_drag_dis	float[73]	n	???	73
+sim/flightmodel/parts/tire_speed_term	float[73]	n	???	73
+sim/flightmodel/parts/tire_speed_now	float[73]	n	???	73
+sim/flightmodel/parts/tire_prop_rot	float[73]	n	???	73
+sim/flightmodel/parts/tire_vrt_def_veh	float[73]	n	???	73
+sim/flightmodel/parts/tire_vrt_frc_veh	float[73]	n	???	73
+sim/flightmodel/parts/tire_steer_cmd	float[73]	n	???	73
+sim/flightmodel/parts/tire_steer_act	float[73]	n	???	73
+sim/flightmodel/parts/nrml_force	float[73]	n	???	73 for data output, for the entire flying surface
+sim/flightmodel/parts/axil_force	float[73]	n	???	73 for data output, for the entire flying surface
+sim/flightmodel/parts/force_XYZ	float[2190]	n	???	73x10x3 for force visualization, for each element
+sim/flightmodel/parts/flap_def	float[73]	n	???	73 with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
+sim/flightmodel/parts/flap2_def	float[73]	n	???	73 with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
+sim/flightmodel/parts/elev_cont_def	float[73]	n	???	73 different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/elev_trim_def	float[73]	n	???	73 different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/rudd_cont_def	float[73]	n	???	73 different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/rudd2_cont_def	float[73]	n	???	73 different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/foil_swe	float[73]	n	???	73
+sim/flightmodel/parts/foil_dih	float[73]	n	???	73
+sim/flightmodel/parts/foil_inc	float[73]	n	???	73
+sim/flightmodel/parts/elem_inc	float[730]	n	???	73x10
+sim/flightmodel/position/local_x	double	y	meters	The location of the plane in OpenGL coordinates
+sim/flightmodel/position/local_y	double	y	meters	The location of the plane in OpenGL coordinates
+sim/flightmodel/position/local_z	double	y	meters	The location of the plane in OpenGL coordinates
+sim/flightmodel/position/lat_ref	float	n	degrees	The latitude of the point 0,0,0 in OpenGL coordinates (Writing NOT recommended!!)
+sim/flightmodel/position/lon_ref	float	n	degrees	The longitude of the point 0,0,0 in OpenGL coordinates.
+sim/flightmodel/position/latitude	double	y	degrees	The latitude of the aircraft
+sim/flightmodel/position/longitude	double	y	degrees	The longitude of the aircraft
+sim/flightmodel/position/elevation	double	y	meters	The elevation above MSL of the aircraft
+sim/flightmodel/position/theta	float	y	degrees	The pitch relative to the plane normal to the Y axis in degrees
+sim/flightmodel/position/phi	float	y	degrees	The roll of the aircraft in degrees
+sim/flightmodel/position/psi	float	y	degrees	The true heading of the aircraft in degrees from the Z axis
+sim/flightmodel/position/magpsi	float	n	degrees	The magnetic heading of the aircraft.
+sim/flightmodel/position/local_vx	float	y	???	The velocity in local OGL coordinates
+sim/flightmodel/position/local_vy	float	y	???	The velocity in local OGL coordinates
+sim/flightmodel/position/local_vz	float	y	???	The velocity in local OGL coordinates
+sim/flightmodel/position/local_ax	float	y	???	The acceleration in local OGL coordinates
+sim/flightmodel/position/local_ay	float	y	???	The acceleration in local OGL coordinates
+sim/flightmodel/position/local_az	float	y	???	The acceleration in local OGL coordinates
+sim/flightmodel/position/alpha	float	n	degrees	The pitch relative to the flown path (angle of attack)
+sim/flightmodel/position/beta	float	n	degrees	The heading relative to the flown path (yaw)
+sim/flightmodel/position/vpath	float	n	degrees	The pitch the aircraft actually flies.  (vpath+alpha=theta)
+sim/flightmodel/position/hpath	float	n	degrees	The heading the aircraft actually flies.  (hpath+beta=psi)
+sim/flightmodel/position/groundspeed	float	n	meters/sec	The ground speed of the aircraft
+sim/flightmodel/position/indicated_airspeed	float	n	kias	Air speed indicated - this takes into account air density and wind direction
+sim/flightmodel/position/indicated_airspeed2	float	n	kias	Air speed indicated - this takes into account air density and wind direction
+sim/flightmodel/position/true_airspeed	float	n	meters/sec	Air speed true - this does not take into account air density at altitude!
+sim/flightmodel/position/magnetic_variation	float	n	degrees	The local magnetic variation [PROBABLY NEEDS TO GO SOMEWHER ELSE!]
+sim/flightmodel/position/M	float	n	???	The angular momentum of the aircraft (relative to flight axis)
+sim/flightmodel/position/N	float	n	???	The angular momentum of the aircraft (relative to flight axis)
+sim/flightmodel/position/L	float	n	???	The angular momentum of the aircraft (relative to flight axis)
+sim/flightmodel/position/P	float	y	???	The rotation rates (relative to the flight)
+sim/flightmodel/position/Q	float	y	???	The rotation rates (relative to the flight)
+sim/flightmodel/position/R	float	y	???	The rotation rates (relative to the flight)
+sim/flightmodel/position/P_dot	float	n	???	The angular acceleration (relative to the flight)
+sim/flightmodel/position/Q_dot	float	n	???	The angular acceleration (relative to the flight)
+sim/flightmodel/position/R_dot	float	n	???	The angular acceleration rates (relative to the flight)
+sim/flightmodel/position/Prad	float	y	???	???
+sim/flightmodel/position/Qrad	float	y	???	???
+sim/flightmodel/position/Rrad	float	y	???	???
+sim/flightmodel/position/q	float[4]	y	???	???
+sim/flightmodel/position/vh_ind	float	n	m/s	VVI (vertical velocity in meters per second)
+sim/flightmodel/position/vh_ind_fpm	float	n	fpm	VVI (vertical velocity in meters per second)
+sim/flightmodel/position/vh_ind_fpm2	float	n	fpm	VVI (vertical velocity in meters per second)
+sim/flightmodel/position/y_agl	float	n	meters	AGL
+sim/flightmodel/weight/m_fixed	float	y	kgs	Payload Weight
+sim/flightmodel/weight/m_total	float	n	kgs	Total Weight
+sim/flightmodel/weight/m_fuel1	float	y	kgs	Fuel Tank 1 Weight
+sim/flightmodel/weight/m_fuel2	float	y	kgs	Fuel Tank 2 Weight
+sim/flightmodel/weight/m_fuel3	float	y	kgs	Fuel Tank 3 Weight
+sim/flightmodel/weight/m_jettison	float	y	kgs	Jettison
+sim/flightmodel/weight/m_fuel_total	float	n	kgs	Fuel Total Weight
+sim/graphics/animation/draw_object_x	float	n	float	X position in cartesian space of currently drawn object
+sim/graphics/animation/draw_object_y	float	n	float	Y position in cartesian space of currently drawn object
+sim/graphics/animation/draw_object_z	float	n	float	Z position in cartesian space of currently drawn object
+sim/graphics/animation/draw_object_psi	float	n	float	rotation in cartesian space of currently drawn object
+sim/graphics/colors/background_rgb	float[3]	n	RGB	Background color behind a modal window
+sim/graphics/colors/menu_dark_rgb	float[3]	n	RGB	Dark tinging for menus
+sim/graphics/colors/menu_hilite_rgb	float[3]	n	RGB	Menu color of a selected item
+sim/graphics/colors/menu_lite_rgb	float[3]	n	RGB	Light tinging for menus
+sim/graphics/colors/menu_text_rgb	float[3]	n	RGB	Menu Item Text Color
+sim/graphics/colors/menu_text_disabled_rgb	float[3]	n	RGB	Menu Item Text Color When Disabled
+sim/graphics/colors/subtitle_text_rgb	float[3]	n	RGB	Subtitle text colors
+sim/graphics/colors/tab_front_rgb	float[3]	n	RGB	Color of text on tabs that are forward
+sim/graphics/colors/tab_back_rgb	float[3]	n	RGB	Color of text on tabs that are in the bkgnd
+sim/graphics/colors/caption_text_rgb	float[3]	n	RGB	Caption text (for on a main window)
+sim/graphics/colors/list_text_rgb	float[3]	n	RGB	Text Color for scrolling lists
+sim/graphics/colors/glass_text_rgb	float[3]	n	RGB	Text color for on a 'glass' screen
+sim/graphics/colors/plane_path1_3d_rgb	float[3]	y	RGB	Color for 3-d plane path
+sim/graphics/colors/plane_path2_3d_rgb	float[3]	y	RGB	Striping color for 3-d plane path
+sim/graphics/misc/show_panel_click_spots	int	y	boolean	Show the clickable parts of the panel?
+sim/graphics/misc/cockpit_light_level_r	float	n	ratio	The red level for the cockpit 'night' tinting, from 0 to 1
+sim/graphics/misc/cockpit_light_level_g	float	n	ratio	The red level for the cockpit 'night' tinting, from 0 to 1
+sim/graphics/misc/cockpit_light_level_b	float	n	ratio	The red level for the cockpit 'night' tinting, from 0 to 1
+sim/graphics/misc/use_proportional_fonts	int	y	boolean	Set this to 1 to enable proportional fonts when available.
+sim/graphics/misc/scrolling_panel_size	int	n	pixels	Max scroll range of scrolling panel, or 0 if it doesn't scroll
+sim/graphics/misc/default_scroll_pos	float	n	pixels	Default position for a scrolling plane panel
+sim/graphics/misc/current_scroll_pos	float	y	pixels	Current position of that panel
+sim/graphics/misc/current_scroll_mode	int	y	enum	Scrolling: 0 = center, 1 = up, 2 = down, -1 = you control
+sim/graphics/scenery/current_planet	int	n	enum	What planet are we on?  (Earth = 0, mars = 1)
+sim/graphics/scenery/percent_lights_on	float	n	percent	what percentage of city lites are on as night hits
+sim/graphics/scenery/sun_declination	float	n	???	sun declination (due to latitude)
+sim/graphics/scenery/moon_declination	float	n	???	moon declination (due to latitude)
+sim/graphics/scenery/sun_azimuth	float	n	???	sun azimuth (due to planet rotation)
+sim/graphics/scenery/moon_azimuth	float	n	???	moon azimuth (due to planet rotation)
+sim/graphics/scenery/earth_lat_loaded	int	n	degrees	How many degrees of scenery are mapped in (latitude) on earth
+sim/graphics/scenery/earth_lon_loaded	int	n	degrees	How many degrees of scenery are mapped in (longitude) on earth
+sim/graphics/scenery/mars_lat_loaded	int	n	degrees	How many degrees of scenery are mapped in (latitude) on mars
+sim/graphics/scenery/mars_lon_loaded	int	n	degrees	How many degrees of scenery are mapped in (longitude) on mars
+sim/graphics/scenery/airport_light_level	float	y	ratio	Level of airport light illumination, 0 = off, 1 = max brightness
+sim/graphics/settings/rendering_res	int	n	int	Texture Rendering Level
+sim/graphics/settings/autogen_level	int	y	0-6	Density level for autogen scenery
+sim/graphics/settings/autogen_distance	int	y	nm	Autogen distance (how far from plane to not draw)
+sim/graphics/settings/draw_aircrafts	int	y	boolean	draw aircraft?
+sim/graphics/settings/draw_obstacles	int	y	boolean	draw obstacles/objects?
+sim/graphics/settings/draw_obstacles	int	y	boolean	draw obstacles/objects?
+sim/graphics/settings/draw_textured_lites	int	y	boolean	draw textured lites?
+sim/graphics/settings/dim_gload	int	y	boolean	dim under high g-load?
+sim/graphics/settings/draw_taxilines	int	y	boolean	draw taxi lines?
+sim/graphics/settings/draw_forestfires	int	y	boolean	draw forest fires?
+sim/graphics/settings/draw_oilrigs	int	y	boolean	draw oil rigs?
+sim/graphics/settings/draw_ships	int	y	boolean	draw ships?
+sim/graphics/settings/draw_vectors	int	y	boolean	draw vectors (roads, trains, trails, powerlines)?
+sim/graphics/settings/draw_cars	int	y	boolean	draw cars on roads
+sim/graphics/settings/transparent_panel	int	y	boolean	Is the panel transparent?
+sim/graphics/settings/draw_planes_on_ground	int	y	boolean	draw extra planes on the ground at airports?
+sim/graphics/view/view_type	int	n	enum	The current camera view
+sim/graphics/view/view_is_external	int	n	boolean	Is the view in the cockpit or outside?  Affects sound!
+sim/graphics/view/view_x	float	n	OGLcoords	The location of the camera, X coordinate (OpenGL)
+sim/graphics/view/view_y	float	n	OGLcoords	The location of the camera, Y coordinate (OpenGL)
+sim/graphics/view/view_z	float	n	OGLcoords	The location of the camera, Z coordinate (OpenGL)
+sim/graphics/view/view_elevation_m_msl	float	n	metersMSL	The elevation of the camera
+sim/graphics/view/view_elevation_agl	float	n	???	The elevation of the camera
+sim/graphics/view/view_pitch	float	n	degrees	The camera's pitch
+sim/graphics/view/view_roll	float	n	degrees	The camera's roll
+sim/graphics/view/view_heading	float	n	degrees	the camera's heading, CW frmo true north
+sim/graphics/view/cockpit_pitch	float	n	degrees	The cockpit's pitch
+sim/graphics/view/cockpit_roll	float	n	degrees	The cockpit's heading (the dataref name is wrong)
+sim/graphics/view/cockpit_heading	float	n	degrees	the cockpit's roll (the dataref is name wrong), CW frmo true north
+sim/graphics/view/view_zoom	float	n	???	Camera Zoom - Use Camera control APIs!
+sim/graphics/view/field_of_view_deg	float	y	degrees	field of view (angle)
+sim/graphics/view/field_of_view_vertical_deg	float	y	degrees	vertical field of view
+sim/graphics/view/field_of_view_horizontal_deg	float	y	degrees	horizontal field of view
+sim/graphics/view/field_of_view_vertical_ratio	float	y	degrees	vertical field of view (ratio)
+sim/graphics/view/field_of_view_horizontal_ratio	float	y	degrees	horizontal field of view (ratio)
+sim/graphics/view/field_of_view_roll_deg	float	y	degrees	Additional roll applied to the view
+sim/graphics/view/elumens_ref_psi	float	y	degrees	Pitch, heading and roll for projection onto an Elumens screen
+sim/graphics/view/elumens_ref_the	float	y	degrees	Pitch, heading and roll for projection onto an Elumens screen
+sim/graphics/view/elumens_ref_phi	float	y	degrees	Pitch, heading and roll for projection onto an Elumens screen
+sim/graphics/view/number_elumens_projections	int	y	count	How many separate patches are we doing for the Elumens screen
+sim/graphics/view/elumens_tex_width	int	y	pixels	Size of texture Elumens screen gets
+sim/graphics/view/elumens_tex_height	int	y	pixels	Size of texture Elumens screen gets
+sim/graphics/view/window_width	int	y	pixels	Size of rendering window
+sim/graphics/view/window_height	int	y	pixels	Size of rendering window
+sim/graphics/view/visibility_effective_m	float	n	meters >= 0	The effective visibility after framerate-protecting visibility reductions.
+sim/graphics/view/visibility_terrain_m	float	n	meters >= 0	The range of ground visibility.Ê When above the clouds, only some of the ground terrain is actually drawn.
+sim/graphics/view/visibility_framerate_ratio	float	y	[0.0 - 1.0]	The ratio of the reported visibility to actually show for frame-rate protection. 1.0 means the user ses the reported visibility.
+sim/graphics/view/visibility_math_level	int	y	???	No idea what this is
+sim/graphics/view/visibility_scale	float	y	???	No idea what this is
+sim/graphics/view/panel_total_pnl_l	float	n	pixels	to be documented
+sim/graphics/view/panel_total_pnl_b	float	n	pixels	to be documented
+sim/graphics/view/panel_total_pnl_r	float	n	pixels	to be documented
+sim/graphics/view/panel_total_pnl_t	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_pnl_l	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_pnl_b	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_pnl_r	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_pnl_t	float	n	pixels	to be documented
+sim/graphics/view/panel_total_win_l	float	n	pixels	to be documented
+sim/graphics/view/panel_total_win_b	float	n	pixels	to be documented
+sim/graphics/view/panel_total_win_r	float	n	pixels	to be documented
+sim/graphics/view/panel_total_win_t	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_win_l	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_win_b	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_win_r	float	n	pixels	to be documented
+sim/graphics/view/panel_visible_win_t	float	n	pixels	to be documented
+sim/joystick/has_joystick	int	n	boolean	Do we have a joystick?
+sim/joystick/mouse_is_joystick	int	n	boolean	Is the mouse acting as a joystick?
+sim/joystick/yolk_pitch_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling pitch.  Use override_joystick
+sim/joystick/yolk_roll_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling roll
+sim/joystick/yolk_heading_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling yaw.
+sim/joystick/artstab_pitch_ratio	float	y	[-1..1]	The artificial stability input modifications for pitch
+sim/joystick/artstab_roll_ratio	float	y	[-1..1]	The artificial stability input modifications for roll
+sim/joystick/artstab_heading_ratio	float	y	[-1..1]	The artificial stability input modifications for yaw
+sim/joystick/FC_hdng	float	y	fc	Flight Control Heading (sum of yolk plus artificial stability)
+sim/joystick/FC_ptch	float	y	fc	Flight Control Pitch (sum of yolk plus artificial stability)
+sim/joystick/FC_roll	float	y	fc	Flight Control Roll (sum of yolk plus artificial stability)
+sim/joystick/joystick_pitch_nullzone	float	y	ratio	The nullzone size for the pitch axis
+sim/joystick/joystick_roll_nullzone	float	y	ratio	The nullzone size for the roll axis
+sim/joystick/joystick_heading_nullzone	float	y	ratio	The nullzone size for the heading axis
+sim/joystick/joystick_pitch_sensitivity	float	y	ratio	The sensitivity for the pitch axis
+sim/joystick/joystick_roll_sensitivity	float	y	ratio	The sensitivity for the roll axis
+sim/joystick/joystick_heading_sensitivity	float	y	ratio	The sensitivity for the heading axis
+sim/joystick/joystick_axis_assignments	int[15]	y	enums	Assignments for the joystick axes - what does X-Plane think each one is?
+sim/joystick/joystick_button_assignments	int[64]	y	enums	Assignments for the joystick buttons - what does each one do?
+sim/joystick/joystick_axis_reverse	int[15]	y	boolean	Reverse this axis?
+sim/joystick/joystick_axis_values	float[15]	n	ratio	The deflection of this joystick
+sim/joystick/joystick_axis_minimum	float[15]	y	ratio	Min raw value ever seen
+sim/joystick/joystick_axis_maximum	float[15]	y	ratio	Max raw value ever seen
+sim/joystick/joystick_button_values	int[64]	n	boolean	Is this button pressed?
+sim/joystick/eq_ped_nobrk	int	n	???	Pedal nobrk
+sim/joystick/eq_ped_wibrk	int	n	???	Pedal wlbrk
+sim/joystick/eq_cirrusII_fun	int	n	???	PFC fun
+sim/joystick/eq_cirrusII_app	int	n	???	PFC cert
+sim/joystick/eq_pfc_pedals	int	n	???	PFC pedal
+sim/joystick/eq_pfc_cirrus2	int	n	???	PFC cirrs
+sim/joystick/eq_pfc_yoke	int	n	???	PFC yoke
+sim/joystick/eq_pfc_throt	int	n	???	PFC throt
+sim/joystick/eq_pfc_avio	int	n	???	PFC avio
+sim/joystick/eq_pfc_centercon	int	n	???	PFC centercon
+sim/joystick/eq_pfc_elec_trim	int	n	???	PFC elect trim
+sim/joystick/eq_pfc_brake_tog	int	n	???	PFC brak toggle
+sim/joystick/eq_pfc_dual_cowl	int	n	???	PFC dual cowl
+sim/joystick/fire_key_is_down	int	y	Boolean	True if the fire key is held down
+sim/joystick/pfc/last_autopilot_button_input	int	y	???	???
+sim/joystick/pfc/autopilot_lites	int	y	???	???
+sim/multiplayer/position/plane1_x	double	y	meters	Plane 1 x location
+sim/multiplayer/position/plane1_y	double	y	meters	Plane 1 y location
+sim/multiplayer/position/plane1_z	double	y	meters	Plane 1 z location
+sim/multiplayer/position/plane1_the	float	y	degrees	Plane 1 theta (pitch)
+sim/multiplayer/position/plane1_phi	float	y	degrees	Plane 1 phi (heading)
+sim/multiplayer/position/plane1_psi	float	y	degrees	Plane 1 psi (roll)
+sim/multiplayer/position/plane1_gear_deploy	float[10]	y	ratio	Plane 1 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane1_flap_ratio	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane1_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane1_spoiler_ratio	float	y	ratio	Plane 1 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane1_speedbrake_ratio	float	y	ratio	Plane 1 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane1_slat_ratio	float	y	ratio	Plane 1 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane1_wing_sweep	float	y	ratio	Plane 1 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane1_throttle	float[8]	y	ratio	Plane 1 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane1_yolk_pitch	float	y	ratio	Plane 1 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane1_yolk_roll	float	y	ratio	Plane 1 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane1_yolk_yaw	float	y	ratio	Plane 1 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane2_x	double	y	meters	Plane 2 x location
+sim/multiplayer/position/plane2_y	double	y	meters	Plane 2 y location
+sim/multiplayer/position/plane2_z	double	y	meters	Plane 2 z location
+sim/multiplayer/position/plane2_the	float	y	degrees	Plane 2 theta (pitch)
+sim/multiplayer/position/plane2_phi	float	y	degrees	Plane 2 phi (heading)
+sim/multiplayer/position/plane2_psi	float	y	degrees	Plane 2 psi (roll)
+sim/multiplayer/position/plane2_gear_deploy	float[10]	y	ratio	Plane 2 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane2_flap_ratio	float	y	ratio	Plane 2 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane2_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane2_spoiler_ratio	float	y	ratio	Plane 2 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane2_speedbrake_ratio	float	y	ratio	Plane 2 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane2_slat_ratio	float	y	ratio	Plane 2 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane2_wing_sweep	float	y	ratio	Plane 2 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane2_throttle	float[8]	y	ratio	Plane 2 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane2_yolk_pitch	float	y	ratio	Plane 2 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane2_yolk_roll	float	y	ratio	Plane 2 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane2_yolk_yaw	float	y	ratio	Plane 2 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane3_x	double	y	meters	Plane 3 x location
+sim/multiplayer/position/plane3_y	double	y	meters	Plane 3 y location
+sim/multiplayer/position/plane3_z	double	y	meters	Plane 3 z location
+sim/multiplayer/position/plane3_the	float	y	degrees	Plane 3 theta (pitch)
+sim/multiplayer/position/plane3_phi	float	y	degrees	Plane 3 phi (heading)
+sim/multiplayer/position/plane3_psi	float	y	degrees	Plane 3 psi (roll)
+sim/multiplayer/position/plane3_gear_deploy	float[10]	y	ratio	Plane 3 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane3_flap_ratio	float	y	ratio	Plane 3 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane3_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane3_spoiler_ratio	float	y	ratio	Plane 3 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane3_speedbrake_ratio	float	y	ratio	Plane 3 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane3_slat_ratio	float	y	ratio	Plane 3 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane3_wing_sweep	float	y	ratio	Plane 3 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane3_throttle	float[8]	y	ratio	Plane 3 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane3_yolk_pitch	float	y	ratio	Plane 3 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane3_yolk_roll	float	y	ratio	Plane 3 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane3_yolk_yaw	float	y	ratio	Plane 3 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane4_x	double	y	meters	Plane 4 x location
+sim/multiplayer/position/plane4_y	double	y	meters	Plane 4 y location
+sim/multiplayer/position/plane4_z	double	y	meters	Plane 4 z location
+sim/multiplayer/position/plane4_the	float	y	degrees	Plane 4 theta (pitch)
+sim/multiplayer/position/plane4_phi	float	y	degrees	Plane 4 phi (heading)
+sim/multiplayer/position/plane4_psi	float	y	degrees	Plane 4 psi (roll)
+sim/multiplayer/position/plane4_gear_deploy	float[10]	y	ratio	Plane 4 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane4_flap_ratio	float	y	ratio	Plane 4 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane4_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane4_spoiler_ratio	float	y	ratio	Plane 4 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane4_speedbrake_ratio	float	y	ratio	Plane 4 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane4_slat_ratio	float	y	ratio	Plane 4 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane4_wing_sweep	float	y	ratio	Plane 4 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane4_throttle	float[8]	y	ratio	Plane 4 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane4_yolk_pitch	float	y	ratio	Plane 4 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane4_yolk_roll	float	y	ratio	Plane 4 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane4_yolk_yaw	float	y	ratio	Plane 4 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane5_x	double	y	meters	Plane 5 x location
+sim/multiplayer/position/plane5_y	double	y	meters	Plane 5 y location
+sim/multiplayer/position/plane5_z	double	y	meters	Plane 5 z location
+sim/multiplayer/position/plane5_the	float	y	degrees	Plane 5 theta (pitch)
+sim/multiplayer/position/plane5_phi	float	y	degrees	Plane 5 phi (heading)
+sim/multiplayer/position/plane5_psi	float	y	degrees	Plane 5 psi (roll)
+sim/multiplayer/position/plane5_gear_deploy	float[10]	y	ratio	Plane 5 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane5_flap_ratio	float	y	ratio	Plane 5 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane5_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane5_spoiler_ratio	float	y	ratio	Plane 5 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane5_speedbrake_ratio	float	y	ratio	Plane 5 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane5_slat_ratio	float	y	ratio	Plane 5 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane5_wing_sweep	float	y	ratio	Plane 5 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane5_throttle	float[8]	y	ratio	Plane 5 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane5_yolk_pitch	float	y	ratio	Plane 5 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane5_yolk_roll	float	y	ratio	Plane 5 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane5_yolk_yaw	float	y	ratio	Plane 5 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane6_x	double	y	meters	Plane 6 x location
+sim/multiplayer/position/plane6_y	double	y	meters	Plane 6 y location
+sim/multiplayer/position/plane6_z	double	y	meters	Plane 6 z location
+sim/multiplayer/position/plane6_the	float	y	degrees	Plane 6 theta (pitch)
+sim/multiplayer/position/plane6_phi	float	y	degrees	Plane 6 phi (heading)
+sim/multiplayer/position/plane6_psi	float	y	degrees	Plane 6 psi (roll)
+sim/multiplayer/position/plane6_gear_deploy	float[10]	y	ratio	Plane 6 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane6_flap_ratio	float	y	ratio	Plane 6 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane6_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane6_spoiler_ratio	float	y	ratio	Plane 6 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane6_speedbrake_ratio	float	y	ratio	Plane 6 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane6_slat_ratio	float	y	ratio	Plane 6 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane6_wing_sweep	float	y	ratio	Plane 6 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane6_throttle	float[8]	y	ratio	Plane 6 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane6_yolk_pitch	float	y	ratio	Plane 6 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane6_yolk_roll	float	y	ratio	Plane 6 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane6_yolk_yaw	float	y	ratio	Plane 6 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane7_x	double	y	meters	Plane 7 x location
+sim/multiplayer/position/plane7_y	double	y	meters	Plane 7 y location
+sim/multiplayer/position/plane7_z	double	y	meters	Plane 7 z location
+sim/multiplayer/position/plane7_the	float	y	degrees	Plane 7 theta (pitch)
+sim/multiplayer/position/plane7_phi	float	y	degrees	Plane 7 phi (heading)
+sim/multiplayer/position/plane7_psi	float	y	degrees	Plane 7 psi (roll)
+sim/multiplayer/position/plane7_gear_deploy	float[10]	y	ratio	Plane 7 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane7_flap_ratio	float	y	ratio	Plane 7 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane7_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane7_spoiler_ratio	float	y	ratio	Plane 7 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane7_speedbrake_ratio	float	y	ratio	Plane 7 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane7_slat_ratio	float	y	ratio	Plane 7 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane7_wing_sweep	float	y	ratio	Plane 7 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane7_throttle	float[8]	y	ratio	Plane 7 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane7_yolk_pitch	float	y	ratio	Plane 7 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane7_yolk_roll	float	y	ratio	Plane 7 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane7_yolk_yaw	float	y	ratio	Plane 7 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane8_x	double	y	meters	Plane 8 x location
+sim/multiplayer/position/plane8_y	double	y	meters	Plane 8 y location
+sim/multiplayer/position/plane8_z	double	y	meters	Plane 8 z location
+sim/multiplayer/position/plane8_the	float	y	degrees	Plane 8 theta (pitch)
+sim/multiplayer/position/plane8_phi	float	y	degrees	Plane 8 phi (heading)
+sim/multiplayer/position/plane8_psi	float	y	degrees	Plane 8 psi (roll)
+sim/multiplayer/position/plane8_gear_deploy	float[10]	y	ratio	Plane 8 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane8_flap_ratio	float	y	ratio	Plane 8 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane8_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane8_spoiler_ratio	float	y	ratio	Plane 8 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane8_speedbrake_ratio	float	y	ratio	Plane 8 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane8_slat_ratio	float	y	ratio	Plane 8 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane8_wing_sweep	float	y	ratio	Plane 8 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane8_throttle	float[8]	y	ratio	Plane 8 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane8_yolk_pitch	float	y	ratio	Plane 8 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane8_yolk_roll	float	y	ratio	Plane 8 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane8_yolk_yaw	float	y	ratio	Plane 8 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane9_x	double	y	meters	Plane 9 x location
+sim/multiplayer/position/plane9_y	double	y	meters	Plane 9 y location
+sim/multiplayer/position/plane9_z	double	y	meters	Plane 9 z location
+sim/multiplayer/position/plane9_the	float	y	degrees	Plane 9 theta (pitch)
+sim/multiplayer/position/plane9_phi	float	y	degrees	Plane 9 phi (heading)
+sim/multiplayer/position/plane9_psi	float	y	degrees	Plane 9 psi (roll)
+sim/multiplayer/position/plane9_gear_deploy	float[10]	y	ratio	Plane 9 gear deployment for 6 gear. 0 = up, 1 = down
+sim/multiplayer/position/plane9_flap_ratio	float	y	ratio	Plane 9 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane9_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
+sim/multiplayer/position/plane9_spoiler_ratio	float	y	ratio	Plane 9 spoiler ratio (0 = clean, 1 = max spoilers)
+sim/multiplayer/position/plane9_speedbrake_ratio	float	y	ratio	Plane 9 speed brake ratio (0 = clean, 1 = max speed brakes)
+sim/multiplayer/position/plane9_slat_ratio	float	y	ratio	Plane 9 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane9_wing_sweep	float	y	ratio	Plane 9 wing sweep, 0 = normal, 1 = most sweep
+sim/multiplayer/position/plane9_throttle	float[8]	y	ratio	Plane 9 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
+sim/multiplayer/position/plane9_yolk_pitch	float	y	ratio	Plane 9 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
+sim/multiplayer/position/plane9_yolk_roll	float	y	ratio	Plane 9 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
+sim/multiplayer/position/plane9_yolk_yaw	float	y	ratio	Plane 9 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane1_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane1_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane1_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane1_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane1_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane1_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane2_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane2_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane2_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane2_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane2_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane2_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane3_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane3_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane3_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane3_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane3_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane3_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane4_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane4_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane4_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane4_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane4_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane4_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane5_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane5_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane5_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane5_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane5_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane5_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane6_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane6_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane6_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane6_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane6_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane6_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane7_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane7_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane7_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane7_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane7_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane7_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane8_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane8_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane8_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane8_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane8_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane8_v_z	float	y	m/s	manipulate the plane.
+sim/multiplayer/position/plane9_lat	double	y	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
+sim/multiplayer/position/plane9_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
+sim/multiplayer/position/plane9_el	double	y	meters	position then these will not be accurate unless the plane updates them.
+sim/multiplayer/position/plane9_v_x	float	y	m/s	Plane 1 cartesian velocities.  These may not be accurate if another plugin
+sim/multiplayer/position/plane9_v_y	float	y	m/s	is controlling the plane andn ot updating this data.  You cannot use these to
+sim/multiplayer/position/plane9_v_z	float	y	m/s	manipulate the plane.
+sim/network/dataout/dump_next_cycle	int	y	boolean	Are we dumping cycle data?
+sim/network/dataout/network_data_rate	int	y	hz	Rate to send data over UDP at
+sim/network/dataout/data_to_internet	int[200]	y	boolean	Enable data output of this data ref to internet
+sim/network/dataout/data_to_disk	int[200]	y	boolean	Enable data output of this data ref to disk file
+sim/network/dataout/data_to_graph	int[200]	y	boolean	Enable data output of this data ref to graph
+sim/network/dataout/data_to_screen	int[200]	y	boolean	Enable data output of this data ref to screen
+sim/network/dataout/dump_parts_props	int	y	boolean	Dump extra prop data to screen
+sim/network/dataout/dump_parts_wings	int	y	boolean	Dump wing prop data to screen
+sim/network/dataout/dump_parts_vstabs	int	y	boolean	Dump vertical stabilizer prop data to screen
+sim/network/misc/opentransport_inited	int	y	boolean	Has x-plane already inited Open Transport?
+sim/network/misc/connection_handshake	int	n	enum	Status of connection, 0 = no connection, 1 = half up, 2 = all up
+sim/network/misc/network_time_sec	float	n	seconds	The current elapsed time synched across the network
+sim/physics/earth_mu	float	n	m^3/s^2	The earth's mass-gravity constant
+sim/physics/mars_mu	float	n	m^3/s^2	Mars's mass-gravity constant
+sim/physics/earth_radius_m	float	n	meters	Earth's radius
+sim/physics/mars_radius_m	float	n	meters	Mars' radius
+sim/physics/earth_temp_c	float	n	celsius	Average sea level temp on earth
+sim/physics/mars_temp_c	float	n	celsius	Average sea level temp on Mars (sea?)
+sim/physics/earth_pressure_p	float	n	pascals	average pressure at sea level, earth
+sim/physics/mars_pressure_p	float	n	pascals	average pressure at sea level, mars
+sim/physics/rho_sea_level	float	n	???	rho at sea level
+sim/physics/mu_air	float	n	???	viscosity of air for Re determination
+sim/physics/g_sealevel	float	n	???	gravitational acceleration of earth AT SEA LEVEL
+sim/physics/pi	float	n	radians	pi - Austin sez plugins may no longer change the value of PI.
+sim/physics/double_pi	float	n	radians	pi * 2
+sim/physics/half_pi	float	n	radians	pi / 2
+sim/physics/R	float	n	???	R (gas constant)
+sim/physics/rho_water	float	n	???	rho of water
+sim/physics/speed_light_m_sec	float	n	m/sec	speed of light; do not exceed!
+sim/operation/failures/hydraulic_pressure_ratio	float	n	ratio	Hydraulic pressure ratio
+sim/operation/failures/hydraulic_pressure_ratio2	float	n	ratio	Hydraulic pressure ratio
+sim/operation/failures/oil_power_thrust_ratio	float[8]	n	ratio	Oil power or thrust ratio
+sim/operation/failures/mean_time_between_failure_hrs	float	y	hours	Mean time between failures
+sim/operation/failures/ram_air_turbine_on	int	y	boolean	Ram air turbine is on?
+sim/operation/failures/failures	int[137]	y	enum	137 separate failure codes
+sim/operation/failures/comp_fail_stat	int[8]	y	bitarray	This was the fail stats bit packed - do not use it!
+sim/operation/failures/rel_vasi	int	y	enum	VASIs
+sim/operation/failures/rel_app_lites	int	y	enum	Approach lites
+sim/operation/failures/rel_rwy_lites	int	y	enum	Runway lites
+sim/operation/failures/rel_conlock	int	y	enum	Controls locked
+sim/operation/failures/rel_fuelcap	int	y	enum	Fuel Cap
+sim/operation/failures/rel_vacuum	int	y	enum	Vaccum System 1
+sim/operation/failures/rel_vacuum2	int	y	enum	Vaccum System 2
+sim/operation/failures/rel_pitot	int	y	enum	Pitot 1
+sim/operation/failures/rel_pitot2	int	y	enum	Pitot 2
+sim/operation/failures/rel_static	int	y	enum	Static 1
+sim/operation/failures/rel_static2	int	y	enum	Static 2
+sim/operation/failures/rel_static1_err	int	y	enum	Static system 1 
+sim/operation/failures/rel_static2_err	int	y	enum	Static system 2
+sim/operation/failures/rel_esys	int	y	enum	Electrical System (Bus 1)
+sim/operation/failures/rel_esys2	int	y	enum	Electrical System (Bus 2)
+sim/operation/failures/rel_invert0	int	y	enum	Inverter 1
+sim/operation/failures/rel_invert1	int	y	enum	Inverter 2
+sim/operation/failures/rel_ss_asi	int	y	enum	Airspeed Indicator
+sim/operation/failures/rel_ss_ahz	int	y	 	enum
+sim/operation/failures/rel_ss_alt	int	y	enum	Altimeter
+sim/operation/failures/rel_ss_tsi	int	y	enum	Turn indicator
+sim/operation/failures/rel_ss_dgy	int	y	enum	Directional Gyro
+sim/operation/failures/rel_ss_vvi	int	y	enum	Vertical Velocity Indicator
+sim/operation/failures/rel_efis_1	int	y	enum	Primary EFIS
+sim/operation/failures/rel_efis_2	int	y	enum	Secondary EFIS
+sim/operation/failures/rel_nav1	int	y	enum	Nav-1 radio
+sim/operation/failures/rel_nav2	int	y	enum	Nav-2 radio
+sim/operation/failures/rel_adf1	int	y	enum	ADF 1 (only one ADF failure in 830!)
+sim/operation/failures/rel_adf2	int	y	enum	ADF 2
+sim/operation/failures/rel_gps	int	y	enum	GPS
+sim/operation/failures/rel_dme	int	y	enum	DME
+sim/operation/failures/rel_loc	int	y	enum	Localizer
+sim/operation/failures/rel_gls	int	y	enum	Glide Slope
+sim/operation/failures/rel_xpndr	int	y	enum	Transponder failure
+sim/operation/failures/rel_hydsys0	int	y	enum	Hydraulic System 1 (general?)
+sim/operation/failures/rel_hydsys2	int	y	enum	Hydraulic System 2 (general?)
+sim/operation/failures/rel_hydpmp	int	y	enum	Hydraulic System 1 (pump fail)
+sim/operation/failures/rel_hydpmp2	int	y	enum	Hydraulic System 2 (pump fail)
+sim/operation/failures/rel_hydleak	int	y	enum	Hydraulic System 1 (leak)
+sim/operation/failures/rel_hydleak2	int	y	enum	Hydraulic System 2 (leak)
+sim/operation/failures/rel_hydoverp	int	y	enum	Hydraulic System 1 (over pressure)
+sim/operation/failures/rel_hydoverp2	int	y	enum	Hydraulic System 2 (over pressure)
+sim/operation/failures/rel_fc_ail_L	int	y	enum	Roll left control
+sim/operation/failures/rel_fc_ail_R	int	y	enum	Roll Right Control
+sim/operation/failures/rel_fc_elv_U	int	y	enum	Pitch Up Control
+sim/operation/failures/rel_fc_elv_D	int	y	enum	Pitch Down Control
+sim/operation/failures/rel_fc_rud_L	int	y	enum	Yaw Left Control
+sim/operation/failures/rel_fc_rud_R	int	y	enum	Yaw Right control
+sim/operation/failures/rel_trim_ail	int	y	enum	roll trim
+sim/operation/failures/rel_trim_elv	int	y	enum	Pitch Trim
+sim/operation/failures/rel_trim_rud	int	y	enum	Yaw Trim
+sim/operation/failures/rel_fc_L_flp	int	y	enum	Left flap activate
+sim/operation/failures/rel_fc_R_flp	int	y	enum	Right Flap activate
+sim/operation/failures/rel_L_flp_off	int	y	enum	Left flap remove
+sim/operation/failures/rel_R_flp_off	int	y	enum	Right flap remove
+sim/operation/failures/rel_gear_act	int	y	enum	Landing Gear actuator
+sim/operation/failures/rel_flap_act	int	y	enum	Flap Actuator
+sim/operation/failures/rel_lagear1	int	y	enum	Landing Gear 1 retract
+sim/operation/failures/rel_lagear2	int	y	enum	Landing Gear 2 retract
+sim/operation/failures/rel_lagear3	int	y	enum	Landing Gear 3 retract
+sim/operation/failures/rel_lagear4	int	y	enum	Landing Gear 4 retract
+sim/operation/failures/rel_lagear5	int	y	enum	Landing Gear 5 retract
+sim/operation/failures/rel_tire1	int	y	enum	Landing gear 1 tire blowout
+sim/operation/failures/rel_tire2	int	y	enum	Landing gear 2 tire blowout
+sim/operation/failures/rel_tire3	int	y	enum	Landing gear 3 tire blowout
+sim/operation/failures/rel_tire4	int	y	enum	Landing gear 4 tire blowout
+sim/operation/failures/rel_tire5	int	y	enum	Landing gear 5 tire blowout
+sim/operation/failures/rel_lbrakes	int	y	enum	Left Brakes
+sim/operation/failures/rel_rbrakes	int	y	enum	Right Brakes
+sim/operation/failures/rel_fc_slt	int	y	enum	Slats
+sim/operation/failures/rel_antice	int	y	enum	Anti-ice
+sim/operation/failures/rel_clights	int	y	enum	Cockpit Lights
+sim/operation/failures/rel_stbaug	int	y	enum	Stability Augmentation
+sim/operation/failures/rel_otto	int	y	enum	AutoPilot
+sim/operation/failures/rel_trotor	int	y	enum	tail rotor transmission
+sim/operation/failures/rel_feather	int	y	enum	Autofeather system inop
+sim/operation/failures/rel_throt_lo	int	y	enum	Throttle inop giving min thrust
+sim/operation/failures/rel_throt_now	int	y	enum	Throttle inop stuck at current thrust
+sim/operation/failures/rel_fc_thr	int	y	enum	Throttle failure - LEGACY - now mapped to rel_throt_now.
+sim/operation/failures/rel_throt_hi	int	y	enum	Throttle inop giving max thrust
+sim/operation/failures/rel_APU_press	int	y	enum	APU is not providing bleed air for engine start or pressurization
+sim/operation/failures/rel_depres_slow	int	y	enum	Slow cabin leak - descend or black out
+sim/operation/failures/rel_depres_fast	int	y	enum,	catastrophic decompression - yer dead
+sim/operation/failures/rel_engfai0	int	y	enum	Engine Failure - engine 1 loss of power without smoke
+sim/operation/failures/rel_engfai1	int	y	enum	Engine Failure - engine 2
+sim/operation/failures/rel_engfai2	int	y	enum	Engine Failure - engine 3
+sim/operation/failures/rel_engfai3	int	y	enum	Engine Failure - engine 4
+sim/operation/failures/rel_engfai4	int	y	enum	Engine Failure - engine 5
+sim/operation/failures/rel_engfai5	int	y	enum	Engine Failure - engine 6
+sim/operation/failures/rel_engfai6	int	y	enum	Engine Failure - engine 7
+sim/operation/failures/rel_engfai7	int	y	enum	Engine Failure - engine 8
+sim/operation/failures/rel_engsep0	int	y	enum	Engine Separation - engine 1
+sim/operation/failures/rel_engsep1	int	y	enum	Engine Separation - engine 2
+sim/operation/failures/rel_engsep2	int	y	enum	Engine Separation - engine 3
+sim/operation/failures/rel_engsep3	int	y	enum	Engine Separation - engine 4
+sim/operation/failures/rel_engsep4	int	y	enum	Engine Separation - engine 5
+sim/operation/failures/rel_engsep5	int	y	enum	Engine Separation - engine 6
+sim/operation/failures/rel_engsep6	int	y	enum	Engine Separation - engine 7
+sim/operation/failures/rel_engsep7	int	y	enum	Engine Separation - engine 8
+sim/operation/failures/rel_pshaft0	int	y	enum	Drive Shaft - engine 1
+sim/operation/failures/rel_pshaft1	int	y	enum	Drive Shaft - engine 2
+sim/operation/failures/rel_pshaft2	int	y	enum	Drive Shaft - engine 3
+sim/operation/failures/rel_pshaft3	int	y	enum	Drive Shaft - engine 4
+sim/operation/failures/rel_pshaft4	int	y	enum	Drive Shaft - engine 5
+sim/operation/failures/rel_pshaft5	int	y	enum	Drive Shaft - engine 6
+sim/operation/failures/rel_pshaft6	int	y	enum	Drive Shaft - engine 7
+sim/operation/failures/rel_pshaft7	int	y	enum	Drive Shaft - engine 8
+sim/operation/failures/rel_seize_0	int	y	enum	Engine Seize - engine 1
+sim/operation/failures/rel_seize_1	int	y	enum	Engine Seize - engine 2
+sim/operation/failures/rel_seize_2	int	y	enum	Engine Seize - engine 3
+sim/operation/failures/rel_seize_3	int	y	enum	Engine Seize - engine 4
+sim/operation/failures/rel_seize_4	int	y	enum	Engine Seize - engine 5
+sim/operation/failures/rel_seize_5	int	y	enum	Engine Seize - engine 6
+sim/operation/failures/rel_seize_6	int	y	enum	Engine Seize - engine 7
+sim/operation/failures/rel_seize_7	int	y	enum	Engine Seize - engine 8
+sim/operation/failures/rel_engfir0	int	y	enum	Engine Failure - engine 1 Fire
+sim/operation/failures/rel_engfir1	int	y	enum	Engine Failure - engine 2 Fire
+sim/operation/failures/rel_engfir2	int	y	enum	Engine Failure - engine 3 Fire
+sim/operation/failures/rel_engfir3	int	y	enum	Engine Failure - engine 4 Fire
+sim/operation/failures/rel_engfir4	int	y	enum	Engine Failure - engine 5 Fire
+sim/operation/failures/rel_engfir5	int	y	enum	Engine Failure - engine 6 Fire
+sim/operation/failures/rel_engfir6	int	y	enum	Engine Failure - engine 7 Fire
+sim/operation/failures/rel_engfir7	int	y	enum	Engine Failure - engine 8 Fire
+sim/operation/failures/rel_comsta0	int	y	enum	Engine Compressor Stall - engine 1
+sim/operation/failures/rel_comsta1	int	y	enum	Engine Compressor Stall - engine 2
+sim/operation/failures/rel_comsta2	int	y	enum	Engine Compressor Stall - engine 3
+sim/operation/failures/rel_comsta3	int	y	enum	Engine Compressor Stall - engine 4
+sim/operation/failures/rel_comsta4	int	y	enum	Engine Compressor Stall - engine 5
+sim/operation/failures/rel_comsta5	int	y	enum	Engine Compressor Stall - engine 6
+sim/operation/failures/rel_comsta6	int	y	enum	Engine Compressor Stall - engine 7
+sim/operation/failures/rel_comsta7	int	y	enum	Engine Compressor Stall - engine 8
+sim/operation/failures/rel_oilpmp0	int	y	enum	Oil Pump - engine 1
+sim/operation/failures/rel_oilpmp1	int	y	enum	Oil Pump - engine 2
+sim/operation/failures/rel_oilpmp2	int	y	enum	Oil Pump - engine 3
+sim/operation/failures/rel_oilpmp3	int	y	enum	Oil Pump - engine 4
+sim/operation/failures/rel_oilpmp4	int	y	enum	Oil Pump - engine 5
+sim/operation/failures/rel_oilpmp5	int	y	enum	Oil Pump - engine 6
+sim/operation/failures/rel_oilpmp6	int	y	enum	Oil Pump - engine 7
+sim/operation/failures/rel_oilpmp7	int	y	enum	Oil Pump - engine 8
+sim/operation/failures/rel_fuepmp0	int	y	enum	Fuel Pump - engine 1
+sim/operation/failures/rel_fuepmp1	int	y	enum	Fuel Pump - engine 2
+sim/operation/failures/rel_fuepmp2	int	y	enum	Fuel Pump - engine 3
+sim/operation/failures/rel_fuepmp3	int	y	enum	Fuel Pump - engine 4
+sim/operation/failures/rel_fuepmp4	int	y	enum	Fuel Pump - engine 5
+sim/operation/failures/rel_fuepmp5	int	y	enum	Fuel Pump - engine 6
+sim/operation/failures/rel_fuepmp6	int	y	enum	Fuel Pump - engine 7
+sim/operation/failures/rel_fuepmp7	int	y	enum	Fuel Pump - engine 8
+sim/operation/failures/rel_genera0	int	y	enum	Generator - engine 1
+sim/operation/failures/rel_genera1	int	y	enum	Generator - engine 2
+sim/operation/failures/rel_genera2	int	y	enum	Generator - engine 3
+sim/operation/failures/rel_genera3	int	y	enum	Generator - engine 4
+sim/operation/failures/rel_genera4	int	y	enum	Generator - engine 5
+sim/operation/failures/rel_genera5	int	y	enum	Generator - engine 6
+sim/operation/failures/rel_genera6	int	y	enum	Generator - engine 7
+sim/operation/failures/rel_genera7	int	y	enum	Generator - engine 8
+sim/operation/failures/rel_fadec_0	int	y	enum	Fadec - engine 1
+sim/operation/failures/rel_fadec_1	int	y	enum	Fadec - engine 2
+sim/operation/failures/rel_fadec_2	int	y	enum	Fadec - engine 3
+sim/operation/failures/rel_fadec_3	int	y	enum	Fadec - engine 4
+sim/operation/failures/rel_fadec_4	int	y	enum	Fadec - engine 5
+sim/operation/failures/rel_fadec_5	int	y	enum	Fadec - engine 6
+sim/operation/failures/rel_fadec_6	int	y	enum	Fadec - engine 7
+sim/operation/failures/rel_fadec_7	int	y	enum	Fadec - engine 8
+sim/operation/failures/rel_runITT0	int	y	enum	Runway Hot ITT - engine 1
+sim/operation/failures/rel_runITT1	int	y	enum	Runway Hot ITT - engine 2
+sim/operation/failures/rel_runITT2	int	y	enum	Runway Hot ITT - engine 3
+sim/operation/failures/rel_runITT3	int	y	enum	Runway Hot ITT - engine 4
+sim/operation/failures/rel_runITT4	int	y	enum	Runway Hot ITT - engine 5
+sim/operation/failures/rel_runITT5	int	y	enum	Runway Hot ITT - engine 6
+sim/operation/failures/rel_runITT6	int	y	enum	Runway Hot ITT - engine 7
+sim/operation/failures/rel_runITT7	int	y	enum	Runway Hot ITT - engine 8
+sim/operation/failures/rel_fuelfl0	int	y	enum	Fuel Flow Fluctuation - engine 1
+sim/operation/failures/rel_fuelfl1	int	y	enum	Fuel Flow Fluctuation - engine 2
+sim/operation/failures/rel_fuelfl2	int	y	enum	Fuel Flow Fluctuation - engine 3
+sim/operation/failures/rel_fuelfl3	int	y	enum	Fuel Flow Fluctuation - engine 4
+sim/operation/failures/rel_fuelfl4	int	y	enum	Fuel Flow Fluctuation - engine 5
+sim/operation/failures/rel_fuelfl5	int	y	enum	Fuel Flow Fluctuation - engine 6
+sim/operation/failures/rel_fuelfl6	int	y	enum	Fuel Flow Fluctuation - engine 7
+sim/operation/failures/rel_fuelfl7	int	y	enum	Fuel Flow Fluctuation - engine 8
+sim/operation/failures/rel_magLFT0	int	y	enum	Left Magento Fail - engine 1
+sim/operation/failures/rel_magLFT1	int	y	enum	Left Magento Fail - engine 2
+sim/operation/failures/rel_magLFT2	int	y	enum	Left Magento Fail - engine 3
+sim/operation/failures/rel_magLFT3	int	y	enum	Left Magento Fail - engine 4
+sim/operation/failures/rel_magLFT4	int	y	enum	Left Magento Fail - engine 5
+sim/operation/failures/rel_magLFT5	int	y	enum	Left Magento Fail - engine 6
+sim/operation/failures/rel_magLFT6	int	y	enum	Left Magento Fail - engine 7
+sim/operation/failures/rel_magLFT7	int	y	enum	Left Magento Fail - engine 8
+sim/operation/failures/rel_magRGT0	int	y	enum	Right Magento Fail - engine 1
+sim/operation/failures/rel_magRGT1	int	y	enum	Right Magento Fail - engine 2
+sim/operation/failures/rel_magRGT2	int	y	enum	Right Magento Fail - engine 3
+sim/operation/failures/rel_magRGT3	int	y	enum	Right Magento Fail - engine 4
+sim/operation/failures/rel_magRGT4	int	y	enum	Right Magento Fail - engine 5
+sim/operation/failures/rel_magRGT5	int	y	enum	Right Magento Fail - engine 6
+sim/operation/failures/rel_magRGT6	int	y	enum	Right Magento Fail - engine 7
+sim/operation/failures/rel_magRGT7	int	y	enum	Right Magento Fail - engine 8
+sim/operation/failures/rel_aftbur0	int	y	enum	Afterburners - engine 1
+sim/operation/failures/rel_aftbur1	int	y	enum	Afterburners - engine 2
+sim/operation/failures/rel_aftbur2	int	y	enum	Afterburners - engine 3
+sim/operation/failures/rel_aftbur3	int	y	enum	Afterburners - engine 4
+sim/operation/failures/rel_aftbur4	int	y	enum	Afterburners - engine 5
+sim/operation/failures/rel_aftbur5	int	y	enum	Afterburners - engine 6
+sim/operation/failures/rel_aftbur6	int	y	enum	Afterburners - engine 7
+sim/operation/failures/rel_aftbur7	int	y	enum	Afterburners - engine 8
+sim/operation/failures/rel_revdep0	int	y	enum	Thrust Reversers - engine 1
+sim/operation/failures/rel_revdep1	int	y	enum	Thrust Reversers - engine 2
+sim/operation/failures/rel_revdep2	int	y	enum	Thrust Reversers - engine 3
+sim/operation/failures/rel_revdep3	int	y	enum	Thrust Reversers - engine 4
+sim/operation/failures/rel_revdep4	int	y	enum	Thrust Reversers - engine 5
+sim/operation/failures/rel_revdep5	int	y	enum	Thrust Reversers - engine 6
+sim/operation/failures/rel_revdep6	int	y	enum	Thrust Reversers - engine 7
+sim/operation/failures/rel_revdep7	int	y	enum	Thrust Reversers - engine 8
+sim/operation/failures/rel_lobatt0	int	y	enum	Low Battery - engine 1
+sim/operation/failures/rel_lobatt1	int	y	enum	Low Battery - engine 2
+sim/operation/failures/rel_lobatt2	int	y	enum	Low Battery - engine 3
+sim/operation/failures/rel_lobatt3	int	y	enum	Low Battery - engine 4
+sim/operation/failures/rel_lobatt4	int	y	enum	Low Battery - engine 5
+sim/operation/failures/rel_lobatt5	int	y	enum	Low Battery - engine 6
+sim/operation/failures/rel_lobatt6	int	y	enum	Low Battery - engine 7
+sim/operation/failures/rel_lobatt7	int	y	enum	Low Battery - engine 8
+sim/operation/failures/rel_wing1L	int	y	enum	Wing separations - left wing 1
+sim/operation/failures/rel_wing1R	int	y	enum	Wing separations - right wing 1
+sim/operation/failures/rel_wing2L	int	y	enum	Wing separations - left wing 2
+sim/operation/failures/rel_wing2R	int	y	enum	Wing separations - right wing 2
+sim/operation/failures/rel_wing3L	int	y	enum	Wing separations - left wing 3
+sim/operation/failures/rel_wing3R	int	y	enum	Wing separations - right wing 3
+sim/operation/failures/rel_wing4L	int	y	enum	Wing separations - left wing 4
+sim/operation/failures/rel_wing4R	int	y	enum	Wing separations - right wing 4
+sim/operation/failures/rel_hstbL	int	y	enum	Left horizontal stabilizer separate
+sim/operation/failures/rel_hstbR	int	y	enum	Right horizontal stabilizer separate
+sim/operation/failures/rel_vstb1	int	y	enum	Vertical stabilizer 1 separate
+sim/operation/failures/rel_vstb2	int	y	enum	Vertical stabilizer 2 separate
+sim/operation/failures/rel_mwing1	int	y	enum	Misc wing 1 separate
+sim/operation/failures/rel_mwing2	int	y	enum	Misc wing 2 separate
+sim/operation/failures/rel_mwing3	int	y	enum	Misc wing 3 separate
+sim/operation/failures/rel_mwing4	int	y	enum	Misc wing 4 separate
+sim/operation/failures/rel_mwing5	int	y	enum	Misc wing 5 separate
+sim/operation/failures/rel_mwing6	int	y	enum	Misc wing 6 separate
+sim/operation/failures/rel_mwing7	int	y	enum	Misc wing 7 separate
+sim/operation/failures/rel_mwing8	int	y	enum	Misc wing 8 separate
+sim/operation/failures/rel_pyl1a	int	y	enum	Engine Pylon 1a Separate
+sim/operation/failures/rel_pyl2a	int	y	enum	Engine Pylon 2a Separate
+sim/operation/failures/rel_pyl3a	int	y	enum	Engine Pylon 3a Separate
+sim/operation/failures/rel_pyl4a	int	y	enum	Engine Pylon 4a Separate
+sim/operation/failures/rel_pyl5a	int	y	enum	Engine Pylon 5a Separate
+sim/operation/failures/rel_pyl6a	int	y	enum	Engine Pylon 6a Separate
+sim/operation/failures/rel_pyl7a	int	y	enum	Engine Pylon 7a Separate
+sim/operation/failures/rel_pyl8a	int	y	enum	Engine Pylon 8a Separate
+sim/operation/failures/rel_pyl1b	int	y	enum	Engine Pylon 1b Separate
+sim/operation/failures/rel_pyl2b	int	y	enum	Engine Pylon 2b Separate
+sim/operation/failures/rel_pyl3b	int	y	enum	Engine Pylon 3b Separate
+sim/operation/failures/rel_pyl4b	int	y	enum	Engine Pylon 4b Separate
+sim/operation/failures/rel_pyl5b	int	y	enum	Engine Pylon 5b Separate
+sim/operation/failures/rel_pyl6b	int	y	enum	Engine Pylon 6b Separate
+sim/operation/failures/rel_pyl7b	int	y	enum	Engine Pylon 7b Separate
+sim/operation/failures/rel_pyl8b	int	y	enum	Engine Pylon 8b Separate
+sim/operation/failures/rel_instrument	int[300]	y	enum	Failures for every panel instrument.  Based on instrument index number.  (WARNING: this is a risky thing to use.)
+sim/operation/failures/rel_invert1	int	y	enum	Inverter - engine 2
+sim/operation/failures/rel_invert2	int	y	enum	Inverter - engine 3
+sim/operation/failures/rel_invert3	int	y	enum	Inverter - engine 4
+sim/operation/failures/rel_invert4	int	y	enum	Inverter - engine 5
+sim/operation/failures/rel_invert5	int	y	enum	Inverter - engine 6
+sim/operation/failures/rel_invert6	int	y	enum	Inverter - engine 7
+sim/operation/failures/rel_invert7	int	y	enum	Inverter - engine 8
+sim/operation/failures/rel_ENGind0	int	y	enum	Panel Indicator Inop - all engine 1
+sim/operation/failures/rel_ENGind1	int	y	enum	Panel Indicator Inop - all engine 2
+sim/operation/failures/rel_ENGind2	int	y	enum	Panel Indicator Inop - all engine 3
+sim/operation/failures/rel_ENGind3	int	y	enum	Panel Indicator Inop - all engine 4
+sim/operation/failures/rel_ENGind4	int	y	enum	Panel Indicator Inop - all engine 5
+sim/operation/failures/rel_ENGind5	int	y	enum	Panel Indicator Inop - all engine 6
+sim/operation/failures/rel_ENGind6	int	y	enum	Panel Indicator Inop - all engine 7
+sim/operation/failures/rel_ENGind7	int	y	enum	Panel Indicator Inop - all engine 8
+sim/operation/failures/rel_PRPind0	int	y	enum	Panel Indicator Inop - all prop 1
+sim/operation/failures/rel_PRPind1	int	y	enum	Panel Indicator Inop - all prop 2
+sim/operation/failures/rel_PRPind2	int	y	enum	Panel Indicator Inop - all prop 3
+sim/operation/failures/rel_PRPind3	int	y	enum	Panel Indicator Inop - all prop 4
+sim/operation/failures/rel_PRPind4	int	y	enum	Panel Indicator Inop - all prop 5
+sim/operation/failures/rel_PRPind5	int	y	enum	Panel Indicator Inop - all prop 6
+sim/operation/failures/rel_PRPind6	int	y	enum	Panel Indicator Inop - all prop 7
+sim/operation/failures/rel_PRPind7	int	y	enum	Panel Indicator Inop - all prop 8
+sim/operation/failures/rel_N1_ind0	int	y	enum	Panel Indicator Inop - N1 engine 1
+sim/operation/failures/rel_N1_ind1	int	y	enum	Panel Indicator Inop - N1 engine 2
+sim/operation/failures/rel_N1_ind2	int	y	enum	Panel Indicator Inop - N1 engine 3
+sim/operation/failures/rel_N1_ind3	int	y	enum	Panel Indicator Inop - N1 engine 4
+sim/operation/failures/rel_N1_ind4	int	y	enum	Panel Indicator Inop - N1 engine 5
+sim/operation/failures/rel_N1_ind5	int	y	enum	Panel Indicator Inop - N1 engine 6
+sim/operation/failures/rel_N1_ind6	int	y	enum	Panel Indicator Inop - N1 engine 7
+sim/operation/failures/rel_N1_ind7	int	y	enum	Panel Indicator Inop - N1 engine 8
+sim/operation/failures/rel_N2_ind0	int	y	enum	Panel Indicator Inop - N2 engine 1
+sim/operation/failures/rel_N2_ind1	int	y	enum	Panel Indicator Inop - N2 engine 2
+sim/operation/failures/rel_N2_ind2	int	y	enum	Panel Indicator Inop - N2 engine 3
+sim/operation/failures/rel_N2_ind3	int	y	enum	Panel Indicator Inop - N2 engine 4
+sim/operation/failures/rel_N2_ind4	int	y	enum	Panel Indicator Inop - N2 engine 5
+sim/operation/failures/rel_N2_ind5	int	y	enum	Panel Indicator Inop - N2 engine 6
+sim/operation/failures/rel_N2_ind6	int	y	enum	Panel Indicator Inop - N2 engine 7
+sim/operation/failures/rel_N2_ind7	int	y	enum	Panel Indicator Inop - N2 engine 8
+sim/operation/failures/rel_TRQind0	int	y	enum	Panel Indicator Inop - Torque engine 1
+sim/operation/failures/rel_TRQind1	int	y	enum	Panel Indicator Inop - Torque engine 2
+sim/operation/failures/rel_TRQind2	int	y	enum	Panel Indicator Inop - Torque engine 3
+sim/operation/failures/rel_TRQind3	int	y	enum	Panel Indicator Inop - Torque engine 4
+sim/operation/failures/rel_TRQind4	int	y	enum	Panel Indicator Inop - Torque engine 5
+sim/operation/failures/rel_TRQind5	int	y	enum	Panel Indicator Inop - Torque engine 6
+sim/operation/failures/rel_TRQind6	int	y	enum	Panel Indicator Inop - Torque engine 7
+sim/operation/failures/rel_TRQind7	int	y	enum	Panel Indicator Inop - Torque engine 8
+sim/operation/failures/rel_FF_ind0	int	y	enum	Panel Indicator Inop - Fuel flow engine 1
+sim/operation/failures/rel_FF_ind1	int	y	enum	Panel Indicator Inop - Fuel flow engine 2
+sim/operation/failures/rel_FF_ind2	int	y	enum	Panel Indicator Inop - Fuel flow engine 3
+sim/operation/failures/rel_FF_ind3	int	y	enum	Panel Indicator Inop - Fuel flow engine 4
+sim/operation/failures/rel_FF_ind4	int	y	enum	Panel Indicator Inop - Fuel flow engine 5
+sim/operation/failures/rel_FF_ind5	int	y	enum	Panel Indicator Inop - Fuel flow engine 6
+sim/operation/failures/rel_FF_ind6	int	y	enum	Panel Indicator Inop - Fuel flow engine 7
+sim/operation/failures/rel_FF_ind7	int	y	enum	Panel Indicator Inop - Fuel flow engine 8
+sim/operation/failures/rel_EPRind0	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 1
+sim/operation/failures/rel_EPRind1	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 2
+sim/operation/failures/rel_EPRind2	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 3
+sim/operation/failures/rel_EPRind3	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 4
+sim/operation/failures/rel_EPRind4	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 5
+sim/operation/failures/rel_EPRind5	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 6
+sim/operation/failures/rel_EPRind6	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 7
+sim/operation/failures/rel_EPRind7	int	y	enum	Panel Indicator Inop - Engine Pressure Ratio Engine 8
+sim/operation/failures/rel_ITTind0	int	y	enum	Panel Indicator Inop - ITT engine 1
+sim/operation/failures/rel_ITTind1	int	y	enum	Panel Indicator Inop - ITT engine 2
+sim/operation/failures/rel_ITTind2	int	y	enum	Panel Indicator Inop - ITT engine 3
+sim/operation/failures/rel_ITTind3	int	y	enum	Panel Indicator Inop - ITT engine 4
+sim/operation/failures/rel_ITTind4	int	y	enum	Panel Indicator Inop - ITT engine 5
+sim/operation/failures/rel_ITTind5	int	y	enum	Panel Indicator Inop - ITT engine 6
+sim/operation/failures/rel_ITTind6	int	y	enum	Panel Indicator Inop - ITT engine 7
+sim/operation/failures/rel_ITTind7	int	y	enum	Panel Indicator Inop - ITT engine 8
+sim/operation/misc/debug_network	int	y	boolean	Enable logging of network data
+sim/operation/misc/frame_rate_period	float	n	secs	The frame rate period. Use the reciprical to get the frame rate (e.g. 1/mnw.prd)
+sim/operation/misc/time_ratio	float	n	secs	This is how close XP time matches real time. Ideal ratio is 1
+sim/operation/override/override_joystick	int	y	boolean	Override control of the joystick deflections
+sim/operation/override/override_artstab	int	y	boolean	Override control of the artificial stability system
+sim/operation/override/override_flightcontrol	int	y	boolean	Override all parts of the flight system at once
+sim/operation/override/override_gearbrake	int	y	boolean	Override gear and brake staus
+sim/operation/override/override_planepath	int[10]	y	boolean	Override position updates of this plane
+sim/operation/override/override_navneedles	int	y	boolean	Override navcom radios
+sim/operation/override/override_adf	int	y	boolean	Override ADF radios
+sim/operation/override/override_dme	int	y	boolean	Override DME distances
+sim/operation/override/override_gps	int	y	boolean	Override GPS copmuter
+sim/operation/override/override_flightdir	int	y	boolean	Override flight director needles (both axes)
+sim/operation/override/override_flightdir_ptch	int	y	boolean	Override flight director needles (pitch only)
+sim/operation/override/override_flightdir_roll	int	y	boolean	Override flight director needles (roll only)
+sim/operation/override/override_camera	int	y	boolean	Override camera control.  NOTE: DO NOT USE, USE XPLMCAMERA!!
+sim/operation/override/override_annunciators	int	y	boolean	Override annunciators
+sim/operation/override/override_autopilot	int	y	boolean	Override the autopilot's brains
+sim/operation/override/override_pfc_autopilot_lites	int	y	boolean	Override partial control of a PFC jet cockpit (not for the faint at heart!)
+sim/operation/override/override_joystick_heading	int	y	boolean	Override just heading of the yolk
+sim/operation/override/override_joystick_pitch	int	y	boolean	Override just heading of the pitch
+sim/operation/override/override_joystick_roll	int	y	boolean	Override just heading of the roll
+sim/operation/override/override_throttles	int	y	boolean	Override the throttles (use ENGN_thro_use to control them)
+sim/operation/override/override_groundplane	int	y	boolean	Override ground interactions (see sim/flightmodel/ground)
+sim/operation/override/disable_cockpit_object	int	y	boolean	Disable drawing of 3-d cockpit object
+sim/operation/override/disable_twosided_fuselage	int	y	boolean	Disable drawing of 3-d cockpit object
+sim/operation/override/override_fms_advance	int	y	boolean	Override the FMS going to the next waypoint.
+sim/operation/prefs/has_view_bitmap	int[9]	n	boolean	Do we have a panel for this angle?
+sim/operation/prefs/startup_on_ramp	int	y	boolean	Start up on the ramp?
+sim/operation/prefs/startup_running	int	y	boolean	Start up with the plane running?
+sim/operation/prefs/autopilot_grab_cur_speed	int	y	boolean	On engage, does the autopilot set itself to the current speed?
+sim/operation/prefs/autopilot_grab_cur_heading	int	y	boolean	On engage, does the autopilot set itself to the current heading?
+sim/operation/prefs/autopilot_grab_cur_vvi	int	y	boolean 	On engage, does the autopilot set itself to the current vertical speed?
+sim/operation/prefs/autopilot_grab_cur_altitude	int	y	boolean	On engage, does the autopilot set itself to the current altitude?
+sim/operation/prefs/warn_overspeed	int	y	boolean	Warn if we exceed max airframe speed
+sim/operation/prefs/warn_overgforce	int	y	boolean	Warn if we exceed max g-forces on aircraft
+sim/operation/prefs/warn_overspeed_flaps	int	y	boolean	Warn if we exceed max flap extended speed
+sim/operation/prefs/warn_overspeed_gear	int	y	boolean	Warn if we exceed max gear deployed speed
+sim/operation/prefs/reset_on_crash	int	y	boolean	On crash, do we reset the AC to the nearest airport?
+sim/operation/prefs/warn_nonobvious_stuff	int	y	boolean	Show text warning for otherwise hard to see things like carb-icing?
+sim/operation/prefs/warn_framerate_low	int	y	boolean	Show text warning if framerate gets too low
+sim/operation/prefs/has_headset_on	int	y	boolean	Muffle sound as if a headset is on
+sim/operation/prefs/text_out	int	y	boolean	show text ATC messages?
+sim/operation/prefs/replay_mode	int	y	boolean	Are we in replay mode?
+sim/operation/prefs/warn_bb	int	y	boolean	No idea what this is!!
+sim/operation/prefs/aircraft_damping	int	y	boolean	This used to be an option under equipment settings for auto damping or something.
+sim/operation/prefs/auto_coordinate_helos	int	y	boolean	Automatically coordinate tale rotor for helos
+sim/operation/prefs/realweather/check_real_weather_time_sec	float	y	seconds	How often to check real weather
+sim/operation/prefs/realweather/real_weather_max_vis_nm	float	y	nm	Max distance for real weather visibility (probably really in sm)
+sim/operation/prefs/misc/language	int	n	enum	Current langauge
+sim/operation/sound/has_sound	int	n	boolean	Does this machine have sound hardware that X-Plane understands?
+sim/operation/sound/has_speech_synth	int	n	boolean	Does this machine have speech synth capabilities?
+sim/operation/sound/sound_on	int	y	boolean	Is sound on (set by user)
+sim/operation/sound/speech_on	int	y	boolean	Is speech synth on (set by user)
+sim/operation/sound/radio_chatter_on	int	y	   boolean	Turn off background radio chatter
+sim/operation/sound/master_sound_volume	float	y	0-1	Master audio level in X-Plane
+sim/operation/windows/system_window	int	n	HWND	This is X-Plane's system native window as an int (either an HWND or WindowRef)
+sim/time/timer_is_running_sec	int	y	boolean	Is the timer running?
+sim/time/total_running_time_sec	float	y	seconds	Total time the sim has been up
+sim/time/total_flight_time_sec	float	y	seconds	Total time since the flight got reset by something
+sim/time/timer_elapsed_time_sec	float	y	seconds	Total time elapsed on the timer
+sim/time/local_time_sec	float	n	seconds	Local time  (seconds since midnight??)
+sim/time/zulu_time_sec	float	y	seconds	Zulu time  (seconds since midnight??)
+sim/time/local_date_days	int	y	days	Date in days since January 1st
+sim/time/use_system_time	int	y	boolean	Use system date and time for local time
+sim/time/backwards	int	y	???	No idea what this is!
+sim/time/paused	int	n	boolean	Is the sim paused?  Use cmd keys to change this.
+sim/time/hobbs_time	float	y	seconds	elapsed time on the Hobbs meter
+sim/version/sim_build_string	char[256]	n	string	This string contains the date and time that this x-plane was built.
+sim/version/xplm_build_string	char[256]	n	string	This string contains the date and time that the XPLM DLL was built.
+sim/weapons/weapon_count	int	n	   	int
+sim/weapons/wpn_struct	int[25]	n	Pointers	Pointers to the raw weapon structs.
+sim/weapons/type	int[25]	y	???	For the geometry we scan right into the acf structure unused array-spaces.
+sim/weapons/free_flyer	int[25]	y	 	???
+sim/weapons/action_mode	int[25]	y	???	In carriage or still in the gun, firing, and destroyed
+sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc.
+sim/weapons/y_wpn_att	float[25]	y	???	Code to do the weapons as well as everything else.
+sim/weapons/z_wpn_att	float[25]	y	???	???
+sim/weapons/cgY	float[25]	y	???	???
+sim/weapons/cgZ	float[25]	y	???	???
+sim/weapons/las_range	float[25]	y	???	???
+sim/weapons/conv_range	float[25]	y	???	???
+sim/weapons/bul_rounds_per_sec	float[25]	y	???	???
+sim/weapons/bul_rounds	float[25]	y	???	???
+sim/weapons/bul_muzzle_speed	float[25]	y	???	???
+sim/weapons/bul_area	float[25]	y	???	???
+sim/weapons/added_mass	float[25]	y	???	Mass in addition to ammo... like the gun itself, and bomb racks.
+sim/weapons/total_weapon_mass_max	float[25]	y	???	Warhead and casing, fuel and tank
+sim/weapons/fuel_warhead_mass_max	float[25]	y	???	Remember we can have drop tanks
+sim/weapons/warhead_type	int[25]	y	???	Conventional or nuke
+sim/weapons/mis_drag_co	float[25]	y	???	???
+sim/weapons/mis_drag_chute_S	float[25]	y	???	???
+sim/weapons/mis_cone_width	float[25]	y	???	For heat or radar-guided, you must keep the target within this cone to track him
+sim/weapons/mis_crat_per_deg_bore	float[25]	y	???	???
+sim/weapons/mis_crat_per_degpersec_bore	float[25]	y	???	???
+sim/weapons/mis_crat_per_degpersec	float[25]	y	???	???
+sim/weapons/gun_del_psi_deg_max	float[25]	y	???	Aimable guns for c130 spectere, etc
+sim/weapons/gun_del_the_deg_max	float[25]	y	???	Aimable guns for c130 spectere, etc
+sim/weapons/gun_del_psi_deg_now	float[25]	y	???	Aimable guns for c130 spectere, etc
+sim/weapons/gun_del_the_deg_now	float[25]	y	???	Aimable guns for c130 spectere, etc
+sim/weapons/s_frn	float[25]	y	???	???
+sim/weapons/s_sid	float[25]	y	???	???
+sim/weapons/s_top	float[25]	y	???	Area
+sim/weapons/X_body_aero	float[25]	y	???	???
+sim/weapons/Y_body_aero	float[25]	y	???	???
+sim/weapons/Z_body_aero	float[25]	y	???	Centroid
+sim/weapons/Jxx_unitmass	float[25]	y	???	???
+sim/weapons/Jyy_unitmass	float[25]	y	???	???
+sim/weapons/Jzz_unitmass	float[25]	y	???	MI
+sim/weapons/i	int[25]	y	???	???
+sim/weapons/j	int[25]	y	???	Keep track for fast ground-elev-finding
+sim/weapons/target_index	int[25]	y	???	Target index
+sim/weapons/targ_lat	float[25]	y	???	???
+sim/weapons/targ_lon	float[25]	y	???	???
+sim/weapons/targ_h	float[25]	y	???	Bomb targets
+sim/weapons/del_psi	float[25]	y	???	???
+sim/weapons/del_the	float[25]	y	???	Delta to target, for data output
+sim/weapons/rudd_rat	float[25]	y	???	???
+sim/weapons/elev_rat	float[25]	y	???	Rudder and elevator steering inputs
+sim/weapons/V_msc	float[25]	y	???	???
+sim/weapons/AV_msc	float[25]	y	???	???
+sim/weapons/dist_targ	float[25]	y	???	???
+sim/weapons/dist_point	float[25]	y	???	???
+sim/weapons/time_point	float[25]	y	???	Speed and dist to target for data output
+sim/weapons/fx_axis	float[25]	y	???	???
+sim/weapons/fy_axis	float[25]	y	???	???
+sim/weapons/fz_axis	float[25]	y	???	Flight-status
+sim/weapons/vx	float[25]	y	???	???
+sim/weapons/vy	float[25]	y	???	???
+sim/weapons/vz	float[25]	y	???	???
+sim/weapons/x	float[25]	y	???	???
+sim/weapons/y	float[25]	y	???	???
+sim/weapons/z	float[25]	y	???	Flight-status
+sim/weapons/L	float[25]	y	???	???
+sim/weapons/M	float[25]	y	???	???
+sim/weapons/N	float[25]	y	???	???
+sim/weapons/Prad	float[25]	y	???	???
+sim/weapons/Qrad	float[25]	y	???	???
+sim/weapons/Rrad	float[25]	y	???	???
+sim/weapons/the	float[25]	n	Deg	Angle relative to the aircraft
+sim/weapons/psi	float[25]	n	Deg	Angle relative to the aircraft
+sim/weapons/phi	float[25]	n	Deg	Angle relative to the aircraft
+sim/weapons/the_con	float[25]	y	Deg	Angle relative to the mounting flight control
+sim/weapons/psi_con	float[25]	y	Deg	Angle relative to the mounting flight control
+sim/weapons/phi_con	float[25]	y	Deg	Angle relative to the mounting flight control
+sim/weapons/next_bull_time	float[25]	y	???	For guns, this is the next fire time
+sim/weapons/total_weapon_mass_now	float[25]	y	???	???
+sim/weapons/fuel_warhead_mass_now	float[25]	y	???	???
+sim/weapons/impact_time	float[25]	y	???	???
+sim/weapons/mis_thrust1	float[25]	y	???	delay
+sim/weapons/mis_thrust2	float[25]	y	???	boost
+sim/weapons/mis_thrust3	float[25]	y	???	sustain
+sim/weapons/mis_duration1	float[25]	y	???	delay
+sim/weapons/mis_duration2	float[25]	y	???	boost
+sim/weapons/mis_duration3	float[25]	y	???	sustain
+sim/weapons/q1	float[25]	y	???	???
+sim/weapons/q2	float[25]	y	???	???
+sim/weapons/q3	float[25]	y	???	???
+sim/weapons/q4	float[25]	y	???	???
+sim/weather/cloud_type[0]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Ê Currently there are only two cloud layers, 0 or 1.Ê Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
+sim/weather/cloud_type[1]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Ê Currently there are only two cloud layers, 0 or 1.Ê Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
+sim/weather/cloud_base_msl_m[0]	float	y	meters MSL >= 0	The base altitude for this cloud layer.
+sim/weather/cloud_base_msl_m[1]	float	y	meters MSL >= 0	The base altitude for this cloud layer.
+sim/weather/cloud_tops_msl_m[0]	float	y	meters >= 0	The tops for this cloud layer.
+sim/weather/cloud_tops_msl_m[1]	float	y	meters >= 0	The tops for this cloud layer.
+sim/weather/visibility_reported_m	float	y	meters >= 0	The reported visibility (e.g. what the METAR/weather window says).
+sim/weather/rain_percent	float	y	[0.0 - 1.0]	The percentage of rain falling.
+sim/weather/thunderstorm_percent	float	y	[0.0 - 1.0]	The percentage of thunderstorms present.
+sim/weather/wind_turbulence_percent	float	y	[0.0 - 1.0]	The precentage of wind turbulence present.
+sim/weather/barometer_sealevel_inhg	float	y	29.92 +- ....	The barometric pressure at sea level.
+sim/weather/microburst_probability	float	y	[0.0 - 1.0]	The probability of a microburst occurring.
+sim/weather/rate_change_percent	float	y	[-1.0 - 1.0]	How fast weather is improving or degenerating.Ê -1.0 means degenerating, 1.0 means improving.
+sim/weather/has_real_weather_bool	int	n	0, 1	Whether a real weather file has been located.
+sim/weather/use_real_weather_bool	int	y	0, 1	Whether a real weather file is in use.
+sim/weather/sigma	float	n	???	The atmospheric density as a ratio compared to sea level.
+sim/weather/rho	float	n	???	The density of the air in kg/cubic meters.
+sim/weather/barometer_current_inhg	float	n	29.92 +- ....	This is the barometric pressure at the point the current flight is at.
+sim/weather/gravity_mss	float	n	meters/sec^2	This is the acceleration of gravity for the current planet.
+sim/weather/speed_sound_ms	float	n	meters/sec	This is the speed of sound in meters/second at the plane's location.
+sim/weather/wind_altitude_msl_m[0]	float	y	meters >= 0	The center altitude of this layer of wind in MSL meters.
+sim/weather/wind_altitude_msl_m[1]	float	y	meters >= 0	The center altitude of this layer of wind in MSL meters.
+sim/weather/wind_altitude_msl_m[2]	float	y	meters >= 0	The center altitude of this layer of wind in MSL meters.
+sim/weather/wind_direction_degt[0]	float	y	[0 - 360)	The direction the wind is blowing from in degrees from true 0rth c lockwise.
+sim/weather/wind_direction_degt[1]	float	y	[0 - 360)	The direction the wind is blowing from in degrees from true 0rth c lockwise.
+sim/weather/wind_direction_degt[2]	float	y	[0 - 360)	The direction the wind is blowing from in degrees from true 0rth c lockwise.
+sim/weather/wind_speed_kt[0]	float	y	kts >= 0	The wind speed in k0ts.
+sim/weather/wind_speed_kt[1]	float	y	kts >= 0	The wind speed in k0ts.
+sim/weather/wind_speed_kt[2]	float	y	kts >= 0	The wind speed in k0ts.
+sim/weather/shear_direction_degt[0]	float	y	[0 - 360)	The direction for a wind shear, per above.
+sim/weather/shear_direction_degt[1]	float	y	[0 - 360)	The direction for a wind shear, per above.
+sim/weather/shear_direction_degt[2]	float	y	[0 - 360)	The direction for a wind shear, per above.
+sim/weather/shear_speed_kt[0]	float	y	kts >= 0	The gain from the shear in k0ts.
+sim/weather/shear_speed_kt[1]	float	y	kts >= 0	The gain from the shear in k0ts.
+sim/weather/shear_speed_kt[2]	float	y	kts >= 0	The gain from the shear in k0ts.
+sim/weather/turbulence[0]	float	y	[0 - 10]	A turbulence factor, 0-10, the unit is just a scale.
+sim/weather/turbulence[1]	float	y	[0 - 10]	A turbulence factor, 0-10, the unit is just a scale.
+sim/weather/turbulence[2]	float	y	[0 - 10]	A turbulence factor, 0-10, the unit is just a scale.
+sim/weather/wave_amplitude	float	y	??	Amplitude of waves in the water (height of waves)
+sim/weather/wave_length	float	y	??	Length of a single wave in the water
+sim/weather/wave_speed	float	y	??	Speed of water waves
+sim/weather/wave_dir	float	y	??	Direction of waves.
+sim/weather/temperature_sealevel_c	float	y	degrees C	The temperature at sea level.
+sim/weather/dewpoi_sealevel_c	float	y	degrees C	The dew point at sea level.
+sim/weather/temperature_ambient_c	float	n	degrees C	The air temperature outside the aircraft (at altitude).
+sim/weather/temperature_le_c	float	n	degrees C	The air temperature at the leading edge of the wings in degrees C.
+sim/weather/thermal_percent	float	y	[0.0 - 1.0]	The percentage of thermal occurence in the area.
+sim/weather/thermal_rate_ms	float	y	m/s >= 0	The climb rate for thermals.
+sim/weather/thermal_altitude_msl_m	float	y	m MSL >= 0	The top of thermals in meters MSL.
+sim/weather/meteorite_density	float	y	??	The density of meteorites in space.
+sim/weather/runway_friction	float	y	??	The friction constant for runways (how wet they are).
+sim/weather/wind_direction_degt	float	n	[0-359)	The effective direction of the wind at the plane's location.
+sim/weather/wind_speed_kt	float	n	kts >= 0	The effective speed of the wind at the plane's location.

@@ -40,7 +40,9 @@ XPlaneACF.py
 XPlaneACF.pyc
 XPlane2Blender.html
 XPlaneImportPlane.html
-XPlaneReadme.txt"
+XPlaneReadme.txt
+DataRefs.txt"
+
 for I in "$HOME/.blender/scripts" $DIRS; do
     for J in $FILES; do
         if [ -e "$I/$J" ]; then
@@ -59,7 +61,8 @@ XPlaneExport8.py
 XPlaneImport.py
 XPlaneImportPlane.py
 XPlaneUtils.py
-XPlane2Blender.html"
+XPlane2Blender.html
+DataRefs.txt"
 if [ -d "$HOME/.blender/scripts" ]; then
     DIRS="$HOME/.blender/scripts"
 fi
