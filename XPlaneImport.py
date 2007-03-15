@@ -113,6 +113,9 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #  - Detect and fix up spaces in texture file name.
 #  - Made merging algorithm thorough.
 #
+# 2005-01-15 v1.90
+#  - Add support for forcing all primitives into a single mesh.
+#
 
 import sys
 import Blender
@@ -425,8 +428,8 @@ class OBJimport:
     #------------------------------------------------------------------------
     def __init__(self, filename):
         #--- public you can change these ---
-        self.verbose=0	# level of verbosity in console 0-none, 1-some, 2-most
-        self.merge=1	# whether to merge primitives into meshes
+        self.verbose=0	# level of verbosity in console: 0-none, 1-some, 2-most
+        self.merge=1	# merge primitives into meshes: 0-no, 1-abut, 2-force
         
         #--- class private don't touch ---
         self.filename=filename
@@ -1150,7 +1153,8 @@ class OBJimport:
         # from the same X-Plane object).
 
         if self.curmesh and self.merge:
-            if self.comment!='' and self.comment==self.lastcomment:
+            if (self.merge>=2 or
+                (self.comment!='' and self.comment==self.lastcomment)):
                 self.curmesh[-1].addFaces (name, faces)
                 return            
             if self.curmesh[-1].flags==flags and self.curmesh[-1].abut(faces):
@@ -1165,7 +1169,8 @@ class OBJimport:
     #------------------------------------------------------------------------
     # last chance - try to merge meshes that abut each other
     def mergeMeshes (self):
-        if not self.merge: return
+        if not self.merge:
+            return
 
         # Brute force and ignorance algorithm is used. But search most recently
         # added meshes first on the assumption of locality.
@@ -1182,32 +1187,6 @@ class OBJimport:
 
             l=m+1
             while l<len(self.curmesh):
-                if (self.curmesh[l].flags==self.curmesh[m].flags and
-                    self.curmesh[l].intersect(self.curmesh[m]) and
-                    self.curmesh[l].abut(facesm)):
-                    self.curmesh[m].addFaces("Mesh", self.curmesh[l].faces)
-                    self.curmesh.pop(l)
-                else:
-                    l=l+1
-            m=m-1
-
-    #------------------------------------------------------------------------
-    # last chance - try to merge meshes that abut each other
-    def OldmergeMeshes (self):
-        # Brute force and ignorance algorithm is used. But search most recently
-        # added meshes first on the assumption of locality.
-        m=len(self.curmesh)-2
-        while m>=0:
-            n=float(m)/len(self.curmesh)
-            Window.DrawProgressBar(1-n/2,"Merging %s%% ..." % (100-int(50*n)))
-            l=m+1
-            # optimisation: take a copy of m's faces to prevent comparing any
-            # newly merged faces multiple times - appears to be worth the cost
-            facesm=[]
-            for face in self.curmesh[m].faces:
-                facesm.append(face)
-            # sliding window
-            while l<min(m+1+self.merge,len(self.curmesh)):
                 if (self.curmesh[l].flags==self.curmesh[m].flags and
                     self.curmesh[l].intersect(self.curmesh[m]) and
                     self.curmesh[l].abut(facesm)):

@@ -146,6 +146,9 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 #    1024x768.
 #  - Also recognise cockpit_inn and cockpit_out as cockpit objects.
 #
+# 2005-01-15 v1.90
+#  - Add variable to control whether to generate strips.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -275,13 +278,14 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.89
+    VERSION=1.90
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
         #--- public you can change these ---
         self.verbose=0	# level of verbosity in console 0-none, 1-some, 2-most
         self.debug=0	# extra debug info in console
+        self.strips=1	# whether to make strips
         
         #--- class private don't touch ---
         self.file=0
@@ -745,8 +749,9 @@ class OBJexport:
                 faces[faceindex]=0	# take face off list
                 firstvertex=0
                         
-                if ((startface.flags & Face.HARD) or
-                    (startface.flags & Face.PANEL)):
+                if (not self.strips or
+                    startface.flags & Face.HARD or
+                    startface.flags & Face.PANEL):
                     # Can't be part of a Quad_Strip
                     self.writeStrip(strip,0)
 
