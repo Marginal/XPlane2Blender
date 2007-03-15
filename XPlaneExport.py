@@ -95,6 +95,10 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 #    duplicate vertex limit, which led to corrupt output file
 #  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits
 #
+# 2004-10-17 v1.74
+#  - Warn if objects present in layers other than 1-3.
+#    Suggested by Hervé Duchesne de Lamotte.
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -198,7 +202,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.73
+    VERSION=1.74
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -235,15 +239,16 @@ class OBJexport:
         self.getTexture (theObjects)
         
         self.file = open(self.filename, "w")
-        self.writeHeader()
-        self.writeObjects(theObjects)
-        self.file.close()
+        self.writeHeader ()
+        self.writeObjects (theObjects)
+        self.checkLayers (theObjects)
+        self.file.close ()
         
         Window.DrawProgressBar(1, "Finished")
         print "Finished - exported %s objects\n" % self.nobj
 
     #------------------------------------------------------------------------
-    def checkFile(self):
+    def checkFile (self):
         try:
             file = open(self.filename, "rb")
         except IOError:
@@ -255,7 +260,16 @@ class OBJexport:
         return 1
 
     #------------------------------------------------------------------------
-    def writeHeader(self):
+    def checkLayers (self, theObjects):
+        for object in theObjects:
+            if not object.Layer & 7:
+                break
+        else:
+            return
+        print "Warn:\tObjects were found outside layers 1-3 and were not exported"
+
+    #------------------------------------------------------------------------
+    def writeHeader (self):
         if Blender.sys.dirsep=="\\":
             systype="I"
         else:

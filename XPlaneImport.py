@@ -91,7 +91,8 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 #  - Report line number on input error
 #  - Reduced duplicate vertex limit to 0.001 for small objects eg cockpits
 #
-
+# 2004-10-17 v1.74
+#
 
 import sys
 import Blender
