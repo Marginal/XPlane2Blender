@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.04"
+__version__ = "2.05"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes into Blender, so that
 they can be exported as X-Plane scenery.
@@ -84,6 +84,9 @@ Limitations:<br>
 #
 # 2005-05-10 v2.02
 #  - Add '*' to mesh names for parts that use non-primary texture.
+#
+# 2005-05-14 v2.05
+#  - Add support for v8.15 format planes.
 #
 
 import sys
@@ -2230,7 +2233,7 @@ xflt, "OVERFLOW_xflt_overflow[20]",
     #------------------------------------------------------------------------
     # Derived from hl_acf_structs.h
     # with help from Michael Ista
-    acf810 = [
+    acf815 = [
 #xchr, "HEADER_platform",
 #xint, "HEADER_version",
 xint, "HEADER_is_hm",
@@ -2724,7 +2727,23 @@ xflt, "CONTROLS_elv2_dn",
 xflt, "CONTROLS_elv2_cratR",
 xflt, "CONTROLS_elv2_cratT",
 xflt, "OVERFLOW_cgZ_ref_ft",
-xflt, "OVERFLOW_xflt_overflow[4887]",
+xflt, "OVERFLOW_total_S",
+xflt, "OVERFLOW_total_elements",
+xint, "OVERFLOW_randy_temp",
+xflt, "OVERFLOW_elev_def_time",
+xflt, "OVERFLOW_ailn_def_time",
+xflt, "OVERFLOW_rudd_def_time",
+xint, "OVERFLOW_custom_FADEC",
+xflt, "OVERFLOW_fadec_del",
+xflt, "OVERFLOW_fadec_dot",
+xflt, "OVERFLOW_fadec_jrk",
+xflt, "OVERFLOW_pitch_cyc_with_v1_kts",
+xflt, "OVERFLOW_pitch_cyc_with_v2_kts",
+xflt, "OVERFLOW_pitch_cyc_with_v2_deg",
+xint, "OVERFLOW_lock_with_elev",
+xint, "OVERFLOW_custom_st_coords",	# set your own s/t mapping
+
+xflt, "OVERFLOW_xflt_overflow[4872]",
 
 xstruct, "engn[8]",
 xstruct, "wing[56]",
@@ -2759,6 +2778,7 @@ xflt, "ringarea[10]",
 xflt, "bladesweep[10]",
     ]
     engn810=engn8000
+    engn815=engn8000
 
     wing8000 = [
 xint, "is_left",
@@ -2853,6 +2873,7 @@ xflt, "elv2_elR",
 xflt, "elv2_elT",
 xflt, "overflow_dat[100]",
     ])
+    wing815=wing810
 
     part8000 = [
 xint, "part_eq",
@@ -2891,8 +2912,9 @@ xflt, "nrm_xyz[20][18][3]",
 xflt, "st[20][18][2]",
 xchr, "locked[20][18]",
     ]
-    part800=part8000
+    part800=part8000	# For weapons
     part810=part8000
+    part815=part8000
 
     gear8000=[
 xint, "gear_type",
@@ -2924,6 +2946,7 @@ xflt, "axiN",
 xflt, "z_nodef",
     ]
     gear810=gear8000
+    gear815=gear8000
 
     watt8000=[
 xchr, "watt_name[40]",
@@ -2937,6 +2960,7 @@ xflt, "watt_z",
 xflt, "watt_phi",
     ]
     watt810=watt8000
+    watt815=watt8000
 
     door8000=[
 xint, "type",
@@ -2958,6 +2982,7 @@ xflt, "inn_t2",
 xflt, "out_t2",
     ]
     door810=door8000
+    door815=door8000
 
     # Derived from WPN740.def by Stanislaw Pusep
     #   http://sysd.org/xplane/acftools/WPN740.def
@@ -3200,8 +3225,8 @@ xflt, "xflt_overflow[100]",
         (self.HEADER_version,)=unpack(fmt+'i', acffile.read(4))
         if self.HEADER_version in [700,740]:
             defs=DEFfile.acf740
-        elif self.HEADER_version in [8000,810]:
-            defs=DEFfile.acf810
+        elif self.HEADER_version in [8000,810,815]:
+            defs=DEFfile.acf815
         elif self.HEADER_version==1:
             defs=DEFfile.wpn740
         elif self.HEADER_version==800:
@@ -3225,7 +3250,7 @@ xflt, "xflt_overflow[100]",
             return
 
         # Rewrite selected v7 acf variables to v8 format
-        
+
         # engines
         self.engn=[]
         for n in range(DEFfile.engnDIM):
@@ -3285,6 +3310,7 @@ xflt, "xflt_overflow[100]",
             self.WB_tank_xyz.append([self.WB_tank_X[i],
                                      self.WB_tank_Y[i],
                                      self.WB_tank_Z[i]])
+        self.OVERFLOW_custom_st_coords=0
 
 
     def data(self, acffile, dmp, number, size, t, fmt, var):
@@ -3521,8 +3547,8 @@ def file_callback (filename):
         obj=ACFimport(filename)
     except ParseError:
         Window.DrawProgressBar(1, "Error")
-        print("ERROR: This isn't a v7 or v8 X-Plane file!")
-        Blender.Draw.PupMenu("ERROR: This isn't a v7 or v8 X-Plane file!")
+        print("ERROR:\tThis isn't a v7 or v8 X-Plane file!")
+        Blender.Draw.PupMenu("ERROR:\tThis isn't a v7 or v8 X-Plane file!")
         return
     obj.doImport()
     Window.DrawProgressBar(1, "Finished")

@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.04"
+__version__ = "2.05"
 __bpydoc__ = """\
 This script imports X-Plane v6 and v7 .obj scenery files into Blender.
 
@@ -138,7 +138,9 @@ Limitations:<br>
 # 2005-05-11 v2.03
 #  - Fixed bug importing quad_cockpits.
 #
-
+# 2005-05-15 v2.05
+#  - Fixed bug introduced in 2.04 with twosided polys.
+#
 
 import sys
 import Blender
@@ -308,7 +310,7 @@ class Mesh:
                 face.mode |= NMesh.FaceModes.DYNAMIC
             #if f.flags&Face.NO_DEPTH:
             #    face.mode |= NMesh.FaceModes.TILES
-            if f.flags&Face.DBLSIDED:
+            if f.flags&Face.TWOSIDE:
                 face.mode |= NMesh.FaceModes.TWOSIDE
             if f.flags&Face.SMOOTH:
                 face.smooth=1
@@ -398,7 +400,7 @@ class OBJimport:
         self.lastcomment=""
         self.smooth=1		# >=7.30 defaults to smoothed rendering
         self.no_depth=0
-        self.dblsided=0
+        self.twoside=0
         self.lod=0
         self.fusecount=0
         
@@ -780,12 +782,12 @@ class OBJimport:
                     # Not sure what gets reset
                     self.smooth=1	# >=7.30 defaults to smoothed rendering
                     self.no_depth=0
-                    self.dblsided=0
+                    self.twoside=0
 
                 elif t==Token.CULL:
-                    self.dblsided = 0
+                    self.twoside = 0
                 elif t in [Token.NO_CULL, Token.NOCULL]:
-                    self.dblsided = 1
+                    self.twoside = 1
 
                 elif t==Token.POLY_OS:
                     n = self.getInt()
@@ -946,7 +948,6 @@ class OBJimport:
         # 'Line's shouldn't be merged, so add immediately 
         mesh=NMesh.New(name)
         mesh.mode &= ~(NMesh.Modes.AUTOSMOOTH|NMesh.Modes.NOVNORMALSFLIP)
-        mesh.mode |= NMesh.Modes.TWOSIDED
 
         face=NMesh.Face()
         face.mode &= ~(NMesh.FaceModes.TEX|NMesh.FaceModes.TILES)
@@ -1007,8 +1008,8 @@ class OBJimport:
                 face.flags |= Face.SMOOTH
             if self.no_depth:
                 face.flags |= Face.NO_DEPTH
-            if self.dblsided:
-                face.flags |= Face.DBLSIDED
+            if self.twoside:
+                face.flags |= Face.TWOSIDE
                 
             faces.append(face)
             
@@ -1076,8 +1077,8 @@ class OBJimport:
                 face.flags |= Face.SMOOTH
             if self.no_depth:
                 face.flags |= Face.NO_DEPTH
-            if self.dblsided:
-                face.flags |= Face.DBLSIDED
+            if self.twoside:
+                face.flags |= Face.TWOSIDE
             
             faces.append(face)
 
