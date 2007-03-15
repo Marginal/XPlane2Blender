@@ -39,12 +39,15 @@
 # 2005-11-19 v2.13
 #  - Workaround for / in Windows paths
 #
-
+# 2006-01-05 v2.16
+#  - Fix for relative and v8 texture paths.
+#
 
 import sys
 import Blender
 from Blender import NMesh, Lamp, Image, Draw, Window
 from XPlaneUtils import Vertex
+from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
 
 class ExportError(Exception):
     def __init__(self, msg):
@@ -106,57 +109,20 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
                 for face in mesh.faces:
                     if (face.mode&NMesh.FaceModes.TEX) and face.image:
                         # Need to canonicalise pathnames to avoid false dupes
-                        fixedfile=face.image.filename
-                        if fixedfile[0:2] in ['//', '\\\\']:
+                        if face.image.filename[0:2] in ['//', '\\\\']:
                             # Path is relative to .blend file
-                            fixedfile=Blender.Get('filename')
-                            l=fixedfile.rfind(Blender.sys.dirsep)
-                            m=fixedfile.rfind('/') # / can appear on Windows
-                            l=max(l,m)
-                            if l!=-1:
-                                fixedfile=(fixedfile[:l+1]+
-                                           face.image.filename[2:])
-                            else:	# give up
-                                fixedfile=face.image.filename[2:]
-                        if Blender.sys.dirsep=='\\':
-                            # Windows
-                            while 1:
-                                # / can appear on Windows
-                                l=fixedfile.find('/')
-                                if l==-1:
-                                    break
-                                fixedfile=fixedfile[:l]+'\\'+fixedfile[l+1:]
-                            if fixedfile[0]=='\\':
-                                # Add drive letter
-                                for drive in [Blender.Get('filename'),
-                                              Blender.sys.progname]:
-                                    if drive and not drive[0] in ['/', '\\']:
-                                        f=drive.lower()[:2]+'\\'+fixedfile[1:]
-                                        try:
-                                            file=open(f, 'rb')
-                                        except IOError:
-                                            pass
-                                        else:
-                                            file.close()
-                                            fixedfile=f
-                                            break
+                            fixedfile=normpath(join(dirname(Blender.Get(
+                                'filename')), face.image.filename[2:]))
+                        else:
+                            fixedfile=abspath(face.image.filename)
+                        if sep=='\\':
+                            if fixedfile[0] in ['/', '\\']:
+                                # Add Windows drive letter
+                                (drive,foo)=splitdrive(Blender.sys.progname)
+                                fixedfile=drive.lower()+fixedfile
                             else:
-                                # Lowercase drive lettter
+                                # Lowercase Windows drive lettter
                                 fixedfile=fixedfile[0].lower()+fixedfile[1:]
-                        while fixedfile.find('..')!=-1:
-                            # Remove relative stuff
-                            r=fixedfile.rfind('..')
-                            l=fixedfile[:r-1].rfind(Blender.sys.dirsep)
-                            if l==-1:
-                                break	# Ugh?
-                            fixedfile=fixedfile[:l]+fixedfile[r+2:]
-                        if 0:	#fixedfile!=face.image.filename:
-                            try:
-                                face.image=Image.Load(fixedfile)
-                            except IOError:
-                                pass
-                            else:
-                                mesh.update()
 
                         if face.image.name.lower().find("panel.")!=-1:
                             # Check that at least one panel texture is OK
@@ -217,19 +183,13 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
                 if l&1 and l>1:
                     raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace to load the new file.")
 
-    l=texture.rfind(Blender.sys.dirsep)
+    l=texture.rfind(sep)
     if l!=-1:
         l=l+1
     else:
         l=0
     if texture[l:].find(' ')!=-1:
         raise ExportError("Texture filename \"%s\" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file." % texture[l:])
-
-    while 1:
-        l=texture.find(Blender.sys.dirsep)
-        if l==-1:
-            break
-        texture=texture[:l]+':'+texture[l+1:]
 
     if texture[-4:].lower() == '.bmp':
         if fileformat==7:
@@ -243,19 +203,32 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
     # try to guess correct texture path
     if iscockpit:
         print "Info:\tUsing algorithms appropriate for a cockpit object."
+        return (basename(texture), havepanel, layermask)
     elif fileformat==7:
         for prefix in ["custom object textures", "autogen textures"]:
             l=texture.lower().rfind(prefix)
             if l!=-1:
-                texture = texture[l+len(prefix)+1:]
+                texture = texture[l+len(prefix)+1:].replace(sep,'/')
                 return (texture, havepanel, layermask)
-        print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
+    elif fileformat==8:
+        # texture is relative to .obj file - find common prefix
+        a=Blender.Get('filename').split(sep)
+        b=texture.split(sep)
+        for i in range(min(len(a),len(b))):
+            if a[i].lower()!=b[i].lower():
+                if i==0: break	# it's hopeless
+                if 'Custom Scenery' in a[i-1:]+b[i-1:]:
+                    break	# Can't step out of scenery package
+                c=''
+                for l in range(i,len(a)-1):
+                    c+='../'
+                for l in range(i,len(b)-1):
+                    c+=b[i]+'/'
+                return (c+basename(texture), havepanel, layermask)
 
     # just return bare filename
-    l=texture.rfind(":")
-    if l!=-1:
-        texture = texture[l+1:]
-    return (texture, havepanel, layermask)
+    print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
+    return (basename(texture), havepanel, layermask)
 
 #------------------------------------------------------------------------
 def isLine(object, linewidth):

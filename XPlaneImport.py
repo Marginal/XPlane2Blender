@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: ' X-Plane Object (.obj)...'
-Blender: 234
+Blender: 240
 Group: 'Import'
 Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.15"
+__version__ = "2.16"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -156,11 +156,15 @@ Limitations:<br>
 # 2005-12-19 v2.15
 #  - Also look for textures in "textures" subdir.
 #
+# 2006-01-05 v2.16
+#  - Fix for relative and v8 texture paths.
+#
 
 import sys
 import Blender
 from Blender import Object, NMesh, Lamp, Image, Material, Window
 from XPlaneUtils import Vertex, UV, Face
+from os.path import abspath, curdir, dirname, join, normpath, sep, splitdrive
 #import time
 
 class ParseError(Exception):
@@ -408,15 +412,14 @@ class Mesh:
 
             if f.flags&Face.PANEL:
                 if not panel:
-                    l = filename.rfind(Blender.sys.dirsep)
-                    if l!=-1:
-                        for extension in ['', '.bmp', '.png']:
-                            cockpit=filename[:l+1]+"cockpit"+Blender.sys.dirsep+"-PANELS-"+Blender.sys.dirsep+"Panel"+extension
-                            try:
-                                panel = Image.Load(cockpit)
-                                break
-                            except IOError:
-                                pass
+                    d = dirname(filename)
+                    for extension in ['.png', '.bmp']:
+                        cockpit=d+sep+"cockpit"+sep+"-PANELS-"+sep+"Panel"+extension
+                        try:
+                            panel = Image.Load(cockpit)
+                            break
+                        except IOError:
+                            pass
                 face.mode |= NMesh.FaceModes.TEX
                 face.image = panel
             elif image:
@@ -449,25 +452,20 @@ class OBJimport:
         self.merge=1	# merge primitives into meshes: 0-no, 1-abut, 2-force
         
         #--- class private don't touch ---
-        self.filename=filename
-        if Blender.sys.dirsep=='\\':
-            if filename[0] in ['/', '\\']:
+        if filename[0:2] in ['//', '\\\\']:
+            # relative to .blend file
+            self.filename=normpath(join(dirname(Blender.Get('filename')),
+                                        filename[2:]))
+        else:
+            self.filename=abspath(filename)
+        if sep=='\\':
+            if self.filename[0] in ['/', '\\']:
                 # Add Windows drive letter
-                for drive in [Blender.Get('filename'),
-                              Blender.sys.progname]:
-                    if drive and not drive[0] in ['/', '\\']:
-                        f=drive.lower()[:2]+'\\'+filename[1:]
-                        try:
-                            file=open(f, 'rb')
-                        except IOError:
-                            pass
-                        else:
-                            file.close()
-                            self.filename=f
-                            break
+                (drive,foo)=splitdrive(Blender.sys.progname)
+                self.filename=drive.lower()+self.filename
             else:
                 # Lowercase Windows drive lettter
-                self.filename=filename[0].lower()+filename[1:]
+                self.filename=filename[0].lower()+self.filename[1:]
 
         self.linesemi=0.025
         self.lineno=1		# for error reporting
@@ -757,14 +755,17 @@ class OBJimport:
 
         # read to newline or comment - include spaces
         tex=""
+        hitspace=False
         while 1:
             pos = self.file.tell()
             c = self.file.read(1)
             if not c:
                 raise ParseError(ParseError.HEADER)
-            if c == '\n':
-                self.lineno += 1
-            if c in ['\n', '/']:
+            if c in [' ','\t']:
+                hitspace=True
+            if (c == '\n' or
+                (c == '/' and hitspace and self.fileformat<8) or
+                (c == '#' and self.fileformat>=8)):
                 self.file.seek(pos)
                 break
             tex = tex + c
@@ -777,55 +778,39 @@ class OBJimport:
                 print "Info:\tNo texture"
             return
 
-        basename=""
-        for i in range(len(tex)):
-            if tex[i]==":":
-                basename+=Blender.sys.dirsep
-            else:
-                basename+=tex[i]
+        base=tex.replace(':',sep)
 
-        for subdir in ["",
-                       "textures"+Blender.sys.dirsep,
-                       "custom object textures"+Blender.sys.dirsep,
-                       "AutoGen textures"+Blender.sys.dirsep]:
-            texdir=self.filename
-            for p in range(3):
-                p=texdir[:-1].rfind(Blender.sys.dirsep)
-                if p!=-1:
-                    texdir=texdir[:p+1]
+        # Look for texture in . and "../custom object textures"
+        dirs=[dirname(self.filename)]
+        l=self.filename.rfind('custom objects')
+        if l!=-1:
+            dirs.append(self.filename[:l]+'custom object textures')
+        for subdir in dirs:
+            for extension in ['', '.png', '.bmp']:
+                texname=normpath(subdir+sep+base+extension)
+                try:
+                    file = open(texname, "rb")
+                except IOError:
+                    pass
                 else:
-                    break
-                
-                for extension in ['', '.bmp', '.png']:
-                    texname=texdir+subdir+basename+extension
-                    try:
-                        file = open(texname, "rb")
-                    except IOError:
-                        pass
-                    else:
-                        # Detect and fix up spaces in texture file name
-                        if basename.find(" ") != -1:
-                            newname=""
-                            for i in range(len(basename)):
-                                if basename[i]==" ":
-                                    newname+="_"
-                                else:
-                                    newname+=basename[i]
-                            newname=texdir+subdir+newname+extension
-                            newfile=open(newname, "wb")
-                            newfile.write(file.read())
-                            newfile.close()
-                            texname=newname
-                            print "Info:\tCreated new texture file \"%s\"" % (
-                                texname)
-                        elif self.verbose:
-                            print "Info:\tUsing texture file \"%s\"" % texname
-                        file.close()
-                        self.image = Image.Load(texname)
-                        return
+                    # Detect and fix up spaces in texture file name
+                    if base.find(" ") != -1:
+                        newname=normpath(subdir+sep+base.replace(' ','_')+
+                                         extension)
+                        newfile=open(newname, "wb")
+                        newfile.write(file.read())
+                        newfile.close()
+                        texname=newname
+                        print "Info:\tCreated new texture file \"%s\"" % (
+                            texname)
+                    elif self.verbose:
+                        print "Info:\tUsing texture file \"%s\"" % texname
+                    file.close()
+                    self.image = Image.Load(texname)
+                    return
             
         self.image=0
-        print "Warn:\tTexture file \"%s\" not found" % basename
+        print "Warn:\tTexture file \"%s\" not found" % base
             
     #------------------------------------------------------------------------
     def readObjects (self):
@@ -908,8 +893,6 @@ class OBJimport:
                             self.addFan(scene,t,v,uv)
 
                 elif t==Token.ANIM_BEGIN:
-                    #if Blender.Get('version')<239:
-                    #    raise ParseError(ParseError.MISC, 'Blender version 2.40 or later required for animation')
                     if not self.animerr:
                         self.animerr=True
                         print "Warn:\tIgnoring unsupported Animations"

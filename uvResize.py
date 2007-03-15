@@ -7,7 +7,7 @@ Tooltip: 'Adjust textures to enlarged bitmap'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.15"
+__version__ = "2.16"
 __bpydoc__ = """\
 This script fixes up selected meshes' texture assignments after doubling
 the size of the bitmap file.

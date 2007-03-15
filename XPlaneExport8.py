@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: ' X-Plane v8 Object (.obj)'
-Blender: 234
+Blender: 240
 Group: 'Export'
 Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.15"
+__version__ = "2.16"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -22,7 +22,7 @@ Limitations:<br>
 """
 
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.34 or above
+# X-Plane exporter for blender 2.40 or above
 #
 # Copyright (c) 2004,2005 Jonathan Harris
 # 
@@ -69,6 +69,9 @@ Limitations:<br>
 #  - Handle armatures set in "Rest position" - requires 2.40.
 #  - Tweaked progress bar.
 #  - Add support for custom datarefs added by XPLMRegisterDataAccessor().
+#
+# 2006-01-05 v2.16
+#  - Fix for relative and v8 texture paths.
 #
 
 #
@@ -700,7 +703,6 @@ class OBJexport:
         resting=False
         object=child.parent
         if (object and object.getType()=='Armature' and
-            ('restPosition' in dir(object.getData())) and	# 2.40
             object.getData().restPosition):
             resting=True
             object.getData().restPosition=False
@@ -2844,7 +2846,7 @@ class Anim:
         if not object or object.getType()!='Armature':
             return
 
-        if Blender.Get('version')<239:
+        if Blender.Get('version')<240:
             raise ExportError('Blender version 2.40 or later required for animation')
 
         if object.parent:
@@ -2856,14 +2858,9 @@ class Anim:
                 raise ExportError("%s \"%s\" has an armature as a parent. It should have a bone as a parent." % (child.getType(), child.name))
 
             bones=object.getData().bones
-            if isinstance(bones, list):	# 2.40a1/2
-                for bone in object.getData().bones:
-                    if bone.name==bonename:
-                        break
-            else:	# 2.40
-                if bonename in bones.keys():
-                    bone=bones[bonename]
-            if not bone:
+            if bonename in bones.keys():
+                bone=bones[bonename]
+            else:
                 raise ExportError("Missing animation data for bone \"%s\" in armature \"%s\"." % (bonename, object.name))	# wtf?
 
         name=bone.name
@@ -2943,16 +2940,10 @@ class Anim:
                 print "world\t%s" % object.getMatrix('worldspace').rotationPart().toEuler()
                 print "\t%s" % object.getMatrix('worldspace').translationPart()
                 print bone
-                if 'getRestMatrix' in dir(bone):	# 2.40a1/2
-                    print "bone\t%s" % bone.getRestMatrix('bonespace').rotationPart().toEuler()
-                    print "\t%s" % bone.getRestMatrix('bonespace').translationPart()
-                    print "world\t%s" % bone.getRestMatrix('worldspace').rotationPart().toEuler()
-                    print "\t%s" % bone.getRestMatrix('worldspace').translationPart()
-                else:	# 2.40
-                    print "bone\t%s" % bone.matrix['BONESPACE'].rotationPart().toEuler()
-                    #crashes print "\t%s" % bone.matrix['BONESPACE'].translationPart()
-                    print "arm\t%s" % bone.matrix['ARMATURESPACE'].rotationPart().toEuler()
-                    print "\t%s" % bone.matrix['ARMATURESPACE'].translationPart()
+                print "bone\t%s" % bone.matrix['BONESPACE'].rotationPart().toEuler()
+                #crashes print "\t%s" % bone.matrix['BONESPACE'].translationPart()
+                print "arm\t%s" % bone.matrix['ARMATURESPACE'].rotationPart().toEuler()
+                print "\t%s" % bone.matrix['ARMATURESPACE'].translationPart()
                 #print "head\t%s" % bone.head
                 #print "tail\t%s" % bone.tail
                 #print "rot\t%s" % bone.quat.toEuler()
@@ -3006,13 +2997,8 @@ class Anim:
             else:
                 t = Vector(0,0,0)
             
-            if 'getRestMatrix' in dir(bone):	# 2.40a1/2
-                t=Vertex(t*bone.getRestMatrix('worldspace').rotationPart()+
-                         bone.getRestMatrix('worldspace').translationPart(),mm)
-            else:	# 2.40
-                t=Vertex(t*bone.matrix['ARMATURESPACE'].rotationPart()+
-                         bone.matrix['ARMATURESPACE'].translationPart(),mm)
-            self.t.append(t)
+            self.t.append(Vertex(t*bone.matrix['ARMATURESPACE'].rotationPart()+
+                                 bone.matrix['ARMATURESPACE'].translationPart(),mm))
 
             if (ipo.getCurve('QuatW') and
                 ipo.getCurve('QuatX') and
@@ -3022,10 +3008,9 @@ class Anim:
                               ipo.getCurveCurval('QuatX'),
                               ipo.getCurveCurval('QuatY'),
                               ipo.getCurveCurval('QuatZ')])
-                if 'getRestMatrix' in dir(bone):	# 2.40a1/2
-                    qr= Vertex(q.axis*bone.getRestMatrix('worldspace').rotationPart(), rm)	# In bone space
-                else:	# 2.40
-                    qr= Vertex(q.axis*bone.matrix['ARMATURESPACE'].rotationPart(), rm)	# In bone space
+                # In bone space
+                qr=Vertex(q.axis*bone.matrix['ARMATURESPACE'].rotationPart(),
+                          rm)
                 a = round(q.angle, Vertex.ROUND)
                 if a==0:
                     self.a.append(0)
