@@ -6,31 +6,49 @@ Group: 'Import'
 Tooltip: 'Import X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.32 or above, version 1.1
+# X-Plane importer for blender 2.32 or above, version 1.11
 #
-# Author: Jonathan Harris <x-plane@marginal.org.uk>
-#
-# Latest version: http://marginal.org.uk/x-plane
+# Copyright (c) 2004 Jonathan Harris
+# 
+# Mail: <x-plane@marginal.org.uk>
+# Web: http://marginal.org.uk/x-plane
 #
 # See XPlaneReadme.txt for usage
 #
-# Notes:
-#  - Error messages go to the Blender console window
+# This software is provided 'as-is', without any express or implied
+# warranty. In no event will the author be held liable for any damages
+# arising from the use of this software.
+# 
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely, subject to the following restrictions:
+# 
+# 1. The origin of this software must not be misrepresented; you must
+#    not claim that you wrote the original software. If you use this
+#    software in a product, an acknowledgment in the product
+#    documentation would be appreciated but is not required.
+# 
+# 2. Altered source versions must be plainly marked as such, and must
+#    not be misrepresented as being the original software.
+# 
+# 3. This notice may not be removed or altered from any source
+#    distribution.
 #
-# 2004-01-25 v0.1 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - First version, based on v1.31 of wrl2export.py <rick@vrmlworld.net>
 #
-# 2004-02-01 v1.0 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-01 v1.00 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - First public version
 #
-# 2004-02-01 v1.1 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-04 v1.10 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Updated for Blender 2.32
+#
+# 2004-02-05 v1.11 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Removed dependency on Python installation
+#  - Import at cursor, not origin
 #
 
 import sys
 import Blender
-from Blender import Object, NMesh, Lamp, Image, Material, Texture
-from string import *
+from Blender import Object, NMesh, Lamp, Image, Material, Window
 
 class ParseError(Exception):
     def __init__(self, type, value=""):
@@ -158,10 +176,10 @@ class OBJimport:
     #------------------------------------------------------------------------
     def get7Token(self):
         c=self.getInput()
-        u=upper(c)
+        u=c.lower()
 
         for i in range(len(Token.NAMES)):
-            if u==upper(Token.NAMES[i]):
+            if u==Token.NAMES[i].lower():
                 return i
         raise ParseError(ParseError.TOKEN, c)
         
@@ -270,7 +288,7 @@ class OBJimport:
             else:
                 basename+=tex[i]
 
-        l=rfind(self.filename,self.dirsep)
+        l=self.filename.rfind(self.dirsep)
         if l==-1:
             l=0
         else:
@@ -522,7 +540,7 @@ class OBJimport:
         ob = Object.New("Lamp", name)
         ob.link(lamp)
         scene.link(ob)
-        ob.setLocation(v)
+        self.locate(ob,v)
         
     #------------------------------------------------------------------------
     def addQuads(self, scene, token, nv, v, uv, vorder):
@@ -594,7 +612,7 @@ class OBJimport:
             ob = Object.New("Mesh", name)
             ob.link(mesh)
             scene.link(ob)
-            ob.setLocation(centre)
+            self.locate(ob,centre)
             mesh.update(1)
 
     #------------------------------------------------------------------------
@@ -643,21 +661,16 @@ class OBJimport:
         ob = Object.New("Mesh", name)
         ob.link(mesh)
         scene.link(ob)
-        ob.setLocation(centre)
+        self.locate(ob,centre)
         mesh.update(1)
 
     #------------------------------------------------------------------------
+    def locate (self,object,v):
+        c=Window.GetCursorPos()
+        object.setLocation(v[0]+c[0], v[1]+c[1], v[2]+c[2])
 
-    def writeVertex(self, v, uv):
-        self.file.write("%s %s %s\t%s %s\n" % (
-            round(v[0], self.vp),
-            round(v[1], self.vp),
-            round(v[2], self.vp),
-            round(uv[0], self.tp),
-            round(uv[1], self.tp))
-            )
-
-def file_callback(filename):
+#------------------------------------------------------------------------
+def file_callback (filename):
     obj=OBJimport(filename)
     try:
         obj.doimport()
@@ -673,13 +686,11 @@ def file_callback(filename):
                 print "Error:\tExpecting a number,",
             else:
                 print "Error:\tParse error,",
-            print "found \"%s\" at file offset %s\n" % (e.value, obj.lastpos)
-
+            print "found \"%s\" at file offset %s\n" % (
+                e.value, obj.lastpos)
     obj.file.close()
     Blender.Redraw()
-    
-#enddef
-    
+
 #------------------------------------------------------------------------
 # main routine
 #------------------------------------------------------------------------

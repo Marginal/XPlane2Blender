@@ -6,32 +6,49 @@ Group: 'Export'
 Tooltip: 'Export to X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.32 or above, version 1.1
+# X-Plane exporter for blender 2.32 or above, version 1.11
 #
-# Author: Jonathan Harris <x-plane@marginal.org.uk>
-#
-# Latest version: http://marginal.org.uk/x-plane
+# Copyright (c) 2004 Jonathan Harris
+# 
+# Mail: <x-plane@marginal.org.uk>
+# Web: http://marginal.org.uk/x-plane
 #
 # See XPlaneReadme.txt for usage
 #
-# Notes:
-#  - Output filename is same as current blender file with .obj extension
-#  - Error messages go to the Blender console window
+# This software is provided 'as-is', without any express or implied
+# warranty. In no event will the author be held liable for any damages
+# arising from the use of this software.
+# 
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely, subject to the following restrictions:
+# 
+# 1. The origin of this software must not be misrepresented; you must
+#    not claim that you wrote the original software. If you use this
+#    software in a product, an acknowledgment in the product
+#    documentation would be appreciated but is not required.
+# 
+# 2. Altered source versions must be plainly marked as such, and must
+#    not be misrepresented as being the original software.
+# 
+# 3. This notice may not be removed or altered from any source
+#    distribution.
 #
-# 2004-01-25 v0.1 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - First version, based on v1.31 of wrl2export.py <rick@vrmlworld.net>
 #
-# 2004-02-01 v1.0 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-01 v1.00 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - First public version
 #
-# 2004-02-01 v1.1 by Jonathan Harris <x-plane@marginal.org.uk>
+# 2004-02-04 v1.10 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Updated for Blender 2.32
+#
+# 2004-02-05 v1.11 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Removed dependency on Python installation
+#  - Import at cursor, not origin
 #
 
 import sys
 import Blender
 from Blender import NMesh, Lamp, Draw
-from string import *
 
 #------------------------------------------------------------------------
 #-- OBJexport --
@@ -107,17 +124,17 @@ class OBJexport:
                 if mesh.hasFaceUV():
                     for face in mesh.faces:
                         if face.image:
-                            if (not texture) or (lower(texture) ==
-                                                 lower(face.image.filename)):
+                            if (not texture) or (str.lower(texture) ==
+                                                 str.lower(face.image.filename)):
                                 texture = face.image.filename
-                                texlist.append(lower(texture))
+                                texlist.append(str.lower(texture))
                             else:
                                 if not erroring:
                                     erroring=1
                                     print "Warn:\tOBJ format supports one texture, but multiple texture files found:"
                                     print "\t\"%s\"" % texture
-                                if not lower(face.image.filename) in texlist:
-                                    texlist.append(lower(face.image.filename))
+                                if not str.lower(face.image.filename) in texlist:
+                                    texlist.append(str.lower(face.image.filename))
                                     print "\t\"%s\"" % face.image.filename
                             
         if erroring:
@@ -134,12 +151,12 @@ class OBJexport:
             else:
                 self.texture+=texture[i]
 
-        if lower(self.texture)[-4:] == ".bmp":
+        if str.lower(self.texture)[-4:] == ".bmp":
             self.texture = self.texture[:-4]
 
         # try to guess correct texture path
         for prefix in ["custom object textures", "autogen textures"]:
-            l=rfind(lower(self.texture), prefix)
+            l=self.texture.lower().find(prefix)
             if l!=-1:
                 self.texture = self.texture[l+len(prefix)+1:]
                 return
@@ -169,20 +186,20 @@ class OBJexport:
         name=lamp.getName()
         
         if lamp.getType() != Lamp.Types.Lamp:
-            print "Info:\tIgnoring spot/sun/hemi \"%s\"" % name
+            print "Info:\tIgnoring Area, Spot, Sun or Hemi lamp \"%s\"" % name
         else:
             if self.verbose:
                 print "Info:\tExporting Lamp \""+name+"\""
 
-            uname=upper(name)
+            lname=name.lower()
             c=[0,0,0]
-            if not find(uname, "PULSE"):
+            if not lname.find("pulse"):
                 c[0]=c[1]=c[2]=99
-            elif not find(uname, "STROBE"):
+            elif not lname.find("strobe"):
                 c[0]=c[1]=c[2]=98
-            elif not find(uname, "TRAFFIC"):
+            elif not lname.find("traffic"):
                 c[0]=c[1]=c[2]=97
-            elif not find(uname, "FLASH"):
+            elif not lname.find("flash"):
                 c[0]=int(lamp.col[0]*-10)
                 c[1]=int(lamp.col[1]*-10)
                 c[2]=int(lamp.col[2]*-10)

@@ -2,11 +2,11 @@ XPlane2Blender - X-Plane import/export scripts for Blender 3D
 -------------------------------------------------------------
 
 Author: 	Jonathan Harris <x-plane@marginal.org.uk>
-Version:	1.1
+Version:	1.11
 Latest version:	http://marginal.org.uk/x-plane
 
 
-Blender is an open source 3D object editor <http://www.blender3d.org/>.
+Blender is an open source 3D object editor - http://www.blender3d.org/.
 These scripts import X-Plane v6 and v7 scenery files (.obj) into Blender
 for editing, and export back to X-Plane v7 obj format for placement with
 World-Maker. All X-Plane object types are supported apart from Line,
@@ -16,37 +16,37 @@ Blender).
 
 Requirements
 ------------
- - Blender 2.32 or later:
-   http://www.blender3d.org/Download/
- - Python 2.2 (Blender does not support Python 2.3 at time of
-   writing - this should be fixed in the next Blender release)
-    - Windows:
-      http://www.python.org/2.2.3/
-    - Mac OS X:
-      The default Python that ships with Mac OS X is not suitable.
-      There are Mac OS X installation instructions at
-      http://www.widomaker.com/~katorlegaz/blendertips/python.html
+Blender 2.32 or later - http://www.blender3d.org/Download/
 
 
 Installation
 ------------
-Unpack the zip file to the folder containing your Blender scripts. If
-you installed Blender in the default location on Windows this folder is
-"C:\Program Files\Blender Foundation\Blender\.blender\scripts\".
+Unpack the zip file to the folder containing your Blender scripts:
+
+Windows:
+ - C:\Program Files\Blender Foundation\Blender\.blender\scripts"
+   (assuming that you installed Blender to the default location)
+
+Mac OS X:
+ - <your home directory>/.blender/scripts
+   (you may need to create those two directories)
+
 (Re)start Blender.
+On Mac OS, also run the "Console" program that comes with Mac OS X and
+which is found under "Utilities".
 
 
 Importing
 ---------
 File -> Import -> X-Plane
 Select a .obj file. Any problems with the import will be listed in the
-console window with lines starting "Warn" or "Error".
+Console window with lines starting "Warn" or "Error".
 
 You can import multiple scenery files and re-export them as a single
-file. But note that the X-Plane .obj file format only supports one
-texture, so you'll have to create a single texture bitmap (x and y sizes
-must be a power of two) and remap all the object textures onto it before
-exporting.
+file. But note that the X-Plane .obj file format only supports the use
+of one texture bitmap file, so you'll have to create a single texture
+bitmap (x and y sizes must be a power of two) and remap all the object
+textures onto it before exporting.
 
 
 Exporting
@@ -54,7 +54,7 @@ Exporting
 File -> Export -> X-Plane
 The output filename is the same as the current Blender filename, but
 with a .obj extension. Any problems with the export will be listed in
-the console window with lines starting "Warn" or "Error".
+the Console window with lines starting "Warn" or "Error".
 
 
 Using Blender to create X-Plane scenery
@@ -64,9 +64,12 @@ Use Lamps and Meshes. No other Blender object types are exported.
 Lamps:
  - R,G,B settings are exported to X-Plane. All other settings (including
    "Energy") are ignored.
- - Lamp types "Spot", "Semi" and "Hemi" are not exported. You can use
-   lamps of these types to provide general illumination of your scene.
- - Lamps with certain names have special meanings when exported:
+ - Only Lamps of type "Lamp" are exported to X-Plane. Lamps of types
+   "Area", "Spot", "Semi" and "Hemi" are ignored. You can use lamps of
+   these other types to provide general illumination of your scene while
+   editing in Blender.
+ - Lamps with certain names have special behaviours when exported to
+   X-Plane:
     "Flash"   - Light flashes.
     "Pulse"   - Red pulsing light. (R,G,B settings are ignored).
     "Strobe"  - White strobe light. (R,G,B settings are ignored).
@@ -81,13 +84,14 @@ Meshes:
     - "Collision" button controls whether the face is "hard" (ie
       landable on) in X-Plane.
     - "Tiles" button turns off depth-testing. Use this for all
-      horizontal faces to prevent nasty display artifacts in X-Plane.
+      horizontal faces to prevent nasty artifacts when displayed in
+      X-Plane.
  - In the "Link and Materials" panel:
-    - "Set Smooth" and "Set Solid" control whether to smooth edges.
-      Useful when using faces to simulate a curved surface - set smooth
-      on each face. The effect is only visible in Blender when the
-      smoothed faces are part of the same mesh, and only in the Render
-      window.
+    - "Set Smooth" and "Set Solid" control whether to smooth edges. This
+      is useful when using multiple faces to simulate a curved surface;
+      use "Set Smooth" on each face. The effect is only visible in
+      Blender when the smoothed faces are part of the same mesh, and
+      then only in the Render window.
 
 
 Random hints
@@ -132,6 +136,7 @@ Import:
  - Level-of-detail is not supported. Any objects that are only visible
    from a non-zero distance are ignored.
 Export:
+ - Only Lamps and Mesh Faces are exported.
  - All objects must share a single texture (this is a limitation of the
    X-Plane .obj file format).
  - No use is made of the more efficient Quad_Strip and Tri_Fan objects.
