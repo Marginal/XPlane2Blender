@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.14"
+__version__ = "2.15"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -152,6 +152,9 @@ Limitations:<br>
 #
 # 2005-11-19 v2.13
 #  - Auto-detect flatness in v8 in the absence of ATTR_no_shade.
+#
+# 2005-12-19 v2.15
+#  - Also look for textures in "textures" subdir.
 #
 
 import sys
@@ -782,6 +785,7 @@ class OBJimport:
                 basename+=tex[i]
 
         for subdir in ["",
+                       "textures"+Blender.sys.dirsep,
                        "custom object textures"+Blender.sys.dirsep,
                        "AutoGen textures"+Blender.sys.dirsep]:
             texdir=self.filename

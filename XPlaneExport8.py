@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.14"
+__version__ = "2.15"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -64,6 +64,11 @@ Limitations:<br>
 #
 # 2005-11-21 v2.14
 #  - Speeded up point re-use optimisation.
+#
+# 2005-12-21 v2.15
+#  - Handle armatures set in "Rest position" - requires 2.40.
+#  - Tweaked progress bar.
+#  - Add support for custom datarefs added by XPLMRegisterDataAccessor().
 #
 
 #
@@ -264,8 +269,8 @@ class OBJexport:
             object=theObjects[o]
             if not object.Layer&self.layermask:
                 continue
-            Window.DrawProgressBar(float(nobj-o)/(2*nobj),
-                                   "Exporting %d%% ..." % ((nobj-o)*50/nobj))
+            Window.DrawProgressBar(float(nobj-o)*0.4/nobj,
+                                   "Exporting %d%% ..." % ((nobj-o)*40/nobj))
             objType=object.getType()
             if objType == 'Mesh':
                 if isLine(object, self.linewidth):
@@ -286,12 +291,15 @@ class OBJexport:
                     self.sortLamp(object)
 
         # Build ((1+Prim.ALPHA*2) * len(anims) * len(lseq)) indices
-        Window.DrawProgressBar(0.5, 'Exporting 50% ...')
         indices=[]
         offsets=[]
         counts=[]
+        progress=0.0
         for layer in lseq:
             for passhi in [0, Prim.PANEL, Prim.ALPHA, Prim.PANEL|Prim.ALPHA]:
+                Window.DrawProgressBar(0.4+progress/(10*len(lseq)),
+                                       "Exporting %d%% ..." % (40+progress*10/len(lseq)))
+                progress+=1
                 for anim in self.anims:
 
                     # Lines
@@ -329,13 +337,12 @@ class OBJexport:
                                                            len(self.vline),
                                                            len(self.lights),
                                                            len(indices)))
-        Window.DrawProgressBar(0.6, 'Exporting 60% ...')
+        Window.DrawProgressBar(0.8, 'Exporting 80% ...')
         for vt in self.vt:
             self.file.write("VT\t%s\n" % vt)
         if self.vt:
             self.file.write("\n")
 
-        Window.DrawProgressBar(0.7, 'Exporting 70% ...')
         for vline in self.vline:
             self.file.write("VLINE\t%s\n" % vline)
         if self.vline:
@@ -346,7 +353,7 @@ class OBJexport:
         if self.lights:
             self.file.write("\n")
 
-        Window.DrawProgressBar(0.8, 'Exporting 80% ...')
+        Window.DrawProgressBar(0.9, 'Exporting 90% ...')
         n=len(indices)
         for i in range(0, n-9, 10):
             self.file.write("IDX10\t")
@@ -357,7 +364,6 @@ class OBJexport:
             self.file.write("IDX\t%d\n" % indices[j])
 
         # Geometry Commands
-        Window.DrawProgressBar(0.9, 'Exporting 90% ...')
         n=0
         for layer in lseq:
             for passhi in [0, Prim.PANEL, Prim.ALPHA, Prim.PANEL|Prim.ALPHA]:
@@ -690,6 +696,15 @@ class OBJexport:
 
         anim=Anim(child)
 
+        # Need to unset resting position of parent armature (if any)
+        resting=False
+        object=child.parent
+        if (object and object.getType()=='Armature' and
+            ('restPosition' in dir(object.getData())) and	# 2.40
+            object.getData().restPosition):
+            resting=True
+            object.getData().restPosition=False
+
         # Add parent anims first
         al=[]
         a=anim
@@ -738,6 +753,10 @@ class OBJexport:
             else:
                 self.anims.append(a)
                 anim=a	# The anim we just made is the last one in the list
+
+        # Restore rest state
+        if resting:
+            object.getData().restPosition=True
 
         return (anim, mm)
 
@@ -2856,12 +2875,41 @@ class Anim:
             ref=name[:l]
         else:
             ref=name
-        for (path, var) in Anim.refs:
-            if ref in var:
-                self.dataref=path+name
-                break
+
+        for prop in object.getAllProperties():
+            if prop.name==ref:
+                # custom dataref
+                if prop.type=='STRING':
+                    if prop.data[-1]!='/':
+                        self.dataref=prop.data+'/'+name
+                    else:
+                        self.dataref=prop.data+name
+                    break
+                else:
+                    raise ExportError("Unsupported data type for \"%s\" in armature \"%s\"" % (val, child.name))
         else:
-            raise ExportError("Unrecognised dataref \"%s\" for bone in armature \"%s\"" % (name, child.name))
+            # Search default datarefs
+            for (path, var) in Anim.refs:
+                if ref in var:
+                    self.dataref=path+name
+                    break
+            else:
+                raise ExportError("Unrecognised dataref \"%s\" for bone in armature \"%s\"" % (name, child.name))
+            
+        # dataref values v1 & v2
+        for val in [1,2]:
+            valstr="%s_v%d" % (ref, val)
+            for prop in object.getAllProperties():
+                if prop.name==valstr:
+                    if prop.type=='INT':
+                        self.v.append(prop.data)
+                    elif prop.type=='FLOAT':
+                        self.v.append(round(prop.data, Vertex.ROUND))
+                    else:
+                        raise ExportError("Unsupported data type for \"%s\" in armature \"%s\"" % (valstr, child.name))
+                    break
+            else:
+                self.v.append(val-1)	# defaults = [0,1]
 
         if not (object.getAction() and
                 object.getAction().getAllChannelIpos().has_key(bone.name)):
@@ -2994,21 +3042,6 @@ class Anim:
                     self.a.append(a)
             else:
                 self.a.append(0)
-
-        # dataref values v1 & v2
-        for val in [1,2]:
-            valstr="%s_v%d" % (ref, val)
-            for prop in object.getAllProperties():
-                if prop.name==valstr:
-                    if prop.type=='INT':
-                        self.v.append(prop.data)
-                    elif prop.type=='FLOAT':
-                        self.v.append(round(prop.data, Vertex.ROUND))
-                    else:
-                        raise ExportError("Unsupported data type for \"%s\" in armature \"%s\"" % (valstr, child.name))
-                    break
-            else:
-                self.v.append(val-1)	# defaults = [0,1]
 
 
     #------------------------------------------------------------------------
