@@ -312,16 +312,18 @@ in layers 1-3 are visible in X-Plane at the following distances:
   </tbody>
 </table>
 </div>
-<h3>Using Blender to create cockpits</h3>
+<h3>Using Blender to create 3D cockpits</h3>
 <p>
 </p>
-<p>X-Plane cockpits shouldn't contain different LODs - so make sure
+<p>X-Plane 3D cockpits are just normal scenery objects. However they
+shouldn't contain different LODs - so make sure
 layers 2 and 3 are empty before exporting. If you want to include
 objects in your Blender scene that you don't want to export - eg the
 plane fuselage - then put them in layer 4 or greater.</p>
 <p>To construct a <code>quad_cockpit</code> face showing moving
-cockpit instruments in X-Plane, assign the
-texture <code>cockpit\-PANELS-\Panel.png</code> to the face. You can
+cockpit instruments in X-Plane, assign the cockpit panel
+texture (i.e. <code>cockpit\-PANELS-\Panel.png</code>) to the face.
+You can
 use
 a <samp>UV Image Editor</samp> window as normal to control mapping
 of the
@@ -359,9 +361,10 @@ easier to create a Mesh "Cube" and delete any faces that are not
 required, rather than create each face individually as Mesh "Plane"s.
 In general, Meshes containing many faces are easier to edit than many
 meshes that contain one face each. So if you're about to create a new
-face that shares an edge with an existing mesh, add it to that existing
-mesh rather than create it as a new standalone Mesh "Plane". To do this
-select the existing mesh and go to "Edit Mode" before adding the plane.</p>
+face that shares an edge with an existing mesh, select the shared edge
+and press <samp style="font-weight: bold;">E</samp> to "extrude" a new
+face, rather than create it as a new standalone Mesh "Plane".<br>
+</p>
 <p> X-Plane normally only displays one side of an object's face; faces
 are
 invisible from behind (unless you set press the <samp>Twoside</samp>
@@ -395,7 +398,9 @@ button in <samp>UV Face Select</samp> mode after import.</li>
 <ul>
   <li>Only Lamps and Mesh Faces (including "lines") are exported.</li>
   <li>All objects must share a single texture (this is a limitation of
-the X-Plane .obj file format). Multiple textures are not automagically
+the X-Plane .obj file format) apart from cockpit objects which can
+additionally use the cockpit panel texture. Multiple textures are not
+automagically
 merged into one file during the export. </li>
 </ul>
 <h3>Problems</h3>
@@ -408,7 +413,7 @@ this is the "Console" program. In Windows this the window titled
 <h3>Stuff</h3>
 <p>Copyright &copy; 2004 Jonathan Harris
 &lt;x-plane&nbsp;at&nbsp;marginal.org.uk&gt;.<br>
-Version 1.80<br>
+Version 1.82<br>
 <a href="http://marginal.org.uk/x-planescenery/">http://marginal.org.uk/x-planescenery/</a></p>
 <p><!-- Creative Commons License -->
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.0/"><img

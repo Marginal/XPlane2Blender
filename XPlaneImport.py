@@ -95,9 +95,12 @@ Tooltip: 'Import an X-Plane scenery file (.obj)'
 # 2004-11-01 v1.80
 #  - Support for "quad_cockpit" using "Text" button.
 #
-# 2004-14-01 v1.81
+# 2004-11-14 v1.81
 #  - Removed use of "Text" button; cockpit panels now assigned correct texture.
 #
+# 2004-11-22 v1.82
+#
+
 
 import sys
 import Blender

@@ -13,26 +13,26 @@ Tooltip: 'Copy selected texture to other faces'
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
-# See XPlane2Blender.html for usage
+# See XPlane2Blender.html for usage.
 #
-# This software is provided 'as-is', without any express or implied
-# warranty. In no event will the author be held liable for any damages
-# arising from the use of this software.
-# 
-# Permission is granted to anyone to use this software for any purpose,
-# including commercial applications, and to alter it and redistribute it
-# freely, subject to the following restrictions:
-# 
-# 1. The origin of this software must not be misrepresented; you must
-#    not claim that you wrote the original software. If you use this
-#    software in a product, an acknowledgment in the product
-#    documentation would be appreciated but is not required.
-# 
-# 2. Altered source versions must be plainly marked as such, and must
-#    not be misrepresented as being the original software.
-# 
-# 3. This notice may not be removed or altered from any source
-#    distribution.
+# This software is licensed under a Creative Commons License
+#   Attribution-ShareAlike 2.0:
+#
+#   You are free:
+#     * to copy, distribute, display, and perform the work
+#     * to make derivative works
+#     * to make commercial use of the work
+#   Under the following conditions:
+#     * Attribution: You must give the original author credit.
+#     * Share Alike: If you alter, transform, or build upon this work, you
+#       may distribute the resulting work only under a license identical to
+#       this one.
+#   For any reuse or distribution, you must make clear to others the license
+#   terms of this work.
+#
+# This is a human-readable summary of the Legal Code (the full license):
+#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#
 #
 # 2004-09-02 v1.70
 #  - New file
@@ -41,6 +41,18 @@ Tooltip: 'Copy selected texture to other faces'
 #
 # 2004-09-10 v1.72
 #  - Checks that in strip mode pasted faces are in same mesh.
+#
+# 2004-10-10 v1.73
+#
+# 2004-10-17 v1.74
+#
+# 2004-11-01 v1.80
+#
+# 2004-11-14 v1.81
+#
+# 2004-11-22 v1.82
+#  - Fix for LOD detection when objects outside levels 1-3
+#  - tri_fan hack from v1.73 not applied to smooth meshes
 #
 
 

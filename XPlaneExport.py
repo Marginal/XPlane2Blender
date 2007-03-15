@@ -101,11 +101,16 @@ Tooltip: 'Export to X-Plane scenery file format (.obj)'
 # 2004-11-01 v1.80
 #  - Support for "quad_cockpit" using "Text" button.
 #
-# 2004-14-01 v1.81
+# 2004-11-14 v1.81
 #  - Removed use of "Text" button; cockpit panels now detected by texture name.
 #  - Cockpit panels must go last in file.
 #  - Prettified output slightly.
 #
+# 2004-11-22 v1.82
+#  - Fix for LOD detection when objects outside levels 1-3
+#  - tri_fan hack from v1.73 not applied to smooth meshes
+#
+
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -211,7 +216,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.81
+    VERSION=1.82
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -302,7 +307,7 @@ class OBJexport:
 
             if layers==0:
                 layers = object.Layer&7
-            elif layers^(object.Layer&7) and not self.dolayers:
+            elif object.Layer&7 and layers^(object.Layer&7) and not self.dolayers:
                 self.dolayers=1
                 print "Info:\tMultiple Levels Of Detail found"
                 
@@ -833,7 +838,7 @@ class OBJexport:
             # Bug appears reliably to be avoided if the tri_fan is regular,
             # but that's hard to work out. So assume it is regular if it is
             # closed. Split back into tris if it is not closed.
-            if n==3 and len(strip)>1:
+            if n==3 and len(strip)>1 and not face.flags&Face.SMOOTH:
                 # tri_fan is closed if first and last faces share two vertices
                 common=0
                 for i in range(3):
