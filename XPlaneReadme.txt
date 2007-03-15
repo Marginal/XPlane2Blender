@@ -2,7 +2,7 @@ XPlane2Blender - X-Plane import/export scripts for Blender 3D
 -------------------------------------------------------------
 
 Author: 	Jonathan Harris <x-plane@marginal.org.uk>
-Version:	1.11
+Version:	1.12
 Latest version:	http://marginal.org.uk/x-plane
 
 
@@ -44,9 +44,8 @@ Console window with lines starting "Warn" or "Error".
 
 You can import multiple scenery files and re-export them as a single
 file. But note that the X-Plane .obj file format only supports the use
-of one texture bitmap file, so you'll have to create a single texture
-bitmap (x and y sizes must be a power of two) and remap all the object
-textures onto it before exporting.
+of one texture bitmap, so you'll have to create a single texture bitmap
+file and remap all the scenery textures onto it before exporting.
 
 
 Exporting
@@ -78,11 +77,16 @@ Lamps:
 Meshes:
  - Use faces with 3 or 4 edges.
  - In the "Texture Face" panel (available in "UV Face Select" mode):
-    - "Tex" button controls whether the face has a texture. Use a
-      "UV Image Editor" window to control mapping of the texture to the
-      face.
+    - "Tex" button controls whether the face has a texture.
+      Create a .bmp or .png file in an image editor progran. Height and
+      width must be powers of two (eg 256, 512, etc). Draw all the
+      textures required by the scenery onto it. Areas of the texture
+      that are coloured magenta or that have Alpha transparency (png
+      files only) will be transparent when displayed in X-Plane.
+      Use a "UV Image Editor" window to control mapping of the texture
+      bitmap to the face.
     - "Collision" button controls whether the face is "hard" (ie
-      landable on) in X-Plane.
+      landable on) in X-Plane. Only works for faces with 4 edges.
     - "Tiles" button turns off depth-testing. Use this for all
       horizontal faces to prevent nasty artifacts when displayed in
       X-Plane.
@@ -106,14 +110,14 @@ You get used to the mode thing. Sadly, I'm not aware of any way to remap
 the button and key assignments, which remain annoying.
 
 Import "Custom Scenery\San Bernardino Example\custom objects\KSBD_example.obj"
-to play with an example X-Plane object.
+to see an example of how X-Plane scenery is made.
 
 See http://www.blender3d.org/Education/ for some tutorials to help you
-get started. 
+get started with Blender.
 
-X-Plane only renders one side of an object's face, so don't make double-
-sided faces in Blender or you'll just get confused. In order to see
-which side of a face is the visible side:
+X-Plane only displays one side of an object's face; faces are invisible
+from behind. So don't make double-sided faces in Blender or you'll just
+get confused. In order to see which side of a face is the visible side:
  - Go to Edit mode (you need to have an object selected to do this).
  - Hit F9 to see the "Editing" buttons.
  - Select "Draw Normals" and set "NSize" to at least 1.0 in the
@@ -125,13 +129,14 @@ you are looking at when the line is pointing _towards_ you.
 
 Mail me <x-plane@marginal.org.uk> with any questions, problems etc.
 If reporting a problem, please try to send me the contents of the
-Console window.
+Console window. In Mac OS X, this is the "Console" program. In Windows
+this the window titled "Blender" that looks like a "Command Prompt".
 
 
 Limitations
 -----------
 Import:
- - Line, Smoke_Black and Smoke_White objects are ignored.
+ - Line, Smoke_Black and Smoke_White X-Plane objects are ignored.
  - Ambient, Difuse, Specular, Emission and Shiny attributes are ignored.
  - Level-of-detail is not supported. Any objects that are only visible
    from a non-zero distance are ignored.
@@ -139,5 +144,6 @@ Export:
  - Only Lamps and Mesh Faces are exported.
  - All objects must share a single texture (this is a limitation of the
    X-Plane .obj file format).
- - No use is made of the more efficient Quad_Strip and Tri_Fan objects.
+ - No use is made of the more efficient Quad_Strip and Tri_Fan X-Plane
+   objects.
 

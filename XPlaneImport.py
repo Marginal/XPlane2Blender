@@ -6,7 +6,7 @@ Group: 'Import'
 Tooltip: 'Import X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.32 or above, version 1.11
+# X-Plane importer for blender 2.32 or above, version 1.12
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -44,6 +44,11 @@ Tooltip: 'Import X-Plane file format (.obj)'
 # 2004-02-05 v1.11 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Removed dependency on Python installation
 #  - Import at cursor, not origin
+#
+# 2004-02-08 v1.12 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Export: Fixed filename bug when texture file is a png
+#  - Import: Fixed refusing to recognise DOS-mode v6 files
+#  - Import: Fixed triangle texture rotation with v6 files
 #
 
 import sys
@@ -140,7 +145,7 @@ class OBJimport:
     def doimport(self):
         print "Starting OBJ import from " + self.filename
     
-        self.file = open(self.filename, "r")
+        self.file = open(self.filename, "rb")
         self.readHeader()
         self.readTexture()
         self.readObjects()
@@ -241,9 +246,13 @@ class OBJimport:
     #------------------------------------------------------------------------
     def readHeader(self):
         c=self.file.read(1)
+        if self.verbose>1:
+            print "Input:\t\"%s\"" % c
         if c=="A" or c=="I":
             self.getCR()
             c=self.file.read(1)
+            if self.verbose>1:
+                print "Input:\t\"%s\"" % c
             if c=="2":
                 self.getCR()
                 self.fileformat=6
@@ -460,13 +469,13 @@ class OBJimport:
                     v = []
                     uv = []
                     for i in range(4):
-                        uv.append(self.getFloat())
+                        uv.append(self.getFloat())	# s s t t
                     for i in range(3):
                         v.append(self.getVertex())
                     # UV order appears to be arbitrary
                     self.addTris(scene,t,3,v,[[uv[1],uv[3]],
                                               [uv[1],uv[2]],
-                                              [uv[0],uv[1]]])
+                                              [uv[0],uv[2]]])
                 elif t in [Token.QUAD,
                            Token.QUAD_HARD,
                            Token.QUAD_MOVIE]:

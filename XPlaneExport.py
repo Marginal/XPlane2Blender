@@ -6,7 +6,7 @@ Group: 'Export'
 Tooltip: 'Export to X-Plane file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.32 or above, version 1.11
+# X-Plane exporter for blender 2.32 or above, version 1.12
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -45,6 +45,11 @@ Tooltip: 'Export to X-Plane file format (.obj)'
 #  - Removed dependency on Python installation
 #  - Import at cursor, not origin
 #
+# 2004-02-08 v1.12 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Export: Fixed filename bug when texture file is a png
+#  - Import: Fixed refusing to recognise DOS-mode v6 files
+#  - Import: Fixed triangle texture rotation with v6 files
+#
 
 import sys
 import Blender
@@ -73,9 +78,9 @@ class OBJexport:
 
     #------------------------------------------------------------------------
     def export(self, scene):
+        print "Starting OBJ export to " + self.filename
         if not self.checkFile():
             return
-        print "Starting OBJ export to " + self.filename
     
         theObjects = []
         theObjects = scene.getChildren()
@@ -151,7 +156,9 @@ class OBJexport:
             else:
                 self.texture+=texture[i]
 
-        if str.lower(self.texture)[-4:] == ".bmp":
+        if self.texture[-4:].lower() == ".bmp":
+            self.texture = self.texture[:-4]
+        elif self.texture[-4:].lower() == ".png":
             self.texture = self.texture[:-4]
 
         # try to guess correct texture path
