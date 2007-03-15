@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.24"
+__version__ = "2.25"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -1164,7 +1164,7 @@ else:
                 for line in f:
                     d=line.split()
                     if not d: continue
-                    if len(d)<4: raise err
+                    if len(d)<3: raise err
                     l=d[0].rfind('/')
                     if l==-1: raise err
                     n=1

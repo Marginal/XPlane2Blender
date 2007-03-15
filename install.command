@@ -19,7 +19,7 @@ else
 fi
 
 # Candidate application locations
-DIRS=$($LS -dump | awk 'match($2, "/blender.app") { print $2 "/Contents/MacOS/.blender/scripts"}')
+DIRS=$($LS -dump | awk 'match($2, "/[B|b]lender.app") { print $2 "/Contents/MacOS/.blender/scripts"}')
 
 # Remove old files from everywhere
 FILES="../Bpymenus
