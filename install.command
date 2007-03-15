@@ -19,7 +19,7 @@ else
 fi
 
 # Candidate application locations
-DIRS=$($LS -dump | awk 'match($2, "/[B|b]lender.app") { print $2 "/Contents/MacOS/.blender/scripts"}')
+DIRS=$($LS -dump | awk 'match($0, "/.*/[B|b]lender.app") { print substr($0, RSTART) "/Contents/MacOS/.blender/scripts" }' | sort -u)
 
 # Remove old files from everywhere
 FILES="../Bpymenus
@@ -75,19 +75,16 @@ fi
 # Copy new
 DONE=
 for I in $DIRS; do
-    if [ -d "$I" ]; then
-	DONE="$DONE
-  $I"
-	cp -f $FILES "$I"
+    if [ -d "$I" ] && [ -w "$I" ]; then
+	DIROK=1
+	cp -f $FILES "$I" 2>/dev/null
 	for J in $FILES; do
-	    if ! [ -r "$I/$J" ]; then
-		echo
-		echo Failed to install scripts in folder
-		echo "  $I" !!!
-		echo
-		exit 1;
-	    fi;
+	    if ! [ -r "$I/$J" ]; then DIROK=; fi;
 	done
+	if [ "$DIROK" ]; then
+	    DONE="$DONE
+  $I";
+	fi;
     fi;
 done
 

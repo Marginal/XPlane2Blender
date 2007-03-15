@@ -1,20 +1,19 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane Object (.obj)...'
-Blender: 241
+Blender: 242
 Group: 'Import'
 Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.28"
+__version__ = "2.31"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
 Limitations:<br>
   * smoke_black and smoke_white X-Plane primitives are ignored.<br>
-  * ambient, difuse, specular, emission and shiny<br>
-    attributes are ignored.<br>
+  * ambient, blend and specular attributes are ignored.<br>
   * Can't work out which faces have transparency. You should tell<br>
     Blender which faces are transparent faces by pressing the Alpha<br>
     button in UV Face Select mode after import.<br>
@@ -166,7 +165,7 @@ Limitations:<br>
 # 2006-05-07 v2.23
 #  - Fix for stupid NPOLY bug introduced in 2.22
 #
-# 2006-07-19 v2.25
+# 2006-07-19 v2.26
 #  - Handle bad textures without crashing.
 #  - Support for named lights, layer group, custom LOD ranges.
 #  - Imports animation armature and bones
@@ -179,13 +178,21 @@ Limitations:<br>
 #  - Support for ANIM_show/hide.
 #  - Support for ANIM_hard <surface>.
 #
+# 2006-08-17 v2.30
+#  - Support for slung_load_weight.
+#
+# 2006-09-29 v2.31
+#  - Goes faster (use new Mesh type) - requires 2.42.
+#  - Support for materials.
+#  - Imports fewer, larger meshes (for speed).
+#
 
 import sys
 import Blender
-from Blender import Armature, Object, NMesh, Lamp, Image, Material, Window
-from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix
+from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Window
+from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, Vector
 from XPlaneUtils import Vertex, UV, Face, getDatarefs
-from os.path import abspath, curdir, dirname, join, normpath, sep, splitdrive
+from os.path import abspath, basename, curdir, dirname, join, normpath, sep, splitdrive
 #import time
 
 datarefs={}
@@ -328,16 +335,42 @@ class Token:
         "ANIM_hide",
         ]
 
-class Mesh:
+class Mat:
+    def __init__(self, d=[1,1,1], e=[0,0,0], s=0):
+        self.d=d
+        self.e=e
+        self.s=s
+        self.blenderMat=None
+
+    def equals(self, other):
+        return (self.d==other.d and self.e==other.e and self.s==other.s)
+
+    def clone(self):
+        return Mat(self.d, self.e, self.s)
+
+    def getBlenderMat(self, force=False):
+        if not self.blenderMat and (force or self.d!=[1,1,1] or self.e!=[0,0,0] or self.s):
+            self.blenderMat=Material.New()
+            self.blenderMat.rgbCol=self.d
+            self.blenderMat.mirCol=self.e
+            if self.e==[0,0,0]:
+                self.blenderMat.emit=0
+            else:
+                self.blenderMat.emit=1
+            self.blenderMat.spec=self.s
+        return self.blenderMat
+    
+class MyMesh:
     # Flags
     LAYERMASK=7
 
-    def __init__(self, name, faces=[], surface=None, layers=1, anim=None):
+    def __init__(self, name, faces=[], surface=None, layers=1, anim=None, mat=None):
         self.name=name
         self.faces=[]
         self.surface=surface	# Hard surface type or None
         self.layers=layers	# LOD
         self.anim=anim		# (armob,bonename)
+        self.mat=mat
         self.bmax=Vertex(-sys.maxint,-sys.maxint,-sys.maxint)
         self.bmin=Vertex( sys.maxint, sys.maxint, sys.maxint)
         self.addFaces(name, faces)
@@ -373,6 +406,7 @@ class Mesh:
     #------------------------------------------------------------------------
     # do faces have any edges in common?
     def abut(self,faces):
+        # print "Abut",self.name, len(self.faces), len(faces),
         for face1 in self.faces:
             n1=len(face1.v)
             for i1 in range(n1):
@@ -383,19 +417,21 @@ class Mesh:
                              face1.v[(i1+1)%n1].equals(face2.v[(i2+1)%n2])) or
                             (face1.v[i1].equals(face2.v[(i2+1)%n2]) and
                              face1.v[(i1+1)%n1].equals(face2.v[i2]))):
-                            return 1
-        return 0
+                            # print "yes"
+                            return True
+        # print "no"
+        return False
 
     #------------------------------------------------------------------------
-    def doimport(self,scene,image,filename,subroutine):
+    def doimport(self,scene,image,objimport,subroutine):
         
-        panel=None
-        
-        mesh=NMesh.New(self.name)
-        mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
-        mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
-        mesh.hasFaceUV(1)	# required for face flags
+        mesh=Mesh.New(self.name)
+        mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
+        mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
 
+        mat=self.mat.getBlenderMat()
+        if mat: mesh.materials+=[mat]
+            
         centre=Vertex(0,0,0)
         if self.anim:
             boneloc=Vertex(self.anim[0].getData().bones[self.anim[2]].head['ARMATURESPACE'])
@@ -413,62 +449,61 @@ class Mesh:
             centre.y=round(centre.y/n,2)
             centre.z=round(centre.z/n,2)
         
+        faces=[]
+        verts=[]
         for f in self.faces:
-            face=NMesh.Face()
-            face.mode |= NMesh.FaceModes.TEX	# Need this for other flags
-            face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TILES|
-                           NMesh.FaceModes.DYNAMIC)
-            if not f.flags&Face.HARD:
-                face.mode |= NMesh.FaceModes.DYNAMIC
-            if f.flags&Face.TWOSIDE:
-                face.mode |= NMesh.FaceModes.TWOSIDE
-            if not f.flags&Face.NPOLY:
-                face.mode |= NMesh.FaceModes.TILES
-            if not f.flags&Face.FLAT:
-                face.smooth=1
-            if f.flags&Face.ALPHA:
-                face.transp=NMesh.FaceTranspModes.ALPHA
-            else:
-                face.transp=NMesh.FaceTranspModes.SOLID
-                
+            face=[]
             for v in f.v:
-                rv=Vertex(v.x-centre.x,v.y-centre.y,v.z-centre.z)
-                for nmv in mesh.verts:
-                    if rv.equals(Vertex(nmv.co[0],nmv.co[1],nmv.co[2])):
-                        nmv.co[0]=(nmv.co[0]+rv.x)/2
-                        nmv.co[1]=(nmv.co[1]+rv.y)/2
-                        nmv.co[2]=(nmv.co[2]+rv.z)/2
-                        face.v.append(nmv)
-                        break
-                else:
-                    nmv=NMesh.Vert(rv.x,rv.y,rv.z)
-                    mesh.verts.append(nmv)
-                    face.v.append(nmv)
+                face.append(len(verts))
+                verts.append([v.x-centre.x, v.y-centre.y, v.z-centre.z])
+            faces.append(face)
+        mesh.verts.extend(verts)
+        mesh.faces.extend(faces)
 
-            # Have to add them even if no texture
-            for uv in f.uv:
-                face.uv.append((uv.s, uv.t))
+        i=0
+        for face in mesh.faces:
+            f=self.faces[i]
+            i+=1
 
             if f.flags&Face.PANEL:
-                if not panel:
-                    d = dirname(filename)
+                if not objimport.panelimage:
+                    d=dirname(objimport.filename)
                     for extension in ['.png', '.bmp']:
                         cockpit=d+sep+"cockpit"+sep+"-PANELS-"+sep+"Panel"+extension
                         try:
-                            panel = Image.Load(cockpit)
-                            panel.getSize()	# force load
-                            face.image = panel
+                            objimport.panelimage = Image.Load(cockpit)
+                            objimport.panelimage.getSize()	# force load
                             break
                         except:
-                            panel=None
-                else:
-                    face.image = panel                    
-            elif image:
+                            pass
+                    else:
+                        objimport.panelimage=Image.New('Panel.png',1024,1024,24)
+                face.image = objimport.panelimage
+            else:
                 face.image = image
                             
+            face.uv=[Vector(uv.s, uv.t) for uv in f.uv]
+            face.mat=0
+            face.mode &= ~(Mesh.FaceModes.TWOSIDE|Mesh.FaceModes.TILES|
+                           Mesh.FaceModes.DYNAMIC)
+            if not f.flags&Face.HARD:
+                face.mode |= Mesh.FaceModes.DYNAMIC
+            if f.flags&Face.TWOSIDE:
+                face.mode |= Mesh.FaceModes.TWOSIDE
+            if not f.flags&Face.NPOLY:
+                face.mode |= Mesh.FaceModes.TILES
+            if f.flags&Face.FLAT:
+                face.smooth=0
+            else:
+                face.smooth=1
+            if f.flags&Face.ALPHA:
+                face.transp=Mesh.FaceTranspModes.ALPHA
+            else:
+                face.transp=Mesh.FaceTranspModes.SOLID
+                
             #assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
-            mesh.faces.append(face)
-
+        mesh.update()
+        
         ob = Object.New("Mesh", self.name)
         ob.link(mesh)
         scene.link(ob)
@@ -484,9 +519,13 @@ class Mesh:
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         if self.surface:
             ob.addProperty('surface', self.surface)
-        if self.layers&Mesh.LAYERMASK:
-            ob.Layer=(self.layers&Mesh.LAYERMASK)
-        mesh.update(1)
+        if self.layers&MyMesh.LAYERMASK:
+            ob.Layer=(self.layers&MyMesh.LAYERMASK)
+
+        mesh.sel=True
+        mesh.remDoubles(Vertex.LIMIT)	# must be after linked to object
+        mesh.sel=False
+
         scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
         return ob
 
@@ -502,11 +541,12 @@ class OBJimport:
         self.subroutine=subroutine
         
         #--- public you can change these ---
-        self.verbose=1	# level of verbosity in console: 1-some,2-chat,3-debug
-        self.merge=1	# merge primitives into meshes: 0-no,1-abut,2-force
         if subroutine:	# Object is being merged into something else
             self.verbose=0
             self.merge=2
+        else:
+            self.verbose=1	# level of verbosity in console: 1-some,2-chat,3-debug
+            self.merge=2	# merge primitives into meshes: 0-no,1-abut,2-force
         
         #--- class private don't touch ---
         if filename[0:2] in ['//', '\\\\']:
@@ -527,8 +567,10 @@ class OBJimport:
         self.linesemi=0.025
         self.lineno=1		# for error reporting
         self.filelen=0		# for progress reports
+        self.progress=-1
         self.fileformat=0	# 6, 7 or 8
         self.image=None		# texture image, iff scenery has texture
+        self.panelimage=None
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
         
@@ -555,13 +597,16 @@ class OBJimport:
         self.alpha=False
         self.panel=False
         self.poly=False
-        self.group=None
+        self.drawgroup=None
+        self.slung=0
         self.armob=None		# armature Object
         self.arm=None		# Armature
         self.action=None	# armature Action
         self.pendingbone=None	# current bone
         self.off=[]		# offset from current bone
         self.bones=[]		# Latest children
+        self.mat=Mat()
+        self.mats=[self.mat]	# Cache of mats to prevent duplicates
 
     #------------------------------------------------------------------------
     def doimport(self):
@@ -667,8 +712,12 @@ class OBJimport:
                 break
         input=c
         if not self.subroutine:
-            Window.DrawProgressBar(float(pos)*0.5/self.filelen,
-                                   "Importing %s%% ..." %(pos*50/self.filelen))
+            progress=pos*50/self.filelen
+            # only update progress bar if need to
+            if self.progress!=progress:
+                Window.DrawProgressBar(float(pos)*0.5/self.filelen,
+                                       "Importing %s%% ..." % progress)
+                self.progress=progress
         while 1:
             pos=self.file.tell()
             c=self.file.read(1)
@@ -726,6 +775,11 @@ class OBJimport:
             if self.fileformat<8:
                 c=c/10.0
             v.append(c)
+        return v
+
+    #------------------------------------------------------------------------
+    def getAttr(self):
+        v=[self.getFloat() for i in range(3)]
         return v
 
     #------------------------------------------------------------------------
@@ -856,7 +910,7 @@ class OBJimport:
         tex = tex.strip()
 
         if tex.lower() in ['', 'none']:
-            self.image=0
+            self.image=Image.New('none',1024,1024,24)
             if self.verbose>1:
                 print "Info:\tNo texture"
             return
@@ -894,10 +948,10 @@ class OBJimport:
                         self.image.getSize()	# force load
                     except:
                         print "Warn:\tTexture file \"%s\" cannot be read" % texname
-                        self.image=None
+                        self.image=Image.New(basename(texname),1024,1024,24)
                     return
             
-        self.image=0
+        self.image=Image.New(basename(base),1024,1024,24)
         print "Warn:\tTexture file \"%s\" not found" % base
             
     #------------------------------------------------------------------------
@@ -910,13 +964,15 @@ class OBJimport:
 
                 if t==Token.END:
                     # global attributes
-                    if (self.group or self.lod) and not self.subroutine:
+                    if (self.drawgroup or self.lod or self.slung) and not self.subroutine:
                         ob = Object.New("Empty", "Attributes")
                         ob.drawSize=0.1
                         #ob.drawMode=2	# 2=OB_PLAINAXES
-                        if self.group:
-                            ob.addProperty("group %s"%self.group[0],
-                                           self.group[1])
+                        if self.drawgroup:
+                            ob.addProperty("group %s" % self.drawgroup[0],
+                                           self.drawgroup[1])
+                        if self.slung:
+                            ob.addProperty("slung_load_weight", self.slung)
                         if self.lod:
                             for i in range(4):
                                 if self.lod[i]!=[0,1000,4000,10000][i]:
@@ -930,7 +986,7 @@ class OBJimport:
                         Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
                                                "Adding %d%% ..." % (
                             90+(i*10.0)/len(self.curmesh)))
-                        last=self.curmesh[i].doimport(scene,self.image,self.filename,self.subroutine)
+                        last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
                     scene.update(1)	# update poses
                     return last
 
@@ -1162,7 +1218,10 @@ class OBJimport:
                     self.alpha = False
 
                 elif t==Token.LAYER_GROUP:
-                    self.group=(self.getInput(), self.getInt())
+                    self.drawgroup=(self.getInput(), self.getInt())
+                    
+                elif t==Token.SLUNG_LOAD_WEIGHT:
+                    self.slung=self.getFloat()
                     
                 elif t==Token.LOD:
                     x=int(self.getFloat())
@@ -1183,6 +1242,7 @@ class OBJimport:
                     self.alpha=False
                     self.panel=False
                     self.poly=False
+                    self.mat=self.mats[0]
                 
                 elif t==Token.RESET:
                     self.hard=False
@@ -1191,6 +1251,34 @@ class OBJimport:
                     self.alpha=False
                     self.panel=False
                     self.poly=False
+                    self.mat=self.mats[0]
+
+                elif t in [Token.DIFUSE_RGB, Token.DIFFUSE_RGB]:
+                    self.mat=self.mat.clone()
+                    self.mat.d=self.getAttr()
+                    for m in self.mats:
+                        if self.mat.equals(m):
+                            self.mat=m
+                    else:
+                        self.mats.append(self.mat)
+
+                elif t==Token.EMISSION_RGB:
+                    self.mat=self.mat.clone()
+                    self.mat.e=self.getAttr()
+                    for m in self.mats:
+                        if self.mat.equals(m):
+                            self.mat=m
+                    else:
+                        self.mats.append(self.mat)
+
+                elif t==Token.SHINY_RAT:
+                    self.mat=self.mat.clone()
+                    self.mat.s=self.getFloat()
+                    for m in self.mats:
+                        if self.mat.equals(m):
+                            self.mat=m
+                    else:
+                        self.mats.append(self.mat)
 
                 elif t in [Token.POINT_COUNTS, Token.TEXTURE_LIT]:
                     # Silently ignore
@@ -1206,13 +1294,13 @@ class OBJimport:
 
                 if t==Token.END:
                     # global attributes
-                    if (self.group or self.lod) and not self.subroutine:
+                    if (self.drawgroup or self.lod) and not self.subroutine:
                         ob = Object.New("Empty", "Attributes")
                         ob.drawSize=0.1
                         #ob.drawMode=2	# 2=OB_PLAINAXES
-                        if self.group:
-                            ob.addProperty("group %s"%self.group[0],
-                                           self.group[1])
+                        if self.drawgroup:
+                            ob.addProperty("group %s" % self.drawgroup[0],
+                                           self.drawgroup[1])
                         if self.lod:
                             for i in range(4):
                                 if self.lod[i]!=[0,1000,4000,10000][i]:
@@ -1226,7 +1314,7 @@ class OBJimport:
                         Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
                                                "Adding %d%% ..." % (
                             90+(i*10.0)/len(self.curmesh)))
-                        last=self.curmesh[i].doimport(scene,self.image,self.filename,self.subroutine)
+                        last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
                     return last
                 
                 elif t==Token.LIGHT:
@@ -1354,7 +1442,7 @@ class OBJimport:
                     self.twoside = True
 
                 elif t==Token.LAYER_GROUP:
-                    self.group=(self.getInput(), self.getInt())
+                    self.drawgroup=(self.getInput(), self.getInt())
                     self.getCR()
                     
                 elif t==Token.LOD:
@@ -1374,12 +1462,41 @@ class OBJimport:
                     self.twoside=False
                     self.flat=False
                     self.poly=False
+                    self.mat=self.mats[0]
                 
                 elif t==Token.RESET:
                     self.getCR()
                     self.twoside=False
                     self.flat=False
                     self.poly=False
+                    self.mat=self.mats[0]
+
+                elif t in [Token.DIFUSE_RGB, Token.DIFFUSE_RGB]:
+                    self.mat=self.mat.clone()
+                    self.mat.d=self.getAttr()
+                    for m in self.mats:
+                        if self.mat.equals(m):
+                            self.mat=m
+                    else:
+                        self.mats.append(self.mat)
+
+                elif t==Token.EMISSION_RGB:
+                    self.mat=self.mat.clone()
+                    self.mat.e=self.getAttr()
+                    for m in self.mats:
+                        if self.mat.equals(m):
+                            self.mat=m
+                    else:
+                        self.mats.append(self.mat)
+
+                elif t==Token.SHINY_RAT:
+                    self.mat=self.mat.clone()
+                    self.mat.s=self.getFloat()
+                    for m in self.mats:
+                        if self.mat.equals(m):
+                            self.mat=m
+                    else:
+                        self.mats.append(self.mat)
 
                 else:
                     print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
@@ -1387,12 +1504,8 @@ class OBJimport:
                         n=0	# not really
                     elif t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
                         n=4
-                    elif t in [Token.AMBIENT_RGB,
-                               Token.DIFUSE_RGB, Token.DIFFUSE_RGB,
-                               Token.SPECULAR_RGB, Token.EMISSION_RGB]:
+                    elif t in [Token.AMBIENT_RGB, Token.SPECULAR_RGB]:
                         n=3
-                    elif t in [Token.SHINY_RAT, Token.SLUNG_LOAD_WEIGHT]:
-                        n=1
                     elif t in [Token.BLEND, Token.NO_BLEND]:
                         n=0
                     else:
@@ -1413,7 +1526,7 @@ class OBJimport:
                         Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
                                                "Adding %d%% ..." % (
                             90+(i*10.0)/len(self.curmesh)))
-                        last=self.curmesh[i].doimport(scene,self.image,self.filename,self.subroutine)
+                        last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
                     return last
     
                 elif t==Token.LIGHT:
@@ -1585,6 +1698,7 @@ class OBJimport:
         mesh.mode &= ~(NMesh.Modes.AUTOSMOOTH|NMesh.Modes.NOVNORMALSFLIP)
 
         face=NMesh.Face()
+        face.mat=0
         face.mode &= ~(NMesh.FaceModes.TEX|NMesh.FaceModes.TILES)
         face.mode |= (NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.DYNAMIC)
 
@@ -1603,9 +1717,13 @@ class OBJimport:
         for nmv in mesh.verts:
             face.v.append(nmv)
 
-        mesh.materials.append(Material.New(name))
-        mesh.materials[0].rgbCol=[c[0],c[1],c[2]]
-        face.mat=0
+        mat=Mat(c)
+        for m in self.mats:
+            if mat.equals(m):
+                mat=m
+        else:
+            self.mats.append(mat)
+        mesh.materials.append(mat.getBlenderMat(True))
         mesh.faces.append(face)
 
         ob = Object.New("Mesh", name)
@@ -1676,11 +1794,12 @@ class OBJimport:
             if self.armob:
                 self.addToMesh(scene,name,faces,surface,
                                OBJimport.LAYER[self.layer],
-                               (self.armob,self.off[-1],self.bones[-1]))
+                               (self.armob,self.off[-1],self.bones[-1]),
+                               self.mat)
             else:
                 self.addToMesh(scene,name,faces,surface,
                                OBJimport.LAYER[self.layer],
-                               None)
+                               None, self.mat)
             self.nprim+=1
 
     #------------------------------------------------------------------------
@@ -1758,16 +1877,17 @@ class OBJimport:
             if self.armob:
                 self.addToMesh(scene,name,faces,surface,
                                OBJimport.LAYER[self.layer],
-                               (self.armob,self.off[-1],self.bones[-1]))
+                               (self.armob,self.off[-1],self.bones[-1]),
+                               self.mat)
             else:
                 self.addToMesh(scene,name,faces,surface,
                                OBJimport.LAYER[self.layer],
-                               None)
+                               None, self.mat)
             self.nprim+=1
 
     #------------------------------------------------------------------------
     # add faces to existing or new mesh
-    def addToMesh (self,scene,name,faces,surface,layers,anim):
+    def addToMesh (self,scene,name,faces,surface,layers,anim,mat):
         # New faces are added to the existing mesh if:
         #  - they share the same comment, or
         #  - any of the new faces has a common edge with any existing face in
@@ -1781,6 +1901,7 @@ class OBJimport:
             (self.curmesh[-1].surface==surface or
              not (self.curmesh[-1].surface and surface)) and
             self.curmesh[-1].anim==anim and
+            self.curmesh[-1].mat==mat and
             (self.merge>=2 or anim or
              (self.comment and self.comment==self.lastcomment) or
              self.curmesh[-1].abut(faces))):
@@ -1788,7 +1909,7 @@ class OBJimport:
             if surface: self.curmesh[-1].surface=surface
         else:
             # No common edge - new mesh required
-            self.curmesh.append(Mesh(name, faces, surface, layers, anim))
+            self.curmesh.append(MyMesh(name, faces, surface, layers, anim, mat))
 
         self.lastcomment=self.comment
 
@@ -1815,12 +1936,15 @@ class OBJimport:
 
             l=m+1
             while l<len(self.curmesh):
+                if self.verbose>2: print "Merge", l, m, len(self.curmesh), self.curmesh[l].name, self.curmesh[m].name
                 if (self.curmesh[l].layers==self.curmesh[m].layers and
                     (self.curmesh[l].surface==self.curmesh[m].surface or
                      not (self.curmesh[l].surface and self.curmesh[m].surface)) and
                     self.curmesh[l].anim==self.curmesh[m].anim and
-                    self.curmesh[l].intersect(self.curmesh[m]) and
-                    self.curmesh[l].abut(facesm)):
+                    self.curmesh[l].mat==self.curmesh[m].mat and
+                    (self.merge>=2 or
+                     (self.curmesh[l].intersect(self.curmesh[m]) and
+                      self.curmesh[l].abut(facesm)))):
                     self.curmesh[m].addFaces("Mesh", self.curmesh[l].faces)
                     if self.curmesh[l].surface:
                         self.curmesh[m].surface=self.curmesh[l].surface

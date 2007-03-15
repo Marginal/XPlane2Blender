@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.28"
+__version__ = "2.31"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -115,6 +115,9 @@ Limitations:<br>
 #  - Use v8.50 named lights. Lights back to shared between layers.
 #  - Fix for wings in layer 3 (broken in 2.21).
 #  - Fix for adjoining wings small enough to be root and tip.
+#
+# 2006-09-29 v2.31
+#  - Hack for v8 weapons.
 #
 
 import sys
@@ -3576,7 +3579,7 @@ xflt, "chute_vector_wrl[3]",
 
 xstruct, "part",
 
-xflt, "xflt_overflow[100]",
+xflt, "xflt_overflow[99]",	# Should be 100 !!!
     ]
 
 
@@ -3634,7 +3637,7 @@ class ACF:
             acffile.close()
             raise ParseError("Can't read %4.2f format planes!" % (self.HEADER_version/100.0))
         if dmp:
-            dmp.write("%6x:\tHEADER_version:\t%s\n" % (1,self.HEADER_version))
+            dmp.write("%6x:t\HEADER_version:\t%s\n" % (1,self.HEADER_version))
 
         self.parse(acffile, dmp, defs, fmt, prefix, prg)
         if dmp: dmp.close()

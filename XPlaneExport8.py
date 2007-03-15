@@ -1,13 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane v8 Object (.obj)'
-Blender: 240
+Blender: 242
 Group: 'Export'
 Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.28"
+__version__ = "2.31"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -86,7 +86,7 @@ Limitations:<br>
 # 2006-04-22 v2.21
 #  - Oops. ATTR_no_blend not such a good idea.
 #
-# 2006-07-19 v2.25
+# 2006-07-19 v2.26
 #  - Support for named lights, layer group, custom LOD ranges.
 #
 # 2006-07-30 v2.28
@@ -95,6 +95,13 @@ Limitations:<br>
 #  - Support for ANIM_hard <surface>.
 #  - Support for materials.
 #  - Add sorting by group name.
+#
+# 2006-08-17 v2.30
+#  - Speed up export by successively filtering triangle list.
+#  - Support for slung_load_weight.
+#
+# 2006-10-03 v2.31
+#  - Fix for nested animation translations.
 #
 
 
@@ -239,6 +246,7 @@ class OBJexport8:
         self.havepanel=False
         self.texture=None
         self.drawgroup=None
+        self.slung=0
         self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
 
@@ -282,7 +290,7 @@ class OBJexport8:
         if not checkFile(self.filename):
             return
 
-        Blender.Window.WaitCursor(1)
+        Window.WaitCursor(1)
         Window.DrawProgressBar(0, 'Examining textures')
         (self.texture,self.havepanel,self.layermask,
          self.lod)=getTexture(theObjects,self.layermask,self.iscockpit,False,8)
@@ -329,6 +337,12 @@ class OBJexport8:
         else:
             lseq=[1,2,4]
 
+        # Speed optimisation
+        if self.iscockpit:
+            surfaces=[False]
+        else:
+            surfaces=Prim.SURFACES
+            
         # Build global vertex lists
         nobj=len(theObjects)
         for o in range (nobj-1,-1,-1):
@@ -351,6 +365,8 @@ class OBJexport8:
                         self.drawgroup=(prop.name.strip()[6:], int(prop.data))
                         if not self.drawgroup[0] in ['terrain', 'beaches', 'shoulders', 'taxiways', 'runways', 'markings', 'airports', 'roads', 'objects', 'light_objects', 'cars']:
                             raise ExportError('Invalid drawing group "%s" in "%s"' % (self.drawgroup[0], object.name))
+                    elif prop.type in ['INT', 'FLOAT', 'STRING'] and prop.name.strip()=='slung_load_weight':
+                        self.slung=prop.data
             else:
                 print "Warn:\tIgnoring %s \"%s\"" % (objType.lower(),
                                                      object.name)
@@ -370,13 +386,16 @@ class OBJexport8:
             # Hack!: Can't have hard tris outside layer 1
             if layer==2:
                 for tri in self.tris: tri.surface=False
+            tris1=[tri for tri in self.tris if tri.layer&layer]
             for group in [None]+self.groups:
+                tris2=[tri for tri in tris1 if tri.group==group]
                 for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
                     Window.DrawProgressBar(0.4+progress/(10*len(lseq)),
                                            "Exporting %d%% ..." % (40+progress*10/len(lseq)))
                     progress+=1
                     for anim in self.anims:
-    
+                        tris3=[tri for tri in tris2 if tri.anim.equals(anim)]
+
                         # Lines
                         index=[]
                         offsets.append(len(indices))
@@ -389,12 +408,14 @@ class OBJexport8:
     
                         # Tris
                         for passno in range(passhi,passhi+Prim.BUCKET1+1):
+                            tris4=[tri for tri in tris3 if tri.flags==passno]
                             for mat in self.mats:
-                                for surface in Prim.SURFACES:
+                                tris5=[tri for tri in tris4 if tri.mat==mat]
+                                for surface in surfaces:
                                     index=[]
                                     offsets.append(len(indices))
-                                    for tri in self.tris:
-                                        if tri.match(layer, group, passno, surface, mat, anim):
+                                    for tri in tris5:
+                                        if tri.surface==surface:
                                             index.append(tri.i[0])
                                             index.append(tri.i[1])
                                             index.append(tri.i[2])
@@ -436,10 +457,12 @@ class OBJexport8:
         for j in range(n-(n%10), n):
             self.file.write("IDX\t%d\n" % indices[j])
 
+        if self.slung:
+            self.file.write("\nslung_load_weight\t%s\n" % self.slung)
         if self.drawgroup:
             self.file.write("\nATTR_layer_group\t%s\t%d\n" % (
                 self.drawgroup[0], self.drawgroup[1]))
-            
+
         # Geometry Commands
         # Order of loops must be *exactly* the same as above
         n=0
@@ -480,7 +503,7 @@ class OBJexport8:
                         # Tris
                         for passno in range(passhi,passhi+Prim.BUCKET1+1):
                             for mat in self.mats:
-                                for surface in Prim.SURFACES:
+                                for surface in surfaces:
                                     if counts[n]:
                                         self.updateAttr(surface,
                                                         mat,
@@ -1067,13 +1090,13 @@ class Anim:
         if not bone:
             bonename=child.getParentBoneName()        
             if not bonename:
-                raise ExportError('%s "%s" has an armature as a parent. It should have a bone as a parent.' % (child.getType(), child.name))
+                raise ExportError('%s "%s" has an armature as its parent. Parent "%s" to a bone instead.' % (child.getType(), child.name, child.name))
 
             bones=object.getData().bones
             if bonename in bones.keys():
                 bone=bones[bonename]
             else:
-                raise ExportError('Missing animation data for bone "%s" in armature "%s".' % (bonename, object.name))	# wtf?
+                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Parent "%s" to an existing bone (or clear its parent).' % (child.getType(), child.name, bonename, child.name))
 
         if bone.parent:
             self.anim=Anim(child, bone.parent)
@@ -1187,7 +1210,7 @@ class Anim:
             # Child offset should be relative to parent
             anim=self.anim
             while not anim.equals(Anim(None)):
-                t=t-anim.t[frame-1]
+                t=t-anim.t[0]	# mesh location is relative to first frame
                 anim=anim.anim
             self.t.append(t)
 
@@ -1254,11 +1277,11 @@ class Anim:
                     # custom dataref
                     if prop.type=='STRING':
                         path=prop.data.strip()
-                        if path[-1]!='/': path=path+'/'
+                        if path and path[-1]!='/': path=path+'/'
                         dataref=path+name
                         break
                     else:
-                        raise ExportError('Unsupported data type for path of custom dataref "%s" in armature "%s".' % (ref, object.name))
+                        raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s".' % (ref, object.name))
         if not dataref:
             if ref in datarefs:
                 (path, n)=datarefs[ref]
@@ -1329,32 +1352,30 @@ class Anim:
 
 
 #------------------------------------------------------------------------
-if Blender.Window.EditMode():
-    Blender.Draw.PupMenu('Please exit Edit Mode first.')
-else:
-    baseFileName=Blender.Get('filename')
-    l = baseFileName.lower().rfind('.blend')
-    if l!=-1:
-        baseFileName=baseFileName[:l]
-    obj=None
-    try:
-        datarefs=getDatarefs()
-        obj=OBJexport8(baseFileName+'.obj')
-        scene = Blender.Scene.getCurrent()
-        obj.export(scene)
-    except ExportError, e:
-        Blender.Window.WaitCursor(0)
-        Blender.Window.DrawProgressBar(0, 'ERROR')
-        print "ERROR:\t%s\n" % e.msg
-        Blender.Draw.PupMenu("ERROR: %s" % e.msg)
-        Blender.Window.DrawProgressBar(1, 'ERROR')
-        if obj and obj.file:
-            obj.file.close()
-    except IOError, e:
-        Blender.Window.WaitCursor(0)
-        Blender.Window.DrawProgressBar(0, 'ERROR')
-        print "ERROR:\t%s\n" % e.strerror
-        Blender.Draw.PupMenu("ERROR: %s" % e.strerror)
-        Blender.Window.DrawProgressBar(1, 'ERROR')
-        if obj and obj.file:
-            obj.file.close()
+if Window.EditMode(): Window.EditMode(0)
+baseFileName=Blender.Get('filename')
+l = baseFileName.lower().rfind('.blend')
+if l!=-1:
+    baseFileName=baseFileName[:l]
+obj=None
+try:
+    datarefs=getDatarefs()
+    obj=OBJexport8(baseFileName+'.obj')
+    scene = Blender.Scene.getCurrent()
+    obj.export(scene)
+except ExportError, e:
+    Blender.Window.WaitCursor(0)
+    Blender.Window.DrawProgressBar(0, 'ERROR')
+    print "ERROR:\t%s\n" % e.msg
+    Blender.Draw.PupMenu("ERROR: %s" % e.msg)
+    Blender.Window.DrawProgressBar(1, 'ERROR')
+    if obj and obj.file:
+        obj.file.close()
+except IOError, e:
+    Blender.Window.WaitCursor(0)
+    Blender.Window.DrawProgressBar(0, 'ERROR')
+    print "ERROR:\t%s\n" % e.strerror
+    Blender.Draw.PupMenu("ERROR: %s" % e.strerror)
+    Blender.Window.DrawProgressBar(1, 'ERROR')
+    if obj and obj.file:
+        obj.file.close()

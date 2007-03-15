@@ -36,13 +36,12 @@ to X-Plane v7, v8 or CSL <code>.obj</code> format.</p>
 <p>The scripts also import existing X-Plane v6, v7, v8 and CSL
 <code>.obj</code> scenery files and X-Plane v7 and v8 <code>.acf</code>
 airplanes into Blender.
-All X-Plane scenery primitives are supported
-apart from <code>smoke_black</code> and <code>smoke_white</code>
-and material attributes.</p>
+All X-Plane scenery primitives are supported apart from
+<code>smoke_black</code> and <code>smoke_white</code>.</p>
 <h3>Requirements</h3>
 <p>Runs on Windows 98 or later, Mac OS 10.3.9 or later, and Linux.</p>
 <p>Requires <a href="http://www.blender3d.org/Download/">Blender
-2.41</a> or later <small>(Mac OS users should download the "Python 2.3"
+2.42</a> or later <small>(Mac OS users should download the "Python 2.3"
 build of Blender unless you have installed Python 2.4. Linux users should
 download the build that corresponds to the Python version that is
 installed on your system - usually "Python 2.4")</small>.</p>
@@ -108,6 +107,7 @@ Extract the contents of the zip file to this folder.</td>
 <p>On Mac OS, also run the "Console" application that comes with
 Mac OS X and which is found under "Utilities".</p>
 <p>You can now delete the temporary folder.</p>
+
 <h3>Importing objects</h3>
 <p><samp>File &raquo; Import &raquo; X-Plane Object</samp></p>
 <p>Select a <code>.obj</code> file. The scenery is
@@ -132,6 +132,7 @@ texture mappings.</p>
 but imported meshes are not parented to the bones - you'll have to parent
 the meshes manually. The armatures are created in "Rest Position" to make
 parenting easier.</p>
+
 <h3>Importing planes</h3>
 <p><samp>File &raquo; Import &raquo; X-Plane Plane or Weapon</samp></p>
 <p>Select a <code>.acf</code> or <code>.wpn</code> file. Planes
@@ -150,6 +151,7 @@ explanation of why it does this.</p>
 <p>Imported planes needs some tweaking before you can export them
 as scenery or as a CSL object; see <a href="#Tweaking_planes">Tweaking
 planes</a> below.</p>
+
 <h3>Exporting objects</h3>
 <p>Save the <code>.blend</code> file in the aircraft or
 scenery folder where you want the <code>.obj</code> file to end up.</p>
@@ -166,6 +168,147 @@ multi-user plugins such as
 <a href="http://www.xsquawkbox.net/xsb/">XSquawkBox</a> or
 <a href="http://www.ivao.aero/softdev/X-IvAp/">X-IvAp</a>.</p>
 <p><samp><b>v8: </b></samp>These objects are supported by X-Plane versions 8.20 and later.</p>
+
+<h3>Creating X-Plane scenery</h3>
+<ul>
+  <li>Find and open the<code> Custom&nbsp;Scenery </code>folder
+inside of your <code>X-Plane</code> installation.</li>
+  <li>Create a subfolder with the name of the scenery collection that you're making.</li>
+  <li>Save your Blender file in this subfolder folder with a descriptive name, <i>eg</i>:
+    <div style="margin-left: 40px;"><code>X-Plane&nbsp;8.50\Custom&nbsp;Scenery\EGLL\house.blend</code></div>
+The X-Plane <code>.obj</code> file will be exported to the same place, <i>ie</i>:
+    <div style="margin-left: 40px;"><code>X-Plane&nbsp;8.50\Custom&nbsp;Scenery\EGLL\house.obj</code></div>
+  </li>
+</ul>
+<h4><a name="Tweaking_planes"></a>Tweaking planes</h4>
+<p>Imported planes need to be positioned correctly on the ground for
+use as static scenery (don't do this if you're making a CSL or cockpit
+object):</p>
+<ul>
+  <li>Select layers 1-3, select all objects and position the
+plane so that its undercarriage is sitting directly on the ground
+(represented by the <i>x</i>/y axes).</li>
+  <li>You may also need to rotate the plane slightly so that all
+wheels are level; press <samp style="font-weight: bold;">r</samp>
+and move the mouse to <u>r</u>otate the plane so that its
+undercarriage is sitting directly on the ground.
+Click to set the plane's position.</li>
+</ul>
+<p>The primary bitmap file for textures is named
+<code><i>airplane</i>_paint</code>.
+Most planes also use textures from a secondary bitmap file named
+<code><i>airplane</i>_paint2</code>. Objects that use textures from
+the secondary bitmap file are imported with "<code>*</code>" after their
+name to make them easier to identify in Blender's <samp>Outliner</samp>
+window.</p>
+<p>The X-Plane <code>.obj</code> scenery file formats only
+support the use of a single bitmap file, up to 1024x1024 in size, for textures.
+If your plane only has a few
+simple objects that use textures from <code><i>airplane</i>_paint2</code>
+then you should re-texture these objects to use
+<code><i>airplane</i>_paint</code>, following the same procedure
+described below for weapons and misc objects. If that is not feasible
+you can use this procedure to make the plane use textures from a single
+bitmap file:</p>
+<ul>
+  <li>Save your Blender model.</li>
+  <li>In an image editor program, resize <code><i>airplane</i>_paint</code>
+and <code><i>airplane</i>_paint2</code> to 512x512. <small>(You don't need to
+save these resized versions)</small>.</li>
+  <li>Create a new bitmap file 1024 pixels wide and 512 pixels high.</li>
+  <li>Paste the resized <code><i>airplane</i>_paint</code> into the left half of this bitmap.</li>
+  <li>Paste the resized <code><i>airplane</i>_paint2</code> into the right half of this bitmap.</li>
+  <li>Save the bitmap file in the same folder and with the same name as your <code>.blend</code> file. If you're making a CSL object then you must save in PNG format.</li>
+  <li>If your plane uses night-time textures then repeat this procedure for the <code>_LIT</code> bitmap files.</li>
+  <li>In a Blender <samp>UV/Image Editor</samp> window choose <samp>UVs &raquo; Merge _paint and _paint2</samp>.
+</ul>      
+<p>If your imported plane uses weapons or misc objects then each of
+these will use an additional bitmap file. Weapons are imported
+with their names starting with "<code>W<i>nn</i></code>" and objects
+with their names starting with "<code>O<i>nn</i></code>". Also note
+that reduced-LOD versions of weapons and misc objects may be present in
+layers 2 and 3.</p>
+<p>Open an
+<samp>Outliner</samp> window and choose <samp>View &raquo; Show Outliner</samp>. For each mesh that has a name starting with "<code>W<i>nn</i></code>" or "<code>O<i>nn</i></code>" or ending with "<code>*</code>", either:</p>
+<ul>
+  <li>Delete the mesh, or</li>
+  <li>Copy the required textures to an unused area in
+the primary bitmap file and use the <samp>UV Image Editor</samp>
+window to map the new copy of the textures to the mesh's faces.</li>
+</ul>
+<p>Consider performance issues when the plane is rendered in
+X-Plane. Ask yourself the following questions:</p>
+<ul>
+  <li>Most important: Do you really need fully detailed 1024x1024
+textures for your plane? Video memory is used up by terrain and
+object geometry and textures. Once you run out of video memory the GPU
+has to fall back to main memory, and this <u>really</u> slows things
+down. One 1024x1024 texture uses 4MB of video memory. Some people are
+running X-Plane on computers with only 32MB of video memory, so one
+1024x1024 texture at "extreme res" in X-Plane uses
+<small><sup>1</sup></small>/<small><sub>8</sub><sup>th</sup></small>
+of their video memory. Consider
+resizing the texture bitmap file in an image editor program to half
+or even quarter size. Use <samp>Image &raquo; Replace</samp> to use
+the new texture bitmap file.</li>
+  <li>Does the model have hidden faces? Some versions of X-Plane
+don't handle hidden faces in v7 scenery objects very well and they also
+a cause a small performance hit. Look for things like wings or misc
+bodies that are partially or wholly buried in the fuselage and delete
+any wholly hidden faces before exporting.</li>
+  <li>Do you really need all that detail? Consider deleting
+details like flap tracks, antennae etc before exporting. This
+especially goes for the lower <a href="XPlane2Blender.html#Level_Of_Detail">Level of Detail</a>
+versions of the plane in layers 2 and 3 which are only viewed in
+X-Plane from &gt;1000m and &gt;4000m respectively.</li>
+</ul>
+<h3>Creating 3D cockpits</h3>
+<p>X-Plane 3D cockpits are just normal v7 or v8 scenery objects.
+However cockpits can't contain multiple <a href="#Level_Of_Detail">Levels
+of Detail</a>, so only objects in Blender layer 1 are exported.
+If you want to keep objects in your Blender scene for reference but
+which you don't want to export - eg the plane fuselage - then put them
+in layer 4 or greater before exporting.</p>
+<p>Choose <samp>File &raquo; Save As</samp> and save
+the blender file in the same folder as your plane's <code>.acf</code>
+file with the name <code><i>airplane</i>_cockpit.blend</code>,
+where <i>airplane</i> is the name of your plane's <code>.acf</code>
+file.</p>
+<p>Normally you will want to import your plane into Blender to
+act as a reference and/or starting point for your cockpit. Delete any
+plane parts that you don't need in creating your cockpit - you only
+need to keep the fuselage itself plus any relevant Misc Bodies. After
+import, your cockpit uses the same texture file as your plane, ie <code><i>airplane</i>_paint</code>.
+Choose <samp>Image &raquo; Replace </samp> in a <samp>UV
+Image Editor</samp> window to use a different texture file, which
+can be named anything you like (but no spaces) and which should live in
+the same folder as your plane's <code>.acf</code> file.</p>
+<p>To construct moving cockpit instruments in X-Plane v8:</p>
+<ul>
+  <li>Layout the 2D panel in PlaneMaker as normal. But bear in
+mind that only the top 768 lines of the 2D panel can be used in the 3D
+cockpit in X-Plane versions prior to 8.20.</li>
+  <li>Run X-Plane and load your aircraft. Press the <samp style="font-weight: bold;">Up</samp> arrow to ensure
+that you're looking at the top of the 2D panel. Take a screenshot (on a
+PC press <samp style="font-weight: bold;">Alt&nbsp;PrtSc</samp>).</li>
+  <li>Load the screenshot into an image editor and change its
+size so that it's the same size as your 2D panel (typically 1024x1024)
+- don't resize the screenshot, just add blank space. Save the
+screenshot as <code>ScreenshotPanel.png</code> (or any
+filename ending in <code>*panel.*</code>) in the same
+folder as your plane's <code>.acf</code> file.</li>
+  <li>Use the <code>ScreenshotPanel.png</code>
+texture on those faces that you want to display moving cockpit
+instruments in X-Plane. (It's easier to use this screenshot texture
+instead of the real panel texture while editing in Blender, since the
+screenshot has instruments drawn on it). The screenshot file does not
+need to be distributed with your finished plane.</li>
+</ul>
+<p>Note that X-Plane versions prior to 8.20 only display the 3D
+cockpit when running at the default 1024x768 resolution. You may want
+to mention this in the Readme with your plane if your plane is
+intended to work in X-Plane versions prior to 8.20.</p>
+
 <h3>Using Blender to create X-Plane objects</h3>
 <p>Only Lamps and Meshes are exported to X-Plane.
 You can use other Blender object types, <i>eg</i> Curves and Surfaces,
@@ -362,8 +505,8 @@ positions in frames 1 and 2 are exported to X-Plane).</small></p>
 <p>By default, X-Plane will display the meshes in the frame 1 position
 when the dataref has a value of 0, and in the frame 2 position
 when the dataref has a value of 1.
-You can change these values by adding <a href="#properties">properties</a>;
-name the property after the dataref and append
+You can change these values by adding <a href="#properties">properties</a>
+to the armature; name the property after the dataref and append
 <code>_v1</code> to the name for the value corresponding to frame 1, or
 <code>_v2</code> for the value corresponding to frame 2.
 <i>eg</i> the yoke pitch dataref <code>yolk_pitch_ratio</code>
@@ -373,15 +516,16 @@ forward add a property named <code>yolk_pitch_ratio_v1</code>, and
 give it the value <code>-1</code>.</p>
 <p>You can also use custom datarefs for animation (<i>ie</i> datarefs
 supplied by a plugin that calls XPLMRegisterDataAccessor); name the bone
-with the leaf name of the dataref and add a <a href="#properties">property</a>
-with the same name. Set this property's value to the path of the dataref.
+with the last part ("leaf") of the dataref name and add a
+<a href="#properties">property</a> with that same "leaf" name. Set this
+property's value to the rest of the dataref name.
 <i>eg</i> the plugin registers the custom dataref
 <code>my_org/widget/volume</code>; to use this dataref name the bone
 <code>volume</code> and add a property named
 <code>volume</code> with the string value <code>my_org/widget/</code>.</p>
 <p>You can make all of the lamps and meshes in an animation disappear
 when a dataref is within a certain range by adding
-<a href="#properties">properties</a> named
+<a href="#properties">properties</a> to the armature named
 <code><i>dataref</i>_hide_v1</code> and <code><i>dataref</i>_hide_v2</code>.
 (It's OK to use datarefs that are not otherwise used in the animation).
 You can make hidden lamps and meshes re-appear when a dataref is within
@@ -400,7 +544,7 @@ subsequent pairs of properties <code><i>dataref</i>_hide_v3</code> and
   <caption>Summary of animation <a href="#properties">properties</a></caption>
   <thead>
     <tr>
-      <th style="text-decoration: underline;">Property</th>
+      <th style="text-decoration: underline;">Property name</th>
       <th></th>
       <th style="text-decoration: underline;">Type</th>
       <th></th>
@@ -479,8 +623,7 @@ But sometimes you need even more control over the drawing order -
 (obviously) a transparent canopy; the HUD must be drawn after the canopy.</p>
 <p>You can specify the relative order in which lamps, meshes etc should be
 drawn by assigning them to "Groups" on the <samp>Object and links</samp>
-panel (<samp style="font-weight: bold;">F7</samp>)
-(available in Blender 2.42 and later):</p>
+panel (<samp style="font-weight: bold;">F7</samp>):</p>
 <ul>
   <li>Objects that don't belong to a group are drawn first.</li>
   <li>The groups are sorted by alphabetical order, and then</li>
@@ -522,145 +665,14 @@ named <code>group_terrain</code>, <code>group_beaches</code>, <code>group_should
 <p><i>eg</i> to make X-Plane draw your object at the same time that it
 draws runway markings add a property named <code>group_markings</code>
 to an Empty object and give it the value <code>0</code>.</p>
-<h3>Creating X-Plane scenery</h3>
+<h4><font size="+1">v8: </font>Slung load weight</a></h4>
+<p>You can specify the weight of an object for use in X-Plane's physics
+engine if the object is being carried by a plane or helicopter:</p>
 <ul>
-  <li>Find and open the<code> Custom&nbsp;Scenery </code>folder
-inside of your <code>X-Plane</code> installation.</li>
-  <li>Create a subfolder with the name of the scenery collection that you're making.</li>
-  <li>Save your Blender file in this subfolder folder with a descriptive name, <i>eg</i>:
-    <div style="margin-left: 40px;"><code>X-Plane&nbsp;8.50\Custom&nbsp;Scenery\EGLL\house.blend</code></div>
-The X-Plane <code>.obj</code> file will be exported to the same place, <i>ie</i>:
-    <div style="margin-left: 40px;"><code>X-Plane&nbsp;8.50\Custom&nbsp;Scenery\EGLL\house.obj</code></div>
-  </li>
+  <li>Add a Blender object of type "Empty" to your scene.</li>
+  <li>Add a <a href="#properties">property</a> to the Empty object
+named <code>slung_load_weight</code> and specify the weight in pounds.
 </ul>
-<h4><a name="Tweaking_planes"></a>Tweaking planes</h4>
-<p>Imported planes need to be positioned correctly on the ground for
-use as static scenery (don't do this if you're making a CSL or cockpit
-object):</p>
-<ul>
-  <li>Select layers 1-3, select all objects and position the
-plane so that its undercarriage is sitting directly on the ground
-(represented by the <i>x</i>/y axes).</li>
-  <li>You may also need to rotate the plane slightly so that all
-wheels are level; press <samp style="font-weight: bold;">r</samp>
-and move the mouse to <u>r</u>otate the plane so that its
-undercarriage is sitting directly on the ground.
-Click to set the plane's position.</li>
-</ul>
-<p>The primary bitmap file for textures is named
-<code><i>airplane</i>_paint</code>.
-Most planes also use textures from a secondary bitmap file named
-<code><i>airplane</i>_paint2</code>. Objects that use textures from
-the secondary bitmap file are imported with "<code>*</code>" after their
-name to make them easier to identify in Blender's <samp>Outliner</samp>
-window.</p>
-<p>The X-Plane <code>.obj</code> scenery file formats only
-support the use of a single bitmap file, up to 1024x1024 in size, for textures.
-If your plane only has a few
-simple objects that use textures from <code><i>airplane</i>_paint2</code>
-then you should re-texture these objects to use
-<code><i>airplane</i>_paint</code>, following the same procedure
-described below for weapons and misc objects. If that is not feasible
-you can use this procedure to make the plane use textures from a single
-bitmap file:</p>
-<ul>
-  <li>Save your Blender model.</li>
-  <li>In an image editor program, resize <code><i>airplane</i>_paint</code>
-and <code><i>airplane</i>_paint2</code> to 512x512. <small>(You don't need to
-save these resized versions)</small>.</li>
-  <li>Create a new bitmap file 1024 pixels wide and 512 pixels high.</li>
-  <li>Paste the resized <code><i>airplane</i>_paint</code> into the left half of this bitmap.</li>
-  <li>Paste the resized <code><i>airplane</i>_paint2</code> into the right half of this bitmap.</li>
-  <li>Save the bitmap file in the same folder and with the same name as your <code>.blend</code> file. If you're making a CSL object then you must save in PNG format.</li>
-  <li>If your plane uses night-time textures then repeat this procedure for the <code>_LIT</code> bitmap files.</li>
-  <li>In a Blender <samp>UV/Image Editor</samp> window choose <samp>UVs &raquo; Merge _paint and _paint2</samp>.
-</ul>      
-<p>If your imported plane uses weapons or misc objects then each of
-these will use an additional bitmap file. Weapons are imported
-with their names starting with "<code>W<i>nn</i></code>" and objects
-with their names starting with "<code>O<i>nn</i></code>". Also note
-that reduced-LOD versions of weapons and misc objects may be present in
-layers 2 and 3.</p>
-<p>Open an
-<samp>Outliner</samp> window and choose <samp>View &raquo; Show Outliner</samp>. For each mesh that has a name starting with "<code>W<i>nn</i></code>" or "<code>O<i>nn</i></code>" or ending with "<code>*</code>", either:</p>
-<ul>
-  <li>Delete the mesh, or</li>
-  <li>Copy the required textures to an unused area in
-the primary bitmap file and use the <samp>UV Image Editor</samp>
-window to map the new copy of the textures to the mesh's faces.</li>
-</ul>
-<p>Consider performance issues when the plane is rendered in
-X-Plane. Ask yourself the following questions:</p>
-<ul>
-  <li>Most important: Do you really need fully detailed 1024x1024
-textures for your plane? Video memory is used up by terrain and
-object geometry and textures. Once you run out of video memory the GPU
-has to fall back to main memory, and this <u>really</u> slows things
-down. One 1024x1024 texture uses 4MB of video memory. Some people are
-running X-Plane on computers with only 32MB of video memory, so one
-1024x1024 texture at "extreme res" in X-Plane uses
-<small><sup>1</sup></small>/<small><sub>8</sub><sup>th</sup></small>
-of their video memory. Consider
-resizing the texture bitmap file in an image editor program to half
-or even quarter size. Use <samp>Image &raquo; Replace</samp> to use
-the new texture bitmap file.</li>
-  <li>Does the model have hidden faces? Some versions of X-Plane
-don't handle hidden faces in v7 scenery objects very well and they also
-a cause a small performance hit. Look for things like wings or misc
-bodies that are partially or wholly buried in the fuselage and delete
-any wholly hidden faces before exporting.</li>
-  <li>Do you really need all that detail? Consider deleting
-details like flap tracks, antennae etc before exporting. This
-especially goes for the lower <a href="XPlane2Blender.html#Level_Of_Detail">Level of Detail</a>
-versions of the plane in layers 2 and 3 which are only viewed in
-X-Plane from &gt;1000m and &gt;4000m respectively.</li>
-</ul>
-<h3>Creating 3D cockpits</h3>
-<p>X-Plane 3D cockpits are just normal v7 or v8 scenery objects.
-However cockpits can't contain multiple <a href="#Level_Of_Detail">Levels
-of Detail</a>, so only objects in Blender layer 1 are exported.
-If you want to keep objects in your Blender scene for reference but
-which you don't want to export - eg the plane fuselage - then put them
-in layer 4 or greater before exporting.</p>
-<p>Choose <samp>File &raquo; Save As</samp> and save
-the blender file in the same folder as your plane's <code>.acf</code>
-file with the name <code><i>airplane</i>_cockpit.blend</code>,
-where <i>airplane</i> is the name of your plane's <code>.acf</code>
-file.</p>
-<p>Normally you will want to import your plane into Blender to
-act as a reference and/or starting point for your cockpit. Delete any
-plane parts that you don't need in creating your cockpit - you only
-need to keep the fuselage itself plus any relevant Misc Bodies. After
-import, your cockpit uses the same texture file as your plane, ie <code><i>airplane</i>_paint</code>.
-Choose <samp>Image &raquo; Replace </samp> in a <samp>UV
-Image Editor</samp> window to use a different texture file, which
-can be named anything you like (but no spaces) and which should live in
-the same folder as your plane's <code>.acf</code> file.</p>
-<p>To construct moving cockpit instruments in X-Plane v8:</p>
-<ul>
-  <li>Layout the 2D panel in PlaneMaker as normal. But bear in
-mind that only the top 768 lines of the 2D panel can be used in the 3D
-cockpit in X-Plane versions prior to 8.20.</li>
-  <li>Run X-Plane and load your aircraft. Press the <samp style="font-weight: bold;">Up</samp> arrow to ensure
-that you're looking at the top of the 2D panel. Take a screenshot (on a
-PC press <samp style="font-weight: bold;">Alt&nbsp;PrtSc</samp>).</li>
-  <li>Load the screenshot into an image editor and change its
-size so that it's the same size as your 2D panel (typically 1024x1024)
-- don't resize the screenshot, just add blank space. Save the
-screenshot as <code>ScreenshotPanel.png</code> (or any
-filename ending in <code>*panel.*</code>) in the same
-folder as your plane's <code>.acf</code> file.</li>
-  <li>Use the <code>ScreenshotPanel.png</code>
-texture on those faces that you want to display moving cockpit
-instruments in X-Plane. (It's easier to use this screenshot texture
-instead of the real panel texture while editing in Blender, since the
-screenshot has instruments drawn on it). The screenshot file does not
-need to be distributed with your finished plane.</li>
-</ul>
-<p>Note that X-Plane versions prior to 8.20 only display the 3D
-cockpit when running at the default 1024x768 resolution. You may want
-to mention this in the Readme with your plane if your plane is
-intended to work in X-Plane versions prior to 8.20.</p>
 <h3>Optimising for X-Plane</h3>
 <h4><a name="strips"><font size="+1">v7: </font>Strips</a></h4>
 <p>As well as basic 3- and 4-edged faces ("<code>tri</code>"s
@@ -784,9 +796,8 @@ to change the Type from <samp>Float</samp> to <samp>String</samp>.</p>
   <li>Animated meshes etc are not parented to their armature's bones.</li>
   <li><code>smoke_black</code> and <code>smoke_white</code>
 X-Plane primitives are ignored.</li>
-  <li><code>blend</code>, <code>ambient</code>,
-    <code>difuse</code>, <code>specular</code>,
-    <code>emission</code> and <code>shiny</code> attributes are ignored.</li>
+  <li><code>ambient</code>, <code>blend</code> and
+<code>specular</code> attributes are ignored.</li>
   <li>The importer usually can't work out which faces are
 partially or wholly transparent. You should tell Blender which
 faces are transparent by pressing the <samp>Alpha</samp>
@@ -849,7 +860,7 @@ no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.28 &copy; 2004-2006
+      <td class="banner">Version 2.31 &copy; 2004-2006
       <a href="mailto:x-plane@marginal.org.uk">Jonathan
 Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>

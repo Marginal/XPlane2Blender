@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane CSL format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.28"
+__version__ = "2.31"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane CSL .obj
 format for use with XSquawkbox.
@@ -52,24 +52,21 @@ Limitations:<br>
 import Blender
 from XPlaneExport import OBJexport7, ExportError
 
-#------------------------------------------------------------------------
-if Blender.Window.EditMode():
-    Blender.Draw.PupMenu("Please exit Edit Mode first.")
-else:
-    baseFileName=Blender.Get('filename')
-    l = baseFileName.lower().rfind('.blend')
-    if l!=-1:
-        baseFileName=baseFileName[:l]
+if Blender.Window.EditMode(): Blender.Window.EditMode(0)
+baseFileName=Blender.Get('filename')
+l = baseFileName.lower().rfind('.blend')
+if l!=-1:
+    baseFileName=baseFileName[:l]
 
-    obj=OBJexport7(baseFileName+'.obj', __version__, True)
-    scene = Blender.Scene.getCurrent()
-    try:
-        obj.export(scene)
-    except ExportError, e:
-        Blender.Window.WaitCursor(0)
-        Blender.Window.DrawProgressBar(0, 'ERROR')
-        print "ERROR:\t%s\n" % e.msg
-        Blender.Draw.PupMenu("ERROR: %s" % e.msg)
-        Blender.Window.DrawProgressBar(1, 'ERROR')
-        if obj.file:
-            obj.file.close()
+obj=OBJexport7(baseFileName+'.obj', __version__, True)
+scene = Blender.Scene.getCurrent()
+try:
+    obj.export(scene)
+except ExportError, e:
+    Blender.Window.WaitCursor(0)
+    Blender.Window.DrawProgressBar(0, 'ERROR')
+    print "ERROR:\t%s\n" % e.msg
+    Blender.Draw.PupMenu("ERROR: %s" % e.msg)
+    Blender.Window.DrawProgressBar(1, 'ERROR')
+    if obj.file:
+        obj.file.close()
