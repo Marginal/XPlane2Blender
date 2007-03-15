@@ -1161,7 +1161,6 @@ class OBJexport7:
     def updateLayer(self, layer):
         # Layers
         if self.layermask!=1:
-            print layer, self.lod
             self.file.write("\nATTR_LOD\t%d %d\t// Layer %d\n\n" % (
                 self.lod[layer/2], self.lod[layer/2+1], layer/2+1))
         # Reset all attributes

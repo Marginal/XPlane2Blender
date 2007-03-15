@@ -270,24 +270,22 @@ def getDatarefs():
             exists(join(Blender.Get(sdir), 'DataRefs.txt'))):
             f=file(join(Blender.Get(sdir), 'DataRefs.txt'), 'rU')
             d=f.readline().split()
-            if len(d)!=7 or d[0]!='2':
-                raise err
+            if len(d)!=7 or d[0]!='2': raise err	# wtf?
             for line in f:
                 d=line.split()
                 if not d: continue
                 if len(d)<3:
                     raise err
                 l=d[0].rfind('/')
-                if l==-1:
-                    raise err
-                n=1
+                if l==-1: raise err
+                n=1					# scalar by default
                 for c in ['int', 'float', 'double']:
                     if d[1].lower().startswith(c):
                         if len(d[1])>len(c):
-                            n=int(d[1][len(c)+1:-1])
+                            n=int(d[1][len(c)+1:-1])	# is array
                         break
-                else:	# not a usable dataref
-                    n=0
+                else:
+                    n=0					# not a usable dataref
                 datarefs[d[0][l+1:]]=(d[0][:l+1], n)
             break
     else:

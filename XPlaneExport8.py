@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.33"
+__version__ = "2.34"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -104,7 +104,11 @@ Limitations:<br>
 #  - Fix for nested animation translations.
 #
 # 2006-10-03 v2.32
-#  - Fix for animations with duplicate hide/show values.
+#  - Fix for animations with duplicate show/hide values.
+#
+# 2006-12-04 v2.34
+#  - Fix for weird sim/weather datarefs.
+#  - ANIM_show/hide commands output in order found.
 #
 
 
@@ -453,12 +457,9 @@ class OBJexport8:
         Window.DrawProgressBar(0.9, 'Exporting 90% ...')
         n=len(indices)
         for i in range(0, n-9, 10):
-            self.file.write("IDX10\t")
-            for j in range(i, i+9):
-                self.file.write("%d " % indices[j])
-            self.file.write("%d\n" % indices[i+9])
-        for j in range(n-(n%10), n):
-            self.file.write("IDX\t%d\n" % indices[j])
+            self.file.write("IDX10\t"+' '.join([str(j) for j in indices[i:i+10]])+"\n")
+        for i in range(n-(n%10), n):
+            self.file.write("IDX\t%d\n" % indices[i])
 
         if self.slung:
             self.file.write("\nslung_load_weight\t%s\n" % self.slung)
@@ -988,7 +989,7 @@ class OBJexport8:
 
         # Turn Ons
         if self.group!=group:
-            self.file.write("%s####_group: %s\n" %(self.anim.ins(),group.name))
+            self.file.write("%s####_group\t%s\n" %(self.anim.ins(),group.name))
             
         if hard and self.hard!=hard:
             if hard==True:
@@ -1026,12 +1027,9 @@ class OBJexport8:
         for i in newa[len(olda):]:
             self.file.write("%sANIM_begin\n" % self.anim.ins())
             self.anim=i
-            for (d, v1, v2) in self.anim.hide:
-                self.file.write("%sANIM_hide\t%s %s\t%s\n" % (
-                    self.anim.ins(), v1, v2, d))
-            for (d, v1, v2) in self.anim.show:
-                self.file.write("%sANIM_show\t%s %s\t%s\n" % (
-                    self.anim.ins(), v1, v2, d))
+            for (sh, d, v1, v2) in self.anim.showhide:
+                self.file.write("%sANIM_%s\t%s %s\t%s\n" % (
+                    self.anim.ins(), sh, v1, v2, d))
             if self.anim.t and not (self.anim.t[0].equals(Vertex(0,0,0)) and self.anim.t[1].equals(Vertex(0,0,0))):
                 if self.anim.t[0].equals(self.anim.t[1]):
                     # save a potential accessor callback
@@ -1073,8 +1071,7 @@ class Anim:
         self.a=[]	# rotation angles (iff self.r)
         self.t=[]	# translation
         self.v=[0,1]	# dataref value
-        self.hide=[]	# hide values (name, v1, v2)
-        self.show=[]	# show values (name, v1, v2)
+        self.showhide=[]	# show/hide values (show/hide, name, v1, v2)
         self.anim=None	# parent Anim
 
         if not child:
@@ -1114,15 +1111,13 @@ class Anim:
                     digit=propname[propname.index(suffix)+7:]
                     if not digit.isdigit() or not int(digit)&1: continue
                     (ref, v)=self.getdataref(object, propname[:propname.index(suffix)], suffix[:-2], int(digit))
-                    if v:
-                        if suffix=='_hide_v': self.hide.append((ref,v[0],v[1]))
-                        else: self.show.append((ref,v[0],v[1]))
+                    if v: self.showhide.append((suffix[1:5],ref,v[0],v[1]))
 
         if not (object.getAction() and
                 object.getAction().getAllChannelIpos().has_key(bone.name)):
             print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
 
-            if (self.hide or self.show) and not bone.parent:
+            if self.showhide and not bone.parent:
                 # Create a dummy animation to hold hide/show values
                 self.dataref='no_ref'	# mustn't eval to False
                 self.t=[Vertex(0,0,0),Vertex(0,0,0)]
@@ -1259,9 +1254,9 @@ class Anim:
         l=name.find('.')
         if l!=-1: name=name[:l]
         name=name.strip()
-        l=name.find('[')
         # split name into ref & idx
-        if l!=-1:
+        l=name.find('[')
+        if l!=-1 and not name in datarefs:
             ref=name[:l].strip()
             idx=name[l+1:-1]
             if name[-1]!=']' or not idx or not idx.isdigit():
@@ -1286,6 +1281,7 @@ class Anim:
                         break
                     else:
                         raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s".' % (ref, object.name))
+
         if not dataref:
             if ref in datarefs:
                 (path, n)=datarefs[ref]
@@ -1332,7 +1328,7 @@ class Anim:
             len(self.r)!=len(b.r) or
             not self.anim.equals(b.anim)):
             return False
-        if self.hide!=b.hide or self.show!=b.show:
+        if self.showhide!=b.showhide:
             return False
         for i in range(len(self.r)):
             if not self.r[i].equals(b.r[i]):

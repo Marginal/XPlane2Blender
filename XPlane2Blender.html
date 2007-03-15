@@ -109,36 +109,38 @@ Mac OS X and which is found under "Utilities".</p>
 <p>You can now delete the temporary folder.</p>
 
 <h3>Importing objects</h3>
-<p><samp>File &raquo; Import &raquo; X-Plane Object</samp></p>
-<p>Select a <code>.obj</code> file. The scenery is
-imported at the "3d Cursor" position. Any problems with the import are
+<p>First, move the 3D Cursor to where you want the imported object
+to be placed. Usually you'll want the object to be placed at the origin so
+just press <samp style="font-weight: bold;">Shift&nbsp;C</samp>
+to centre the 3D Cursor at the origin.</p>
+<p>Choose <samp>File &raquo; Import &raquo; X-Plane Object</samp>,
+select a <code>.obj</code> file and press <samp>Import&nbsp;OBJ</samp>.</p>
+<p>The scenery is
+imported at the 3d Cursor position. Any problems with the import are
 reported in the Console window as lines starting "Warn" or "Error".</p>
-<p>The <code>.obj</code> file format doesn't
-preserve any information about which primitives belong together in the
-same mesh. So the script works quite hard to glue faces together into
-meshes for ease and speed of editing in Blender. This means that it can
-be <u>very</u> slow to import large scenery. You may find
-it helpful to manually merge some meshes together after importing; in
-"Object Mode" select the meshes you want to merge and choose <samp>Space
-&raquo; Object &raquo; Join Objects</samp>.</p>
-<p>You can import multiple scenery files and re-export them as a
+<p>You can import multiple <code>.obj</code> files and re-export them as a
 single file. But note that the X-Plane <code>.obj</code>
-scenery file format only supports the use of one texture bitmap, so
-you'll have to create a single larger texture bitmap file containg all
-required textures. Use <samp>UVs &raquo; Double bitmap size</samp>
-from the <samp>UV/Image Editor</samp> window to fix up
-texture mappings.</p>
+file format only supports the use of one texture file, so you'll have
+to create a single larger file containg all required textures.
+Use <samp>UVs &raquo; Double bitmap size</samp> from the
+<samp>UV/Image Editor</samp> window to fix up texture mappings.</p>
 <p>Armatures and bones are created for any <a href="#animation">animations</a>,
 but imported meshes are not parented to the bones - you'll have to parent
 the meshes manually. The armatures are created in "Rest Position" to make
 parenting easier.</p>
 
 <h3>Importing planes</h3>
-<p><samp>File &raquo; Import &raquo; X-Plane Plane or Weapon</samp></p>
-<p>Choose whether to import the plane or weapon so that the "reference point"
-is located at the cursor (for making cockpit & misc objects) or so that the
-"centre of gravity" is located at the cursor (for making CSLs and static
-scenery). Then select a <code>.acf</code> or <code>.wpn</code> file.
+<p>First, move the 3D Cursor to where you want the imported plane or weapon
+to be placed. Usually you'll want it to be placed at the origin so
+just press <samp style="font-weight: bold;">Shift&nbsp;C</samp>
+to centre the 3D Cursor at the origin.</p>
+<p>Choose <samp>File &raquo; Import &raquo; X-Plane Plane or Weapon</samp> and
+choose whether to import the plane or weapon so that the "reference point"
+is located at the 3D Cursor (for making cockpit & misc objects) or so that the
+"centre of gravity" is located at the 3D Cursor (for making CSLs and static
+scenery).</p>
+<p>Then select a <code>.acf</code> or <code>.wpn</code> file and press
+<samp>Import&nbsp;OBJ&nbsp;or&nbsp;WPN</samp>.
 Any problems with the import will be reported
 in the Console window as lines starting "Warn" or "Error".</p>
 <p>The script creates up to three versions of the plane or weapon in
@@ -154,13 +156,17 @@ as scenery or as a CSL object; see <a href="#Tweaking_planes">Tweaking
 planes</a> below.</p>
 
 <h3>Exporting objects</h3>
-<p>Save the <code>.blend</code> file in the aircraft or
-scenery folder where you want the <code>.obj</code> file to end up.</p>
-<samp>File &raquo; Export &raquo; X-Plane CSL Object</samp> or<br>
-<samp>File &raquo; Export &raquo; X-Plane v7 Object</samp> or<br>
-<samp>File &raquo; Export &raquo; X-Plane v8 Object</samp>
-<p>The output filename and location is the same as the current
-Blender filename, but with a <code>.obj</code> extension. 
+<p>First, choose <samp>File &raquo; Save As...</samp> and save the
+<code>.blend</code> file in the aircraft or
+scenery folder where you want the <code>.obj</code> file to end up.
+Then choose:
+<dl>
+  <dd><samp>File &raquo; Export &raquo; X-Plane CSL Object</samp> or</dd>
+  <dd><samp>File &raquo; Export &raquo; X-Plane v7 Object</samp> or</dd>
+  <dd><samp>File &raquo; Export &raquo; X-Plane v8 Object</samp></dd>
+</dl>
+<p>The object is exported in the same folder and with the same name
+as the current Blender file, but with a <code>.obj</code> extension. 
 Always check the Console window for messages reporting any problems
 with the export, which are displayed as lines starting "Warn" or
 "Error".</p>
@@ -195,22 +201,21 @@ and move the mouse to <u>r</u>otate the plane so that its
 undercarriage is sitting directly on the ground.
 Click to set the plane's position.</li>
 </ul>
-<p>The primary bitmap file for textures is named
+<p>The primary file for textures is named
 <code><i>airplane</i>_paint</code>.
-Most planes also use textures from a secondary bitmap file named
+Most planes also use textures from a secondary file named
 <code><i>airplane</i>_paint2</code>. Objects that use textures from
-the secondary bitmap file are imported with "<code>*</code>" after their
+the secondary file are imported with "<code>*</code>" after their
 name to make them easier to identify in Blender's <samp>Outliner</samp>
 window.</p>
-<p>The X-Plane <code>.obj</code> scenery file formats only
-support the use of a single bitmap file, up to 1024x1024 in size, for textures.
-If your plane only has a few
-simple objects that use textures from <code><i>airplane</i>_paint2</code>
-then you should re-texture these objects to use
-<code><i>airplane</i>_paint</code>, following the same procedure
+<p>The X-Plane <code>.obj</code> scenery file formats only support the use
+of a single file for textures, up to 1024x1024 pixels in size.
+If your plane only has a few simple objects that use textures from
+<code><i>airplane</i>_paint2</code> then you should re-texture these objects
+to use <code><i>airplane</i>_paint</code>, following the same procedure
 described below for weapons and misc objects. If that is not feasible
 you can use this procedure to make the plane use textures from a single
-bitmap file:</p>
+file:</p>
 <ul>
   <li>Save your Blender model.</li>
   <li>In an image editor program, resize <code><i>airplane</i>_paint</code>
@@ -248,10 +253,9 @@ down. One 1024x1024 texture uses 4MB of video memory. Some people are
 running X-Plane on computers with only 32MB of video memory, so one
 1024x1024 texture at "extreme res" in X-Plane uses
 <small><sup>1</sup></small>/<small><sub>8</sub><sup>th</sup></small>
-of their video memory. Consider
-resizing the texture bitmap file in an image editor program to half
-or even quarter size. Use <samp>Image &raquo; Replace</samp> to use
-the new texture bitmap file.</li>
+of their video memory. Consider resizing the texture file in an image
+editor program to half or even quarter size.
+Use <samp>Image &raquo; Replace</samp> to use the new texture file.</li>
   <li>Does the model have hidden faces? Some versions of X-Plane
 don't handle hidden faces in v7 scenery objects very well and they also
 a cause a small performance hit. Look for things like wings or misc
@@ -315,7 +319,7 @@ intended to work in X-Plane versions prior to 8.20.</p>
 You can use other Blender object types, <i>eg</i> Curves and Surfaces,
 to construct your scenery as long as you convert them to meshes before
 exporting to X-Plane.</p>
-<h4><a name="lamps">Lamps</h4>
+<h4><a name="lamps">Lamps</a></h4>
 <ul>
   <li>Only Lamp objects of type "Lamp" are exported to X-Plane. Lamp objects
 of types "Area", "Spot", "Semi" and "Hemi" are ignored (and so can be
@@ -324,9 +328,11 @@ used to illuminate your model in Blender).</li>
     <dl>
       <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
       <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
-      <dd><code>Pulse</code>, <code>Strobe</code>, <code>Traffic</code> - As for X-Plane v7 objects. (R,G,B settings are ignored).</dd>
-      <dd><i>other</i> - X-Plane pre-defined "named" light. (Supported by X-Plane 8.50 and later. R,G,B settings are ignored). The name of the X-Plane light is taken from the value of a <a href="#properties">property</a> named <code>name</code> if this exists, otherwise from the name of the lamp object.</dd>
-    </dl>
+      <dd><code>Pulse</code>, <code>Strobe</code>, <code>Traffic</code> -
+As for X-Plane v7 objects. (R,G,B settings are ignored).</dd>
+      <dd><i>other</i> -
+X-Plane pre-defined "named" light. (Supported by X-Plane 8.50 and later. R,G,B settings are ignored). The name of the X-Plane light is taken from the value of a <a href="#properties">property</a> named <code>name</code> if this exists, otherwise from the name of the lamp object.</dd>
+    </dl></li>
   <li>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v7 object:
     <dl>
       <dd><code>Flash</code> - Flashing light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
@@ -334,7 +340,7 @@ used to illuminate your model in Blender).</li>
       <dd><code>Strobe</code> or <code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
       <dd><code>Traffic</code> - Cycles red, orange, green. (R,G,B settings are ignored).</dd>
       <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
-    </dl>
+    </dl></li>
   <li>Lamp objects with certain names have special behaviours when exported to
 an X-Plane CSL object. The XSquawkBox documentation strongly recommends
 using these special lights rather than normal lights:
@@ -361,52 +367,52 @@ This is useful when using multiple faces to simulate a curved surface.
 Go to "Object Mode", select the mesh and press <samp>Set Smooth</samp>.
 The effect is only visible in Blender <samp>3D View</samp>
 windows when the <samp>Viewport Shading</samp> button is
-set to <samp>Solid</samp> or <samp>Shaded</samp>.</li>
-	<div><samp style="font-weight: bold;">v7: </samp>Only faces that
+set to <samp>Solid</samp> or <samp>Shaded</samp>.<br>
+      <samp style="font-weight: bold;">v7: </samp>Only faces that
 are part of a <a href="#strips">Strip</a> will be smoothed when displayed
-in X-Plane.</div>
+in X-Plane.</li>
     </ul>
   </li>
   <li>In the <samp>Texture Face</samp> Editing panel (<samp style="font-weight: bold;">F9</samp>) available in <samp>UV Face Select</samp> mode:
     <ul>
-      <li><samp>Tex</samp> button controls whether
-the face has a texture. Create a <code>.bmp</code> or <code>.png
-        </code>file in an image editor program and save it in the<code>
-custom object textures </code>folder for scenery, or in the same folder
-as the <code>.acf</code> file for cockpits. Height and width
-must be powers of two (eg 256, 512, etc) but the bitmap doesn't have
-to be square.
-Draw all the textures required by the scenery onto it. Areas of the
-texture that are coloured magenta or that have Alpha transparency (png
-files only) will be transparent when displayed in X-Plane. Use the <samp>UV
-Image Editor</samp> window to control mapping of the texture
-bitmap to the face.</li>
+      <li><samp>Tex</samp> button controls whether the face has a texture:<br>
+In an image editor application create one texture file that is like a
+"<a href="http://en.wikipedia.org/wiki/Collage" target="_blank">collage</a>"
+of all of the textures that you need in your model. 
+The height and width of the texture file must be powers of two
+(<i>eg</i> 128, 256, 512, 1024) but it doesn't have to be square.
+(See ...<code>/Custom&nbsp;Scenery/KSBD&nbsp;Demo&nbsp;Area/KSBD_example.png</code> for a basic example).<br>
+Save the texture file in 32bit or 24bit PNG format (<i>ie</i> with or
+without an "Alpha" channel) in the aircraft or scenery folder where you
+want the X-Plane <code>.obj</code> file to end up.<br>
+Use the <samp>UV Image Editor</samp> window to control mapping of the textures
+to the face.</li>
       <li><samp>Tiles</samp> button controls whether
 the face is rendered with "polygon offsetting" (<code>ATTR_poly_os</code>)
 in X-Plane. Use this for faces that lie horizontally on the ground to
 prevent artifacts in X-Plane. Don't press this button for other faces.
 For best results you should ensure that objects that use polygon
 offsetting are listed first in your <code>.env</code> or
-<code>.dsf</code> scenery file.</li>
-	<div><samp style="font-weight: bold;">v7: </samp>"polygon offsetting" does not produce reliable results in X-Plane versions prior to 8.20.</div>
-	<div><samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</div>
+<code>.dsf</code> scenery file.<br>
+      <samp style="font-weight: bold;">v7: </samp>"polygon offsetting" does not produce reliable results in X-Plane versions prior to 8.20.<br>
+      <samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</li>
       <li><samp>Collision</samp> button indicates
 that the face is <u>not</u> "hard" (ie not "landable on")
 in X-Plane. Making faces hard is very expensive, so this button should
 normally be pressed. Unpress this button only for things like
 helicopter landing pads. <small>(Note: The meaning of this
 button was changed in v1.50. Use <a href="http://marginal.org.uk/x-planescenery/collide.txt">this</a>
-script to turn the Collision button back on for all faces).</small></li>
-        <div><samp style="font-weight: bold;">v8: </samp>You can specify
-the type of hard surface. Add a <a href="#properties">property</a> named <code>surface</code> and give it the value <code>water</code>, <code>concrete</code>, <code>asphalt</code>, <code>grass</code>, <code>dirt</code>, <code>gravel</code>, <code>lakebed</code>, <code>snow</code>, <code>shoulder</code> or <code>blastpad</code>. The surface type is ignored by X-Plane versions prior to 8.50.</div>
-        <div><samp style="font-weight: bold;">v7: </samp>Only faces with
-4 edges (ie "<code>quads</code>") are exported as "hard".</div>
-        <div><samp style="font-weight: bold;">v7: </samp>X-Plane
+script to turn the Collision button back on for all faces).</small><br>
+      <samp style="font-weight: bold;">v8: </samp>You can specify
+the type of hard surface. Add a <a href="#properties">property</a> named <code>surface</code> and give it the value <code>water</code>, <code>concrete</code>, <code>asphalt</code>, <code>grass</code>, <code>dirt</code>, <code>gravel</code>, <code>lakebed</code>, <code>snow</code>, <code>shoulder</code> or <code>blastpad</code>. The surface type is ignored by X-Plane versions prior to 8.50.<br>
+      <samp style="font-weight: bold;">v7: </samp>Only faces with
+4 edges (ie "<code>quads</code>") are exported as "hard".<br>
+      <samp style="font-weight: bold;">v7: </samp>X-Plane
 versions prior to 8.20 have a bug where <code>.obj</code>
 files that contain hard faces must be placed in WorldMaker with an
 "object heading" of 0. Otherwise the "hard" part of the surface ends
-up in the wrong place.</div>
-	<div><samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</div>
+up in the wrong place.<br>
+      <samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</li>
       <li><samp>Twoside</samp> button controls whether one or both sides
 of the face are displayed. Unless you need a lot of double-sided faces it
 is cheaper to use two single-sided faces back-to-back instead.</li>
@@ -430,14 +436,14 @@ Only a few of the Blender's many material buttons affect X-Plane:
     <ul>
       <li><samp>Col</samp> button and <samp>R</samp>, <samp>G</samp>, <samp>B</samp> sliders on the <samp>Materials</samp> panel control the
 diffuse colour of the faces. X-Plane combines the colours that are
-specified by the texture bitmap (if any) with this setting.
+specified by the texture (if any) with this setting.
 The default X-Plane setting is
 <code>1</code>, <code>1</code>, <code>1</code> (white).
 However the default setting of a new material in Blender is
 <code>0.8</code>, <code>0.8</code>, <code>0.8</code>.
 You should almost always set this to
 <code>1</code>, <code>1</code>, <code>1</code>
-and control the face colours using only the texture bitmap.</li>
+and control the face colours using only the texture.</li>
       <li><samp>Spec</samp> slider on the <samp>Shaders</samp> panel
 controls the specularity (shininess) of the faces.
 The default X-Plane setting is 0 (matt).
@@ -469,7 +475,7 @@ in its mesh and must not have a texture assigned to it.</p>
 <samp>B</samp> sliders on the <samp>Materials</samp> panel to control
 the colour of the line.
 Faces not linked to a material will be exported coloured grey.</p>
-<h4><a name="animation"><font size="+1">v8: </font>Animation</h4>
+<h4><a name="animation"><font size="+1">v8: </font>Animation</a></h4>
 <p>You can make lamps, meshes and lines animate in X-Plane
 according to the value of any of the simulator datarefs
 listed <a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">here</a>
@@ -541,7 +547,7 @@ the same dataref in multiple "show" and "hide" properties; name the
 subsequent pairs of properties <code><i>dataref</i>_hide_v3</code> and
 <code><i>dataref</i>_hide_v4</code> etc.</p>
 <div style="margin-left: 40px;">
-<table style="text-align: left;" border="0"; cellspacing="4">
+<table style="text-align: left;" border="0" cellspacing="4">
   <caption>Summary of animation <a href="#properties">properties</a></caption>
   <thead>
     <tr>
@@ -627,12 +633,12 @@ drawn by assigning them to "Groups" on the <samp>Object and links</samp>
 panel (<samp style="font-weight: bold;">F7</samp>):</p>
 <ul>
   <li>Objects that don't belong to a group are drawn first.</li>
-  <li>The groups are sorted by alphabetical order, and then</li>
-  <ul>
-    <li>objects that belong to the first group are drawn next.</li>
-    <div>...</div>
-    <li>objects that belong to the last group are drawn last.</li>
-  </ul>
+  <li>The groups are sorted by alphabetical order, and then
+    <ul>
+      <li>objects that belong to the first group are drawn next.<br>
+      ...</li>
+      <li>objects that belong to the last group are drawn last.</li>
+    </ul></li>
 </ul>
 <p><i>eg</i> in the case of the cockpit with transparent canopy and HUD,
 we could put the canopy and HUD into separate groups named <code>GroupA</code>
@@ -666,7 +672,7 @@ named <code>group_terrain</code>, <code>group_beaches</code>, <code>group_should
 <p><i>eg</i> to make X-Plane draw your object at the same time that it
 draws runway markings add a property named <code>group_markings</code>
 to an Empty object and give it the value <code>0</code>.</p>
-<h4><font size="+1">v8: </font>Slung load weight</a></h4>
+<h4><font size="+1">v8: </font>Slung load weight</h4>
 <p>You can specify the weight of an object for use in X-Plane's physics
 engine if the object is being carried by a plane or helicopter:</p>
 <ul>
@@ -688,10 +694,8 @@ frame rates.</p>
 one of these strips, the following conditions need to be true:</p>
 <ol>
   <li>The faces must be facing the same way.</li>
-  <li>Each pair of faces must share a common edge (apart from the
-first and last face).</li>
-  <li>Each shared edge must have the same texture bitmap
-co-ordinates in both faces.</li>
+  <li>Each pair of faces must share a common edge (apart from the first and last face).</li>
+  <li>Each shared edge must have the same texture co-ordinates in both faces.</li>
 </ol>
 <p>In practice this means that the texture must be reversed in
 alternate faces in the strip. In the case of tris this can also be
@@ -727,7 +731,7 @@ at the following distances:</p>
     <tr>
       <th style="text-decoration: underline;">Layer</td>
       <th></th>
-      <th style="text-decoration: underline;">Distance</td>
+      <th style="text-decoration: underline;">Distance</th>
     </tr>
   </thead>
   <tbody>
@@ -818,7 +822,7 @@ If not corrected manually this can create shadow effects in XSquawkBox.</li>
 &raquo; Import &raquo; X-Plane Object</samp> to import
 cockpits.</li>
   <li>Planes (and their weapons, misc objects and cockpit objects)
-use multiple texture bitmap files. These are not automagically merged
+use multiple texture files. These are not automagically merged
 into one file during the import.</li>
   <li>The importer can't work out which faces are partially or
 wholly transparent. You should tell Blender which faces are transparent
@@ -829,10 +833,10 @@ Face Select</samp> mode after import.</li>
 <h4>Export object</h4>
 <ul>
   <li>Only Lamps and Mesh Faces (including "lines") are exported.</li>
-  <li>All faces must share a single texture bitmap file (this is
+  <li>All faces must share a single texture file (this is
 a limitation of the X-Plane <code>.obj</code> file
 formats) apart from cockpit panel faces which can additionally use the
-cockpit panel bitmap file. Multiple textures are not automagically
+cockpit panel texture. Multiple texture files are not automagically
 merged into one file during the export.</li>
 </ul>
 <h3>Problems</h3>
@@ -861,9 +865,9 @@ no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.33 &copy; 2004-2006
+      <td class="banner">Version 2.34 &copy; 2004-2006
       <a href="mailto:x-plane@marginal.org.uk">Jonathan
-Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
+Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
   </tbody>
 </table>

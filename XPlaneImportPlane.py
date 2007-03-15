@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.33"
+__version__ = "2.34"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -118,6 +118,13 @@ Limitations:<br>
 #
 # 2006-09-29 v2.31
 #  - Hack for v8 weapons.
+#
+# 2006-10-16 v2.33
+#  - Support for importing planes centred at the plane's centre of
+#    gravity (for making CSLs for use with recent versions of X-IvAp).
+#
+# 2006-12-21 v2.34
+#  - Add support for v8.60 format planes (no visible changes).
 #
 
 import sys
@@ -521,26 +528,29 @@ class ACFimport:
         self.meshcache[p]=[]
 
         # Find four points - leading root & tip, trailing tip & root
+        rootinc=RotationMatrix(wing.incidence[0]*wing.lat_sign, 3, 'x')
         if istip:
             # Don't want to rotate to find wing sweep. So find tip manually.
             tip=Vertex(RotationMatrix(wing.lat_sign*wing.sweep1, 3, 'z') *
                        Vector([wing.lat_sign*wing.semilen_SEG*self.scale,0,0]))
-            v=[Vertex(0.0,    wing.Croot*self.scale/4,         0.0),
-               Vertex(tip.x,  wing.Ctip *self.scale/4  +tip.y, tip.z),
-               Vertex(tip.x, -wing.Ctip *self.scale*3/4+tip.y, tip.z),
-               Vertex(0.0,   -wing.Croot*self.scale*3/4,       0.0)]
+            tiplen=wing.Ctip
+            tipinc=RotationMatrix(wing.incidence[wing.els-1]*wing.lat_sign, 3, 'x')
+            v=[Vertex(rootinc*Vector([0.0,  wing.Croot*self.scale/4,   0.0])),
+               Vertex( tipinc*Vector([0.0,  wing.Ctip *self.scale/4,   0.0]))+tip,
+               Vertex( tipinc*Vector([0.0, -wing.Ctip *self.scale*3/4, 0.0]))+tip,
+               Vertex(rootinc*Vector([0.0, -wing.Croot*self.scale*3/4, 0.0]))]
         else:
             # Get tip from child's root so segments line-up exactly
             # XXX Todo: Make mid-chord vertices line-up also
             (tip,t2)=self.wingc[child]
             tip=(tip-centre).toVector(4) * RotationMatrix(wing.lat_sign*
                                                           wing.dihed1, 4, 'y')
-            v=[Vertex(0.0,    wing.Croot*self.scale/4,         0.0),
-               Vertex(tip.x,  self.acf.wing[child].Croot*self.scale/4  +tip.y,
-                      tip.z),
-               Vertex(tip.x, -self.acf.wing[child].Croot*self.scale*3/4+tip.y,
-                      tip.z),
-               Vertex(0.0,   -wing.Croot*self.scale*3/4,       0.0)]
+            tiplen=self.acf.wing[child].Croot
+            tipinc=RotationMatrix(self.acf.wing[child].incidence[0]*self.acf.wing[child].lat_sign, 3, 'x')
+            v=[Vertex(rootinc*Vector([0.0,  wing.Croot*self.scale/4,                   0.0])),
+               Vertex( tipinc*Vector([0.0,  self.acf.wing[child].Croot*self.scale/4,   0.0]))+tip,
+               Vertex( tipinc*Vector([0.0, -self.acf.wing[child].Croot*self.scale*3/4, 0.0]))+tip,
+               Vertex(rootinc*Vector([0.0, -wing.Croot*self.scale*3/4,                 0.0]))]
 
         rv=v
         lv=[v[3], v[2], v[1], v[0]]
@@ -624,7 +634,7 @@ class ACFimport:
             self.addFacePart(mesh, rv, ruv, chord2,   1,        rwidth, twidth,
                              image)
             self.addFacePart(mesh, lv, luv, 0,        1-chord2, rwidth, twidth,
-                             image)
+                             image, False)	# sharp edge required
             self.addFacePart(mesh, lv, luv, 1-chord2, 1-chord1, rwidth, twidth,
                              image)
             self.addFacePart(mesh, lv, luv, 1-chord1, 1,        rwidth, twidth,
@@ -668,8 +678,8 @@ class ACFimport:
             return
         
         mesh=NMesh.New(name+ACFimport.LAYER2MKR+imagemkr)
-        self.addFace(mesh, rv, ruv, image)
-        self.addFace(mesh, lv, luv, image)
+        self.addFace(mesh, rv, ruv, image, False)
+        self.addFace(mesh, lv, luv, image, False)
         self.meshcache[p].append(mesh)
         self.addMesh(mesh.name, mesh, ACFimport.LAYER2, mm)
 
@@ -690,18 +700,19 @@ class ACFimport:
                 ACFimport.THRESH3 * ACFimport.THRESH3):
                 return
 
-            rv=[Vertex(0.0,    self.acf.wing[rootp].Croot*self.scale/4,   0.0),
-                Vertex(tip.x,  wing.Ctip *self.scale/4  +tip.y,           tip.z),
-                Vertex(tip.x, -wing.Ctip *self.scale*3/4+tip.y,           tip.z),
-                Vertex(0.0,   -self.acf.wing[rootp].Croot*self.scale*3/4, 0.0)]
+            rootwing=self.acf.wing[rootp]
+            rootinc=RotationMatrix(rootwing.incidence[0]*rootwing.lat_sign, 3, 'x')
+            tipinc=RotationMatrix(wing.incidence[wing.els-1]*wing.lat_sign, 3, 'x')
+            rv=[Vertex(rootinc*Vector([0.0,  rootwing.Croot*self.scale/4,   0.0])),
+                Vertex( tipinc*Vector([0.0,  wing.Ctip     *self.scale/4,   0.0]))+tip,
+                Vertex( tipinc*Vector([0.0, -wing.Ctip     *self.scale*3/4, 0.0]))+tip,
+                Vertex(rootinc*Vector([0.0, -rootwing.Croot*self.scale*3/4, 0.0]))]
             lv=[rv[3], rv[2], rv[1], rv[0]]
-
             mm=TranslationMatrix((self.offset + root).toVector(4))
 
-
         mesh=NMesh.New(name+ACFimport.LAYER3MKR+imagemkr)
-        self.addFace(mesh, rv, ruv, image)
-        self.addFace(mesh, lv, luv, image)
+        self.addFace(mesh, rv, ruv, image, False)
+        self.addFace(mesh, lv, luv, image, False)
         self.meshcache[p].append(mesh)
         self.addMesh(mesh.name, mesh, ACFimport.LAYER3, mm)
 
@@ -1649,7 +1660,7 @@ class ACFimport:
 
 
     #------------------------------------------------------------------------
-    def addFace(self, mesh, fv, fuv, image, dbl=0):
+    def addFace(self, mesh, fv, fuv, image, remdbl=True):
 
         # Remove any duplicate vertices
         v=[]
@@ -1667,16 +1678,14 @@ class ACFimport:
         face=NMesh.Face()
         face.mode |= NMesh.FaceModes.TEX|NMesh.FaceModes.DYNAMIC
         face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TILES)
-        if dbl:
-            face.mode |= NMesh.FaceModes.TWOSIDE
+        #if dbl:
+        #    face.mode |= NMesh.FaceModes.TWOSIDE
         #face.transp=NMesh.FaceTranspModes.ALPHA
         face.smooth=1
         
         for rv in v:
             for nmv in mesh.verts:
-                if rv.equals(Vertex(nmv.co[0],
-                                    nmv.co[1],
-                                    nmv.co[2])):
+                if remdbl and rv.equals(Vertex(nmv.co[0],nmv.co[1],nmv.co[2])):
                     nmv.co[0]=(nmv.co[0]+rv.x)/2
                     nmv.co[1]=(nmv.co[1]+rv.y)/2
                     nmv.co[2]=(nmv.co[2]+rv.z)/2
@@ -1698,7 +1707,7 @@ class ACFimport:
     
 
     #------------------------------------------------------------------------
-    def addFacePart(self, mesh, v, uv, c1, c2, rw, tw, image):
+    def addFacePart(self, mesh, v, uv, c1, c2, rw, tw, image, remdbl=True):
 
         if c1==0 or c1==1:
             nr1=0
@@ -1714,21 +1723,23 @@ class ACFimport:
             nr2=rw
             nt2=tw
 
+        vr=v[3]-v[0]
+        vt=v[2]-v[1]
         croot=v[3].y-v[0].y
         ctip=v[2].y-v[1].y
         
-        # assumes normal.x == 0 for simplicity
-        nv=[v[0] + Vertex(0, croot*c1, croot*nr1),
-            v[1] + Vertex(0, ctip *c1, ctip *nt1),
-            v[1] + Vertex(0, ctip *c2, ctip *nt2),
-            v[0] + Vertex(0, croot*c2, croot*nr2)]
+        # assumes normal is up (ie no incidence) for simplicity
+        nv=[v[0] + vr*c1 + Vertex(0, 0, croot*nr1),
+            v[1] + vt*c1 + Vertex(0, 0, ctip *nt1),
+            v[1] + vt*c2 + Vertex(0, 0, ctip *nt2),
+            v[0] + vr*c2 + Vertex(0, 0, croot*nr2)]
 
         nuv=[UV(uv[0].s+(uv[3].s-uv[0].s)*c1, uv[0].t),
              UV(uv[1].s+(uv[2].s-uv[1].s)*c1, uv[1].t),
              UV(uv[1].s+(uv[2].s-uv[1].s)*c2, uv[1].t),
              UV(uv[0].s+(uv[3].s-uv[0].s)*c2, uv[0].t)]
             
-        self.addFace(mesh, nv, nuv, image)
+        self.addFace(mesh, nv, nuv, image, remdbl)
 
 
     #------------------------------------------------------------------------
@@ -3121,6 +3132,8 @@ xstruct, "part[95]",
 xstruct, "gear[10]",
 xstruct, "watt[24]",	# was after sbrk, but is actually here!
 xstruct, "door[24]",	# doorstruct used for speedbrakes and doors!
+#struct, "objs[24]",	# Misc Objects - >=8.40
+# Unknown other stuff here in >=8.60
     ]
     acf810=acf8000
     acf815=acf8000
@@ -3129,6 +3142,7 @@ xstruct, "door[24]",	# doorstruct used for speedbrakes and doors!
     acf840.extend([
 xstruct, "objs[24]",	# Misc Objects
     ])
+    acf860=acf840
 
     engn8000 = [
 xint, "engn_type",
@@ -3158,6 +3172,7 @@ xflt, "bladesweep[10]",
     engn815=engn8000
     engn830=engn8000
     engn840=engn8000
+    engn860=engn8000
 
     wing8000 = [
 xint, "is_left",
@@ -3255,6 +3270,7 @@ xflt, "overflow_dat[100]",
     wing815=wing810
     wing830=wing810
     wing840=wing810
+    wing860=wing810
 
     part8000 = [
 xint, "part_eq",
@@ -3298,6 +3314,7 @@ xchr, "locked[20][18]",
     part815=part8000
     part830=part8000
     part840=part8000
+    part860=part8000
 
     gear8000=[
 xint, "gear_type",
@@ -3332,6 +3349,7 @@ xflt, "z_nodef",
     gear815=gear8000
     gear830=gear8000
     gear840=gear8000
+    gear860=gear8000
 
     watt8000=[
 xchr, "watt_name[40]",
@@ -3348,6 +3366,7 @@ xflt, "watt_phi",
     watt815=watt8000
     watt830=watt8000
     watt840=watt8000
+    watt860=watt8000
 
     door8000=[
 xint, "type",
@@ -3372,6 +3391,7 @@ xflt, "out_t2",
     door815=door8000
     door830=door8000
     door840=door8000
+    door860=door8000
 
     objs840=[	# same as watt. variable names may not match Laminar's
 xchr, "obj_name[40]",
@@ -3384,6 +3404,7 @@ xflt, "obj_the",
 xflt, "obj_z",
 xflt, "obj_phi",
     ]
+    objs860=objs840
     
 # Derived from WPN740.def by Stanislaw Pusep
 #   http://sysd.org/xplane/acftools/WPN740.def
@@ -3641,7 +3662,7 @@ class ACF:
             else:
                 acffile.close()
                 raise ParseError("This is a %4.2f format plane! Please re-save it in PlaneMaker 7.63." % (self.HEADER_version/100.0))
-        elif self.HEADER_version in [8000,810,815,830,840]:
+        elif self.HEADER_version in [8000,810,815,830,840,860]:
             defs=eval("DEFfmt.acf%s" % self.HEADER_version)
         else:
             acffile.close()
@@ -3842,6 +3863,7 @@ class v7wing:
         self.semilen_JND=acf.PARTS_semilen_JND[v7]
         self.dihed1=acf.PARTS_dihed1[v7]
         self.sweep1=acf.PARTS_sweep1[v7]
+        self.incidence=acf.PARTS_incidence[v7]
         self.inc_vect=acf.PARTS_inc_vect[v7]
 
 class v7part:
@@ -4000,6 +4022,7 @@ def file_callback (filename):
 #------------------------------------------------------------------------
 
 opt=Blender.Draw.PupMenu("Cursor location:%t|Reference point (for cockpit & misc objects)|Centre of gravity (for CSLs & static scenery)")
+print opt
 if opt==1:
     relocate=False
     Blender.Window.FileSelector(file_callback, "Import ACF or WPN")

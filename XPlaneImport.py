@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.33"
+__version__ = "2.34"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -263,11 +263,12 @@ class Token:
     ANIM_TRANS	= 51
     ALPHA	= 52
     NO_ALPHA	= 53
-    LIGHT_NAMED = 54
-    LIGHT_CUSTOM= 55
-    LAYER_GROUP = 56
-    ANIM_SHOW	= 57
-    ANIM_HIDE	= 58
+    GROUP	= 54
+    LIGHT_NAMED = 55
+    LIGHT_CUSTOM= 56
+    LAYER_GROUP = 57
+    ANIM_SHOW	= 58
+    ANIM_HIDE	= 59
     END		= 99
     NAMES = [
         "",
@@ -327,6 +328,7 @@ class Token:
         "ANIM_trans",
         "####_alpha",
         "####_no_alpha",
+        "####_group",
         # 8.50+
         "LIGHT_NAMED",
         "LIGHT_CUSTOM",
@@ -803,6 +805,8 @@ class OBJimport:
     def getCR(self):
         while 1:
             c = self.file.read(1)
+            if not c:
+                return Token.END
             if c in self.whitespace:
                 if c == '\n':
                     self.lineno += 1
@@ -813,6 +817,8 @@ class OBJimport:
         input=c
         while 1:
             c = self.file.read(1)
+            if not c:
+                return Token.END
             if c == '\n':
                 self.lineno += 1
                 pos=self.file.tell()
@@ -969,7 +975,7 @@ class OBJimport:
                         ob.drawSize=0.1
                         #ob.drawMode=2	# 2=OB_PLAINAXES
                         if self.drawgroup:
-                            ob.addProperty("group %s" % self.drawgroup[0],
+                            ob.addProperty("group_%s" % self.drawgroup[0],
                                            self.drawgroup[1])
                         if self.slung:
                             ob.addProperty("slung_load_weight", self.slung)

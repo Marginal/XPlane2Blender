@@ -1,4 +1,4 @@
-2 850 Fri Sep 22 21:20:59 2006
+2 860 Sat Dec  2 17:55:36 2006
 
 sim/aircraft/acf_struct	int[10]	y	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
@@ -125,36 +125,36 @@ sim/aircraft/prop/acf_bladesweep	float[80]	y	???	blade sweep for scimitar props
 sim/aircraft/prop/acf_des_rpm_prp	float[8]	y	???	design point
 sim/aircraft/prop/acf_des_kts_prp	float[8]	y	???	design point
 sim/aircraft/prop/acf_des_kts_acf	float[8]	y	???	design point
-sim/aircraft/prop/acf_part_eq	int[73]	y
+sim/aircraft/prop/acf_part_eq	int[95]	y	???	[PART]
 sim/aircraft/parts/acf_Rafl0	byte[2920]	y	string[40]	array of airfoil names, per part
 sim/aircraft/parts/acf_Rafl1	byte[2920]	y	string[40]	file, not path
 sim/aircraft/parts/acf_Tafl0	byte[2920]	y	string[40]	file, not path
 sim/aircraft/parts/acf_Tafl1	byte[2920]	y	string[40]	file, not path
-sim/aircraft/parts/acf_els	int[73]	y
-sim/aircraft/parts/acf_Xarm	float[73]	y
-sim/aircraft/parts/acf_Yarm	float[73]	y
-sim/aircraft/parts/acf_Zarm	float[73]	y
-sim/aircraft/parts/acf_X_body_aero	float[73]	y	???	body aero center offset from it's reference
-sim/aircraft/parts/acf_Y_body_aero	float[73]	y	???	used for force build-up
-sim/aircraft/parts/acf_Z_body_aero	float[73]	y
-sim/aircraft/parts/acf_Croot	float[73]	y
-sim/aircraft/parts/acf_Ctip	float[73]	y
-sim/aircraft/parts/acf_dihed1	float[73]	y
-sim/aircraft/parts/acf_sweep1	float[73]	y
-sim/aircraft/parts/acf_sweep2	float[73]	y
-sim/aircraft/parts/acf_sweepnow	float[73]	y
+sim/aircraft/parts/acf_els	int[73]	y	???	[WING]
+sim/aircraft/parts/acf_Xarm	float[73]	y	???	[GEAR]
+sim/aircraft/parts/acf_Yarm	float[73]	y	???	[GEAR]
+sim/aircraft/parts/acf_Zarm	float[73]	y	???	[GEAR]
+sim/aircraft/parts/acf_X_body_aero	float[95]	y	???	[PART] body aero center offset from it's reference
+sim/aircraft/parts/acf_Y_body_aero	float[95]	y	???	[PART] used for force build-up
+sim/aircraft/parts/acf_Z_body_aero	float[95]	y	???	[PART]
+sim/aircraft/parts/acf_Croot	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_Ctip	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_dihed1	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_sweep1	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_sweep2	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_sweepnow	float[73]	y	???	[WING]
 sim/aircraft/parts/acf_varsweepEQ	int	y	???	NOTE : This used to be i57 in v6 - eliminated in 832 - now per-wing
-sim/aircraft/parts/acf_semilen_SEG	float[73]	y	???	semilen this segment only
-sim/aircraft/parts/acf_semilen_JND	float[73]	y	???	semilen of the JOINED wing segments, all JOINED SEGMENTS, for AR and CDi and ground effect, etc.
-sim/aircraft/parts/acf_e	float[73]	y
-sim/aircraft/parts/acf_AR	float[73]	y
-sim/aircraft/parts/acf_al_D_al0	float[73]	y
-sim/aircraft/parts/acf_cl_D_cl0	float[73]	y
-sim/aircraft/parts/acf_cm_D_cm0	float[73]	y
-sim/aircraft/parts/acf_delta_fac	float[73]	y
-sim/aircraft/parts/acf_spec_wash	float[73]	y
-sim/aircraft/parts/acf_alpha_max	float[73]	y
-sim/aircraft/parts/acf_slat_effect	float[73]	y
+sim/aircraft/parts/acf_semilen_SEG	float[73]	y	???	[WING] semilen this segment only
+sim/aircraft/parts/acf_semilen_JND	float[73]	y	???	[WING] semilen of the JOINED wing segments, all JOINED SEGMENTS, for AR and CDi and ground effect, etc. 
+sim/aircraft/parts/acf_e	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_AR	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_al_D_al0	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_cl_D_cl0	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_cm_D_cm0	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_delta_fac	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_spec_wash	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_alpha_max	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_slat_effect	float[73]	y	???	[WING]
 sim/aircraft/parts/acf_s	float[730]	y	???	s for each element for foils, and FRONT, SIDE, TOP for BODIES.
 sim/aircraft/parts/acf_mac	float[730]	y
 sim/aircraft/parts/acf_anginc	float[730]	y
@@ -162,7 +162,7 @@ sim/aircraft/parts/acf_ail1	int[730]	y
 sim/aircraft/parts/acf_ail2	int[730]	y
 sim/aircraft/parts/acf_splr	int[730]	y
 sim/aircraft/parts/acf_flap	int[730]	y
-sim/aircraft/parts/acf_flap2	int[730]	y
+sim/aircraft/parts/acf_flap2	int[560]	y
 sim/aircraft/parts/acf_flapEQ	int	y
 sim/aircraft/parts/acf_slat	int[730]	y
 sim/aircraft/parts/acf_slatEQ	int	y
@@ -171,9 +171,9 @@ sim/aircraft/parts/acf_sbrkEQ	int	y
 sim/aircraft/parts/acf_drud	int[730]	y
 sim/aircraft/parts/acf_elev	int[730]	y
 sim/aircraft/parts/acf_rudd	int[730]	y
-sim/aircraft/parts/acf_rudd2	int[730]	y
+sim/aircraft/parts/acf_rudd2	int[560]	y
 sim/aircraft/parts/acf_in_downwash	int[53290]	y
-sim/aircraft/parts/acf_body_r	float[73]	y	meters	Radius of part I think
+sim/aircraft/parts/acf_body_r	float[95]	y	meters	[PART] Radius of part I think
 sim/aircraft/parts/acf_gear_type	int[73]	y
 sim/aircraft/parts/acf_gear_latE	float[73]	y
 sim/aircraft/parts/acf_gear_lonE	float[73]	y
@@ -195,7 +195,7 @@ sim/aircraft/parts/acf_gear_xnodef	float[73]	y	???	gear unloaded location
 sim/aircraft/parts/acf_gear_ynodef	float[73]	y	???	gear unloaded location
 sim/aircraft/parts/acf_gear_znodef	float[73]	y	???	gear unloaded location
 sim/aircraft/bodies/acf_fuse_cd	float	y	??? cd for	fuselage
-sim/aircraft/bodies/acf_fuse_cd_array	float[73]	y	??? cd for all	parts
+sim/aircraft/bodies/acf_fuse_cd_array	float[95]	y	???	[PART] cd for all parts
 sim/aircraft/controls/acf_ail1_crat	float	y
 sim/aircraft/controls/acf_ail1_up	float	y
 sim/aircraft/controls/acf_ail1_dn	float	y
@@ -354,7 +354,7 @@ sim/aircraft/artstability/acf_ASmaxr_hi	float	y
 sim/aircraft/artstability/acf_ASr_hi_rate	float	y
 sim/aircraft/artstability/acf_has_clutch	int	y
 sim/aircraft/artstability/acf_has_idlespeed	int	y
-sim/aircraft/overflow/acf_element_len	float[73]	y	???	length of each element... quicker to find once and use over and over when finding element locs.
+sim/aircraft/overflow/acf_element_len	float[73]	y	???	[WING] length of each element... quicker to find once and use over and over when finding element locs.
 sim/aircraft/overflow/acf_gear_door_size	float	y	???	size of gear-door editing region
 sim/aircraft/overflow/acf_stab_delinc_to_Vne	float	y	???	amount the stab moves in trim automatically as you go to redline.
 sim/aircraft/overflow/acf_Vmca	float	y
@@ -369,8 +369,8 @@ sim/aircraft/overflow/acf_refuel_Z	float	y	???	refueling port location
 sim/aircraft/overflow/acf_gear_steers	int[73]	y	???	this gear turns with rudder input
 sim/aircraft/overflow/acf_hybrid_gear	int	y	???	this is an indication that we have skids on a plane (legit use is tailskid on a jet, etc), NOTE : This used to be b1 in v6
 sim/aircraft/overflow/acf_vardihedEQ	int	y	???	variable dihedral, NOTE : This used to be i57 in v6 - eliminated in 840 - now per wing
-sim/aircraft/overflow/acf_dihed2	float[73]	y	???	variable dihedral
-sim/aircraft/overflow/acf_dihednow	float[73]	y	???	variable dihedral
+sim/aircraft/overflow/acf_dihed2	float[73]	y	???	[WING] variable dihedral
+sim/aircraft/overflow/acf_dihednow	float[73]	y	???	[WING] variable dihedral
 sim/aircraft/overflow/jett_X	float	y
 sim/aircraft/overflow/jett_Y	float	y
 sim/aircraft/overflow/jett_Z	float	y
@@ -506,10 +506,10 @@ sim/cockpit/autopilot/heading_mag2	float	y	degm	The heading to fly (magnetic, pr
 sim/cockpit/autopilot/airspeed_is_mach	int	n	boolean	Is our airspeed a mach number
 sim/cockpit/autopilot/flight_director_pitch	float	y	degrees	The recommended pitch from the Flight Director.  Use override_flightdir
 sim/cockpit/autopilot/flight_director_roll	float	y	degrees	The recommended roll from the Flight Director.  Use override_flightdir
-sim/cockpit/autopilot/autopilot_state	int	y	flags	Various autopilot engage modes, etc.
+sim/cockpit/autopilot/autopilot_state	int	y	flags	Various autopilot engage modes, etc.  See docs for flags
 sim/cockpit/autopilot/heading_roll_mode	int	y	enum	Bank limit - 0 = auto, 1-6 = 5-30 degrees of bank
-sim/cockpit/autopilot/mode_hnav	int	y	???	???
-sim/cockpit/autopilot/mode_gls	int	y	???	???
+sim/cockpit/autopilot/mode_hnav	int	y	enum	Localizer mode (off, armed, enaged). DEPRECATED
+sim/cockpit/autopilot/mode_gls	int	y	enum	Glide-slope mode (off, armed, engaged). DEPRECATED
 sim/cockpit/autopilot/alt_hold_ft_fms	float	y	???	???
 sim/cockpit/autopilot/syn_hold_deg	float	y	???	???
 sim/cockpit/electrical/battery_on	int	y	bool	Is the main battery on
@@ -592,6 +592,7 @@ sim/cockpit/pressure/bleed_air_on	int	y	bool	Bleeding air is on (legacy)
 sim/cockpit/pressure/bleed_air_mode	int	y	enum	0=off,1=L,2=B,3=R,4=APU
 sim/cockpit/pressure/cabin_altitude_set_m_msl	float	y	???	The desired cabin altitude (BEFORE 730 this was incorrectly int type)
 sim/cockpit/pressure/cabin_vvi_set_m_msec	float	y	???	The desired cabin altitude rate change (BEFORE 730 this was incorrectly int type)
+sim/cockpit/pressure/cabin_pressure_differential_psi	float	y	psi	????
 sim/cockpit/pressure/cabin_altitude_actual_m_msl	float	n	???	The real cabin altitude (BEFORE 730 this was incorrectly int type)
 sim/cockpit/pressure/cabin_vvi_actual_m_msec	float	n	???	The real cabin altitude rate change (BEFORE 730 this was incorrectly int type)
 sim/cockpit/pressure/pressure_test_timeout	float	y	???	Timeout for some kind of pressure test/
@@ -826,17 +827,17 @@ sim/flightmodel/controls/ldruddef	float	y	degrees	Deflection Left Rudder
 sim/flightmodel/controls/rdruddef	float	y	degrees	Deflection Right Rudder
 sim/flightmodel/controls/lsplrdef	float	y	degrees	Deflection Left Spoiler
 sim/flightmodel/controls/rsplrdef	float	y	degrees	Deflection Right Spoiler
-sim/flightmodel/controls/ail1_def	float[73]	y	degrees	Deflection Aileron 1
-sim/flightmodel/controls/ail2_def	float[73]	y	degrees	Deflection Aileron 2
-sim/flightmodel/controls/splr_def	float[73]	y	degrees	Deflection Spoilers
-sim/flightmodel/controls/splr2_def	float[73]	y	degrees	Deflection Spoilers 2
-sim/flightmodel/controls/yawb_def	float[73]	y	degrees	???
-sim/flightmodel/controls/rudd_def	float[73]	y	degrees	Deflection Rudders
-sim/flightmodel/controls/rudd2_def	float[73]	y	degrees	Deflection Rudders
-sim/flightmodel/controls/elv1_def	float[73]	y	degrees	Deflection Elevators
-sim/flightmodel/controls/elv2_def	float[73]	y	degrees	Deflection Elevators
-sim/flightmodel/controls/fla1_def	float[73]	y	degrees	Deflection Flaps
-sim/flightmodel/controls/fla2_def	float[73]	y	degrees	Deflection Flaps
+sim/flightmodel/controls/ail1_def	float[73]	y	degrees	[WING] Deflection Aileron 1
+sim/flightmodel/controls/ail2_def	float[73]	y	degrees	[WING] Deflection Aileron 2
+sim/flightmodel/controls/splr_def	float[73]	y	degrees	[WING] Deflection Spoilers
+sim/flightmodel/controls/splr2_def	float[56]	y	degrees	[WING] Deflection Spoilers 2
+sim/flightmodel/controls/yawb_def	float[73]	y	degrees	[WING]
+sim/flightmodel/controls/rudd_def	float[73]	y	degrees	[WING] Deflection Rudders
+sim/flightmodel/controls/rudd2_def	float[56]	y	degrees	[WING] Deflection Rudders
+sim/flightmodel/controls/elv1_def	float[56]	y	degrees	[WING] Deflection Elevators
+sim/flightmodel/controls/elv2_def	float[56]	y	degrees	[WING] Deflection Elevators
+sim/flightmodel/controls/fla1_def	float[56]	y	degrees	[WING] Deflection Flaps
+sim/flightmodel/controls/fla2_def	float[56]	y	degrees	[WING] Deflection Flaps
 sim/flightmodel/controls/sbrkrqst	float	y	???	Speed Brake
 sim/flightmodel/controls/vectrqst	float	y	???	Vector
 sim/flightmodel/controls/swdi	float	y	???	Sweep Ratio
@@ -915,226 +916,322 @@ sim/flightmodel/controls/vstab1_rud1def	float	y	degrees	Deflection Wing 1 Rudder
 sim/flightmodel/controls/vstab1_rud2def	float	y	degrees	Deflection Wing 1 Rudder 2
 sim/flightmodel/controls/vstab2_rud1def	float	y	degrees	Deflection Wing 2 Rudder 1
 sim/flightmodel/controls/vstab2_rud2def	float	y	degrees	Deflection Wing 2 Rudder 2
-sim/flightmodel/controls/mwing01_ail1def	float	y	degrees	Deflection Misc Wing 1 Left Aileron 1
-sim/flightmodel/controls/mwing01_ail2def	float	y	degrees	Deflection Misc Wing 1 Left Aileron 2
-sim/flightmodel/controls/mwing01_spo1def	float	y	degrees	Deflection Misc Wing 1 Left Spoiler 1
-sim/flightmodel/controls/mwing01_spo2def	float	y	degrees	Deflection Misc Wing 1 Left Spoiler 2
-sim/flightmodel/controls/mwing01_fla1def	float	y	degrees	Deflection Misc Wing 1 Left Flap 1
-sim/flightmodel/controls/mwing01_fla2def	float	y	degrees	Deflection Misc Wing 1 Left Flap 2
+sim/flightmodel/controls/mwing01_ail1def	float	y	degrees	Deflection Misc Wing 1 Aileron 1
+sim/flightmodel/controls/mwing01_ail2def	float	y	degrees	Deflection Misc Wing 1 Aileron 2
+sim/flightmodel/controls/mwing01_spo1def	float	y	degrees	Deflection Misc Wing 1 Spoiler 1
+sim/flightmodel/controls/mwing01_spo2def	float	y	degrees	Deflection Misc Wing 1 Spoiler 2
+sim/flightmodel/controls/mwing01_fla1def	float	y	degrees	Deflection Misc Wing 1 Flap 1
+sim/flightmodel/controls/mwing01_fla2def	float	y	degrees	Deflection Misc Wing 1 Flap 2
 sim/flightmodel/controls/mwing01_yawbdef	float	y	degrees	Deflection Misc Wing 1 Yaw Brake
 sim/flightmodel/controls/mwing01_elv1def	float	y	degrees	Deflection Misc Wing 1 Elevator 1
 sim/flightmodel/controls/mwing01_elv2def	float	y	degrees	Deflection Misc Wing 1 Elevator 2
 sim/flightmodel/controls/mwing01_rud1def	float	y	degrees	Deflection Misc Wing 1 Rudder 1
 sim/flightmodel/controls/mwing01_rud2def	float	y	degrees	Deflection Misc Wing 1 Rudder 2
-sim/flightmodel/controls/mwing02_ail1def	float	y	degrees	Deflection Misc Wing 2 Left Aileron 1
-sim/flightmodel/controls/mwing02_ail2def	float	y	degrees	Deflection Misc Wing 2 Left Aileron 2
-sim/flightmodel/controls/mwing02_spo1def	float	y	degrees	Deflection Misc Wing 2 Left Spoiler 1
-sim/flightmodel/controls/mwing02_spo2def	float	y	degrees	Deflection Misc Wing 2 Left Spoiler 2
-sim/flightmodel/controls/mwing02_fla1def	float	y	degrees	Deflection Misc Wing 2 Left Flap 1
-sim/flightmodel/controls/mwing02_fla2def	float	y	degrees	Deflection Misc Wing 2 Left Flap 2
+sim/flightmodel/controls/mwing02_ail1def	float	y	degrees	Deflection Misc Wing 2 Aileron 1
+sim/flightmodel/controls/mwing02_ail2def	float	y	degrees	Deflection Misc Wing 2 Aileron 2
+sim/flightmodel/controls/mwing02_spo1def	float	y	degrees	Deflection Misc Wing 2 Spoiler 1
+sim/flightmodel/controls/mwing02_spo2def	float	y	degrees	Deflection Misc Wing 2 Spoiler 2
+sim/flightmodel/controls/mwing02_fla1def	float	y	degrees	Deflection Misc Wing 2 Flap 1
+sim/flightmodel/controls/mwing02_fla2def	float	y	degrees	Deflection Misc Wing 2 Flap 2
 sim/flightmodel/controls/mwing02_yawbdef	float	y	degrees	Deflection Misc Wing 2 Yaw Brake
 sim/flightmodel/controls/mwing02_elv1def	float	y	degrees	Deflection Misc Wing 2 Elevator 1
 sim/flightmodel/controls/mwing02_elv2def	float	y	degrees	Deflection Misc Wing 2 Elevator 2
 sim/flightmodel/controls/mwing02_rud1def	float	y	degrees	Deflection Misc Wing 2 Rudder 1
 sim/flightmodel/controls/mwing02_rud2def	float	y	degrees	Deflection Misc Wing 2 Rudder 2
-sim/flightmodel/controls/mwing03_ail1def	float	y	degrees	Deflection Misc Wing 3 Left Aileron 1
-sim/flightmodel/controls/mwing03_ail2def	float	y	degrees	Deflection Misc Wing 3 Left Aileron 2
-sim/flightmodel/controls/mwing03_spo1def	float	y	degrees	Deflection Misc Wing 3 Left Spoiler 1
-sim/flightmodel/controls/mwing03_spo2def	float	y	degrees	Deflection Misc Wing 3 Left Spoiler 2
-sim/flightmodel/controls/mwing03_fla1def	float	y	degrees	Deflection Misc Wing 3 Left Flap 1
-sim/flightmodel/controls/mwing03_fla2def	float	y	degrees	Deflection Misc Wing 3 Left Flap 2
+sim/flightmodel/controls/mwing03_ail1def	float	y	degrees	Deflection Misc Wing 3 Aileron 1
+sim/flightmodel/controls/mwing03_ail2def	float	y	degrees	Deflection Misc Wing 3 Aileron 2
+sim/flightmodel/controls/mwing03_spo1def	float	y	degrees	Deflection Misc Wing 3 Spoiler 1
+sim/flightmodel/controls/mwing03_spo2def	float	y	degrees	Deflection Misc Wing 3 Spoiler 2
+sim/flightmodel/controls/mwing03_fla1def	float	y	degrees	Deflection Misc Wing 3 Flap 1
+sim/flightmodel/controls/mwing03_fla2def	float	y	degrees	Deflection Misc Wing 3 Flap 2
 sim/flightmodel/controls/mwing03_yawbdef	float	y	degrees	Deflection Misc Wing 3 Yaw Brake
 sim/flightmodel/controls/mwing03_elv1def	float	y	degrees	Deflection Misc Wing 3 Elevator 1
 sim/flightmodel/controls/mwing03_elv2def	float	y	degrees	Deflection Misc Wing 3 Elevator 2
 sim/flightmodel/controls/mwing03_rud1def	float	y	degrees	Deflection Misc Wing 3 Rudder 1
 sim/flightmodel/controls/mwing03_rud2def	float	y	degrees	Deflection Misc Wing 3 Rudder 2
-sim/flightmodel/controls/mwing04_ail1def	float	y	degrees	Deflection Misc Wing 4 Left Aileron 1
-sim/flightmodel/controls/mwing04_ail2def	float	y	degrees	Deflection Misc Wing 4 Left Aileron 2
-sim/flightmodel/controls/mwing04_spo1def	float	y	degrees	Deflection Misc Wing 4 Left Spoiler 1
-sim/flightmodel/controls/mwing04_spo2def	float	y	degrees	Deflection Misc Wing 4 Left Spoiler 2
-sim/flightmodel/controls/mwing04_fla1def	float	y	degrees	Deflection Misc Wing 4 Left Flap 1
-sim/flightmodel/controls/mwing04_fla2def	float	y	degrees	Deflection Misc Wing 4 Left Flap 2
+sim/flightmodel/controls/mwing04_ail1def	float	y	degrees	Deflection Misc Wing 4 Aileron 1
+sim/flightmodel/controls/mwing04_ail2def	float	y	degrees	Deflection Misc Wing 4 Aileron 2
+sim/flightmodel/controls/mwing04_spo1def	float	y	degrees	Deflection Misc Wing 4 Spoiler 1
+sim/flightmodel/controls/mwing04_spo2def	float	y	degrees	Deflection Misc Wing 4 Spoiler 2
+sim/flightmodel/controls/mwing04_fla1def	float	y	degrees	Deflection Misc Wing 4 Flap 1
+sim/flightmodel/controls/mwing04_fla2def	float	y	degrees	Deflection Misc Wing 4 Flap 2
 sim/flightmodel/controls/mwing04_yawbdef	float	y	degrees	Deflection Misc Wing 4 Yaw Brake
 sim/flightmodel/controls/mwing04_elv1def	float	y	degrees	Deflection Misc Wing 4 Elevator 1
 sim/flightmodel/controls/mwing04_elv2def	float	y	degrees	Deflection Misc Wing 4 Elevator 2
 sim/flightmodel/controls/mwing04_rud1def	float	y	degrees	Deflection Misc Wing 4 Rudder 1
 sim/flightmodel/controls/mwing04_rud2def	float	y	degrees	Deflection Misc Wing 4 Rudder 2
-sim/flightmodel/controls/mwing05_ail1def	float	y	degrees	Deflection Misc Wing 5 Left Aileron 1
-sim/flightmodel/controls/mwing05_ail2def	float	y	degrees	Deflection Misc Wing 5 Left Aileron 2
-sim/flightmodel/controls/mwing05_spo1def	float	y	degrees	Deflection Misc Wing 5 Left Spoiler 1
-sim/flightmodel/controls/mwing05_spo2def	float	y	degrees	Deflection Misc Wing 5 Left Spoiler 2
-sim/flightmodel/controls/mwing05_fla1def	float	y	degrees	Deflection Misc Wing 5 Left Flap 1
-sim/flightmodel/controls/mwing05_fla2def	float	y	degrees	Deflection Misc Wing 5 Left Flap 2
+sim/flightmodel/controls/mwing05_ail1def	float	y	degrees	Deflection Misc Wing 5 Aileron 1
+sim/flightmodel/controls/mwing05_ail2def	float	y	degrees	Deflection Misc Wing 5 Aileron 2
+sim/flightmodel/controls/mwing05_spo1def	float	y	degrees	Deflection Misc Wing 5 Spoiler 1
+sim/flightmodel/controls/mwing05_spo2def	float	y	degrees	Deflection Misc Wing 5 Spoiler 2
+sim/flightmodel/controls/mwing05_fla1def	float	y	degrees	Deflection Misc Wing 5 Flap 1
+sim/flightmodel/controls/mwing05_fla2def	float	y	degrees	Deflection Misc Wing 5 Flap 2
 sim/flightmodel/controls/mwing05_yawbdef	float	y	degrees	Deflection Misc Wing 5 Yaw Brake
 sim/flightmodel/controls/mwing05_elv1def	float	y	degrees	Deflection Misc Wing 5 Elevator 1
 sim/flightmodel/controls/mwing05_elv2def	float	y	degrees	Deflection Misc Wing 5 Elevator 2
 sim/flightmodel/controls/mwing05_rud1def	float	y	degrees	Deflection Misc Wing 5 Rudder 1
 sim/flightmodel/controls/mwing05_rud2def	float	y	degrees	Deflection Misc Wing 5 Rudder 2
-sim/flightmodel/controls/mwing06_ail1def	float	y	degrees	Deflection Misc Wing 6 Left Aileron 1
-sim/flightmodel/controls/mwing06_ail2def	float	y	degrees	Deflection Misc Wing 6 Left Aileron 2
-sim/flightmodel/controls/mwing06_spo1def	float	y	degrees	Deflection Misc Wing 6 Left Spoiler 1
-sim/flightmodel/controls/mwing06_spo2def	float	y	degrees	Deflection Misc Wing 6 Left Spoiler 2
-sim/flightmodel/controls/mwing06_fla1def	float	y	degrees	Deflection Misc Wing 6 Left Flap 1
-sim/flightmodel/controls/mwing06_fla2def	float	y	degrees	Deflection Misc Wing 6 Left Flap 2
+sim/flightmodel/controls/mwing06_ail1def	float	y	degrees	Deflection Misc Wing 6 Aileron 1
+sim/flightmodel/controls/mwing06_ail2def	float	y	degrees	Deflection Misc Wing 6 Aileron 2
+sim/flightmodel/controls/mwing06_spo1def	float	y	degrees	Deflection Misc Wing 6 Spoiler 1
+sim/flightmodel/controls/mwing06_spo2def	float	y	degrees	Deflection Misc Wing 6 Spoiler 2
+sim/flightmodel/controls/mwing06_fla1def	float	y	degrees	Deflection Misc Wing 6 Flap 1
+sim/flightmodel/controls/mwing06_fla2def	float	y	degrees	Deflection Misc Wing 6 Flap 2
 sim/flightmodel/controls/mwing06_yawbdef	float	y	degrees	Deflection Misc Wing 6 Yaw Brake
 sim/flightmodel/controls/mwing06_elv1def	float	y	degrees	Deflection Misc Wing 6 Elevator 1
 sim/flightmodel/controls/mwing06_elv2def	float	y	degrees	Deflection Misc Wing 6 Elevator 2
 sim/flightmodel/controls/mwing06_rud1def	float	y	degrees	Deflection Misc Wing 6 Rudder 1
 sim/flightmodel/controls/mwing06_rud2def	float	y	degrees	Deflection Misc Wing 6 Rudder 2
-sim/flightmodel/controls/mwing07_ail1def	float	y	degrees	Deflection Misc Wing 7 Left Aileron 1
-sim/flightmodel/controls/mwing07_ail2def	float	y	degrees	Deflection Misc Wing 7 Left Aileron 2
-sim/flightmodel/controls/mwing07_spo1def	float	y	degrees	Deflection Misc Wing 7 Left Spoiler 1
-sim/flightmodel/controls/mwing07_spo2def	float	y	degrees	Deflection Misc Wing 7 Left Spoiler 2
-sim/flightmodel/controls/mwing07_fla1def	float	y	degrees	Deflection Misc Wing 7 Left Flap 1
-sim/flightmodel/controls/mwing07_fla2def	float	y	degrees	Deflection Misc Wing 7 Left Flap 2
+sim/flightmodel/controls/mwing07_ail1def	float	y	degrees	Deflection Misc Wing 7 Aileron 1
+sim/flightmodel/controls/mwing07_ail2def	float	y	degrees	Deflection Misc Wing 7 Aileron 2
+sim/flightmodel/controls/mwing07_spo1def	float	y	degrees	Deflection Misc Wing 7 Spoiler 1
+sim/flightmodel/controls/mwing07_spo2def	float	y	degrees	Deflection Misc Wing 7 Spoiler 2
+sim/flightmodel/controls/mwing07_fla1def	float	y	degrees	Deflection Misc Wing 7 Flap 1
+sim/flightmodel/controls/mwing07_fla2def	float	y	degrees	Deflection Misc Wing 7 Flap 2
 sim/flightmodel/controls/mwing07_yawbdef	float	y	degrees	Deflection Misc Wing 7 Yaw Brake
 sim/flightmodel/controls/mwing07_elv1def	float	y	degrees	Deflection Misc Wing 7 Elevator 1
 sim/flightmodel/controls/mwing07_elv2def	float	y	degrees	Deflection Misc Wing 7 Elevator 2
 sim/flightmodel/controls/mwing07_rud1def	float	y	degrees	Deflection Misc Wing 7 Rudder 1
 sim/flightmodel/controls/mwing07_rud2def	float	y	degrees	Deflection Misc Wing 7 Rudder 2
-sim/flightmodel/controls/mwing08_ail1def	float	y	degrees	Deflection Misc Wing 8 Left Aileron 1
-sim/flightmodel/controls/mwing08_ail2def	float	y	degrees	Deflection Misc Wing 8 Left Aileron 2
-sim/flightmodel/controls/mwing08_spo1def	float	y	degrees	Deflection Misc Wing 8 Left Spoiler 1
-sim/flightmodel/controls/mwing08_spo2def	float	y	degrees	Deflection Misc Wing 8 Left Spoiler 2
-sim/flightmodel/controls/mwing08_fla1def	float	y	degrees	Deflection Misc Wing 8 Left Flap 1
-sim/flightmodel/controls/mwing08_fla2def	float	y	degrees	Deflection Misc Wing 8 Left Flap 2
+sim/flightmodel/controls/mwing08_ail1def	float	y	degrees	Deflection Misc Wing 8 Aileron 1
+sim/flightmodel/controls/mwing08_ail2def	float	y	degrees	Deflection Misc Wing 8 Aileron 2
+sim/flightmodel/controls/mwing08_spo1def	float	y	degrees	Deflection Misc Wing 8 Spoiler 1
+sim/flightmodel/controls/mwing08_spo2def	float	y	degrees	Deflection Misc Wing 8 Spoiler 2
+sim/flightmodel/controls/mwing08_fla1def	float	y	degrees	Deflection Misc Wing 8 Flap 1
+sim/flightmodel/controls/mwing08_fla2def	float	y	degrees	Deflection Misc Wing 8 Flap 2
 sim/flightmodel/controls/mwing08_yawbdef	float	y	degrees	Deflection Misc Wing 8 Yaw Brake
 sim/flightmodel/controls/mwing08_elv1def	float	y	degrees	Deflection Misc Wing 8 Elevator 1
 sim/flightmodel/controls/mwing08_elv2def	float	y	degrees	Deflection Misc Wing 8 Elevator 2
 sim/flightmodel/controls/mwing08_rud1def	float	y	degrees	Deflection Misc Wing 8 Rudder 1
 sim/flightmodel/controls/mwing08_rud2def	float	y	degrees	Deflection Misc Wing 8 Rudder 2
-sim/flightmodel/controls/mwing09_ail1def	float	y	degrees	Deflection Misc Wing 9 Left Aileron 1
-sim/flightmodel/controls/mwing09_ail2def	float	y	degrees	Deflection Misc Wing 9 Left Aileron 2
-sim/flightmodel/controls/mwing09_spo1def	float	y	degrees	Deflection Misc Wing 9 Left Spoiler 1
-sim/flightmodel/controls/mwing09_spo2def	float	y	degrees	Deflection Misc Wing 9 Left Spoiler 2
-sim/flightmodel/controls/mwing09_fla1def	float	y	degrees	Deflection Misc Wing 9 Left Flap 1
-sim/flightmodel/controls/mwing09_fla2def	float	y	degrees	Deflection Misc Wing 9 Left Flap 2
+sim/flightmodel/controls/mwing09_ail1def	float	y	degrees	Deflection Misc Wing 9 Aileron 1
+sim/flightmodel/controls/mwing09_ail2def	float	y	degrees	Deflection Misc Wing 9 Aileron 2
+sim/flightmodel/controls/mwing09_spo1def	float	y	degrees	Deflection Misc Wing 9 Spoiler 1
+sim/flightmodel/controls/mwing09_spo2def	float	y	degrees	Deflection Misc Wing 9 Spoiler 2
+sim/flightmodel/controls/mwing09_fla1def	float	y	degrees	Deflection Misc Wing 9 Flap 1
+sim/flightmodel/controls/mwing09_fla2def	float	y	degrees	Deflection Misc Wing 9 Flap 2
 sim/flightmodel/controls/mwing09_yawbdef	float	y	degrees	Deflection Misc Wing 9 Yaw Brake
 sim/flightmodel/controls/mwing09_elv1def	float	y	degrees	Deflection Misc Wing 9 Elevator 1
 sim/flightmodel/controls/mwing09_elv2def	float	y	degrees	Deflection Misc Wing 9 Elevator 2
 sim/flightmodel/controls/mwing09_rud1def	float	y	degrees	Deflection Misc Wing 9 Rudder 1
 sim/flightmodel/controls/mwing09_rud2def	float	y	degrees	Deflection Misc Wing 9 Rudder 2
-sim/flightmodel/controls/mwing10_ail1def	float	y	degrees	Deflection Misc Wing 10 Left Aileron 1
-sim/flightmodel/controls/mwing10_ail2def	float	y	degrees	Deflection Misc Wing 10 Left Aileron 2
-sim/flightmodel/controls/mwing10_spo1def	float	y	degrees	Deflection Misc Wing 10 Left Spoiler 1
-sim/flightmodel/controls/mwing10_spo2def	float	y	degrees	Deflection Misc Wing 10 Left Spoiler 2
-sim/flightmodel/controls/mwing10_fla1def	float	y	degrees	Deflection Misc Wing 10 Left Flap 1
-sim/flightmodel/controls/mwing10_fla2def	float	y	degrees	Deflection Misc Wing 10 Left Flap 2
+sim/flightmodel/controls/mwing10_ail1def	float	y	degrees	Deflection Misc Wing 10 Aileron 1
+sim/flightmodel/controls/mwing10_ail2def	float	y	degrees	Deflection Misc Wing 10 Aileron 2
+sim/flightmodel/controls/mwing10_spo1def	float	y	degrees	Deflection Misc Wing 10 Spoiler 1
+sim/flightmodel/controls/mwing10_spo2def	float	y	degrees	Deflection Misc Wing 10 Spoiler 2
+sim/flightmodel/controls/mwing10_fla1def	float	y	degrees	Deflection Misc Wing 10 Flap 1
+sim/flightmodel/controls/mwing10_fla2def	float	y	degrees	Deflection Misc Wing 10 Flap 2
 sim/flightmodel/controls/mwing10_yawbdef	float	y	degrees	Deflection Misc Wing 10 Yaw Brake
 sim/flightmodel/controls/mwing10_elv1def	float	y	degrees	Deflection Misc Wing 10 Elevator 1
 sim/flightmodel/controls/mwing10_elv2def	float	y	degrees	Deflection Misc Wing 10 Elevator 2
 sim/flightmodel/controls/mwing10_rud1def	float	y	degrees	Deflection Misc Wing 10 Rudder 1
 sim/flightmodel/controls/mwing10_rud2def	float	y	degrees	Deflection Misc Wing 10 Rudder 2
-sim/flightmodel/controls/mwing11_ail1def	float	y	degrees	Deflection Misc Wing 11 Left Aileron 1
-sim/flightmodel/controls/mwing11_ail2def	float	y	degrees	Deflection Misc Wing 11 Left Aileron 2
-sim/flightmodel/controls/mwing11_spo1def	float	y	degrees	Deflection Misc Wing 11 Left Spoiler 1
-sim/flightmodel/controls/mwing11_spo2def	float	y	degrees	Deflection Misc Wing 11 Left Spoiler 2
-sim/flightmodel/controls/mwing11_fla1def	float	y	degrees	Deflection Misc Wing 11 Left Flap 1
-sim/flightmodel/controls/mwing11_fla2def	float	y	degrees	Deflection Misc Wing 11 Left Flap 2
+sim/flightmodel/controls/mwing11_ail1def	float	y	degrees	Deflection Misc Wing 11 Aileron 1
+sim/flightmodel/controls/mwing11_ail2def	float	y	degrees	Deflection Misc Wing 11 Aileron 2
+sim/flightmodel/controls/mwing11_spo1def	float	y	degrees	Deflection Misc Wing 11 Spoiler 1
+sim/flightmodel/controls/mwing11_spo2def	float	y	degrees	Deflection Misc Wing 11 Spoiler 2
+sim/flightmodel/controls/mwing11_fla1def	float	y	degrees	Deflection Misc Wing 11 Flap 1
+sim/flightmodel/controls/mwing11_fla2def	float	y	degrees	Deflection Misc Wing 11 Flap 2
 sim/flightmodel/controls/mwing11_yawbdef	float	y	degrees	Deflection Misc Wing 11 Yaw Brake
 sim/flightmodel/controls/mwing11_elv1def	float	y	degrees	Deflection Misc Wing 11 Elevator 1
 sim/flightmodel/controls/mwing11_elv2def	float	y	degrees	Deflection Misc Wing 11 Elevator 2
 sim/flightmodel/controls/mwing11_rud1def	float	y	degrees	Deflection Misc Wing 11 Rudder 1
 sim/flightmodel/controls/mwing11_rud2def	float	y	degrees	Deflection Misc Wing 11 Rudder 2
-sim/flightmodel/controls/mwing12_ail1def	float	y	degrees	Deflection Misc Wing 12 Left Aileron 1
-sim/flightmodel/controls/mwing12_ail2def	float	y	degrees	Deflection Misc Wing 12 Left Aileron 2
-sim/flightmodel/controls/mwing12_spo1def	float	y	degrees	Deflection Misc Wing 12 Left Spoiler 1
-sim/flightmodel/controls/mwing12_spo2def	float	y	degrees	Deflection Misc Wing 12 Left Spoiler 2
-sim/flightmodel/controls/mwing12_fla1def	float	y	degrees	Deflection Misc Wing 12 Left Flap 1
-sim/flightmodel/controls/mwing12_fla2def	float	y	degrees	Deflection Misc Wing 12 Left Flap 2
+sim/flightmodel/controls/mwing12_ail1def	float	y	degrees	Deflection Misc Wing 12 Aileron 1
+sim/flightmodel/controls/mwing12_ail2def	float	y	degrees	Deflection Misc Wing 12 Aileron 2
+sim/flightmodel/controls/mwing12_spo1def	float	y	degrees	Deflection Misc Wing 12 Spoiler 1
+sim/flightmodel/controls/mwing12_spo2def	float	y	degrees	Deflection Misc Wing 12 Spoiler 2
+sim/flightmodel/controls/mwing12_fla1def	float	y	degrees	Deflection Misc Wing 12 Flap 1
+sim/flightmodel/controls/mwing12_fla2def	float	y	degrees	Deflection Misc Wing 12 Flap 2
 sim/flightmodel/controls/mwing12_yawbdef	float	y	degrees	Deflection Misc Wing 12 Yaw Brake
 sim/flightmodel/controls/mwing12_elv1def	float	y	degrees	Deflection Misc Wing 12 Elevator 1
 sim/flightmodel/controls/mwing12_elv2def	float	y	degrees	Deflection Misc Wing 12 Elevator 2
 sim/flightmodel/controls/mwing12_rud1def	float	y	degrees	Deflection Misc Wing 12 Rudder 1
 sim/flightmodel/controls/mwing12_rud2def	float	y	degrees	Deflection Misc Wing 12 Rudder 2
-sim/flightmodel/controls/mwing13_ail1def	float	y	degrees	Deflection Misc Wing 13 Left Aileron 1
-sim/flightmodel/controls/mwing13_ail2def	float	y	degrees	Deflection Misc Wing 13 Left Aileron 2
-sim/flightmodel/controls/mwing13_spo1def	float	y	degrees	Deflection Misc Wing 13 Left Spoiler 1
-sim/flightmodel/controls/mwing13_spo2def	float	y	degrees	Deflection Misc Wing 13 Left Spoiler 2
-sim/flightmodel/controls/mwing13_fla1def	float	y	degrees	Deflection Misc Wing 13 Left Flap 1
-sim/flightmodel/controls/mwing13_fla2def	float	y	degrees	Deflection Misc Wing 13 Left Flap 2
+sim/flightmodel/controls/mwing13_ail1def	float	y	degrees	Deflection Misc Wing 13 Aileron 1
+sim/flightmodel/controls/mwing13_ail2def	float	y	degrees	Deflection Misc Wing 13 Aileron 2
+sim/flightmodel/controls/mwing13_spo1def	float	y	degrees	Deflection Misc Wing 13 Spoiler 1
+sim/flightmodel/controls/mwing13_spo2def	float	y	degrees	Deflection Misc Wing 13 Spoiler 2
+sim/flightmodel/controls/mwing13_fla1def	float	y	degrees	Deflection Misc Wing 13 Flap 1
+sim/flightmodel/controls/mwing13_fla2def	float	y	degrees	Deflection Misc Wing 13 Flap 2
 sim/flightmodel/controls/mwing13_yawbdef	float	y	degrees	Deflection Misc Wing 13 Yaw Brake
 sim/flightmodel/controls/mwing13_elv1def	float	y	degrees	Deflection Misc Wing 13 Elevator 1
 sim/flightmodel/controls/mwing13_elv2def	float	y	degrees	Deflection Misc Wing 13 Elevator 2
 sim/flightmodel/controls/mwing13_rud1def	float	y	degrees	Deflection Misc Wing 13 Rudder 1
 sim/flightmodel/controls/mwing13_rud2def	float	y	degrees	Deflection Misc Wing 13 Rudder 2
-sim/flightmodel/controls/mwing14_ail1def	float	y	degrees	Deflection Misc Wing 14 Left Aileron 1
-sim/flightmodel/controls/mwing14_ail2def	float	y	degrees	Deflection Misc Wing 14 Left Aileron 2
-sim/flightmodel/controls/mwing14_spo1def	float	y	degrees	Deflection Misc Wing 14 Left Spoiler 1
-sim/flightmodel/controls/mwing14_spo2def	float	y	degrees	Deflection Misc Wing 14 Left Spoiler 2
-sim/flightmodel/controls/mwing14_fla1def	float	y	degrees	Deflection Misc Wing 14 Left Flap 1
-sim/flightmodel/controls/mwing14_fla2def	float	y	degrees	Deflection Misc Wing 14 Left Flap 2
+sim/flightmodel/controls/mwing14_ail1def	float	y	degrees	Deflection Misc Wing 14 Aileron 1
+sim/flightmodel/controls/mwing14_ail2def	float	y	degrees	Deflection Misc Wing 14 Aileron 2
+sim/flightmodel/controls/mwing14_spo1def	float	y	degrees	Deflection Misc Wing 14 Spoiler 1
+sim/flightmodel/controls/mwing14_spo2def	float	y	degrees	Deflection Misc Wing 14 Spoiler 2
+sim/flightmodel/controls/mwing14_fla1def	float	y	degrees	Deflection Misc Wing 14 Flap 1
+sim/flightmodel/controls/mwing14_fla2def	float	y	degrees	Deflection Misc Wing 14 Flap 2
 sim/flightmodel/controls/mwing14_yawbdef	float	y	degrees	Deflection Misc Wing 14 Yaw Brake
 sim/flightmodel/controls/mwing14_elv1def	float	y	degrees	Deflection Misc Wing 14 Elevator 1
 sim/flightmodel/controls/mwing14_elv2def	float	y	degrees	Deflection Misc Wing 14 Elevator 2
 sim/flightmodel/controls/mwing14_rud1def	float	y	degrees	Deflection Misc Wing 14 Rudder 1
 sim/flightmodel/controls/mwing14_rud2def	float	y	degrees	Deflection Misc Wing 14 Rudder 2
-sim/flightmodel/controls/mwing15_ail1def	float	y	degrees	Deflection Misc Wing 15 Left Aileron 1
-sim/flightmodel/controls/mwing15_ail2def	float	y	degrees	Deflection Misc Wing 15 Left Aileron 2
-sim/flightmodel/controls/mwing15_spo1def	float	y	degrees	Deflection Misc Wing 15 Left Spoiler 1
-sim/flightmodel/controls/mwing15_spo2def	float	y	degrees	Deflection Misc Wing 15 Left Spoiler 2
-sim/flightmodel/controls/mwing15_fla1def	float	y	degrees	Deflection Misc Wing 15 Left Flap 1
-sim/flightmodel/controls/mwing15_fla2def	float	y	degrees	Deflection Misc Wing 15 Left Flap 2
+sim/flightmodel/controls/mwing15_ail1def	float	y	degrees	Deflection Misc Wing 15 Aileron 1
+sim/flightmodel/controls/mwing15_ail2def	float	y	degrees	Deflection Misc Wing 15 Aileron 2
+sim/flightmodel/controls/mwing15_spo1def	float	y	degrees	Deflection Misc Wing 15 Spoiler 1
+sim/flightmodel/controls/mwing15_spo2def	float	y	degrees	Deflection Misc Wing 15 Spoiler 2
+sim/flightmodel/controls/mwing15_fla1def	float	y	degrees	Deflection Misc Wing 15 Flap 1
+sim/flightmodel/controls/mwing15_fla2def	float	y	degrees	Deflection Misc Wing 15 Flap 2
 sim/flightmodel/controls/mwing15_yawbdef	float	y	degrees	Deflection Misc Wing 15 Yaw Brake
 sim/flightmodel/controls/mwing15_elv1def	float	y	degrees	Deflection Misc Wing 15 Elevator 1
 sim/flightmodel/controls/mwing15_elv2def	float	y	degrees	Deflection Misc Wing 15 Elevator 2
 sim/flightmodel/controls/mwing15_rud1def	float	y	degrees	Deflection Misc Wing 15 Rudder 1
 sim/flightmodel/controls/mwing15_rud2def	float	y	degrees	Deflection Misc Wing 15 Rudder 2
-sim/flightmodel/controls/mwing16_ail1def	float	y	degrees	Deflection Misc Wing 16 Left Aileron 1
-sim/flightmodel/controls/mwing16_ail2def	float	y	degrees	Deflection Misc Wing 16 Left Aileron 2
-sim/flightmodel/controls/mwing16_spo1def	float	y	degrees	Deflection Misc Wing 16 Left Spoiler 1
-sim/flightmodel/controls/mwing16_spo2def	float	y	degrees	Deflection Misc Wing 16 Left Spoiler 2
-sim/flightmodel/controls/mwing16_fla1def	float	y	degrees	Deflection Misc Wing 16 Left Flap 1
-sim/flightmodel/controls/mwing16_fla2def	float	y	degrees	Deflection Misc Wing 16 Left Flap 2
+sim/flightmodel/controls/mwing16_ail1def	float	y	degrees	Deflection Misc Wing 16 Aileron 1
+sim/flightmodel/controls/mwing16_ail2def	float	y	degrees	Deflection Misc Wing 16 Aileron 2
+sim/flightmodel/controls/mwing16_spo1def	float	y	degrees	Deflection Misc Wing 16 Spoiler 1
+sim/flightmodel/controls/mwing16_spo2def	float	y	degrees	Deflection Misc Wing 16 Spoiler 2
+sim/flightmodel/controls/mwing16_fla1def	float	y	degrees	Deflection Misc Wing 16 Flap 1
+sim/flightmodel/controls/mwing16_fla2def	float	y	degrees	Deflection Misc Wing 16 Flap 2
 sim/flightmodel/controls/mwing16_yawbdef	float	y	degrees	Deflection Misc Wing 16 Yaw Brake
 sim/flightmodel/controls/mwing16_elv1def	float	y	degrees	Deflection Misc Wing 16 Elevator 1
 sim/flightmodel/controls/mwing16_elv2def	float	y	degrees	Deflection Misc Wing 16 Elevator 2
 sim/flightmodel/controls/mwing16_rud1def	float	y	degrees	Deflection Misc Wing 16 Rudder 1
 sim/flightmodel/controls/mwing16_rud2def	float	y	degrees	Deflection Misc Wing 16 Rudder 2
-sim/flightmodel/controls/mwing17_ail1def	float	y	degrees	Deflection Misc Wing 17 Left Aileron 1
-sim/flightmodel/controls/mwing17_ail2def	float	y	degrees	Deflection Misc Wing 17 Left Aileron 2
-sim/flightmodel/controls/mwing17_spo1def	float	y	degrees	Deflection Misc Wing 17 Left Spoiler 1
-sim/flightmodel/controls/mwing17_spo2def	float	y	degrees	Deflection Misc Wing 17 Left Spoiler 2
-sim/flightmodel/controls/mwing17_fla1def	float	y	degrees	Deflection Misc Wing 17 Left Flap 1
-sim/flightmodel/controls/mwing17_fla2def	float	y	degrees	Deflection Misc Wing 17 Left Flap 2
+sim/flightmodel/controls/mwing17_ail1def	float	y	degrees	Deflection Misc Wing 17 Aileron 1
+sim/flightmodel/controls/mwing17_ail2def	float	y	degrees	Deflection Misc Wing 17 Aileron 2
+sim/flightmodel/controls/mwing17_spo1def	float	y	degrees	Deflection Misc Wing 17 Spoiler 1
+sim/flightmodel/controls/mwing17_spo2def	float	y	degrees	Deflection Misc Wing 17 Spoiler 2
+sim/flightmodel/controls/mwing17_fla1def	float	y	degrees	Deflection Misc Wing 17 Flap 1
+sim/flightmodel/controls/mwing17_fla2def	float	y	degrees	Deflection Misc Wing 17 Flap 2
 sim/flightmodel/controls/mwing17_yawbdef	float	y	degrees	Deflection Misc Wing 17 Yaw Brake
 sim/flightmodel/controls/mwing17_elv1def	float	y	degrees	Deflection Misc Wing 17 Elevator 1
 sim/flightmodel/controls/mwing17_elv2def	float	y	degrees	Deflection Misc Wing 17 Elevator 2
 sim/flightmodel/controls/mwing17_rud1def	float	y	degrees	Deflection Misc Wing 17 Rudder 1
 sim/flightmodel/controls/mwing17_rud2def	float	y	degrees	Deflection Misc Wing 17 Rudder 2
-sim/flightmodel/controls/mwing18_ail1def	float	y	degrees	Deflection Misc Wing 18 Left Aileron 1
-sim/flightmodel/controls/mwing18_ail2def	float	y	degrees	Deflection Misc Wing 18 Left Aileron 2
-sim/flightmodel/controls/mwing18_spo1def	float	y	degrees	Deflection Misc Wing 18 Left Spoiler 1
-sim/flightmodel/controls/mwing18_spo2def	float	y	degrees	Deflection Misc Wing 18 Left Spoiler 2
-sim/flightmodel/controls/mwing18_fla1def	float	y	degrees	Deflection Misc Wing 18 Left Flap 1
-sim/flightmodel/controls/mwing18_fla2def	float	y	degrees	Deflection Misc Wing 18 Left Flap 2
+sim/flightmodel/controls/mwing18_ail1def	float	y	degrees	Deflection Misc Wing 18 Aileron 1
+sim/flightmodel/controls/mwing18_ail2def	float	y	degrees	Deflection Misc Wing 18 Aileron 2
+sim/flightmodel/controls/mwing18_spo1def	float	y	degrees	Deflection Misc Wing 18 Spoiler 1
+sim/flightmodel/controls/mwing18_spo2def	float	y	degrees	Deflection Misc Wing 18 Spoiler 2
+sim/flightmodel/controls/mwing18_fla1def	float	y	degrees	Deflection Misc Wing 18 Flap 1
+sim/flightmodel/controls/mwing18_fla2def	float	y	degrees	Deflection Misc Wing 18 Flap 2
 sim/flightmodel/controls/mwing18_yawbdef	float	y	degrees	Deflection Misc Wing 18 Yaw Brake
 sim/flightmodel/controls/mwing18_elv1def	float	y	degrees	Deflection Misc Wing 18 Elevator 1
 sim/flightmodel/controls/mwing18_elv2def	float	y	degrees	Deflection Misc Wing 18 Elevator 2
 sim/flightmodel/controls/mwing18_rud1def	float	y	degrees	Deflection Misc Wing 18 Rudder 1
 sim/flightmodel/controls/mwing18_rud2def	float	y	degrees	Deflection Misc Wing 18 Rudder 2
-sim/flightmodel/controls/mwing19_ail1def	float	y	degrees	Deflection Misc Wing 19 Left Aileron 1
-sim/flightmodel/controls/mwing19_ail2def	float	y	degrees	Deflection Misc Wing 19 Left Aileron 2
-sim/flightmodel/controls/mwing19_spo1def	float	y	degrees	Deflection Misc Wing 19 Left Spoiler 1
-sim/flightmodel/controls/mwing19_spo2def	float	y	degrees	Deflection Misc Wing 19 Left Spoiler 2
-sim/flightmodel/controls/mwing19_fla1def	float	y	degrees	Deflection Misc Wing 19 Left Flap 1
-sim/flightmodel/controls/mwing19_fla2def	float	y	degrees	Deflection Misc Wing 19 Left Flap 2
+sim/flightmodel/controls/mwing19_ail1def	float	y	degrees	Deflection Misc Wing 19 Aileron 1
+sim/flightmodel/controls/mwing19_ail2def	float	y	degrees	Deflection Misc Wing 19 Aileron 2
+sim/flightmodel/controls/mwing19_spo1def	float	y	degrees	Deflection Misc Wing 19 Spoiler 1
+sim/flightmodel/controls/mwing19_spo2def	float	y	degrees	Deflection Misc Wing 19 Spoiler 2
+sim/flightmodel/controls/mwing19_fla1def	float	y	degrees	Deflection Misc Wing 19 Flap 1
+sim/flightmodel/controls/mwing19_fla2def	float	y	degrees	Deflection Misc Wing 19 Flap 2
 sim/flightmodel/controls/mwing19_yawbdef	float	y	degrees	Deflection Misc Wing 19 Yaw Brake
 sim/flightmodel/controls/mwing19_elv1def	float	y	degrees	Deflection Misc Wing 19 Elevator 1
 sim/flightmodel/controls/mwing19_elv2def	float	y	degrees	Deflection Misc Wing 19 Elevator 2
 sim/flightmodel/controls/mwing19_rud1def	float	y	degrees	Deflection Misc Wing 19 Rudder 1
 sim/flightmodel/controls/mwing19_rud2def	float	y	degrees	Deflection Misc Wing 19 Rudder 2
-sim/flightmodel/controls/mwing20_ail1def	float	y	degrees	Deflection Misc Wing 20 Left Aileron 1
-sim/flightmodel/controls/mwing20_ail2def	float	y	degrees	Deflection Misc Wing 20 Left Aileron 2
-sim/flightmodel/controls/mwing20_spo1def	float	y	degrees	Deflection Misc Wing 20 Left Spoiler 1
-sim/flightmodel/controls/mwing20_spo2def	float	y	degrees	Deflection Misc Wing 20 Left Spoiler 2
-sim/flightmodel/controls/mwing20_fla1def	float	y	degrees	Deflection Misc Wing 20 Left Flap 1
-sim/flightmodel/controls/mwing20_fla2def	float	y	degrees	Deflection Misc Wing 20 Left Flap 2
+sim/flightmodel/controls/mwing20_ail1def	float	y	degrees	Deflection Misc Wing 20 Aileron 1
+sim/flightmodel/controls/mwing20_ail2def	float	y	degrees	Deflection Misc Wing 20 Aileron 2
+sim/flightmodel/controls/mwing20_spo1def	float	y	degrees	Deflection Misc Wing 20 Spoiler 1
+sim/flightmodel/controls/mwing20_spo2def	float	y	degrees	Deflection Misc Wing 20 Spoiler 2
+sim/flightmodel/controls/mwing20_fla1def	float	y	degrees	Deflection Misc Wing 20 Flap 1
+sim/flightmodel/controls/mwing20_fla2def	float	y	degrees	Deflection Misc Wing 20 Flap 2
 sim/flightmodel/controls/mwing20_yawbdef	float	y	degrees	Deflection Misc Wing 20 Yaw Brake
 sim/flightmodel/controls/mwing20_elv1def	float	y	degrees	Deflection Misc Wing 20 Elevator 1
 sim/flightmodel/controls/mwing20_elv2def	float	y	degrees	Deflection Misc Wing 20 Elevator 2
 sim/flightmodel/controls/mwing20_rud1def	float	y	degrees	Deflection Misc Wing 20 Rudder 1
 sim/flightmodel/controls/mwing20_rud2def	float	y	degrees	Deflection Misc Wing 20 Rudder 2
+sim/flightmodel/controls/wing1l_retract	int	y	boolean	Wing 1 Left Retract
+sim/flightmodel/controls/wing1r_retract	int	y	boolean	Wing 1 Right Retract
+sim/flightmodel/controls/wing2l_retract	int	y	boolean	Wing 2 Left Retract
+sim/flightmodel/controls/wing2r_retract	int	y	boolean	Wing 2 Right Retract
+sim/flightmodel/controls/wing3l_retract	int	y	boolean	Wing 3 Left Retract
+sim/flightmodel/controls/wing3r_retract	int	y	boolean	Wing 3 Right Retract
+sim/flightmodel/controls/wing4l_retract	int	y	boolean	Wing 4 Left Retract
+sim/flightmodel/controls/wing4r_retract	int	y	boolean	Wing 4 Right Retract
+sim/flightmodel/controls/hstab1_retract	int	y	boolean	Horiz Stab Left Retract
+sim/flightmodel/controls/hstab2_retract	int	y	boolean	Horiz Stab Right Retract
+sim/flightmodel/controls/vstab1_retract	int	y	boolean	Vert Stab 1 Retract
+sim/flightmodel/controls/vstab2_retract	int	y	boolean	Vert Stab 2 Retract
+sim/flightmodel/controls/mwing01_retract	int	y	boolean	Misc Wing 1 Retract
+sim/flightmodel/controls/mwing02_retract	int	y	boolean	Misc Wing 2 Retract
+sim/flightmodel/controls/mwing03_retract	int	y	boolean	Misc Wing 3 Retract
+sim/flightmodel/controls/mwing04_retract	int	y	boolean	Misc Wing 4 Retract
+sim/flightmodel/controls/mwing05_retract	int	y	boolean	Misc Wing 5 Retract
+sim/flightmodel/controls/mwing06_retract	int	y	boolean	Misc Wing 6 Retract
+sim/flightmodel/controls/mwing07_retract	int	y	boolean	Misc Wing 7 Retract
+sim/flightmodel/controls/mwing08_retract	int	y	boolean	Misc Wing 8 Retract
+sim/flightmodel/controls/mwing09_retract	int	y	boolean	Misc Wing 9 Retract
+sim/flightmodel/controls/mwing10_retract	int	y	boolean	Misc Wing 10 Retract
+sim/flightmodel/controls/mwing11_retract	int	y	boolean	Misc Wing 11 Retract
+sim/flightmodel/controls/mwing12_retract	int	y	boolean	Misc Wing 12 Retract
+sim/flightmodel/controls/mwing13_retract	int	y	boolean	Misc Wing 13 Retract
+sim/flightmodel/controls/mwing14_retract	int	y	boolean	Misc Wing 14 Retract
+sim/flightmodel/controls/mwing15_retract	int	y	boolean	Misc Wing 15 Retract
+sim/flightmodel/controls/mwing16_retract	int	y	boolean	Misc Wing 16 Retract
+sim/flightmodel/controls/mwing17_retract	int	y	boolean	Misc Wing 17 Retract
+sim/flightmodel/controls/mwing18_retract	int	y	boolean	Misc Wing 18 Retract
+sim/flightmodel/controls/mwing19_retract	int	y	boolean	Misc Wing 19 Retract
+sim/flightmodel/controls/mwing20_retract	int	y	boolean	Misc Wing 20 Retract
+sim/flightmodel/controls/wing1l_retract_now	float	y	ratio	Wing 1 Left Retract Now
+sim/flightmodel/controls/wing1r_retract_now	float	y	ratio	Wing 1 Right Retract Now
+sim/flightmodel/controls/wing2l_retract_now	float	y	ratio	Wing 2 Left Retract Now
+sim/flightmodel/controls/wing2r_retract_now	float	y	ratio	Wing 2 Right Retract Now
+sim/flightmodel/controls/wing3l_retract_now	float	y	ratio	Wing 3 Left Retract Now
+sim/flightmodel/controls/wing3r_retract_now	float	y	ratio	Wing 3 Right Retract Now
+sim/flightmodel/controls/wing4l_retract_now	float	y	ratio	Wing 4 Left Retract Now
+sim/flightmodel/controls/wing4r_retract_now	float	y	ratio	Wing 4 Right Retract Now
+sim/flightmodel/controls/hstab1_retract_now	float	y	ratio	Horiz Stab Left Retract Now
+sim/flightmodel/controls/hstab2_retract_now	float	y	ratio	Horiz Stab Right Retract Now
+sim/flightmodel/controls/vstab1_retract_now	float	y	ratio	Vert Stab 1 Retract Now
+sim/flightmodel/controls/vstab2_retract_now	float	y	ratio	Vert Stab 2 Retract Now
+sim/flightmodel/controls/mwing01_retract_now	float	y	ratio	Misc Wing 1 Retract Now
+sim/flightmodel/controls/mwing02_retract_now	float	y	ratio	Misc Wing 2 Retract Now
+sim/flightmodel/controls/mwing03_retract_now	float	y	ratio	Misc Wing 3 Retract Now
+sim/flightmodel/controls/mwing04_retract_now	float	y	ratio	Misc Wing 4 Retract Now
+sim/flightmodel/controls/mwing05_retract_now	float	y	ratio	Misc Wing 5 Retract Now
+sim/flightmodel/controls/mwing06_retract_now	float	y	ratio	Misc Wing 6 Retract Now
+sim/flightmodel/controls/mwing07_retract_now	float	y	ratio	Misc Wing 7 Retract Now
+sim/flightmodel/controls/mwing08_retract_now	float	y	ratio	Misc Wing 8 Retract Now
+sim/flightmodel/controls/mwing09_retract_now	float	y	ratio	Misc Wing 9 Retract Now
+sim/flightmodel/controls/mwing10_retract_now	float	y	ratio	Misc Wing 10 Retract Now
+sim/flightmodel/controls/mwing11_retract_now	float	y	ratio	Misc Wing 11 Retract Now
+sim/flightmodel/controls/mwing12_retract_now	float	y	ratio	Misc Wing 12 Retract Now
+sim/flightmodel/controls/mwing13_retract_now	float	y	ratio	Misc Wing 13 Retract Now
+sim/flightmodel/controls/mwing14_retract_now	float	y	ratio	Misc Wing 14 Retract Now
+sim/flightmodel/controls/mwing15_retract_now	float	y	ratio	Misc Wing 15 Retract Now
+sim/flightmodel/controls/mwing16_retract_now	float	y	ratio	Misc Wing 16 Retract Now
+sim/flightmodel/controls/mwing17_retract_now	float	y	ratio	Misc Wing 17 Retract Now
+sim/flightmodel/controls/mwing18_retract_now	float	y	ratio	Misc Wing 18 Retract Now
+sim/flightmodel/controls/mwing19_retract_now	float	y	ratio	Misc Wing 19 Retract Now
+sim/flightmodel/controls/mwing20_retract_now	float	y	ratio	Misc Wing 20 Retract Now
+sim/flightmodel/controls/wing1l_retract_max	float	y	ratio	Wing 1 Left Retract Max
+sim/flightmodel/controls/wing1r_retract_max	float	y	ratio	Wing 1 Right Retract Max
+sim/flightmodel/controls/wing2l_retract_max	float	y	ratio	Wing 2 Left Retract Max
+sim/flightmodel/controls/wing2r_retract_max	float	y	ratio	Wing 2 Right Retract Max
+sim/flightmodel/controls/wing3l_retract_max	float	y	ratio	Wing 3 Left Retract Max
+sim/flightmodel/controls/wing3r_retract_max	float	y	ratio	Wing 3 Right Retract Max
+sim/flightmodel/controls/wing4l_retract_max	float	y	ratio	Wing 4 Left Retract Max
+sim/flightmodel/controls/wing4r_retract_max	float	y	ratio	Wing 4 Right Retract Max
+sim/flightmodel/controls/hstab1_retract_max	float	y	ratio	Horiz Stab Left Retract Max
+sim/flightmodel/controls/hstab2_retract_max	float	y	ratio	Horiz Stab Right Retract Max
+sim/flightmodel/controls/vstab1_retract_max	float	y	ratio	Vert Stab 1 Retract Max
+sim/flightmodel/controls/vstab2_retract_max	float	y	ratio	Vert Stab 2 Retract Max
+sim/flightmodel/controls/mwing01_retract_max	float	y	ratio	Misc Wing 1 Retract Max
+sim/flightmodel/controls/mwing02_retract_max	float	y	ratio	Misc Wing 2 Retract Max
+sim/flightmodel/controls/mwing03_retract_max	float	y	ratio	Misc Wing 3 Retract Max
+sim/flightmodel/controls/mwing04_retract_max	float	y	ratio	Misc Wing 4 Retract Max
+sim/flightmodel/controls/mwing05_retract_max	float	y	ratio	Misc Wing 5 Retract Max
+sim/flightmodel/controls/mwing06_retract_max	float	y	ratio	Misc Wing 6 Retract Max
+sim/flightmodel/controls/mwing07_retract_max	float	y	ratio	Misc Wing 7 Retract Max
+sim/flightmodel/controls/mwing08_retract_max	float	y	ratio	Misc Wing 8 Retract Max
+sim/flightmodel/controls/mwing09_retract_max	float	y	ratio	Misc Wing 9 Retract Max
+sim/flightmodel/controls/mwing10_retract_max	float	y	ratio	Misc Wing 10 Retract Max
+sim/flightmodel/controls/mwing11_retract_max	float	y	ratio	Misc Wing 11 Retract Max
+sim/flightmodel/controls/mwing12_retract_max	float	y	ratio	Misc Wing 12 Retract Max
+sim/flightmodel/controls/mwing13_retract_max	float	y	ratio	Misc Wing 13 Retract Max
+sim/flightmodel/controls/mwing14_retract_max	float	y	ratio	Misc Wing 14 Retract Max
+sim/flightmodel/controls/mwing15_retract_max	float	y	ratio	Misc Wing 15 Retract Max
+sim/flightmodel/controls/mwing16_retract_max	float	y	ratio	Misc Wing 16 Retract Max
+sim/flightmodel/controls/mwing17_retract_max	float	y	ratio	Misc Wing 17 Retract Max
+sim/flightmodel/controls/mwing18_retract_max	float	y	ratio	Misc Wing 18 Retract Max
+sim/flightmodel/controls/mwing19_retract_max	float	y	ratio	Misc Wing 19 Retract Max
+sim/flightmodel/controls/mwing20_retract_max	float	y	ratio	Misc Wing 20 Retract Max
 sim/flightmodel/cyclic/cyclic_ailn_blad_alph	float[8]	n	??? Blade	alpha
 sim/flightmodel/cyclic/cyclic_ailn_disc_tilt	float[8]	n	???	Disc tilt
 sim/flightmodel/cyclic/cyclic_elev_blad_alph	float[8]	n	???	Blade alpha
@@ -1194,6 +1291,8 @@ sim/flightmodel/engine/POINT_side_wash	float[8]	n	???	???
 sim/flightmodel/engine/POINT_XYZ	float[24]	n	???	???
 sim/flightmodel/engine/POINT_pitch_deg_use	float[8]	y
 sim/flightmodel/engine/POINT_prop_ang_deg	float[8]	n	???	???
+sim/flightmodel/engine/burner_enabled	int	y	boolean	Burner is on or off
+sim/flightmodel/engine/burner_level	int	y	boolean	Burner is high or low
 sim/flightmodel/failures/frm_ice	float	y	ratio	Ratio of icing on wings/airframe
 sim/flightmodel/failures/pitot_ice	float	y	ratio	Ratio of icing on pitot tube
 sim/flightmodel/failures/pitot_ice2	float	y	ratio	Ratio of icing on pitot tube2
@@ -1240,7 +1339,7 @@ sim/flightmodel/jetwash/ringDVinc	float[80]	n	???	ringDVinc	8x10
 sim/flightmodel/misc/ett_size	float	y	???	??? Slung/jettisonable load size (this should read JETT size but has a typo) hrm weigiht?!
 sim/flightmodel/misc/jett_len	float	y	???	??? slung jettisonable load length (length of cable??!)
 sim/flightmodel/misc/g_total	float	n	???	???
-sim/flightmodel/misc/nosewheel_speed	float	n	???	???
+sim/flightmodel/misc/nosewheel_speed	float	n	???	[GEAR]
 sim/flightmodel/misc/wing_tilt_ptch	float	y	???	???
 sim/flightmodel/misc/wing_tilt_roll	float	y	???	???
 sim/flightmodel/misc/ai_app_mode	int	y	???	???
@@ -1248,6 +1347,8 @@ sim/flightmodel/misc/jato_left	float	y	???	???
 sim/flightmodel/misc/displace_rat	float	y	???	???
 sim/flightmodel/misc/h_ind	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
 sim/flightmodel/misc/h_ind2	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/h_ind_copilot	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/h_ind_copilot2	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
 sim/flightmodel/misc/machno	float	n	???	???
 sim/flightmodel/misc/Qstatic	float	n	psf	Ambient Q
 sim/flightmodel/misc/turnrate_roll	float	n	???	???
@@ -1290,33 +1391,33 @@ sim/flightmodel/parts/alpha_el	float[2920]	n	???  	73x10x4 alpha is DIFFERENT FO
 sim/flightmodel/parts/downwash_deg	float[730]	n	???	73x10
 sim/flightmodel/parts/propwash_rat	float[730]	n	???	73x10
 sim/flightmodel/parts/del_dir	float[2920]	n	???	73x10x4 corkscrew path is DIFFERENT FOR EACH BLADE!
-sim/flightmodel/parts/CL_grndeffect	float[73]	n	???	73
-sim/flightmodel/parts/CD_grndeffect	float[73]	n	???	73
-sim/flightmodel/parts/wash_grndeffect	float[73]	n	???	73
+sim/flightmodel/parts/CL_grndeffect	float[73]	n	???	73 [WING]
+sim/flightmodel/parts/CD_grndeffect	float[73]	n	???	73 [WING]
+sim/flightmodel/parts/wash_grndeffect	float[56]	n	???	56 [WING]
 sim/flightmodel/parts/Q_centroid_loc	float[292]	n	???	73x4 centroid is TOTALLY DIFFERENT FOR EACH BLADE on helos and gyros!
 sim/flightmodel/parts/Q_centroid_MULT	float[292]	n	???	73x4 centroid is TOTALLY DIFFERENT FOR EACH BLADE on helos and gyros!
-sim/flightmodel/parts/stalled	float[73]	n	???	73
+sim/flightmodel/parts/stalled	float[73]	n	???	73 [WING]
 sim/flightmodel/parts/tire_locked	float[73]	n	???	73
 sim/flightmodel/parts/tire_drag_dis	float[73]	n	???	73
 sim/flightmodel/parts/tire_speed_term	float[73]	n	???	73
 sim/flightmodel/parts/tire_speed_now	float[73]	n	???	73
 sim/flightmodel/parts/tire_prop_rot	float[73]	n	???	73
-sim/flightmodel/parts/tire_vrt_def_veh	float[73]	n	???	73
-sim/flightmodel/parts/tire_vrt_frc_veh	float[73]	n	???	73
-sim/flightmodel/parts/tire_steer_cmd	float[73]	n	???	73
-sim/flightmodel/parts/tire_steer_act	float[73]	n	???	73
-sim/flightmodel/parts/nrml_force	float[73]	n	???	73 for data output, for the entire flying surface
-sim/flightmodel/parts/axil_force	float[73]	n	???	73 for data output, for the entire flying surface
+sim/flightmodel/parts/tire_vrt_def_veh	float[10]	n	???	73
+sim/flightmodel/parts/tire_vrt_frc_veh	float[10]	n	???	73
+sim/flightmodel/parts/tire_steer_cmd	float[10]	n	???	73
+sim/flightmodel/parts/tire_steer_act	float[10]	n	???	73
+sim/flightmodel/parts/nrml_force	float[73]	n	???	73 [WING] for data output, for the entire flying surface
+sim/flightmodel/parts/axil_force	float[73]	n	???	73 [WING] for data output, for the entire flying surface
 sim/flightmodel/parts/force_XYZ	float[2190]	n	???	73x10x3 for force visualization, for each element
-sim/flightmodel/parts/flap_def	float[73]	n	???	73 with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
-sim/flightmodel/parts/flap2_def	float[73]	n	???	73 with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
-sim/flightmodel/parts/elev_cont_def	float[73]	n	???	73 different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
-sim/flightmodel/parts/elev_trim_def	float[73]	n	???	73 different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
-sim/flightmodel/parts/rudd_cont_def	float[73]	n	???	73 different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
-sim/flightmodel/parts/rudd2_cont_def	float[73]	n	???	73 different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
-sim/flightmodel/parts/foil_swe	float[73]	n	???	73
-sim/flightmodel/parts/foil_dih	float[73]	n	???	73
-sim/flightmodel/parts/foil_inc	float[73]	n	???	73
+sim/flightmodel/parts/flap_def	float[73]	n	???	73 [WING] with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
+sim/flightmodel/parts/flap2_def	float[56]	n	???	56 [WING] with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
+sim/flightmodel/parts/elev_cont_def	float[73]	n	???	73 [WING] different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/elev_trim_def	float[73]	n	???	73 [WING] different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/rudd_cont_def	float[73]	n	???	73 [WING] different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/rudd2_cont_def	float[56]	n	???	56 [WING] different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/foil_swe	float[73]	n	???	73 [WING] 
+sim/flightmodel/parts/foil_dih	float[73]	n	???	73 [WING] 
+sim/flightmodel/parts/foil_inc	float[73]	n	???	73 [WING] 
 sim/flightmodel/parts/elem_inc	float[730]	n	???	73x10
 sim/flightmodel/position/local_x	double	y	meters	The location of the plane in OpenGL coordinates
 sim/flightmodel/position/local_y	double	y	meters	The location of the plane in OpenGL coordinates
@@ -1383,6 +1484,10 @@ sim/graphics/animation/crane_psi	float	n	ratio	crane heading
 sim/graphics/animation/buoy_height	float	n	meters	how high above MSL 0 is this buoy riding?
 sim/graphics/animation/ping_pong_2	float	n	ratio	-1 to 1
 sim/graphics/animation/sin_wave_2	float	n	ratio	-1 to 1
+sim/graphics/animation/carrier_blast_def_lf	float	n	ratio	Ratio of deployment of carrier blast door (left front)
+sim/graphics/animation/carrier_blast_def_rf	float	n	ratio	Ratio of deployment of carrier blast door (right front)
+sim/graphics/animation/carrier_blast_def_lr	float	n	ratio	Ratio of deployment of carrier blast door (left rear)
+sim/graphics/animation/carrier_blast_def_rr	float	n	ratio	Ratio of deployment of carrier blast door (right rear)
 sim/graphics/animation/birds/wing_flap_deg	float	n	float	degree of wing flap for the currently drawn bird
 sim/graphics/animation/lights/flasher	float[9]	n	light	A flashing light, on only at night, matches v7
 sim/graphics/animation/lights/pulse	float[9]	n	light	A red pulsing light, on only at night, matches v7
