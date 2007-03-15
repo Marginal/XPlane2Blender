@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.21"
+__version__ = "2.22"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -104,6 +104,9 @@ Limitations:<br>
 #
 # 2006-04-22 v2.21
 #  - Re-use meshes for duplicate wings, bodies, weapons and objects
+#
+# 2006-05-02 v2.22
+#  - Fix for fairing rotation.
 #
 
 import sys
@@ -461,45 +464,35 @@ class ACFimport:
         mm=TranslationMatrix(centre.toVector(4))
         mm=RotationMatrix(-wing.lat_sign*wing.dihed1, 4, 'y')*mm
 
-        meshno=None
-        if p in DEFfmt.partRightWings:
-            # Re-use meshes from left wings
-            meshno=p-1
-        elif not p in DEFfmt.partMainWings:
-            # Re-use meshes from misc wings
-            crs=[DEFfmt.partMiscWings,DEFfmt.partPylons]
-            for cr in crs:
-                if not p in cr: continue
-                for p2 in cr:
-                    part2=self.acf.part[p2]
-                    wing2=self.acf.wing[p2]
-                    if (p2>=p or not part2.part_eq or
-                        part.part_tex!=part2.part_tex or
-                        part.top_s1!=part2.top_s1 or
-                        part.top_s2!=part2.top_s2 or
-                        part.top_t1!=part2.top_t1 or
-                        part.top_t2!=part2.top_t2 or
-                        wing.semilen_SEG!=wing2.semilen_SEG or
-                        wing.Ctip!=wing2.Ctip or
-                        wing.Croot!=wing2.Croot or
-                        wing.dihed1!=wing2.dihed1 or
-                        wing.sweep1!=wing2.sweep1 or
-                        wing.Rafl0!=wing2.Rafl0 or
-                        wing.Tafl0!=wing2.Tafl0): continue
-                    meshno=p2
-                    break
-                else:
-                    break
-        if meshno:
-            meshes=self.meshcache[meshno]
-            for i in range(len(meshes)):
-                ob=self.addMesh(name+ACFimport.MARKERS[i]+imagemkr,
-                                meshes[i], ACFimport.LAYERS[i], mm)
-                if wing.lat_sign*self.acf.wing[meshno].lat_sign<0:
-                    ob.SizeX=-ob.SizeX
-            return
-        else:
-            self.meshcache[p]=[]
+        # Re-use existing meshes
+        crs=[DEFfmt.partMainWings,DEFfmt.partMiscWings,DEFfmt.partPylons]
+        for cr in crs:
+            if not p in cr: continue
+            for p2 in cr:
+                part2=self.acf.part[p2]
+                wing2=self.acf.wing[p2]
+                if (p2>=p or not part2.part_eq or
+                    part.part_tex!=part2.part_tex or
+                    part.top_s1!=part2.top_s1 or
+                    part.top_s2!=part2.top_s2 or
+                    part.top_t1!=part2.top_t1 or
+                    part.top_t2!=part2.top_t2 or
+                    wing.semilen_SEG!=wing2.semilen_SEG or
+                    wing.Ctip!=wing2.Ctip or
+                    wing.Croot!=wing2.Croot or
+                    wing.dihed1!=wing2.dihed1 or
+                    wing.sweep1!=wing2.sweep1 or
+                    wing.Rafl0!=wing2.Rafl0 or
+                    wing.Tafl0!=wing2.Tafl0): continue
+                meshes=self.meshcache[p2]
+                for i in range(len(meshes)):
+                    ob=self.addMesh(name+ACFimport.MARKERS[i]+imagemkr,
+                                    meshes[i], ACFimport.LAYERS[i], mm)
+                    if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
+                        ob.SizeX=-ob.SizeX
+                return
+        # No matching wing
+        self.meshcache[p]=[]
 
         # Find four points - leading root & tip, trailing tip & root
         if istip:
@@ -749,7 +742,8 @@ class ACFimport:
                 image=self.image2
             
             if p in DEFfmt.partFairings:
-                # Fairings take location from wheels
+                # Fairings take location but not rotation from wheels
+                part.patt_con=0	# appears to be random in acf
                 gear=self.acf.gear[p-DEFfmt.partFair1]
                 a=RotationMatrix(gear.latE, 3, 'y')
                 a=RotationMatrix(-gear.lonE, 3, 'x')*a

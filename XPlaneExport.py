@@ -182,6 +182,9 @@
 #  - Add support for CSL variant of OBJv7
 #  - Fix face direction when object negatively scaled.
 #
+# 2006-05-02 v2.22
+#  - Add support back for poly_os / TILES.
+#
 
 import sys
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
@@ -423,6 +426,7 @@ class Mesh:
 #        - HARD
 #        - TWOSIDE
 #        - FLAT
+#	 - NPOLY - negative so polygon offsets come first
 #        - ALPHA
 #        - PANEL
 #        For each attribute, sort on polygon type.
@@ -459,6 +463,8 @@ class OBJexport7:
         self.hard=False
         self.twoside=False
         self.flat=False		# >=7.30 defaults to smoothed
+        if self.iscockpit or self.iscsl: self.npoly=1
+        else: self.npoly=-1	# Always set explicitly for <8.20
         self.alpha=False	# implicit - doesn't appear in output file
         self.panel=False
         self.layer=0
@@ -511,8 +517,6 @@ class OBJexport7:
             self.file.write("%s\t\t// Texture\n\n" % self.texture)
         else:	# Barfs if no texture specified
             self.file.write("none\t\t\t// Texture\n\n")            
-        if not self.iscockpit and not self.iscsl:
-            self.file.write("ATTR_poly_os 0\t\t// fix for versions < 8.20\n\n")
 
     #------------------------------------------------------------------------
     def writeObjects (self, theObjects):
@@ -747,8 +751,8 @@ class OBJexport7:
                     if f.transp == NMesh.FaceTranspModes.ALPHA:
                         face.flags|=Face.ALPHA
 
-                #if f.mode & NMesh.FaceModes.TILES:
-                #    face.flags|=Face.TILES
+                if not f.mode&NMesh.FaceModes.TILES or self.iscockpit or self.iscsl:
+                    face.flags|=Face.NPOLY
 
                 if f.mode & NMesh.FaceModes.TWOSIDE:
                     face.flags|=Face.TWOSIDE
@@ -1016,8 +1020,8 @@ class OBJexport7:
         face=strip[0]
         n=len(face.v)
         self.updateAttr(face.flags&Face.HARD, face.flags&Face.TWOSIDE,
-                        face.flags&Face.FLAT, face.flags&Face.ALPHA,
-                        face.flags&Face.PANEL)
+                        face.flags&Face.FLAT, face.flags&Face.NPOLY,
+                        face.flags&Face.ALPHA, face.flags&Face.PANEL)
         
         if (len(strip))==1:
             # Oh for fuck's sake. X-Plane 8.00-8.06 loses the plot unless
@@ -1087,7 +1091,7 @@ class OBJexport7:
 
 
     #------------------------------------------------------------------------
-    def updateAttr(self, hard, twoside, flat, alpha, panel):
+    def updateAttr(self, hard, twoside, flat, npoly, alpha, panel):
 
         # Note X-Plane v7 parser requires a comment after attribute statements
 
@@ -1100,6 +1104,9 @@ class OBJexport7:
 
         if self.flat and not flat:
             self.file.write("ATTR_shade_smooth\t//\n\n")
+
+        if self.npoly!=0 and not npoly:
+            self.file.write("ATTR_poly_os\t2\t//\n\n")
 
         # alpha is implicit - doesn't appear in output file
         # panel handled by explicit command, not attribute
@@ -1114,12 +1121,17 @@ class OBJexport7:
         if flat and not self.flat:
             self.file.write("ATTR_shade_flat\t\t//\n\n")
 
+        if npoly and self.npoly!=1:
+            self.file.write("ATTR_poly_os\t0\t//\n\n")
+
         # alpha is implicit - doesn't appear in output file
         # panel handled by explicit command, not attribute
 
         self.hard=hard
         self.twoside=twoside
         self.flat=flat
+        if npoly: self.npoly=1
+        else: self.npoly=0
         self.alpha=alpha
         self.panel=panel
 
@@ -1140,6 +1152,8 @@ class OBJexport7:
         self.hard=False
         self.twoside=False
         self.flat=False
+        if self.iscockpit or self.iscsl: self.npoly=1
+        else: self.npoly=-1	# Always set explicitly for <8.20
         self.alpha=False
         self.panel=False
         self.layer=layer

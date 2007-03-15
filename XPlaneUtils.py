@@ -183,10 +183,10 @@ class Face:
     HARD=1
     TWOSIDE=2
     FLAT=4
-    ALPHA=8	# Must be 2nd last
-    PANEL=16	# Must be last
-    BUCKET=HARD|TWOSIDE|FLAT|ALPHA|PANEL	# For v7 export
-    TILES=32	# Not output in v7
+    NPOLY=8
+    ALPHA=16	# Must be 2nd last
+    PANEL=32	# Must be last
+    BUCKET=HARD|TWOSIDE|FLAT|NPOLY|ALPHA|PANEL	# For v7 export
 
     def __init__ (self):
         self.v=[]

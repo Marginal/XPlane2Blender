@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.21"
+__version__ = "2.22"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -603,7 +603,7 @@ class OBJexport8:
                             face.flags|=Prim.TWOSIDE
                             twosideerr=twosideerr+1
         
-                        if not f.mode & NMesh.FaceModes.TILES:
+                        if not f.mode&NMesh.FaceModes.TILES or self.iscockpit:
                             face.flags|=Prim.NPOLY
                             
                         if f.image and 'panel.' in f.image.name.lower():
@@ -654,7 +654,7 @@ class OBJexport8:
                     face.flags|=Prim.TWOSIDE
                     twosideerr=twosideerr+1
 
-                if not f.mode & NMesh.FaceModes.TILES:
+                if not f.mode&NMesh.FaceModes.TILES or self.iscockpit:
                     face.flags|=Prim.NPOLY
                     
                 if f.image and 'panel.' in f.image.name.lower():

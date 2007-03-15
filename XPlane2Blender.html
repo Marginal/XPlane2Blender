@@ -31,13 +31,12 @@ Scenery</a> &raquo; <a href="http://marginal.org.uk/x-planescenery/tools.html">T
 <p><a href="http://www.blender3d.org/">Blender</a>
 is an open source 3D object editor for Windows, Mac and
 UNIX.</p>
-<p> These Blender scripts export
-scenery created in Blender to X-Plane v7, v8 or CSL
-<code>.obj</code> format for placement with World-Maker.
-The scripts also import existing X-Plane v6, v7, v8 and CSL <code>.obj</code>
-scenery files and X-Plane v7 and v8 <code>.acf</code>
-airplanes into Blender.</p>
-<p>All X-Plane scenery primitives are supported
+<p>These Blender scripts export scenery created in Blender
+to X-Plane v7, v8 or CSL <code>.obj</code> format.</p>
+<p>The scripts also import existing X-Plane v6, v7, v8 and CSL
+<code>.obj</code> scenery files and X-Plane v7 and v8 <code>.acf</code>
+airplanes into Blender.
+All X-Plane scenery primitives are supported
 apart from <code>smoke_black</code> and <code>smoke_white</code>
 and material attributes.</p>
 <h3>Requirements</h3>
@@ -214,10 +213,10 @@ Go to "Object Mode", select the mesh and press <samp>Set Smooth</samp>.
 The effect is only visible in Blender <samp>3D View</samp>
 windows when the <samp>Viewport Shading</samp> button is
 set to <samp>Solid</samp> or <samp>Shaded</samp>.</li>
-    </ul>
-    <div style="margin-left: 40px;"><samp style="font-weight: bold;">v7: </samp>Only faces that
+	<div><samp style="font-weight: bold;">v7: </samp>Only faces that
 are part of a Strip (see <a href="#strips">Strips</a>
 below) will be smoothed when displayed in X-Plane.</div>
+    </ul>
   </li>
   <li>In the <samp>Texture Face</samp> panel
 (available in <samp>UV Face Select</samp> mode):
@@ -237,27 +236,27 @@ bitmap to the face.</li>
       <li><samp>Tiles</samp> button controls whether
 the face is rendered with "polygon offsetting" (<code>ATTR_poly_os</code>)
 in X-Plane. Use this for faces that lie horizontally on the ground to
-prevent
-artifacts in X-Plane. Don't press this button for other faces.</li>
-    </ul>
-    <div style="margin-left: 40px;"><samp style="font-weight: bold;">v7 & csl: </samp>This button is ignored.</div>
-    <ul>
+prevent artifacts in X-Plane. Don't press this button for other faces.
+For best results you should ensure that objects that use polygon
+offsetting are listed first in your <code>.env</code> or
+<code>.dsf</code> scenery file.</li>
+	<div><samp style="font-weight: bold;">v7: </samp>"polygon offsetting" does not produce reliable results in X-Plane versions prior to 8.20.</div>
+	<div><samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</div>
       <li><samp>Collision</samp> button indicates
 that the face is <u>not</u> "hard" (ie not "landable on")
 in X-Plane. Making faces hard is very expensive, so this button should
 normally be pressed. Unpress this button only for things like
 helicopter landing pads. <small>(Note: The meaning of this
 button was changed in v1.50. Use <a href="http://marginal.org.uk/x-planescenery/collide.txt">this</a>
-script to turn the Collision button back on for all faces).</small>
-        <div style="margin-left: 0px;"><samp style="font-weight: bold;">v7: </samp>Only faces with
+script to turn the Collision button back on for all faces).</small></li>
+        <div><samp style="font-weight: bold;">v7: </samp>Only faces with
 4 edges (ie "<code>quads</code>") are exported as "hard".</div>
-        <div style="margin-left: 0px;"><samp style="font-weight: bold;">v7: </samp>X-Plane
+        <div><samp style="font-weight: bold;">v7: </samp>X-Plane
 versions prior to 8.20 have a bug where <code>.obj</code>
-files
-that contain hard faces must be placed in WorldMaker with an "object
-heading" of 0. Otherwise the "hard" part of the surface ends up in the
-wrong place.</div>
-      </li>
+files that contain hard faces must be placed in WorldMaker with an
+"object heading" of 0. Otherwise the "hard" part of the surface ends
+up in the wrong place.</div>
+	<div><samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</div>
       <li><samp>Twoside</samp> button controls
 whether one or both sides of the face are displayed. Using a two-sided
 face is more expensive than using a single-sided face, but is cheaper
@@ -639,7 +638,7 @@ looks like a Command Prompt).</small></li>
 <p>Use of these tools does not impose any requirement on you to license
 your work under a Creative Commons license. For the avoidance of doubt,
 this means that you can license any scenery or planes that you make
-using these tools under commercial terms.<p>
+using these tools under commercial terms.</p>
 <p>The author would appreciate a courtesy copy of any commercial
 scenery or planes that you make using these tools, but you are under
 no obligation.</p>
@@ -647,7 +646,7 @@ no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.21 &copy; 2004-2006
+      <td class="banner">Version 2.22 &copy; 2004-2006
       <a href="mailto:x-plane@marginal.org.uk">Jonathan
 Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
