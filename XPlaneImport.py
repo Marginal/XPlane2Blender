@@ -46,27 +46,21 @@ Tip: 'Import an X-Plane scenery file (.obj)'
 #  - Import at cursor, not origin
 #
 # 2004-02-08 v1.12 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - Export: Fixed filename bug when texture file is a png
-#  - Import: Fixed refusing to recognise DOS-mode v6 files
-#  - Import: Fixed triangle texture rotation with v6 files
+#  - Fixed refusing to recognise DOS-mode v6 files
+#  - Fixed triangle texture rotation with v6 files
 #
 # 2004-02-09 v1.13 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - Import: Fixed filename bug when texture file is a png
-#  - Export: Fixed lack of comment bug on v7 objects
+#  - Fixed filename bug when texture file is a png
 #
 # 2004-02-29 v1.20 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Emulate Lines with faces
-#  - Import: Join adjacent faces into meshes for easier and faster editing
-#  - Export: Automatically generate strips where possible for faster rendering
+#  - Join adjacent faces into meshes for easier and faster editing
 #
 # 2004-03-24 v1.30 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
-#  - Export: Sort faces by type for correct rendering in X-Plane. This fixes
-#            bugs with alpha and no_depth faces.
 #
 # 2004-04-10 v1.40 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reduced duplicate vertex limit to 0.01 to handle imported objects
-#  - Export: Support 3 LOD levels: 1000,4000,10000
 #
 # 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reversed meaning of DYNAMIC flag, since it is set by default when
@@ -74,15 +68,17 @@ Tip: 'Import an X-Plane scenery file (.obj)'
 #
 # 2004-08-28 v1.60 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Added support for double-sided faces
-#  - Import: Support importing files with multiple LODs
+#  - Support importing files with multiple LODs
 #
 # 2004-08-28 v1.61 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
 #  - Display number of X-Plane objects on import and export
 #
 # 2004-08-29 v1.62 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - Import and export Light and Line colours as floats
-#  - Export: Don't generate no_depth attribute - it's broken in X-Plane 7.61
+#  - Light and Line colours are floats
+#
+# 2004-08-30 v1.63 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Don't set alpha
 #
 
 import sys
@@ -279,7 +275,7 @@ class Mesh:
             face=NMesh.Face()
             face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TEX|
                            NMesh.FaceModes.TILES|NMesh.FaceModes.DYNAMIC)
-            face.transp=NMesh.FaceTranspModes.ALPHA
+            #face.transp=NMesh.FaceTranspModes.ALPHA
             if not f.flags&Face.HARD:
                 face.mode |= NMesh.FaceModes.DYNAMIC
             if f.flags&Face.NO_DEPTH:
@@ -327,7 +323,7 @@ class Mesh:
 #-- OBJimport --
 #------------------------------------------------------------------------
 class OBJimport:
-    VERSION=1.62
+    VERSION=1.63
     
     LAYER=[0,1,2,4]
 
@@ -336,7 +332,7 @@ class OBJimport:
         #--- public you can change these ---
         self.verbose=0	# level of verbosity in console 0-none, 1-some, 2-most
         self.aggressive=6	# how aggressively to merge meshes. Should be
-        			# at least 1. 5 seems to cover most cases OK.
+        			# at least 1. 6 seems to cover most cases OK.
         
         #--- class private don't touch ---
         self.filename=filename

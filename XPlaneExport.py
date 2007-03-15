@@ -43,30 +43,25 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-02-05 v1.11 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Removed dependency on Python installation
-#  - Import at cursor, not origin
 #
 # 2004-02-08 v1.12 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - Export: Fixed filename bug when texture file is a png
-#  - Import: Fixed refusing to recognise DOS-mode v6 files
-#  - Import: Fixed triangle texture rotation with v6 files
+#  - Fixed filename bug when texture file is a png
 #
 # 2004-02-09 v1.13 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - Import: Fixed filename bug when texture file is a png
-#  - Export: Fixed lack of comment bug on v7 objects
+#  - Fixed lack of comment bug on v7 objects
 #
 # 2004-02-29 v1.20 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Emulate Lines with faces
-#  - Import: Join adjacent faces into meshes for easier and fast editing
-#  - Export: Automatically generate strips where possible for faster rendering
+#  - Automatically generate strips where possible for faster rendering
 #
 # 2004-03-24 v1.30 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
-#  - Export: Sort faces by type for correct rendering in X-Plane. This fixes
-#            bugs with alpha and no_depth faces.
+#  - Sort faces by type for correct rendering in X-Plane. This fixes bugs with
+#    alpha and no_depth faces.
 #
 # 2004-04-10 v1.40 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reduced duplicate vertex limit to 0.01 to handle imported objects
-#  - Export: Support 3 LOD levels: 1000,4000,10000
+#  - Support 3 LOD levels: 1000,4000,10000
 #
 # 2004-08-22 v1.50 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Reversed meaning of DYNAMIC flag, since it is set by default when
@@ -74,15 +69,17 @@ Tip: 'Export to X-Plane scenery file format (.obj)'
 #
 # 2004-08-28 v1.60 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Added support for double-sided faces
-#  - Import: Support importing files with multiple LODs
 #
 # 2004-08-28 v1.61 by Jonathan Harris <x-plane@marginal.org.uk>
 #  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
 #  - Display number of X-Plane objects on import and export
 #
 # 2004-08-29 v1.62 by Jonathan Harris <x-plane@marginal.org.uk>
-#  - Import and export Light and Line colours as floats
-#  - Export: Don't generate no_depth attribute - it's broken in X-Plane 7.61
+#  - Light and Line colours are floats
+#  - Don't generate no_depth attribute - it's broken in X-Plane 7.61
+#
+# 2004-08-30 v1.63 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Work round X-Plane 7.61 tri_fan normal bug
 #
 
 #
@@ -187,7 +184,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.62
+    VERSION=1.63
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -495,6 +492,7 @@ class OBJexport:
             print "Mesh \"%s\" %s faces" % (object.name, len(mesh.faces))
 
         # Build list of faces and vertices
+        twoside=0
         for f in mesh.faces:
             n=len(f.v)
             if (n!=3) and (n!=4):
@@ -508,6 +506,10 @@ class OBJexport:
                     face.flags|=Face.ALPHA
                 if f.mode & NMesh.FaceModes.TWOSIDE:
                     face.flags|=Face.DBLSIDED
+                    if not twoside:
+                        print "Warn:\tFound two-sided face(s) in mesh \"%s\""%(
+                            object.name)
+                    twoside=1
                 if f.smooth:
                     face.flags|=Face.SMOOTH
                 if (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
@@ -562,8 +564,8 @@ class OBJexport:
             # Identify strips
             for faceindex in range(nfaces):
                 
-                if  (self.faces[faceindex] and
-                     (self.faces[faceindex].flags&Face.BUCKET) == bucket):
+                if (self.faces[faceindex] and
+                    (self.faces[faceindex].flags&Face.BUCKET) == bucket):
                     Window.DrawProgressBar(0.5+float(facenum)/(nfaces*2),
                                            "Exporting %s%% ..." %
                                            (50 + facenum*50/nfaces))
@@ -620,7 +622,6 @@ class OBJexport:
                                     break
 
                     elif len(startface.v)==4:
-                        # Strip could maybe go two ways - try horzontally first
                         # Find lowest two points
                         miny=sys.maxint
                         for i in range(4):
@@ -640,8 +641,9 @@ class OBJexport:
                         if self.debug: print "Start strip, edge=%s,%s:\n%s" % (
                             sv, (sv+1)%4, startface)
 
+                        # Strip could maybe go two ways
                         if startface.flags&Face.SMOOTH:
-                            # Vertically then Horizontally
+                            # Vertically then Horizontally for fuselages
                             seq=[1,0]
                         else:
                             # Horizontally then Vertically
@@ -762,6 +764,23 @@ class OBJexport:
                 for f in strip:
                     print f
 
+            # Work round bug in X-Plane 7.61 where one tri is rendered
+            # incorrectly (wrong normal?) under some situations.
+            # Bug appears reliably to be avoided if the tri_fan is regular,
+            # but that's hard to work out. So assume it is regular if it is
+            # closed. Split back into tris unless it is closed.
+            if n==3 and len(strip)>1:
+                # tri_fan is closed if first and last faces share two vertices
+                common=0
+                for i in range(3):
+                    for j in range(3):
+                        if strip[0].v[i].equals(strip[-1].v[j]):
+                            common+=1
+                if len(strip)==2 or common<2:
+                    while len(strip):
+                        self.writeStrip ([strip.pop()], 0)
+                    return;
+                
             if self.fileformat==7:
                 if n==3:
                     self.file.write ("tri_fan %s" % (len(strip)+2))
@@ -776,7 +795,7 @@ class OBJexport:
                     self.file.write("%s\t  %s\n" % (face.v[i], face.uv[i]))
                 c=face.v[(firstvertex+1)%n]
                 v=face.v[firstvertex]
-                
+
                 for face in strip:
                     for i in range(3):
                         if face.v[i]!=c and face.v[i]!=v:
