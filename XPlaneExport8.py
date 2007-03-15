@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.31"
+__version__ = "2.32"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -102,6 +102,9 @@ Limitations:<br>
 #
 # 2006-10-03 v2.31
 #  - Fix for nested animation translations.
+#
+# 2006-10-03 v2.32
+#  - Fix for animations with duplicate hide/show values.
 #
 
 
@@ -1122,6 +1125,7 @@ class Anim:
             if (self.hide or self.show) and not bone.parent:
                 # Create a dummy animation to hold hide/show values
                 self.dataref='no_ref'	# mustn't eval to False
+                self.t=[Vertex(0,0,0),Vertex(0,0,0)]
             elif bone.parent:
                 foo=Anim(child, bone.parent)
                 self.dataref=foo.dataref
