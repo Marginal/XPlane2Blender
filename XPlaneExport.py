@@ -28,10 +28,13 @@
 #
 #
 # 2005-09-23 v2.10
-#  - Main export routines split out
+#  - Main export routines split out.
 #
 # 2005-11-11 v2.11
-#  - Don't try to load texture if TEX isn't set
+#  - Don't try to load texture if TEX isn't set.
+# 
+# 2005-11-18 v2.12
+#  - Fix for relative texture paths.
 #
 
 
@@ -99,11 +102,21 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
             if mesh.hasFaceUV():
                 for face in mesh.faces:
                     if (face.mode&NMesh.FaceModes.TEX) and face.image:
-                        # Normalise pathnames
+                        # Need to canonicalise pathnames to avoid false dupes
                         fixedfile=face.image.filename
+                        if fixedfile[0:2] in ['//', '\\\\']:
+                            # Path is relative to .blend file
+                            fixedfile=Blender.Get('filename')
+                            l=fixedfile.rfind(Blender.sys.dirsep)
+                            if l!=-1:
+                                fixedfile=(fixedfile[:l+1]+
+                                           face.image.filename[2:])
+                            else:
+                                fixedfile=face.image.filename[2:]
                         if Blender.sys.dirsep=='\\':
+                            # Windows
                             if fixedfile[0] in ['/', '\\']:
-                                # Add Windows drive letter
+                                # Add drive letter
                                 for drive in [Blender.Get('filename'),
                                               Blender.sys.progname]:
                                     if drive and not drive[0] in ['/', '\\']:
@@ -117,7 +130,7 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
                                             fixedfile=f
                                             break
                             else:
-                                # Lowercase Windows drive lettter
+                                # Lowercase drive lettter
                                 fixedfile=fixedfile[0].lower()+fixedfile[1:]
                         while fixedfile.find('..')!=-1:
                             # Remove relative stuff
@@ -154,22 +167,20 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
                                         break
                                 else:
                                     panelerr=0
-
                         else:
                             # Check for multiple textures
                             if ((not texture) or
-                                (str.lower(texture.filename) ==
-                                 str.lower(face.image.filename))):
-                                texture = face.image
-                                texlist.append(str.lower(texture.filename))
+                                (str.lower(fixedfile)==str.lower(texture))):
+                                texture = fixedfile
+                                texlist.append(str.lower(fixedfile))
                             else:
                                 if not multierr:
                                     multierr=1
                                     print "Warn:\tMultiple texture files found:"
-                                    print texture.filename
-                                if not str.lower(face.image.filename) in texlist:
-                                    texlist.append(str.lower(face.image.filename))
-                                    print face.image.filename
+                                    print texture
+                                if not str.lower(fixedfile) in texlist:
+                                    texlist.append(str.lower(fixedfile))
+                                    print fixedfile
         elif (iscockpit and objType == "Lamp"
               and object.getData().getType() == Lamp.Types.Lamp):
             raise ExportError("Cockpit objects can't contain lights.")
@@ -181,13 +192,13 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
         raise ExportError("At least one instrument panel texture must be within 1024x768.")
 
     if not texture:
-        return ('', False, layermask)
+        return (None, False, layermask)
 
     try:
-        dim=texture.getSize()
-    except RuntimeError:
-        pass
-    	#raise ExportError("Can't load texture file \"%s\"" % texture.filename)
+        tex=Image.Load(texture)
+        dim=tex.getSize()
+    except (RuntimeError, IOError):
+    	raise ExportError("Can't load texture file \"%s\"" % texture)
     else:
         for l in dim:
             while l:
@@ -195,27 +206,26 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
                 if l&1 and l>1:
                     raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace to load the new file.")
 
-    l=texture.filename.rfind(Blender.sys.dirsep)
+    l=texture.rfind(Blender.sys.dirsep)
     if l!=-1:
         l=l+1
     else:
         l=0
-    if texture.filename[l:].find(" ")!=-1:
-        raise ExportError("Texture filename \"%s\" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file." % texture.filename[l:])
+    if texture[l:].find(' ')!=-1:
+        raise ExportError("Texture filename \"%s\" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file." % texture[l:])
 
-    texname=''
-    for i in range(len(texture.filename)):
-        if texture.filename[i]==Blender.sys.dirsep:
-            texname+=":"
-        else:
-            texname+=texture.filename[i]
+    while 1:
+        l=texture.find(Blender.sys.dirsep)
+        if l==-1:
+            break
+        texture=texture[:l]+':'+texture[l+1:]
 
-    if texname[-4:].lower() == '.bmp':
+    if texture[-4:].lower() == '.bmp':
         if fileformat==7:
-            texname = texname[:-4]
-    elif texname[-4:].lower() == '.png':
+            texture = texture[:-4]
+    elif texture[-4:].lower() == '.png':
         if fileformat==7:
-            texname = texname[:-4]
+            texture = texture[:-4]
     else:
         raise ExportError("Texture file must be in bmp or png format.\n\tPlease convert the file. Use Image->Replace to load the new file.")
     
@@ -224,17 +234,17 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
         print "Info:\tUsing algorithms appropriate for a cockpit object."
     elif fileformat==7:
         for prefix in ["custom object textures", "autogen textures"]:
-            l=texname.lower().find(prefix)
+            l=texture.lower().rfind(prefix)
             if l!=-1:
-                texname = texname[l+len(prefix)+1:]
-                return (texname, havepanel, layermask)
+                texture = texture[l+len(prefix)+1:]
+                return (texture, havepanel, layermask)
         print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
 
     # just return bare filename
-    l=texname.rfind(":")
+    l=texture.rfind(":")
     if l!=-1:
-        texname = texname[l+1:]
-    return (texname, havepanel, layermask)
+        texture = texture[l+1:]
+    return (texture, havepanel, layermask)
 
 #------------------------------------------------------------------------
 def isLine(object, linewidth):

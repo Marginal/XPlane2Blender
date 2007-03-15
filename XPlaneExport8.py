@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.11"
+__version__ = "2.12"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -56,6 +56,7 @@ Limitations:<br>
 # 2005-11-17 v2.11
 #  - Fixed error when ipo exists, but no curve defined.
 #  - Added support for updated (hopefully final) Blender 2.40 API.
+#  - Fixed bug with translation of child bones.
 #
 
 #
@@ -65,13 +66,13 @@ Limitations:<br>
 #
 # So we have to sort on export to ensure alpha comes after non-alpha. We also
 # sort to minimise attribute state changes, in rough order of expense:
-#  - HARD - should be first, since renderer merges hard polys with non-hard
+#  - HARD - should be first. Renderer merges hard polys with similar non-hard.
 #  - TWOSIDE
 #  - FLAT
 #  - NPOLY - negative so polygon offsets come first
 #  - (animations)
 #  - PANEL - most expensive
-#  - ALPHA - must be last for correctness
+#  - ALPHA - must be last for correctness. Renderer will merge with previous.
 #  - (LOD)
 #
 
