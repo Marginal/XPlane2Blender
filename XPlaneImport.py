@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.06"
+__version__ = "2.07"
 __bpydoc__ = """\
 This script imports X-Plane v6 and v7 .obj scenery files into Blender.
 
