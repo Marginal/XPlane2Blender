@@ -1,5 +1,5 @@
 #!/bin/sh
-# Installation script for OSX & Linux
+# Installation script for MacOS X
 clear
 echo Installing Blender scripts . . .
 

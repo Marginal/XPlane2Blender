@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.12"
+__version__ = "2.13"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -146,9 +146,12 @@ Limitations:<br>
 #  - Add support for v8 objects. No animation yet.
 #
 # 2005-11-17 v2.11
-#  - Import animations at rest position - no armatures yet.
+#  - Import v8 animations at rest position - no armatures yet.
 #  - Fixed face flags when no texture.
-#  - Added support for alpha and no_alpha pseudo attributes.
+#  - Added support for v8 alpha and no_alpha pseudo attributes.
+#
+# 2005-11-19 v2.13
+#  - Auto-detect flatness in v8 in the absence of ATTR_no_shade.
 #
 
 import sys
@@ -561,7 +564,7 @@ class OBJimport:
             elif c in self.whitespace:
                 if c == '\n':
                     self.lineno += 1
-            elif self.fileformat==8 and c=='#':
+            elif self.fileformat>=8 and c=='#':
                 # Hack!
                 for a in [Token.NAMES[Token.ALPHA],
                           Token.NAMES[Token.NO_ALPHA]]:
@@ -600,6 +603,7 @@ class OBJimport:
             print "Token:\t\"%s\"" % input
 
         if self.fileformat>6:
+            # names
             u=input.lower()
             for i in range(len(Token.NAMES)):
                 if u==Token.NAMES[i].lower():
@@ -607,6 +611,7 @@ class OBJimport:
             if self.fileformat==7 and u=='end':
                 return Token.END
         else:
+            # numbers
             try:
                 return int(input)
             except ValueError:
@@ -679,6 +684,7 @@ class OBJimport:
         if self.fileformat>=8:
             return
 
+        # Gather comment to help with merge
         while input and input[0]=='/':
             input=input[1:]
         self.comment = input.strip()
@@ -729,7 +735,7 @@ class OBJimport:
             raise ParseError(ParseError.HEADER)
 
         # read texture
-        if self.fileformat==8:
+        if self.fileformat>=8:
             t=self.getToken()
             if t!=Token.TEXTURE:
                 raise ParseError(ParseError.HEADER)
@@ -844,9 +850,9 @@ class OBJimport:
 
                 elif t==Token.VT:
                     v=self.getVertex()
-                    self.getVertex()	# ignore normal
+                    n=self.getVertex()	# normal
                     uv=self.getUV()
-                    self.vt.append((v,uv))
+                    self.vt.append((v,uv,n))
 
                 elif t==Token.IDX:
                     self.idx.append(self.getInt())
@@ -879,11 +885,23 @@ class OBJimport:
                     for i in range(a,a+b,3):
                         v=[]
                         uv=[]
+                        n=[]
                         for j in range(i,i+3):
-                            (vj,uvj)=self.vt[self.idx[j]]
+                            (vj,uvj,nj)=self.vt[self.idx[j]]
                             v.append(vj)
                             uv.append(uvj)
-                        self.addFan(scene,t,v,uv)
+                            n.append(nj)
+                        # autodetect flatness if ATTR_no_shade not supplied
+                        if (not self.flat and
+                            n[0].equals(n[1]) and
+                            n[1].equals(n[2])):
+                            # Should check that vertex normals equal plane
+                            # normal, but unlikely that won't be true.
+                            self.flat=True
+                            self.addFan(scene,t,v,uv)
+                            self.flat=False
+                        else:
+                            self.addFan(scene,t,v,uv)
 
                 elif t==Token.ANIM_BEGIN:
                     #if Blender.Get('version')<239:
@@ -1361,7 +1379,7 @@ class OBJimport:
     def addFan(self, scene, token, v, uv):
         # input v: list of co-ords, uv: corresponding list of uv points
         #	v[0] and uv[0] are common to every triangle
-        if self.fileformat==8:
+        if self.fileformat>=8:
             name="Mesh"
         else:
             name=self.name(Token.NAMES[token])

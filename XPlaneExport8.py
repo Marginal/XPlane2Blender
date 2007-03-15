@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.12"
+__version__ = "2.13"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -58,6 +58,10 @@ Limitations:<br>
 #  - Added support for updated (hopefully final) Blender 2.40 API.
 #  - Fixed bug with translation of child bones.
 #
+# 2005-11-21 v2.13
+#  - Don't emit redundant ATTR_[no_]shade attributes.
+#  - Added optimisation to re-use points (but not indices) between animations.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -68,7 +72,6 @@ Limitations:<br>
 # sort to minimise attribute state changes, in rough order of expense:
 #  - HARD - should be first. Renderer merges hard polys with similar non-hard.
 #  - TWOSIDE
-#  - FLAT
 #  - NPOLY - negative so polygon offsets come first
 #  - (animations)
 #  - PANEL - most expensive
@@ -128,12 +131,11 @@ class Prim:
     # Flags in sort order
     HARD=1
     TWOSIDE=2
-    FLAT=4
-    NPOLY=8
-    PANEL=16	# Should be 2nd last
-    ALPHA=32	# Must be last
+    NPOLY=4
+    PANEL=8	# Should be 2nd last
+    ALPHA=16	# Must be last
     
-    BUCKET1=HARD|TWOSIDE|FLAT|NPOLY
+    BUCKET1=HARD|TWOSIDE|NPOLY
     # ANIM comes here
     BUCKET2=PANEL|ALPHA
     # LOD comes here
@@ -175,7 +177,6 @@ class OBJexport:
         # attributes controlling export
         self.hard=False
         self.twoside=False
-        self.flat=False
         self.npoly=True
         self.panel=False
         self.alpha=False	# implicit - doesn't appear in output file
@@ -367,7 +368,7 @@ class OBJexport:
                                     break
                             else:
                                 count=len(self.lights)-offset
-                            self.updateAttr(0, 0, 0, 1, 0, 0, layer, anim)
+                            self.updateAttr(0, 0, 1, 0, 0, layer, anim)
                             self.file.write("%sLIGHTS\t%d %d\n" %
                                             (anim.ins(), offset, count))
                             self.nprim+=count
@@ -377,7 +378,7 @@ class OBJexport:
 
                     # Lines
                     if counts[n]:
-                        self.updateAttr(0, 0, 0, 1, 0, 0, layer, anim)
+                        self.updateAttr(0, 0, 1, 0, 0, layer, anim)
                         self.file.write("%sLINES\t%d %d\n" %
                                         (anim.ins(), offsets[n], counts[n]))
                         self.nprim+=1
@@ -388,7 +389,6 @@ class OBJexport:
                         if counts[n]:
                             self.updateAttr(passno&Prim.HARD,
                                             passno&Prim.TWOSIDE,
-                                            passno&Prim.FLAT,
                                             passno&Prim.NPOLY,
                                             passno&Prim.PANEL,
                                             passno&Prim.ALPHA,
@@ -399,7 +399,7 @@ class OBJexport:
                         n=n+1
 
         # Close animations
-        self.updateAttr(self.hard, self.twoside, self.flat, self.npoly,
+        self.updateAttr(self.hard, self.twoside, self.npoly,
                         self.panel, self.alpha, self.layer, Anim(None))
 
         self.file.write("\n# Built with Blender %4.2f. Exported with XPlane2Blender %s.\n" % (float(Blender.Get('version'))/100, __version__))
@@ -515,7 +515,7 @@ class OBJexport:
         # Build list of faces and vertices
         twosideerr=0
         harderr=0
-        vti = [[] for i in range(len(nmesh.verts))]
+        vti = [[] for i in range(len(nmesh.verts))]	# indices into vt
         
         for f in nmesh.faces:
             n=len(f.v)
@@ -538,9 +538,6 @@ class OBJexport:
                     face.flags|=Prim.TWOSIDE
                     twosideerr=twosideerr+1
 
-                if not f.smooth:
-                    face.flags|=Prim.FLAT
-
                 if not f.mode & NMesh.FaceModes.TILES:
                     face.flags|=Prim.NPOLY
                     
@@ -553,7 +550,7 @@ class OBJexport:
                 for i in range(n-1,-1,-1):
                     nmv=f.v[i]
                     vertex=Vertex(nmv[0], nmv[1], nmv[2], mm)
-                    if face.flags&Prim.FLAT:
+                    if not f.smooth:
                         norm=Vertex(f.no, nm)
                     else:
                         norm=Vertex(nmv.no, nm)
@@ -572,10 +569,28 @@ class OBJexport:
                             face.i.append(j)
                             break
                     else:
-                        j=len(self.vt)
-                        self.vt.append(vt)
-                        face.i.append(j)
-                        vti[nmv.index].append(j)
+                        found=False
+                        null=Anim(None)
+                        # Search other animations
+                        if not anim.equals(null):
+                            for tri in self.tris:
+                                if not tri.anim.equals(null):
+                                    for j in tri.i:
+                                        q=self.vt[j]
+                                        if vt.equals(q):
+                                            q.uv= (q.uv+ vt.uv)/2
+                                            face.i.append(j)
+                                            found=True
+                                            break
+                                    else:
+                                        continue	# next face
+                                    break		# found
+                        # New
+                        if not found:
+                            j=len(self.vt)
+                            self.vt.append(vt)
+                            face.i.append(j)
+                            vti[nmv.index].append(j)
 
                 self.tris.append(face)
                 
@@ -650,7 +665,7 @@ class OBJexport:
 
 
     #------------------------------------------------------------------------
-    def updateAttr(self, hard, twoside, flat, npoly, panel, alpha, layer,anim):
+    def updateAttr(self, hard, twoside, npoly, panel, alpha, layer,anim):
 
         if layer!=self.layer:
             # Reset all attributes
@@ -659,7 +674,6 @@ class OBJexport:
                 self.file.write("%sANIM_end\n" % self.anim.ins())
             self.hard=False
             self.twoside=False
-            self.flat=False
             self.npoly=True
             self.panel=False
             self.alpha=False
@@ -723,9 +737,6 @@ class OBJexport:
         if self.twoside and not twoside:
             self.file.write("%sATTR_cull\n" % self.anim.ins())
 
-        if self.flat and not flat:
-            self.file.write("%sATTR_shade_smooth\n" % self.anim.ins())
-
         if self.npoly and not npoly:
             self.file.write("%sATTR_poly_os\t2\n" % self.anim.ins())
 
@@ -743,9 +754,6 @@ class OBJexport:
         if twoside and not self.twoside:
             self.file.write("%sATTR_no_cull\n" % self.anim.ins())
 
-        if flat and not self.flat:
-            self.file.write("%sATTR_shade_flat\n" % self.anim.ins())
-
         if npoly and not self.npoly:
             self.file.write("%sATTR_poly_os\t0\n" % self.anim.ins())
 
@@ -758,7 +766,6 @@ class OBJexport:
 
         self.hard=hard
         self.twoside=twoside
-        self.flat=flat
         self.npoly=npoly
         self.panel=panel
         self.alpha=alpha

@@ -36,6 +36,9 @@
 # 2005-11-18 v2.12
 #  - Fix for relative texture paths.
 #
+# 2005-11-19 v2.13
+#  - Workaround for / in Windows paths
+#
 
 
 import sys
@@ -108,14 +111,22 @@ def getTexture (theObjects, layermask, iscockpit, fileformat):
                             # Path is relative to .blend file
                             fixedfile=Blender.Get('filename')
                             l=fixedfile.rfind(Blender.sys.dirsep)
+                            m=fixedfile.rfind('/') # / can appear on Windows
+                            l=max(l,m)
                             if l!=-1:
                                 fixedfile=(fixedfile[:l+1]+
                                            face.image.filename[2:])
-                            else:
+                            else:	# give up
                                 fixedfile=face.image.filename[2:]
                         if Blender.sys.dirsep=='\\':
                             # Windows
-                            if fixedfile[0] in ['/', '\\']:
+                            while 1:
+                                # / can appear on Windows
+                                l=fixedfile.find('/')
+                                if l==-1:
+                                    break
+                                fixedfile=fixedfile[:l]+'\\'+fixedfile[l+1:]
+                            if fixedfile[0]=='\\':
                                 # Add drive letter
                                 for drive in [Blender.Get('filename'),
                                               Blender.sys.progname]:
