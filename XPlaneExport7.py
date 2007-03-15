@@ -7,7 +7,7 @@ Tooltip: 'Export to X-Plane v7 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.22"
+__version__ = "2.23"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v7 .obj
 format for placement with World-Maker.

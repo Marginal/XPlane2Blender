@@ -7,7 +7,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
-__version__ = "2.22"
+__version__ = "2.23"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -162,6 +162,9 @@ Limitations:<br>
 # 2006-04-18 v2.20
 #  - Now imports successive LODs into different layers, irrespective
 #    of LOD range.
+#
+# 2006-05-07 v2.23
+#  - Fix for stupid NPOLY bug introduced in 2.22
 #
 
 import sys
@@ -389,7 +392,7 @@ class Mesh:
                 face.mode |= NMesh.FaceModes.DYNAMIC
             if f.flags&Face.TWOSIDE:
                 face.mode |= NMesh.FaceModes.TWOSIDE
-            if f.flags&Face.TILES:
+            if not f.flags&Face.NPOLY:
                 face.mode |= NMesh.FaceModes.TILES
             if not f.flags&Face.FLAT:
                 face.smooth=1
@@ -1404,8 +1407,8 @@ class OBJimport:
             flags |= Face.TWOSIDE
         if self.flat:
             flags |= Face.FLAT
-        if self.poly:
-            flags |= Face.TILES
+        if not self.poly:
+            flags |= Face.NPOLY
         if self.panel:
             flags |= Face.PANEL
         if self.alpha:
@@ -1459,8 +1462,8 @@ class OBJimport:
             flags |= Face.TWOSIDE
         if self.flat:
             flags |= Face.FLAT
-        if self.poly:
-            flags |= Face.TILES
+        if not self.poly:
+            flags |= Face.NPOLY
         if self.panel:
             flags |= Face.PANEL
         if self.alpha:
