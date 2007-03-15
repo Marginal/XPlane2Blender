@@ -1,12 +1,12 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane...'
-Blender: 230
+Name: 'X-Plane scenery...'
+Blender: 232
 Group: 'Import'
-Tooltip: 'Import X-Plane file format (.obj)'
+Tip: 'Import X-Plane scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.32 or above, version 1.20
+# X-Plane importer for blender 2.32 or above, version 1.40
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -63,6 +63,10 @@ Tooltip: 'Import X-Plane file format (.obj)'
 #  - Reduced duplicate vertex limit from 0.25 to 0.1 to handle smaller objects
 #  - Export: Sort faces by type for correct rendering in X-Plane. This fixes
 #            bugs with alpha and no_depth faces.
+#
+# 2004-04-10 v1.40 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Reduced duplicate vertex limit to 0.01 to handle imported objects
+#  - Export: Support 3 LOD levels: 1000,4000,10000
 #
 
 import sys
@@ -129,7 +133,7 @@ class Token:
              "ATTR_LOD"]
 
 class Vertex:
-    LIMIT=0.1	# max distance between vertices for them to be merged
+    LIMIT=0.01	# max distance between vertices for them to be merged
     ROUND=1	# Precision
     
     def __init__(self, x, y, z):
@@ -235,10 +239,9 @@ class Mesh:
                 centre.x+=vertex.x
                 centre.y+=vertex.y
                 centre.z+=vertex.z
-        # Round centre to integer to give easier positioning
-        centre.x=round(centre.x/n,0)
-        centre.y=round(centre.y/n,0)
-        centre.z=round(centre.z/n,0)
+        centre.x=round(centre.x/n,Vertex.ROUND)
+        centre.y=round(centre.y/n,Vertex.ROUND)
+        centre.z=round(centre.z/n,Vertex.ROUND)
         
         for f in self.faces:
             face=NMesh.Face()
@@ -297,6 +300,7 @@ class OBJimport:
         
         #--- class private don't touch ---
         self.filename=filename
+        self.linesemi=0.025
         self.lastpos=0		# for error reporting
         self.filelen=0		# for progress reports
         self.fileformat=0	# 6 or 7
@@ -306,10 +310,6 @@ class OBJimport:
         
         # random stuff
         self.whitespace=[" ","\t","\n","\r"]
-        if sys.platform=="win32":
-            self.dirsep="\\"
-        else:
-            self.dirsep="/"
 
         # flags controlling import
         self.smooth=0
@@ -478,25 +478,25 @@ class OBJimport:
         basename=""
         for i in range(len(tex)):
             if tex[i]==":":
-                basename+=self.dirsep
+                basename+=Blender.sys.dirsep
             else:
                 basename+=tex[i]
 
-        l=self.filename.rfind(self.dirsep)
+        l=self.filename.rfind(Blender.sys.dirsep)
         if l==-1:
             l=0
         else:
             l=l+1
 
-        p=".."+self.dirsep
+        p=".."+Blender.sys.dirsep
         for extension in [".bmp", ".png"]:
             for prefix in ["",
-                           p+"custom object textures"+self.dirsep,
-                           p+p+"custom object textures"+self.dirsep,
-                           p+p+p+"custom object textures"+self.dirsep,
-                           p+"AutoGen textures"+self.dirsep,
-                           p+p+"AutoGen textures"+self.dirsep,
-                           p+p+p+"AutoGen textures"+self.dirsep]:
+                           p+"custom object textures"+Blender.sys.dirsep,
+                           p+p+"custom object textures"+Blender.sys.dirsep,
+                           p+p+p+"custom object textures"+Blender.sys.dirsep,
+                           p+"AutoGen textures"+Blender.sys.dirsep,
+                           p+p+"AutoGen textures"+Blender.sys.dirsep,
+                           p+p+p+"AutoGen textures"+Blender.sys.dirsep]:
                 texfilename=self.filename[:l]+prefix+basename+extension
                 try:
                     file = open(texfilename, "rb")
@@ -754,7 +754,7 @@ class OBJimport:
         lamp=Lamp.New("Lamp", name)
         lamp.col=c
         lamp.mode |= Lamp.Modes.Sphere	# stop lamp colouring whole object
-        lamp.dist = 10.0
+        lamp.dist = 4.0
         ob = Object.New("Lamp", name)
         ob.link(lamp)
         scene.link(ob)
@@ -773,11 +773,11 @@ class OBJimport:
         d=Vertex(abs(v[0].x-v[1].x),abs(v[0].y-v[1].y),abs(v[0].z-v[1].z))
 
         if d.z>max(d.x,d.y):
-            e=Vertex(Vertex.LIMIT/4,-Vertex.LIMIT/4,0)
+            e=Vertex(self.linesemi,-self.linesemi,0)
         elif d.y>max(d.z,d.x):
-            e=Vertex(-Vertex.LIMIT/4,0,Vertex.LIMIT/4)
+            e=Vertex(-self.linesemi,0,self.linesemi)
         else:	# d.x>max(d.y,d.z):
-            e=Vertex(0,Vertex.LIMIT/4,-Vertex.LIMIT/4)
+            e=Vertex(0,self.linesemi,-self.linesemi)
 
         # 'Line's shouldn't be merged, so add immediately 
         mesh=NMesh.New("Line")
@@ -905,7 +905,7 @@ class OBJimport:
 #                mesh.addFaces(faces)
 #                return
             
-        if self.curmesh:
+        if self.curmesh and self.aggressive:
             if self.curmesh[-1].flags==flags and self.curmesh[-1].abut(faces):
                 self.curmesh[-1].addFaces(faces)
                 return
@@ -944,18 +944,21 @@ def file_callback (filename):
         obj.doimport()
     except ParseError, e:
         if e.type == ParseError.HEADER:
-            print "Error:\tThis is not a valid X-Plane v6 or v7 OBJ file\n"
+            msg="ERROR:\tThis is not a valid X-Plane v6 or v7 OBJ file\n"
         else:
             if e.type == ParseError.TOKEN:
-                print "Error:\tExpecting a Token,",
+                msg="ERROR:\tExpecting a Token,"
             elif e.type == ParseError.INTEGER:
-                print "Error:\tExpecting an integer,",
+                msg="ERROR:\tExpecting an integer,"
             elif e.type == ParseError.FLOAT:
-                print "Error:\tExpecting a number,",
+                msg="ERROR:\tExpecting a number,"
             else:
-                print "Error:\tParse error,",
-            print "found \"%s\" at file offset %s\n" % (
+                msg="ERROR:\tParse error,",
+            msg=msg+" found \"%s\" at file offset %s\n" % (
                 e.value, obj.lastpos)
+        Window.DrawProgressBar(1, "Error")
+        print msg
+        Blender.Draw.PupMenu(msg)
     obj.file.close()
     Blender.Redraw()
 

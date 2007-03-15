@@ -1,12 +1,12 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane'
-Blender: 230
+Name: 'X-Plane Scenery'
+Blender: 232
 Group: 'Export'
-Tooltip: 'Export to X-Plane file format (.obj)'
+Tip: 'Export to X-Plane scenery file format (.obj)'
 """
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.32 or above, version 1.20
+# X-Plane exporter for blender 2.32 or above, version 1.40
 #
 # Copyright (c) 2004 Jonathan Harris
 # 
@@ -64,6 +64,10 @@ Tooltip: 'Export to X-Plane file format (.obj)'
 #  - Export: Sort faces by type for correct rendering in X-Plane. This fixes
 #            bugs with alpha and no_depth faces.
 #
+# 2004-04-10 v1.40 by Jonathan Harris <x-plane@marginal.org.uk>
+#  - Reduced duplicate vertex limit to 0.01 to handle imported objects
+#  - Export: Support 3 LOD levels: 1000,4000,10000
+#
 
 #
 # X-Plane renders faces in scenery files in the order that it finds them -
@@ -88,8 +92,8 @@ import Blender
 from Blender import NMesh, Lamp, Draw, Window
 
 class Vertex:
-    LIMIT=0.1	# max distance between vertices for them to be merged = 3.5in
-    ROUND=1	# Precision = about 4 inches
+    LIMIT=0.01	# max distance between vertices for them to be merged = 1/4in
+    ROUND=2	# Precision, AS ABOVE
     
     def __init__(self, x, y, z, mm=0):
         self.faces=[]	# indices into face array
@@ -103,12 +107,12 @@ class Vertex:
             self.z=-(mm[0][1]*x + mm[1][1]*y + mm[2][1]*z + mm[3][1])
             
     def __str__(self):
-        return "%7.1f %7.1f %7.1f" % (self.x, self.y, self.z)
+        return "%7.2f %7.2f %7.2f" % (self.x, self.y, self.z)
     
-    def equals (self, v):
-        if ((abs(self.x-v.x) < Vertex.LIMIT) and
-            (abs(self.y-v.y) < Vertex.LIMIT) and
-            (abs(self.z-v.z) < Vertex.LIMIT)):
+    def equals (self, v, fudge=LIMIT):
+        if ((abs(self.x-v.x) < fudge) and
+            (abs(self.y-v.y) < fudge) and
+            (abs(self.z-v.z) < fudge)):
             return 1
         else:
             return 0
@@ -138,9 +142,9 @@ class Face:
     # Flags
     NO_DEPTH=1
     ALPHA=2
-    BUCKET=3    # Bucket algorithm relies on ALPHA+NO_DEPTH==3
-    SMOOTH=4	# Due to X-Plane file format, SMOOTH and HARD are in practice
-    HARD=8	# mutually exclusive.
+    SMOOTH=4
+    HARD=8
+    BUCKET=NO_DEPTH|ALPHA
 
     def __init__(self, name):
         self.v=[]
@@ -152,7 +156,7 @@ class Face:
     def __str__(self):
         s="<"
         for v in self.v:
-            s=s+("[%3d %3d %3d]," % (v.x, v.y, v.z))
+            s=s+("[%4.1f %4.1f %4.1f]," % (v.x, v.y, v.z))
         return s[:-1]+">"
 
     def addVertex(self, v):
@@ -176,12 +180,7 @@ class OBJexport:
         #--- class private don't touch ---
         self.filename=filename
         self.texture=""
-
-        # random stuff
-        if sys.platform=="win32":
-            self.dirsep="\\"
-        else:
-            self.dirsep="/"
+        self.linewidth=0.1
 
         # flags controlling export
         self.smooth=0
@@ -238,8 +237,16 @@ class OBJexport:
         erroring=0;
         nobj=len(theObjects)
         texlist=[]
+        self.dolayers=0
+        layers=theObjects[0].Layer
         for o in range (nobj-1,-1,-1):
             object=theObjects[o]
+            
+            if layers^object.Layer and not self.dolayers:
+                layers=layers&object.Layer
+                self.dolayers=1
+                print "Info:\tMultiple Levels Of Detail found"
+                
             objType=object.getType()
             if objType == "Mesh":
                 mesh=object.getData()
@@ -269,7 +276,7 @@ class OBJexport:
 
         self.texture=""
         for i in range(len(texture)):
-            if texture[i]==self.dirsep:
+            if texture[i]==Blender.sys.dirsep:
                 self.texture+=":"
             else:
                 self.texture+=texture[i]
@@ -282,41 +289,59 @@ class OBJexport:
             print "Warn:\tTexture must be in bmp or png format. Please convert your file."
             if self.texture[-4:-3] == ".":
                 self.texture = self.texture[:-4]
-
+        
         # try to guess correct texture path
         for prefix in ["custom object textures", "autogen textures"]:
             l=self.texture.lower().find(prefix)
             if l!=-1:
                 self.texture = self.texture[l+len(prefix)+1:]
+                if self.texture.find(" ")!=-1:
+                    print "Warn:\tTexture file name must not contain spaces. Please fix."
                 return
 
         print "Warn:\tCan't guess path for texture file. Please fix in the .obj file."
         l=self.texture.rfind(":")
         if l!=-1:
             self.texture = self.texture[l+1:]
+        if self.texture.find(" ")!=-1:
+            print "Warn:\tTexture file name must not contain spaces. Please fix."
 
     #------------------------------------------------------------------------
     def writeObjects (self, theObjects):
         nobj=len(theObjects)
-        for o in range (nobj-1,-1,-1):
-            Window.DrawProgressBar(float(nobj-o)/(nobj*2),
-                                   "Exporting %s%% ..." % ((nobj-o)*50/nobj))
-            object=theObjects[o]
-            objType=object.getType()
 
-            if objType == "Mesh":
-                self.sortMesh(object)
-            elif objType == "Lamp":
-                self.writeLamp(object)
-            elif objType == "Camera":
-                print "Info:\tIgnoring Camera \"%s\"" % object.name
-            else:
-                print "Warn:\tIgnoring unsupported %s \"%s\"" % (
-                    object.getType(), object.name)
+        if not self.dolayers:
+            seq=[1]
+        else:
+            seq=[1,2,4]
 
-        self.writeFaces()
+        for layer in seq:
+            self.faces=[]
+            self.verts=[]
+            self.updateLayer(layer)
+            for o in range (nobj-1,-1,-1):
+                object=theObjects[o]
+                if not object.Layer&layer:
+                    continue
                 
-        self.updateFlags(0,0)	# not sure if this is required
+                Window.DrawProgressBar(float(nobj-o)/(nobj*2),
+                                       "Exporting %s%% ..." % ((nobj-o)*50/nobj))
+                objType=object.getType()
+
+                if objType == "Mesh":
+                    self.sortMesh(object)
+                elif objType == "Lamp":
+                    self.writeLamp(object)
+                elif objType == "Camera":
+                    print "Info:\tIgnoring Camera \"%s\"" % object.name
+                else:
+                    print "Warn:\tIgnoring unsupported %s \"%s\"" % (
+                        object.getType(), object.name)
+
+            self.writeFaces()
+                
+            self.updateFlags(0,0)	# not sure if this is required
+            
         if self.fileformat==7:
             self.file.write("end\t\t\t// eof\n")
         else:
@@ -336,13 +361,13 @@ class OBJexport:
 
         lname=name.lower()
         c=[0,0,0]
-        if not lname.find("pulse"):
+        if lname.find("pulse")!=-1:
             c[0]=c[1]=c[2]=99
-        elif not lname.find("strobe"):
+        elif lname.find("strobe")!=-1:
             c[0]=c[1]=c[2]=98
-        elif not lname.find("traffic"):
+        elif lname.find("traffic")!=-1:
             c[0]=c[1]=c[2]=97
-        elif not lname.find("flash"):
+        elif lname.find("flash")!=-1:
             c[0]=-int(round(lamp.col[0]*10,0))
             c[1]=-int(round(lamp.col[1]*10,0))
             c[2]=-int(round(lamp.col[2]*10,0))
@@ -354,11 +379,11 @@ class OBJexport:
         v=Vertex(0,0,0, object.getMatrix())
         if self.fileformat==7:
             self.file.write("light\t\t\t// Light: %s\n" % name)
-            self.file.write("%s\t  %3d %3d %3d\n\n\n" % (v, c[0],c[1],c[2]))
+            self.file.write("%s\t  %3d %3d %3d\n\n" % (v, c[0],c[1],c[2]))
         else:
             self.file.write("1  %3d %3d %3d\t\t// Light: %s\n" % (
                 c[0], c[1], c[2], name))
-            self.file.write("%s\n\n" % v)
+            self.file.write("%s\n" % v)
             
     #------------------------------------------------------------------------
     def writeLine(self, object):
@@ -373,7 +398,8 @@ class OBJexport:
         v=[]
         for i in range(4):
             v.append(Vertex(face.v[i][0],face.v[i][1],face.v[i][2],mm))
-        if v[0].equals(v[1]) and v[2].equals(v[3]):
+        if (v[0].equals(v[1],self.linewidth) and
+            v[2].equals(v[3],self.linewidth)):
             i=0
         else:
             i=1
@@ -394,11 +420,11 @@ class OBJexport:
         if self.fileformat==7:
             self.file.write("line\t\t\t// Line: %s\n" % name)
             self.file.write("%s\t  %3d %3d %3d\n" % (v1, c[0],c[1],c[2]))
-            self.file.write("%s\t  %3d %3d %3d\n\n\n" % (v2, c[0],c[1],c[2]))
+            self.file.write("%s\t  %3d %3d %3d\n\n" % (v2, c[0],c[1],c[2]))
         else:
             self.file.write("2  %3d %3d %3d\t\t// Line: %s\n" % (
                 c[0], c[1], c[2], name))
-            self.file.write("%s\n%s\n\n\n" % (v1, v2))
+            self.file.write("%s\n%s\n\n" % (v1, v2))
 
 
     #------------------------------------------------------------------------
@@ -407,7 +433,7 @@ class OBJexport:
         mm=object.getMatrix()
 
         # A line is represented as a mesh with one 4-edged face, where vertices
-        # at each end of the face/line are less than Vertex.LIMIT units apart
+        # at each end of the face are less than self.linewidth units apart
         if  (len(mesh.faces)==1 and
              len(mesh.faces[0].v)==4 and
              not mesh.faces[0].mode&NMesh.FaceModes.TEX):
@@ -416,7 +442,8 @@ class OBJexport:
             for i in range(4):
                 v.append(Vertex(f.v[i][0],f.v[i][1],f.v[i][2],mm))
             for i in range(2):
-                if v[i].equals(v[i+1]) and v[i+2].equals(v[(i+3)%4]):
+                if (v[i].equals(v[i+1],self.linewidth) and
+                    v[i+2].equals(v[(i+3)%4],self.linewidth)):
                     self.writeLine(object)
                     return
             
@@ -446,23 +473,35 @@ class OBJexport:
                     face.flags|=Face.NO_DEPTH
                 if f.mode & NMesh.FaceModes.TEX:
                     assert len(f.uv)==n, "Missing UV in \"%s\"" % object.name
-                    for uv in f.uv:
-                        face.addUV(UV(uv[0],uv[1]))
-                else:
-                    # File format requires something - using (0,0)
-                    for i in range(n):
-                        face.addUV(UV(0,0))
 
+                # Remove any redundant vertices
+                v=[]
+                for i in range(n):
+                    vertex=Vertex(f.v[i][0],f.v[i][1],f.v[i][2],mm)
+                    for j in range(len(v)):
+                        if vertex.equals(v[j]):
+                            v[j].x=(v[j].x+vertex.x)/2
+                            v[j].y=(v[j].y+vertex.y)/2
+                            v[j].z=(v[j].z+vertex.z)/2
+                            break
+                    else:
+                        v.append(vertex)
+                        if f.mode & NMesh.FaceModes.TEX:
+                            face.addUV(UV(f.uv[i][0],f.uv[i][1]))
+                        else:	# File format requires something - using (0,0)
+                            face.addUV(UV(0,0))
+                if len(v)<3:
+                    continue
+                
                 self.faces.append(face)
-                for nmv in f.v:
-                    vertex=Vertex(nmv.co[0],nmv.co[1],nmv.co[2],mm)
-                    for v in self.verts:
-                        if vertex.equals(v):
-                            v.x=(v.x+vertex.x)/2
-                            v.y=(v.y+vertex.y)/2
-                            v.z=(v.z+vertex.z)/2
-                            v.addFace(len(self.faces)-1)
-                            face.addVertex(v)
+                for vertex in v:
+                    for q in self.verts:
+                        if vertex.equals(q):
+                            q.x=(q.x+vertex.x)/2
+                            q.y=(q.y+vertex.y)/2
+                            q.z=(q.z+vertex.z)/2
+                            q.addFace(len(self.faces)-1)
+                            face.addVertex(q)
                             break
                     else:
                         self.verts.append(vertex)
@@ -560,8 +599,13 @@ class OBJexport:
                         if self.debug: print "Start strip, edge=%s,%s:\n%s" % (
                             sv, (sv+1)%4, startface)
 
-                        # Horizontally then Vertically
-                        for hv in [0,1]:	# rotate 0 or 90
+                        if startface.flags&Face.SMOOTH:
+                            # Vertically then Horizontally
+                            seq=[1,0]
+                        else:
+                            # Horizontally then Vertically
+                            seq=[0,1]
+                        for hv in seq:	# rotate 0 or 90
                             firstvertex=(sv+2+hv)%4
                             for o in [0,2]:
                                 # vertices must be in clockwise order
@@ -741,6 +785,18 @@ class OBJexport:
                             break
                 
         self.file.write("\n")
+
+    #------------------------------------------------------------------------
+    def updateLayer(self,layer):
+        if not self.dolayers:
+            return
+        if layer==1:
+            self.file.write("\nATTR_LOD 0 1000\t\t// Layer 1\n\n")
+        elif layer==2:
+            self.file.write("\nATTR_LOD 1000 4000\t// Layer 2\n\n")
+        else:
+            self.file.write("\nATTR_LOD 4000 10000\t// Layer 3\n\n")
+
 
     #------------------------------------------------------------------------
     def updateFlags(self,smooth,no_depth):
