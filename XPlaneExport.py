@@ -149,6 +149,9 @@ Tooltip: 'Export to X-Plane v7 scenery file format (.obj)'
 # 2005-01-15 v1.90
 #  - Add variable to control whether to generate strips.
 #
+# 2005-02-08 v1.91
+#  - Fixed nannying with panel textures < 1024
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -258,6 +261,7 @@ class Face:
         self.v=[]
         self.uv=[]
         self.flags=0
+        self.kosher=0	# Hack! True iff panel and within 1024x768
         self.name=name
 
     # for debug only
@@ -278,7 +282,7 @@ class Face:
 #-- OBJexport --
 #------------------------------------------------------------------------
 class OBJexport:
-    VERSION=1.90
+    VERSION=1.91
 
     #------------------------------------------------------------------------
     def __init__(self, filename):
@@ -397,7 +401,8 @@ class OBJexport:
                                 if panelerr and object.Layer&1:
                                     for uv in face.uv:
                                         if (uv[0]<0.0  or uv[0]>1.0 or
-                                            uv[1]<0.25 or uv[1]>1.0):
+                                            (1-uv[1])*face.image.size[1]>768
+                                            or uv[1]>1.0):
                                             break
                                     else:
                                         panelerr=0
@@ -483,8 +488,8 @@ class OBJexport:
 
         for layer in seq:
             self.updateLayer(layer)
-            faces=[]	# Per-mesh list of list of faces
-            verts=[]	# Per-mesh list of list of vertices
+            faces=[]	# List of per-mesh list of faces
+            verts=[]	# List of per-mesh list of vertices
 
             # Four passes
             # 1st pass: Output Lamps and Lines, build meshes
@@ -522,17 +527,12 @@ class OBJexport:
                         continue
 
                     for j in range(len(faces[i])):
-                        if faces[i][j].flags&Face.PANEL:
-                            for uv in faces[i][j].uv:
-                                if (uv.s<0.0  or uv.s>1.0 or
-                                    uv.t<0.25 or uv.t>1.0):
-                                    break
-                            else:
-                                faces.append([faces[i][j]])
-                                verts.append([0])	# Not used for panels
-                                faces[i][j]=0		# Remove original face
-                                panelsorted=1
-                                break
+                        if faces[i][j].kosher:
+                            faces.append([faces[i][j]])
+                            verts.append([0])	# Verts not used for panels
+                            faces[i][j]=0	# Remove original face
+                            panelsorted=1
+                            break
                     i=i+1
 
             # 2nd-4th pass: Output meshes
@@ -549,7 +549,7 @@ class OBJexport:
             self.updateFlags(0,0,0)	# not sure if this is required
             
         self.file.write("end\t\t\t// eof\n\n")
-        self.file.write("// Built using Blender %4.2f, http://www.blender3d.org/\n// Exported using XPlane2Blender %4.2f, http://marginal.org.uk/x-planescenery/\n" % (float(Blender.Get('version'))/100, self.VERSION))
+        self.file.write("// Built with Blender %4.2f. Exported with XPlane2Blender %4.2f.\n" % (float(Blender.Get('version'))/100, self.VERSION))
 
     #------------------------------------------------------------------------
     def writeLamp(self, object):
@@ -669,23 +669,36 @@ class OBJexport:
                     n, object.name)
             else:
                 face=Face(object.name)
+                
                 #if f.mode & NMesh.FaceModes.TILES:
                 #    face.flags|=Face.TILES
+
                 if f.transp == NMesh.FaceTranspModes.ALPHA:
                     face.flags|=Face.ALPHA
+
                 if f.mode & NMesh.FaceModes.TWOSIDE:
                     face.flags|=Face.DBLSIDED
                     if not twosideerr:
                         print "Warn:\tFound two-sided face(s) in mesh \"%s\""%(
                             object.name)
                     twosideerr=1
+
                 if f.smooth:
                     face.flags|=Face.SMOOTH
-                if (n==4) and f.image and f.image.name.lower().find("panel.")!=-1:
+
+                if (n==4 and f.image and
+                    f.image.name.lower().find("panel.")!=-1):
                     # Sort is easier if we also assume alpha
                     face.flags|=(Face.PANEL|Face.ALPHA)
-                elif (n==4) and not (f.mode & NMesh.FaceModes.DYNAMIC):
+                    for uv in f.uv:
+                        if (uv[0]<0.0  or uv[0]>1.0 or
+                            (1-uv[1])*f.image.size[1]>768 or uv[1]>1.0):
+                            break
+                    else:
+                        face.kosher=1
+                elif n==4 and not (f.mode & NMesh.FaceModes.DYNAMIC):
                     face.flags|=Face.HARD
+
                 if f.mode & NMesh.FaceModes.TEX:
                     assert len(f.uv)==n, "Missing UV in \"%s\"" % object.name
 
