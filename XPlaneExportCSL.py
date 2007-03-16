@@ -6,7 +6,9 @@ Group: 'Export'
 Tooltip: 'Export to X-Plane CSL format object (.obj)'
 """
 __author__ = "Jonathan Harris"
-__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
+__url__ = ["XPlane2Blender, http://marginal.org.uk/x-planescenery/",
+           "X-IvAp, http://www.ivao.aero/softdev/X-IvAp/"]
 __version__ = "2.35"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane CSL .obj

@@ -21,7 +21,7 @@ if defined BDIR set DIRS=%DIRS% "%BDIR%.blender\scripts"
 set DIRS=%DIRS% "%ProgramFiles%\Blender Foundation\Blender\.blender\scripts" "%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts"
 
 rem Remove old files from everywhere
-for %%D in (%DIRS%) do for %%I in (%FILES%) do if exist "%%~D\%%I" del "%%~D\%%I"
+for %%D in (%DIRS%) do for %%I in (%FILES%) do if exist "%%~D\%%I" del "%%~D\%%I" >nul: 2>&1
 
 rem Remove empty script directories to prevent masking - but not home dir
 if not defined BDIR goto defdir

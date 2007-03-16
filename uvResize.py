@@ -6,7 +6,8 @@ Group: 'Image'
 Tooltip: 'Adjust textures to enlarged bitmap'
 """
 __author__ = "Jonathan Harris"
-__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
+__url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
 __version__ = "2.35"
 __bpydoc__ = """\
 This script fixes up selected meshes' texture assignments after doubling

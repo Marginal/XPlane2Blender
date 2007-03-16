@@ -6,7 +6,8 @@ Group: 'UV'
 Tooltip: 'Copy selected texture assignment to other faces'
 """
 __author__ = "Jonathan Harris"
-__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
+__url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
 __version__ = "2.35"
 __bpydoc__ = """\
 This script duplicates a face's texture assignment across many faces.
@@ -15,8 +16,7 @@ Usage:<br>
   * Select a mesh.<br>
   * Enter UV Face Select mode.<br>
   * Select the face who's texture assignment you want to duplicate.<br>
-  * Run this script from the UVs menu in the UV/Image Editor<br>
-    window.<br>
+  * Run this script from the UVs menu in the UV/Image Editor window.<br>
   * Select the face(s) that you want to change.<br>
   * Press the Copy button.<br>
 """

@@ -6,7 +6,8 @@ Group: 'Import'
 Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
 __author__ = "Jonathan Harris"
-__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
+__url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
 __version__ = "2.35"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
@@ -14,9 +15,7 @@ This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 Limitations:<br>
   * smoke_black and smoke_white X-Plane primitives are ignored.<br>
   * ambient, blend and specular attributes are ignored.<br>
-  * Can't work out which faces have transparency. You should tell<br>
-    Blender which faces are transparent faces by pressing the Alpha<br>
-    button in UV Face Select mode after import.<br>
+  * Can't work out which faces are partially or wholly transparent.<br>
 """
 
 #------------------------------------------------------------------------
@@ -187,7 +186,8 @@ Limitations:<br>
 #  - Imports fewer, larger meshes (for speed).
 #
 # 2007-02-26 v2.35
-#  - Animated objects correctly parented to bones (using Blender 2.43 & later).
+#  - Animated objects correctly parented to bones (2.43 & later).
+#  - Fix for object locations on 2.43.
 #
 
 import sys
@@ -439,13 +439,13 @@ class MyMesh:
             
         centre=Vertex(0,0,0)
         if self.anim:
-            print self.anim[0], self.anim[1], self.anim[2]
+            #print self.anim[0], self.anim[1], self.anim[2]
             if self.anim[2]:
                 boneloc=Vertex(self.anim[0].getData().bones[self.anim[2]].head['ARMATURESPACE'])
             else:	# Bone can be None if no_ref
                 boneloc=Vertex(0,0,0)
             centre=boneloc-self.anim[1]
-        elif not subroutine:
+        elif False: #not subroutine:
             n=0
             for f in self.faces:
                 for vertex in f.v:
@@ -511,7 +511,6 @@ class MyMesh:
                 face.transp=Mesh.FaceTranspModes.SOLID
                 
             #assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
-        mesh.update()
         
         ob = Object.New("Mesh", self.name)
         ob.link(mesh)
@@ -523,22 +522,22 @@ class MyMesh:
                            self.anim[0].LocZ+boneloc.z)
             self.anim[0].makeParent([ob])
             if self.anim[2] and 'makeParentBone' in dir(self.anim[0]):	# new in 2.43
-                print self.anim[0], ob, self.anim[2]
+                #print self.anim[0], ob, self.anim[2]
                 self.anim[0].makeParentBone([ob],self.anim[2])
         else:
             cur=Window.GetCursorPos()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         if self.surface:
             ob.addProperty('surface', self.surface)
-        #if self.layers&MyMesh.LAYERMASK:
-        #    ob.Layer=(self.layers&MyMesh.LAYERMASK)
-
+        if self.layers&MyMesh.LAYERMASK:
+            ob.Layer=(self.layers&MyMesh.LAYERMASK)
+        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
+        
+        # must be after object linked to scene
         mesh.sel=True
-        mesh.remDoubles(Vertex.LIMIT)	# must be after linked to object
+        mesh.remDoubles(Vertex.LIMIT)
         mesh.sel=False
-
-        scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
-        scene.update(1)
+        mesh.calcNormals()
         return ob
 
 
@@ -633,14 +632,17 @@ class OBJimport:
         self.file.seek(0)
         if not self.subroutine:
             Window.DrawProgressBar(0, "Opening ...")
-            scene=Blender.Scene.GetCurrent()
-            #layers=scene.Layers
-            #scene.Layers=7	# workaround for 2.42 - Blender bug #4696 ?
         self.readHeader()
-        ob=self.readObjects()
+        scene=Blender.Scene.GetCurrent()
+        layers=scene.layers
+        scene.layers=[1,2,3]		# otherwise object centres not updated
+        ob=self.readObjects(scene)
+        scene.layers=layers
+        scene.getRenderingContext().currentFrame(1)
+        scene.makeCurrent()		# for pose in 2.42 - Blender bug #4696
+        scene.update(1)
         if not self.subroutine:
             Window.DrawProgressBar(1, "Finished")
-            #scene.Layers=layers
         if self.verbose:
             print "Finished - imported %s primitives\n" % self.nprim
         #print "%s CPU time\n" % (time.clock()-clock)
@@ -971,8 +973,7 @@ class OBJimport:
         print "Warn:\tTexture file \"%s\" not found" % base
             
     #------------------------------------------------------------------------
-    def readObjects (self):
-        scene = Blender.Scene.GetCurrent()
+    def readObjects (self, scene):
 
         if self.fileformat==8:
             while 1:
@@ -1003,8 +1004,6 @@ class OBJimport:
                                                "Adding %d%% ..." % (
                             90+(i*10.0)/len(self.curmesh)))
                         last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
-                    #scene.makeCurrent()	# Blender bug #4696
-                    #scene.update(1)	# update poses
                     return last
 
                 elif t==Token.VLIGHT:
@@ -1091,11 +1090,11 @@ class OBJimport:
                         self.arm.drawType=Armature.STICK
                         self.arm.restPosition=True	# for easier parenting
                         self.armob.link(self.arm)
-                        scene.link(self.armob)
-                        #if self.layer:
-                        #    self.armob.Layer=OBJimport.LAYER[self.layer]
+                        if self.layer:
+                            self.armob.Layer=OBJimport.LAYER[self.layer]
                         cur=Window.GetCursorPos()
                         self.armob.setLocation(cur[0], cur[1], cur[2])
+                        self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
                         self.action = Armature.NLA.NewAction()
                         self.action.setActive(self.armob)
                         self.arm.makeEditable()
@@ -1113,9 +1112,10 @@ class OBJimport:
                     self.bones.pop()
                     if not self.off:
                         # Back at top level
-                        print self.off, self.bones
+                        #print self.off, self.bones
                         self.arm.restPosition=False
                         self.arm.update()
+                        scene.link(self.armob)
                         self.arm=None
                         self.armob=None
                         self.action=None
@@ -1131,6 +1131,7 @@ class OBJimport:
                         if len(self.bones)==1:
                             # first bone in Armature - move armature location
                             self.armob.setLocation(self.off[-1].x+self.armob.LocX, self.off[-1].y+self.armob.LocY, self.off[-1].z+self.armob.LocZ)
+                            self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
                             self.off[-1]=Vertex(0,0,0)
                         else:
                             # first bone at this level - adjust previous tail
@@ -1676,8 +1677,8 @@ class OBJimport:
         if propname: ob.addProperty('name', propname)
         ob.link(lamp)
         scene.link(ob)
-        #if self.layer:
-        #    ob.Layer=OBJimport.LAYER[self.layer]
+        if self.layer:
+            ob.Layer=OBJimport.LAYER[self.layer]
         if self.armob:
             if self.bones:
                 boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
@@ -1691,7 +1692,6 @@ class OBJimport:
         else:
             cur=Window.GetCursorPos()
             ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
-        #scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
         self.nprim+=1
         
     #------------------------------------------------------------------------
@@ -1755,9 +1755,8 @@ class OBJimport:
 
         ob = Object.New("Mesh", name)
         ob.link(mesh)
-        scene.link(ob)
-        #if self.layer:
-        #    ob.Layer=OBJimport.LAYER[self.layer]
+        if self.layer:
+            ob.Layer=OBJimport.LAYER[self.layer]
         if self.armob:
             ob.setLocation(self.armob.LocX+boneloc.x,
                            self.armob.LocY+boneloc.y,
@@ -1769,7 +1768,8 @@ class OBJimport:
             cur=Window.GetCursorPos()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
-        scene.makeCurrent()	# for pose in 2.42 - Blender bug #4696
+        scene.link(ob)
+        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         self.nprim+=1
 
     #------------------------------------------------------------------------

@@ -6,7 +6,8 @@ Group: 'Image'
 Tooltip: 'Merge X-Plane plane_paint and plane_paint2 bitmaps'
 """
 __author__ = "Jonathan Harris"
-__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
+__url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
 __version__ = "2.35"
 __bpydoc__ = """\
 This script fixes up an imported plane's texture assignments to use

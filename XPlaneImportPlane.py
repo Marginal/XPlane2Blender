@@ -1,12 +1,13 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane Plane or Weapon (.acf, .wpn)...'
-Blender: 240
+Blender: 242
 Group: 'Import'
 Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """
 __author__ = "Jonathan Harris"
-__url__ = ("Script homepage, http://marginal.org.uk/x-planescenery/")
+__email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
+__url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
 __version__ = "2.35"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
@@ -16,11 +17,14 @@ Planes are imported with three levels of detail to maximise rendering
 speed in X-Plane.
 
 Limitations:<br>
-  * Imported planes usually use two or more textures. All faces<br>
-    must be made to share a single texture before export. (This is<br>
-    a limitation of the X-Plane .obj file format).<br>
-  * v6 planes are not supported. Convert v6 planes to v7 or v8<br>
-    format in Plane Maker first.<br>
+  * Planes made with PlaneMaker 7.30 or earlier are not supported.<br>
+  * Wings are simplified to reduce polygon count.<br>
+    Any wing curvature is ignored.<br>
+  * Adjacent wing segments may not be exactly joined-up.<br>
+  * Cockpit objects are ignored.<br>
+  * Imported planes usually use two or more textures.<br>
+    All faces must be made to share a single texture before export.<br>
+  * Can't work out which faces are partially or wholly transparent.<br>
 """
 
 #------------------------------------------------------------------------
@@ -127,13 +131,16 @@ Limitations:<br>
 #  - Add support for v8.60 format planes (no visible changes).
 #  - Handle wing incidence.
 #
+# 2006-03-16 v2.35
+#  - Fix for weapon fins.
+#
 
 import sys
 import Blender
 from Blender import Object, NMesh, Lamp, Image, Material, Window, Mathutils
 from Blender.Mathutils import Vector, Matrix, RotationMatrix, TranslationMatrix, Quaternion
 from struct import unpack
-from math import hypot, pi, sin, cos, atan
+from math import hypot, pi, sin, cos, atan, radians
 from os.path import basename, dirname, join, splitext
 
 from XPlaneUtils import Vertex, UV, findTex
@@ -177,7 +184,7 @@ class ACFimport:
         else:
             self.filename=filename
         self.acf=ACF(self.filename, self.debug)
-        self.scene = Blender.Scene.GetCurrent();
+        self.scene = Blender.Scene.GetCurrent()
         self.navloc = Vertex(0.0, 0.0, 0.0)
         self.tailloc = Vertex(0.0, 0.0, 0.0)
         self.wingc = {}
@@ -188,7 +195,7 @@ class ACFimport:
                        [0.0, 0.0, -self.scale, 0.0],
                        [0.0, 0.0, 0.0,         1.0])
         self.meshcache={}
-        
+
         cur=Window.GetCursorPos()
         self.offset=Vertex(cur[0], cur[1], cur[2])
         if self.acf.HEADER_version in [1,800]:
@@ -239,10 +246,14 @@ class ACFimport:
     #------------------------------------------------------------------------
     def doImport(self):
 
+        layers=self.scene.layers
+        self.scene.layers=[1,2,3]	# otherwise object centres not updated
+        
         # Hack! Just importing weapon
         if self.acf.HEADER_version in [1,800]:
             Window.DrawProgressBar(0.5, "Importing weapon ...")
             self.doBody(basename(self.filename), 0)
+            self.scene.layers=layers
             return
         
         if self.isscenery:
@@ -258,6 +269,7 @@ class ACFimport:
             self.doBody(name, p)
 
         if not self.isscenery:
+            self.scene.layers=layers
             return
 
         for p in range(DEFfmt.engnDIM):
@@ -319,6 +331,7 @@ class ACFimport:
                              self.offset+Vertex(self.tailloc.x, self.tailloc.y,
                                                 self.tailloc.z + 0.05))
 
+        self.scene.layers=layers
                 
     #------------------------------------------------------------------------
     def doProp(self, p):
@@ -1125,8 +1138,7 @@ class ACFimport:
                 for fin in range(DEFfmt.wpnfinDIM):
                     if not wpn.mis_fin_semilen[fin]:
                         continue
-                    if wpn.mis_fin_dihed[fin][0]==wpn.mis_fin_dihed[fin][1]:
-                        wpn.mis_fin_dihed[fin][1]+=180	# fix for v7 wpns
+                    wpn.mis_fin_dihed[fin][1]=180-wpn.mis_fin_dihed[fin][1]
                     root=Vertex(0,0,wpn.mis_fin_z[fin],self.mm)
                     s_os=fin*(42.0/512.0)
                     for side in [0,1]:
@@ -1560,7 +1572,11 @@ class ACFimport:
         mesh.name=name
         self.meshcache[obj.obj_name]=[mesh]
         ob.setName(obname)
-        ob.setMatrix(mm)
+        ob.setMatrix(mm)	# no longer sets rot/scale in 2.43
+        ob.setLocation(*mm.translationPart())
+        v=mm.toEuler()
+        ob.rot=((radians(v.x), radians(v.y), radians(v.z)))	# for 2.43
+        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
 
 
     #------------------------------------------------------------------------
@@ -1651,12 +1667,16 @@ class ACFimport:
     def addMesh(self, name, mesh, layer, mm):
         mesh.mode &= ~(NMesh.Modes.TWOSIDED|NMesh.Modes.AUTOSMOOTH)
         mesh.mode |= NMesh.Modes.NOVNORMALSFLIP
+        mesh.update(1)	# recalc normals
         ob = Object.New("Mesh", name)
         ob.link(mesh)
         self.scene.link(ob)
         ob.Layer=layer
-        ob.setMatrix(mm)
-        mesh.update(1)
+        ob.setMatrix(mm)	# no longer sets rot/scale in 2.43
+        ob.setLocation(*mm.translationPart())
+        v=mm.toEuler()
+        ob.rot=((radians(v.x), radians(v.y), radians(v.z)))	# for 2.43
+        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         return ob
 
 
@@ -3441,7 +3461,7 @@ xflt, "mis_fin_semilen[4]",
 xflt, "mis_fin_sweep[4]",
 xflt, "mis_fin_conrat[4]",
 xflt, "mis_fin_steer[4]",
-xflt, "mis_fin_dihed[4][2]",	# dihedrals: [x,x] means [x,x+180]. Sheesh.
+xflt, "mis_fin_dihed[4][2]",	# dihedrals: [x,x] means [x,180-x]. Sheesh.
 xchr, "mis_afl[4][40]",
 xflt, "mis_thrust[3]",
 xflt, "mis_duration[3]",
@@ -3547,7 +3567,7 @@ xflt, "mis_fin_semilen[4]",
 xflt, "mis_fin_sweep[4]",
 xflt, "mis_fin_conrat[4]",	# control size
 xflt, "mis_fin_steer[4]",
-xflt, "mis_fin_dihed[4][2]",	# dihedrals: [0,0] means [0,180]. Sheesh.
+xflt, "mis_fin_dihed[4][2]",	# dihedrals: [x,x] means [x,180-x]. Sheesh.
 xchr, "mis_afl[4][40]",
 xflt, "mis_thrust[3]",
 xflt, "mis_duration[3]",
