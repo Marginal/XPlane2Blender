@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.35"
+__version__ = "2.36"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -134,13 +134,17 @@ Limitations:<br>
 # 2006-03-16 v2.35
 #  - Fix for weapon fins.
 #
+# 2006-03-18 v2.36
+#  - Fixes for importing planes on Mac & Linux.
+#
 
 import sys
 import Blender
 from Blender import Object, NMesh, Lamp, Image, Material, Window, Mathutils
-from Blender.Mathutils import Vector, Matrix, RotationMatrix, TranslationMatrix, Quaternion
+from Blender.Mathutils import Vector, Matrix, RotationMatrix, ScaleMatrix, TranslationMatrix, Quaternion
 from struct import unpack
 from math import hypot, pi, sin, cos, atan, radians
+from os import listdir
 from os.path import basename, dirname, join, splitext
 
 from XPlaneUtils import Vertex, UV, findTex
@@ -527,16 +531,18 @@ class ACFimport:
                     wing.Rafl0!=wing2.Rafl0 or
                     wing.Tafl0!=wing2.Tafl0): continue
                 meshes=self.meshcache[p2]
+                if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
+                    mm=ScaleMatrix(-1, 4, Vector(1, 0, 0))*mm
                 for i in range(len(meshes)):
                     if i==2:	# layer 3
                         if not istip: continue
                         if p!=rootp:
                             (root, foo) = self.wingc[rootp]
                             mm=TranslationMatrix((self.offset + root).toVector(4))
+                            if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
+                                mm=ScaleMatrix(-1, 4, Vector(1, 0, 0))*mm
                     ob=self.addMesh(name+ACFimport.MARKERS[i]+imagemkr,
                                     meshes[i], ACFimport.LAYERS[i], mm)
-                    if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
-                        ob.SizeX=-ob.SizeX
                 return
         # No matching wing
         self.meshcache[p]=[]
@@ -1768,32 +1774,29 @@ class ACFimport:
         if not aflname:
             return None
         afldir=self.filename
-        for l in range(5):
-            q=afldir[:-1].rfind(Blender.sys.dirsep)
-            if q==-1:
-                return
-            afldir=afldir[:q+1]
-            try:
-                file = open(afldir+'Airfoils'+Blender.sys.dirsep+aflname, 'rU')
-            except IOError:
-                pass
-            else:
-                thing=file.readline(1024)
-                if not thing in ["A\n", "I\n"]:
-                    file.close()
-                    continue
-                thing=file.readline(1024)
-                if thing!="700 version\n":
-                    file.close()
-                    continue
-                thing=file.readline(1024)	# device type code
-                thing=file.readline(1024)
-                file.close()
-                n=thing.split()
-                try:
-                    return float(n[1])
-                except ValueError:
-                    pass
+        while True:
+            if dirname(afldir)==afldir: break
+            afldir=dirname(afldir)
+            for d in listdir(afldir):
+                if d.lower()=='airfoils':
+                    for f in listdir(join(afldir, d)):
+                        if f.lower()==aflname.lower():
+                            try:
+                                file = open(join(afldir,d,f), 'rU')
+                                thing=file.readline(1024)
+                                if not thing or thing[0] not in ['A', 'I']:
+                                    file.close()
+                                    continue
+                                thing=file.readline(1024).split()
+                                if not thing or thing[0]!='700':
+                                    file.close()
+                                    continue
+                                thing=file.readline(1024)	# device type
+                                thing=file.readline(1024).split()
+                                file.close()
+                                return float(thing[1])		# thickness
+                            except:
+                                pass
 
         print "Warn:\tCouldn't read airfoil \"%s\"" % aflname
         return None
@@ -1802,17 +1805,18 @@ class ACFimport:
     #------------------------------------------------------------------------
     def wpn(self, wpnname):
         wpndir=self.filename
-        for l in range(5):
-            q=wpndir[:-1].rfind(Blender.sys.dirsep)
-            if q==-1:
-                return
-            wpndir=wpndir[:q+1]
-            try:
-                filename = wpndir+'Weapons'+Blender.sys.dirsep+wpnname
-                w=ACF(filename, self.debug, None, None, '', None)
-                return w
-            except (ParseError, IOError):
-                pass
+        while True:
+            if dirname(wpndir)==wpndir: break
+            wpndir=dirname(wpndir)
+            for d in listdir(wpndir):
+                if d.lower()=='weapons':
+                    for f in listdir(join(wpndir, d)):
+                        if f.lower()==wpnname.lower():
+                            try:
+                                w=ACF(join(wpndir,d,f), self.debug, None, None, '', None)
+                                return w
+                            except:
+                                pass
 
         print "Warn:\tCouldn't read weapon \"%s\"" % wpnname
         return None
