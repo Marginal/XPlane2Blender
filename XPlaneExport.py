@@ -244,6 +244,7 @@ def getTexture (theObjects, layermask, iscockpit, iscsl, fileformat):
         lod=[0,1000,4000,100000]	# list of lod limits
     else:
         lod=[0,1000,4000,10000]		# list of lod limits
+    thisdir=normpath(dirname(Blender.Get('filename')))
 
     for o in range (nobj-1,-1,-1):
         object=theObjects[o]
@@ -273,25 +274,10 @@ def getTexture (theObjects, layermask, iscockpit, iscsl, fileformat):
         if objType == "Mesh":
             mesh=object.getData()
             if mesh.hasFaceUV():
+                #print object.getName()
                 for face in mesh.faces:
                     if (face.mode&NMesh.FaceModes.TEX) and face.image:
-                        # Need to canonicalise pathnames to avoid false dupes
-                        if face.image.filename[0:2] in ['//', '\\\\']:
-                            # Path is relative to .blend file
-                            fixedfile=normpath(join(dirname(Blender.Get(
-                                'filename')), face.image.filename[2:]))
-                        else:
-                            fixedfile=abspath(face.image.filename)
-                        if sep=='\\':
-                            if fixedfile[0] in ['/', '\\']:
-                                # Add Windows drive letter
-                                (drive,foo)=splitdrive(Blender.sys.progname)
-                                fixedfile=drive.lower()+fixedfile
-                            else:
-                                # Lowercase Windows drive lettter
-                                fixedfile=fixedfile[0].lower()+fixedfile[1:]
-
-                        if face.image.name.lower().find("panel.")!=-1:
+                        if 'panel.' in face.image.name.lower():
                             # Check that at least one panel texture is OK
                             if len(face.v)==3 and fileformat==7:
                                 raise ExportError("Only quads can use the instrument panel texture,\n\tbut I found tri(s) using the panel texture in \"%s\"." % object.name, [object])
@@ -312,6 +298,21 @@ def getTexture (theObjects, layermask, iscockpit, iscsl, fileformat):
                                 else:
                                     panelerr=0
                         else:
+                            # Canonicalise pathnames to avoid false dupes
+                            if face.image.filename[0:2] in ['//', '\\\\']:
+                                # Path is relative to .blend file
+                                fixedfile=join(thisdir,face.image.filename[2:])
+                            else:
+                                fixedfile=abspath(face.image.filename)
+                            if sep=='\\':
+                                if fixedfile[0] in ['/', '\\']:
+                                    # Add Windows drive letter
+                                    (drive,foo)=splitdrive(Blender.sys.progname)
+                                    fixedfile=drive.lower()+fixedfile
+                                else:
+                                    # Lowercase Windows drive lettter
+                                    fixedfile=fixedfile[0].lower()+fixedfile[1:]
+
                             # Check for multiple textures
                             if ((not texture) or
                                 (str.lower(fixedfile)==str.lower(texture))):
