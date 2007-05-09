@@ -153,7 +153,7 @@ as scenery or as a CSL object; see <a href="#Tweaking_planes">Tweaking
 planes</a> below.</p>
 
 <h3>Exporting objects</h3>
-<p>First, choose <samp>File &rarr; Save As...</samp> and save the
+<p>First, choose <samp>File &rarr; Save As&#8230;</samp> and save the
 <code>.blend</code> file in the aircraft or
 scenery folder where you want the <code>.obj</code> file to end up.
 Then choose:
@@ -380,7 +380,7 @@ In an image editor application create one texture file that is like a
 of all of the textures that you need in your model. 
 The height and width of the texture file must be powers of two
 (<i>eg</i> 128, 256, 512, 1024) but it doesn't have to be square.
-(See ...<code>/Custom&nbsp;Scenery/KSBD&nbsp;Demo&nbsp;Area/KSBD_example.png</code> for an example).<br>
+(See <code>&#8230;/Custom&nbsp;Scenery/KSBD&nbsp;Demo&nbsp;Area/KSBD_example.png</code> for an example).<br>
 Save the texture file in 32bit or 24bit PNG format (<i>ie</i> with or
 without an "Alpha" channel) in the aircraft or scenery folder where you
 want the X-Plane <code>.obj</code> file to end up.<br>
@@ -438,15 +438,12 @@ Only a few of the Blender's many material buttons affect X-Plane:
     <ul>
       <li><samp>Col</samp> button and the
 <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the
-<samp>Materials</samp> panel control the diffuse colour of the faces.
+<samp>Material</samp> panel control the diffuse colour of the faces.
 X-Plane combines the colours that are specified by the texture (if any) with
 this setting.
 The default X-Plane setting is <code>1</code>, <code>1</code>, <code>1</code>
 (white). However the default setting of a new material in Blender is
-<code>0.8</code>, <code>0.8</code>, <code>0.8</code>.
-You should almost always set this to
-<code>1</code>, <code>1</code>, <code>1</code>
-and control the face colours using only the texture.</li>
+<code>0.8</code>, <code>0.8</code>, <code>0.8</code>.</li>
       <li><samp>Spec</samp> slider on the <samp>Shaders</samp> panel
 controls the specularity (shininess) of the faces.
 The default X-Plane setting is 0 (matt).
@@ -462,7 +459,7 @@ which <code>_LIT</code> textures do not.
 The default X-Plane and Blender setting is 0 (not emissive).</li>
       <li><samp>Mir</samp> button and the
 <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the
-<samp>Materials</samp> panel control the emissive colour of the faces.</li>
+<samp>Material</samp> panel control the emissive colour of the faces.</li>
     </ul>
   </li>      
 </ul>
@@ -477,7 +474,7 @@ must be within 0.1 units of each other. The face must be the only face
 in its mesh and must not have a texture assigned to it.</p>
 <p>Assign a material to the face and use the
 <samp>Col</samp> button and the <samp>R</samp>,<samp>G</samp>,<samp>B</samp>
-sliders on the <samp>Materials</samp> panel to control
+sliders on the <samp>Material</samp> panel to control
 the colour of the line.
 Faces not linked to a material will be exported coloured grey.</p>
 <h4><a name="animation"><font size="+1">v8: </font>Animation</a></h4>
@@ -485,36 +482,49 @@ Faces not linked to a material will be exported coloured grey.</p>
 according to the value of any of the simulator datarefs
 listed <a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">here</a>
 that have type "int", "float" or "double".</p>
-<p>Create an "Armature" object, with one or more "Bones". Name
-the bone(s) with one of the datarefs in the <a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">list</a>.
+<p>Create an "Armature" object. Click on the armature's "Bone" and in the
+<samp>Armature Bones</samp> panel (which is only displayed in
+<samp>Edit Mode</samp>) name the bone with one of the datarefs in
+<a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">this list</a>.
 For datarefs that are listed as being of type <code>int[<i>n</i>]</code> or
 <code>float[<i>n</i>]</code> append <code>[0]</code>
 to the bone name to use the first value, <code>[1]</code> to use the second
 value etc. <i>eg</i> name the bone <code>ENGN_thro[0]</code>
-to represent the throttle setting for the first engine. Add additional
-bones to the armature and create parent/child relationships between
-each bone (in <samp>Edit Mode</samp>) if you need to use
-multiple datarefs to describe the animation of a single lamp or mesh.</p>
-<p>Parent the lamps and/or meshes that you want to animate to the bone
-(choose the "youngest" child bone in the chain if you're using multiple
-datarefs):</p>
+to represent the throttle setting for the first engine.</p>
+<p>Make the bone the parent of the lamps and/or meshes that you want to
+animate:</p>
 <ul>
-  <li>Click on the lamp or mesh</li>
-  <li>Shift-click on the Armature</li>
+  <li>Click on the lamps and/or meshes (the "children")</li>
+  <li>Shift-click on the armature</li>
   <li><b>Choose <samp>Pose Mode</samp> from the Mode menu</b></li>
-  <li>Click on the bone</li>
-  <li>Press <samp style="font-weight: bold;">Ctrl-P</samp>
+  <li>Click on the bone (the "parent")</li>
+  <li>Press <samp><b>Ctrl&nbsp;P</b></samp>
 and select <samp>Bone</samp> from the popup menu</li>
 </ul>
-<p>Use <samp>Pose Mode</samp> to describe the
-animation; press <samp>I</samp> to insert "LocRot" keys in Blender's
-frames 1 and 2 to represent the desired position of the meshes at the
-minimum and maximum dataref values -
-X-Plane will interpolate smoothly between these two positions.
-<small>(X-Plane's animation syntax is quite
-simple; so don't use IPOcurves or any other advanced Blender animation
+<p>Add additional bones to the armature and create parent/child relationships
+between each bone (using the <samp>Armature Bones</samp> panel in
+<samp>Edit Mode</samp>) if you need to use multiple datarefs to describe the
+animation of lamps/meshes. Make the lamps/meshes the child of the "youngest"
+bone in the chain.</p>
+<p>Use frames 1 and 2 to represent the desired position of the lamps/meshes
+at the minimum and maximum dataref values - X-Plane will
+<a href="http://en.wikipedia.org/wiki/Linear_interpolation">interpolate</a> and
+<a href="http://en.wikipedia.org/wiki/Extrapolation">extrapolate</a>
+linearly between these two positions
+<small>(X-Plane's animation syntax is quite simple;
+so don't use IPOcurves or any other advanced Blender animation
 techniques since these will be ignored by the exporter - only the
-positions in frames 1 and 2 are exported to X-Plane).</small></p>
+positions in frames 1 and 2 are significant to X-Plane)</small>:</p>
+<ul>
+  <li>Select animation frame 1</li>
+  <li>Click on the armature</li>
+  <li>Choose <samp>Pose Mode</samp> from the Mode menu</li>
+  <li>Click on a bone</li>
+  <li>Move and/or rotate the bone<li>
+  <li>Press <samp><b>i</b></samp> to insert a "<samp>LocRot</samp>" key</li>
+  <li>Repeat for any other bones in the armature</li>
+  <li>Select animation frame 2 and repeat</li>
+</ul>
 <p>By default, X-Plane will display the meshes in the frame 1 position
 when the dataref has a value of 0, and in the frame 2 position
 when the dataref has a value of 1.
@@ -537,21 +547,24 @@ property's value to the rest of the dataref name.
 <code>volume</code> and add a property named
 <code>volume</code> with the string value <code>my_org/widget/</code>.</p>
 <p>You can make all of the lamps and meshes in an animation disappear
-when a dataref is within a certain range by adding
+when a dataref is within a certain range by adding a pair of
 <a href="#properties">properties</a> to the armature named
 <code><i>dataref</i>_hide_v1</code> and <code><i>dataref</i>_hide_v2</code>.
 (It's OK to use datarefs that are not otherwise used in the animation).
-You can make hidden lamps and meshes re-appear when a dataref is within
-a certain range by adding properties named
+You can make hidden lamps/meshes re-appear when a dataref is within
+a certain range by adding a pair of properties named
 <code><i>dataref</i>_show_v1</code> and <code><i>dataref</i>_show_v2</code>. 
-(These can be the same or different than the dataref(s)
-that you used to hide the animation).</p>
-<p>You can add multiple "hide" and "show" properties;
-the animation will be hidden only if one or more of the "hide" datarefs
-are in range and none of the "show" datarefs are in range. You can use
-the same dataref in multiple "show" and "hide" properties; name the
+The dataref that you use to "show" the animation can be the same or different
+than the dataref that you used to "hide" the animation.</p>
+<p>You can add multiple "hide" and "show" pairs of properties. To use
+the same dataref in multiple "show" and "hide" properties name the
 subsequent pairs of properties <code><i>dataref</i>_hide_v3</code> and
-<code><i>dataref</i>_hide_v4</code> etc.</p>
+<code><i>dataref</i>_hide_v4</code> etc.
+The order of "hide" and "show" properties is significant; the animation
+will be hidden if any of the "hide" datarefs are in range, unless a subsequent
+"show" dataref is also in range. <small>(The animation is always shown by
+default, so you only need to use a pair of "show" properties if you have used
+one or more pairs of "hide" properties and you want to override them).</small>
 <div style="margin-left: 40px;">
 <table style="text-align: left;" border="0" cellspacing="4">
   <caption>Summary of animation <a href="#properties">properties</a></caption>
@@ -616,7 +629,14 @@ subsequent pairs of properties <code><i>dataref</i>_hide_v3</code> and
     </tr>
   </tbody>
 </table>
-</div>      
+</div>
+<p>You can make a bone the child of a bone in a different armature,
+in which case any <code><i>dataref</i></code>, <code><i>dataref</i>_v1</code>
+and <code><i>dataref</i>_v2</code> properties only apply to bones that are
+in the same armature as the properties.
+However all children inherit any "hide" and "show" properties from parent
+armatures.</p>
+
 <h4><a name="order"><font size="+1">v8: </font>Drawing order</a></h4>
 <p>The order in which X-Plane draws the animations, lights, lines and
 triangles in your scenery or cockpit object usually has no effect on
@@ -643,7 +663,7 @@ panel (<samp style="font-weight: bold;">F7</samp>):</p>
   <li>The groups are sorted by alphabetical order, and then
     <ul>
       <li>objects that belong to the first group are drawn next.<br>
-      ...</li>
+      &#8230;</li>
       <li>objects that belong to the last group are drawn last.</li>
     </ul></li>
 </ul>
@@ -844,8 +864,9 @@ Face Select</samp> mode after import.</li>
   <li>All faces must share a single texture file (this is
 a limitation of the X-Plane <code>.obj</code> file
 formats) apart from cockpit panel faces which can additionally use the
-cockpit panel texture. Multiple texture files are not automagically
-merged into one file during the export.</li>
+cockpit panel texture.
+You can use <samp>Image &rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>
+to merge multiple texture files into one file.</li>
 </ul>
 <h3>Problems</h3>
 <p><a href="mailto:Jonathan%20Harris%20%3Cx-plane@marginal.org.uk%3E">Mail
@@ -873,7 +894,7 @@ no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.36 &copy; 2004-2006
+      <td class="banner">Version 2.37 &copy; 2004-2007
       <a href="mailto:x-plane@marginal.org.uk">Jonathan
 Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
