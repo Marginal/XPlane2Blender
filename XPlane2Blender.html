@@ -20,8 +20,7 @@ h5 { font-family: Arial,Helvetica,sans-serif; }
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Marginal &rarr; <a href="http://marginal.org.uk/x-planescenery/">X-Plane
-Scenery</a> &rarr; <a href="http://marginal.org.uk/x-planescenery/tools.html">Tools</a> &rarr; XPlane2Blender</td>
+      <td class="banner">Marginal&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/">X-Plane&nbsp;Scenery</a>&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/tools.html">Tools</a>&nbsp;&rarr; XPlane2Blender</td>
     </tr>
   </tbody>
 </table>
@@ -103,8 +102,8 @@ Extract the contents of the zip file to this folder.</td>
     </tr>
   </tbody>
 </table>
-<p>(Re)start Blender. This file can now be viewed by choosing <samp>Help
-&rarr; X-Plane</samp> in Blender.</p>
+<p>(Re)start Blender. This file can now be viewed by choosing
+<samp>Help&nbsp;&rarr; X-Plane</samp> in Blender.</p>
 <p>On Mac OS, also run the "Console" application that comes with
 Mac OS X and which is found under "Utilities".</p>
 <p>You can now delete the temporary folder.</p>
@@ -114,7 +113,7 @@ Mac OS X and which is found under "Utilities".</p>
 to be placed. Usually you'll want the object to be placed at the origin so
 just press <samp style="font-weight: bold;">Shift&nbsp;C</samp>
 to centre the 3D Cursor at the origin.</p>
-<p>Choose <samp>File &rarr; Import &rarr; X-Plane Object</samp>,
+<p>Choose <samp>File&nbsp;&rarr; Import&nbsp;&rarr; X-Plane Object</samp>,
 select a <code>.obj</code> file and press <samp>Import&nbsp;OBJ</samp>.</p>
 <p>The scenery is
 imported at the 3d Cursor position. Any problems with the import are
@@ -123,16 +122,18 @@ reported in the Console window as lines starting "Warn" or "Error".</p>
 single file. But note that the X-Plane <code>.obj</code>
 file format only supports the use of one texture file, so you'll have
 to create a single larger file containg all required textures.
-Use <samp>Image &rarr; Double bitmap size</samp> from the
-<samp>UV/Image Editor</samp> window to fix up texture mappings.</p>
+You can create this single file automatically using
+<samp>Image&nbsp;&rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>
+from a <samp>UV/Image Editor</samp> window.</p>
 
 <h3>Importing planes</h3>
 <p>First, move the 3D Cursor to where you want the imported plane or weapon
 to be placed. Usually you'll want it to be placed at the origin so
 just press <samp style="font-weight: bold;">Shift&nbsp;C</samp>
 to centre the 3D Cursor at the origin.</p>
-<p>Choose <samp>File &rarr; Import &rarr; X-Plane Plane or Weapon</samp> and
-choose whether to import the plane or weapon so that the "reference point"
+<p>Choose
+<samp>File&nbsp;&rarr; Import&nbsp;&rarr; X-Plane&nbsp;Plane&nbsp;or&nbsp;Weapon</samp>
+and choose whether to import the plane or weapon so that the "reference point"
 is located at the 3D Cursor (for making cockpit & misc objects) or so that the
 "centre of gravity" is located at the 3D Cursor (for making CSLs and static
 scenery).</p>
@@ -153,14 +154,14 @@ as scenery or as a CSL object; see <a href="#Tweaking_planes">Tweaking
 planes</a> below.</p>
 
 <h3>Exporting objects</h3>
-<p>First, choose <samp>File &rarr; Save As&#8230;</samp> and save the
+<p>First, choose <samp>File&nbsp;&rarr; Save As&#8230;</samp> and save the
 <code>.blend</code> file in the aircraft or
 scenery folder where you want the <code>.obj</code> file to end up.
 Then choose:
 <dl>
-  <dd><samp>File &rarr; Export &rarr; X-Plane CSL Object</samp> or</dd>
-  <dd><samp>File &rarr; Export &rarr; X-Plane v7 Object</samp> or</dd>
-  <dd><samp>File &rarr; Export &rarr; X-Plane v8 Object</samp></dd>
+  <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;CSL&nbsp;Object</samp> or</dd>
+  <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;v7&nbsp;Object</samp> or</dd>
+  <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;v8&nbsp;Object</samp></dd>
 </dl>
 <p>The object is exported in the same folder and with the same name
 as the current Blender file, but with a <code>.obj</code> extension. 
@@ -225,7 +226,8 @@ save these resized versions)</small>.</li>
   <li>Paste the resized <code><i>airplane</i>_paint2</code> into the right half of this bitmap.</li>
   <li>Save the bitmap file in the same folder and with the same name as your <code>.blend</code> file. If you're making a CSL object then you must save in PNG format.</li>
   <li>If your plane uses night-time textures then repeat this procedure for the <code>_LIT</code> bitmap files.</li>
-  <li>In a Blender <samp>UV/Image Editor</samp> window choose <samp>Image &rarr; Merge _paint and _paint2</samp>.
+  <li>In a Blender <samp>UV/Image Editor</samp> window choose
+<samp>Image&nbsp;&rarr; Merge&nbsp;_paint&nbsp;and&nbsp;_paint2</samp>.
 </ul>      
 <p>If your imported plane uses weapons or misc objects then each of
 these will use an additional bitmap file. Weapons are imported
@@ -233,8 +235,10 @@ with their names starting with "<code>W<i>nn</i></code>" and objects
 with their names starting with "<code>O<i>nn</i></code>". Also note
 that reduced-LOD versions of weapons and misc objects may be present in
 layers 2 and 3.</p>
-<p>Open an
-<samp>Outliner</samp> window and choose <samp>View &rarr; Show Outliner</samp>. For each mesh that has a name starting with "<code>W<i>nn</i></code>" or "<code>O<i>nn</i></code>" or ending with "<code>*</code>", either:</p>
+<p>Open an <samp>Outliner</samp> window and choose
+<samp>View&nbsp;&rarr; Show&nbsp;Outliner</samp>. For each mesh that has a
+name starting with "<code>W<i>nn</i></code>" or "<code>O<i>nn</i></code>" or
+ending with "<code>*</code>", either:</p>
 <ul>
   <li>Delete the mesh, or</li>
   <li>Copy the required textures to an unused area in
@@ -254,7 +258,7 @@ running X-Plane on computers with only 32MB of video memory, so one
 <small><sup>1</sup></small>/<small><sub>8</sub><sup>th</sup></small>
 of their video memory. Consider resizing the texture file in an image
 editor program to half or even quarter size.
-Use <samp>Image &rarr; Replace</samp> to use the new texture file.</li>
+Use <samp>Image&nbsp;&rarr; Replace</samp> to use the new texture file.</li>
   <li>Does the model have hidden faces? Some versions of X-Plane
 don't handle hidden faces in v7 scenery objects very well and they also
 a cause a small performance hit. Look for things like wings or misc
@@ -273,7 +277,7 @@ of Detail</a>, so only objects in Blender layer 1 are exported.
 If you want to keep objects in your Blender scene for reference but
 which you don't want to export - eg the plane fuselage - then put them
 in layer 4 or greater before exporting.</p>
-<p>Choose <samp>File &rarr; Save As</samp> and save
+<p>Choose <samp>File&nbsp;&rarr; Save As</samp> and save
 the blender file in the same folder as your plane's <code>.acf</code>
 file with the name <code><i>airplane</i>_cockpit.blend</code>,
 where <i>airplane</i> is the name of your plane's <code>.acf</code>
@@ -283,8 +287,8 @@ act as a reference and/or starting point for your cockpit. Delete any
 plane parts that you don't need in creating your cockpit - you only
 need to keep the fuselage itself plus any relevant Misc Bodies. After
 import, your cockpit uses the same texture file as your plane, ie <code><i>airplane</i>_paint</code>.
-Choose <samp>Image &rarr; Replace </samp> in a <samp>UV
-Image Editor</samp> window to use a different texture file, which
+Choose <samp>Image&nbsp;&rarr; Replace </samp> in a
+<samp>UV Image Editor</samp> window to use a different texture file, which
 can be named anything you like (but no spaces) and which should live in
 the same folder as your plane's <code>.acf</code> file.</p>
 <p>To construct moving cockpit instruments in X-Plane v8:</p>
@@ -727,9 +731,9 @@ one of these strips, the following conditions need to be true:</p>
 <p>In practice this means that the texture must be reversed in
 alternate faces in the strip. In the case of tris this can also be
 achieved by mapping a single area of the texture across all the tris,
-with the tip of the tris at the centre of the texture area. Use <samp>UVs
-&rarr; Copy &amp; Paste</samp> from the<samp>
-UV/Image Editor</samp> window to automate the creation of strips.</p>
+with the tip of the tris at the centre of the texture area. Use
+<samp>UVs&nbsp;&rarr; Copy&nbsp;&amp;&nbsp;Paste</samp> from the
+<samp>UV/Image Editor</samp> window to automate the creation of strips.</p>
 <p>These compound types aren't supported directly by Blender.
 However, the export script automatically tries to spot when it can use
 them.</p>
@@ -846,9 +850,9 @@ chords</samp> option in PlaneMaker)</small> is ignored.</li>
   <li>Adjacent wing segments may not be exactly joined-up.
 If not corrected manually this can create shadow effects in
 XSquawkBox and X-IvAp.</li>
-  <li>Cockpit objects are ignored. You can use <samp>File
-&rarr; Import &rarr; X-Plane Object</samp> to import
-cockpits.</li>
+  <li>Cockpit objects are ignored. You can use
+<samp>File&nbsp;&rarr; Import&nbsp;&rarr; X-Plane&nbsp;Object</samp>
+to import cockpits.</li>
   <li>Planes (and their weapons, misc objects and cockpit objects)
 use multiple texture files. These are not automagically merged
 into one file during the import.</li>
@@ -864,8 +868,8 @@ Face Select</samp> mode after import.</li>
   <li>All faces must share a single texture file (this is
 a limitation of the X-Plane <code>.obj</code> file
 formats) apart from cockpit panel faces which can additionally use the
-cockpit panel texture.
-You can use <samp>Image &rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>
+cockpit panel texture. You can use
+<samp>Image&nbsp;&rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>
 to merge multiple texture files into one file.</li>
 </ul>
 <h3>Problems</h3>
@@ -895,8 +899,8 @@ no obligation.</p>
   <tbody>
     <tr>
       <td class="banner">Version 2.37 &copy; 2004-2007
-      <a href="mailto:x-plane@marginal.org.uk">Jonathan
-Harris</a> <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
+      <a href="mailto:x-plane@marginal.org.uk">Jonathan Harris</a>
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
   </tbody>
 </table>
