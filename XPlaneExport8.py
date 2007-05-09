@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.36"
+__version__ = "2.37"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -115,6 +115,9 @@ Limitations:<br>
 #  - Select problematic objects on error.
 #  - Check for ambiguous dataref leaf names.
 #  - Check that dataref indices don't exceed length of array.
+#
+# 2007-05-09 v2.37
+#  - Allow a bone to be a child of a bone in another armature.
 #
 
 
@@ -865,14 +868,6 @@ class OBJexport8:
 
         anim=Anim(child)
 
-        # Need to unset resting position of parent armature (if any)
-        resting=False
-        object=child.parent
-        if (object and object.getType()=='Armature' and
-            object.getData().restPosition):
-            resting=True
-            object.getData().restPosition=False
-
         # Add parent anims first
         al=[]
         a=anim
@@ -926,10 +921,6 @@ class OBJexport8:
             else:
                 self.anims.append(a)
                 anim=a	# The anim we just made is the last one in the list
-
-        # Restore rest state
-        if resting:
-            object.getData().restPosition=True
 
         return (anim, mm)
 
@@ -1083,44 +1074,44 @@ class Anim:
         if not child:
             return	# null
 
-        object=child.parent
+        object=child.parent	# child is lamp/mesh. object is parent armature
         if not object or object.getType()!='Armature':
             return
 
         if Blender.Get('version')<240:
             raise ExportError('Blender version 2.40 or later required for animation')
 
-        if object.parent:
-            raise ExportError('Armature "%s" has a parent; this is not supported. Use multiple bones within a single armature to represent complex animations.' % object.name, [object])
+        #if object.parent:
+        #    raise ExportError('Armature "%s" has a parent; this is not supported. Use multiple bones within a single armature to represent complex animations.' % object.name, [object])
                 
         if not bone:
             bonename=child.getParentBoneName()
-            if not bonename: raise ExportError('%s "%s" has an armature as its parent. Parent "%s" to a bone instead.' % (child.getType(), child.name, child.name), [child])
+            if not bonename: raise ExportError('%s "%s" has an armature as its parent. Make "%s" the child of a bone.' % (child.getType(), child.name, child.name), [child])
             bones=object.getData().bones
             if bonename in bones.keys():
                 bone=bones[bonename]
             else:
-                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Parent "%s" to an existing bone (or clear its parent).' % (child.getType(), child.name, bonename, child.name), [child])
+                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Either make "%s" the child of an existing bone, or clear its parent.' % (child.getType(), child.name, bonename, child.name), [child])
 
         if bone.parent:
             #print "bp", child, bone.parent
             self.anim=Anim(child, bone.parent)
-        elif False: # object.parent and object.parent.getType()=='Armature':
+        elif object.parent and object.parent.getType()=='Armature':
             # child's parent armature is itself parented to an armature
             bonename=object.getParentBoneName()
-            if not bonename: raise ExportError('Bone "%s" has an armature as its parent. Parent "%s" to another bone instead.' % (bone.name, bone.name), [child])
+            if not bonename: raise ExportError('Bone "%s" has an armature as its parent. Make "%s" the child of another bone.' % (bone.name, bone.name), [child])
             bones=object.parent.getData().bones
             if bonename in bones.keys():
                 parentbone=bones[bonename]
             else:
-                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Parent "%s" to an existing bone (or clear its parent).' % (child.getType(), child.name, bonename, child.name), [child])
+                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Either make "%s" the child of an existing bone, or clear its parent.' % (child.getType(), child.name, bonename, child.name), [child])
             #print "ob", object, parentbone
             self.anim=Anim(object, parentbone)
         else:
             self.anim=Anim(None)
 
         if not bone.parent:
-            # Hide/show values if grandfather bone
+            # Hide/show values if eldest bone in its armature
             vals={}
             for prop in object.getAllProperties():
                 propname=prop.name.strip()
@@ -1131,7 +1122,7 @@ class Anim:
                     (ref, v)=self.getdataref(object, propname[:propname.index(suffix)], suffix[:-2], int(digit))
                     if v: self.showhide.append((suffix[1:5],ref,v[0],v[1]))
 
-        #print "ac", object, bone.name, object.getAction(), object.getAction().getAllChannelIpos(), object.getAction().getAllChannelIpos().has_key(bone.name)
+        #print "ac", object, bone.name, object.getAction(), object.getAction().getAllChannelIpos()[bone.name]
         if not (object.getAction() and
                 object.getAction().getAllChannelIpos().has_key(bone.name)):
             print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
@@ -1206,11 +1197,20 @@ class Anim:
         # Transformations are relative to unrotated position and cumulative
         # Rotations are relative to each other (ie cumulative)
         
-        for frame in [1,2]:            
+        # Need to unset resting position of parent armature
+        object.getData().restPosition=False
+        # But grandparent armature (if any) need to be resting, since
+        # getMatrix('localspace') doesn't account for rotation due to pose
+        a=object.parent
+        while a:
+            a.getData().restPosition=True
+            a=a.parent
+
+        for frame in [1,2]:
             Blender.Set('curframe', frame)
             #scene.update(1)
             #scene.makeCurrent()	# see Blender bug #4696
-            mm=Matrix(object.getMatrix('worldspace'))
+            mm=object.getMatrix('worldspace')
             # mm.rotationPart() scaled to be unit size for rotation axis
             rm=MatrixrotationOnly(mm, object)
             
@@ -1259,6 +1259,11 @@ class Anim:
                     self.a.append(a)
             else:
                 self.a.append(0)
+
+        a=object.parent
+        while a:
+            a.getData().restPosition=False
+            a=a.parent
 
 
     #------------------------------------------------------------------------
