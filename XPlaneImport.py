@@ -19,9 +19,9 @@ Limitations:<br>
 """
 
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.41 or above
+# X-Plane importer for blender 2.43 or above
 #
-# Copyright (c) 2004,2005 Jonathan Harris
+# Copyright (c) 2004-2007 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -189,6 +189,9 @@ Limitations:<br>
 #  - Animated objects correctly parented to bones (2.43 & later).
 #  - Fix for object locations on 2.43.
 #
+# 2007-06-06 v2.37
+#  - Rewrote parser to be more tolerant.
+#
 
 import sys
 import Blender
@@ -208,137 +211,9 @@ class ParseError(Exception):
     TOKEN  = 1
     INTEGER= 2
     FLOAT  = 3
-    MISC   = 4
-
-class Token:
-    "OBJ tokens"
-    # numbers 1-8 and 99 should not change for v6 compatibility
-    LIGHT	= 1
-    LINE	= 2
-    TRI		= 3
-    QUAD	= 4
-    QUAD_HARD	= 5
-    SMOKE_BLACK	= 6
-    SMOKE_WHITE	= 7
-    QUAD_MOVIE	= 8
-    POLYGON	= 9
-    QUAD_STRIP	= 10
-    TRI_STRIP	= 11
-    TRI_FAN	= 12
-    SHADE_FLAT	= 13
-    SHADE_SMOOTH= 14
-    AMBIENT_RGB	= 15
-    DIFUSE_RGB	= 16
-    DIFFUSE_RGB	= 17
-    SPECULAR_RGB= 18
-    EMISSION_RGB= 19
-    SHINY_RAT	= 20
-    NO_DEPTH	= 21
-    DEPTH	= 22
-    LOD		= 23
-    RESET	= 24
-    NO_CULL	= 25
-    NOCULL	= 26
-    CULL	= 27
-    POLY_OS	= 28
-    QUAD_COCKPIT= 29
-    TEXTURE	= 30
-    TEXTURE_LIT	= 31
-    POINT_COUNTS= 32
-    SLUNG_LOAD_WEIGHT = 33
-    VT		= 34
-    VLINE	= 35
-    VLIGHT	= 36
-    IDX		= 37
-    IDX10	= 38
-    TRIS	= 39
-    LINES	= 40
-    LIGHTS	= 41
-    HARD	= 42
-    NO_HARD	= 43
-    COCKPIT	= 44
-    NO_COCKPIT	= 45
-    BLEND	= 46
-    NO_BLEND	= 47
-    ANIM_BEGIN	= 48
-    ANIM_END	= 49
-    ANIM_ROTATE	= 50
-    ANIM_TRANS	= 51
-    ALPHA	= 52
-    NO_ALPHA	= 53
-    GROUP	= 54
-    LIGHT_NAMED = 55
-    LIGHT_CUSTOM= 56
-    LAYER_GROUP = 57
-    ANIM_SHOW	= 58
-    ANIM_HIDE	= 59
-    END		= 99
-    NAMES = [
-        "",
-        "Light",
-        "Line",
-        "Tri",
-        "Quad",
-        "Quad_hard",
-        "Smoke_Black",
-        "Smoke_White",
-        "Quad_Movie",
-        "Polygon",
-        "Quad_Strip",
-        "Tri_Strip",
-        "Tri_Fan",
-        "ATTR_shade_flat",
-        "ATTR_shade_smooth",
-        "ATTR_ambient_rgb",
-        "ATTR_difuse_rgb",
-        "ATTR_diffuse_rgb",
-        "ATTR_specular_rgb",
-        "ATTR_emission_rgb",
-        "ATTR_shiny_rat",
-        "ATTR_no_depth",
-        "ATTR_depth",
-        "ATTR_LOD",
-        "ATTR_reset",
-        # 7.40+
-        "ATTR_no_cull",
-        "ATTR_nocull",	# Also seen
-        "ATTR_cull",
-        "ATTR_poly_os",
-        # 8.00+
-        "Quad_Cockpit",
-        # 8.20+
-        "TEXTURE",
-        "TEXTURE_LIT",
-        "POINT_COUNTS",
-        "slung_load_weight",
-        "VT",
-        "VLINE",
-        "VLIGHT",
-        "IDX",
-        "IDX10",
-        "TRIS",
-        "LINES",
-        "LIGHTS",
-        "ATTR_hard",
-        "ATTR_no_hard",
-        "ATTR_cockpit",
-        "ATTR_no_cockpit",
-        "ATTR_blend",
-        "ATTR_no_blend",
-        "ANIM_begin",
-        "ANIM_end",
-        "ANIM_rotate",
-        "ANIM_trans",
-        "####_alpha",
-        "####_no_alpha",
-        "####_group",
-        # 8.50+
-        "LIGHT_NAMED",
-        "LIGHT_CUSTOM",
-        "ATTR_layer_group",
-        "ANIM_show",
-        "ANIM_hide",
-        ]
+    NAME   = 4
+    MISC   = 5
+    TEXT   = ["Header", "Command", "Integer", "Number", "Name", "Misc"]
 
 class Mat:
     def __init__(self, d=[1,1,1], e=[0,0,0], s=0):
@@ -514,7 +389,7 @@ class MyMesh:
         
         ob = Object.New("Mesh", self.name)
         ob.link(mesh)
-        scene.link(ob)
+        scene.objects.link(ob)
         if self.anim:
             #print "%s\t(%s) (%s) (%s)" % (self.anim[2], Vertex(self.anim[0].LocX, self.anim[0].LocY, self.anim[0].LocZ), Vertex(self.anim[0].getData().bones[self.anim[2]].head['ARMATURESPACE']), self.anim[1])
             ob.setLocation(self.anim[0].LocX+boneloc.x,
@@ -556,7 +431,7 @@ class OBJimport:
             self.verbose=0
             self.merge=2
         else:
-            self.verbose=1	# level of verbosity in console: 1-some,2-chat,3-debug
+            self.verbose=1	# level of verbosity in console: 1-normal,2-chat,3-debug
             self.merge=2	# merge primitives into meshes: 0-no,1-abut,2-force
         
         #--- class private don't touch ---
@@ -576,8 +451,10 @@ class OBJimport:
                 self.filename=filename[0].lower()+self.filename[1:]
 
         self.linesemi=0.025
-        self.lineno=1		# for error reporting
+        self.file=None		# file handle
         self.filelen=0		# for progress reports
+        self.line=None		# current input line
+        self.lineno=0		# for error reporting
         self.progress=-1
         self.fileformat=0	# 6, 7 or 8
         self.image=None		# texture image, iff scenery has texture
@@ -589,8 +466,6 @@ class OBJimport:
         self.whitespace=[' ','\t','\n']
 
         # flags controlling import
-        self.comment=""
-        self.lastcomment=""
         self.layer=0
         self.lod=None		# list of lod limits
         self.fusecount=0
@@ -650,157 +525,46 @@ class OBJimport:
 
     #------------------------------------------------------------------------
     def getInput(self, optional=False):
-        # Skip whitespace
-        while 1:
-            c=self.file.read(1)
-            if not c:
-            	raise ParseError(ParseError.MISC, 'Unexpected <EOF>')
-            elif c in self.whitespace:
-                if c=='\n':
-                    if self.fileformat<8:
-                        self.lineno += 1
-                    elif optional:
-                        return None
-                    else:
-                        raise ParseError(ParseError.MISC, 'Unexpected newline')
+        try:
+            return self.line.pop(0)
+        except IndexError:
+            if optional:
+                return None
             else:
-                break
-        # Read input
-        input=c
-        while 1:
-            pos = self.file.tell()
-            c = self.file.read(1)
-            if not c:
-            	raise ParseError(ParseError.MISC, 'Unexpected <EOF>')
-            elif c in self.whitespace:
-                if c=='\n':
-                    if self.fileformat<8:
-                        self.lineno += 1
-                    else:
-                        self.file.seek(pos)	# stay on this line
-                if self.verbose>2:
-                    print "Input:\t\"%s\"" % input
-                return input
-            else:
-                input=input+c
+                raise ParseError(ParseError.MISC)
 
-    #------------------------------------------------------------------------
-    def getToken(self):
-        # Skip whitespace & v8-style comment lines
-        while 1:
-            pos = self.file.tell()
-            c=self.file.read(1)
-            if not c:
-                if 0: #self.fileformat<8:
-                    raise ParseError(ParseError.TOKEN, "<EOF>")
-                else:
-                    return Token.END
-            elif c in self.whitespace:
-                if c == '\n':
-                    self.lineno += 1
-            elif self.fileformat>=8 and c=='#':
-                # Hack!
-                for a in [Token.NAMES[Token.ALPHA],
-                          Token.NAMES[Token.NO_ALPHA]]:
-                    self.file.seek(pos)
-                    c=self.file.read(len(a))
-                    if c==a:
-                        self.file.seek(pos)
-                        c=''
-                        break
-                else:
-                    # normal comment
-                    self.file.seek(pos)
-                    self.getCR()
-                    continue
-                break
-            elif self.fileformat>=8 and c=='/':
-                if self.file.read(1)=='/':
-                    # illegal v7-style comment - propsman likes these
-                    self.getCR()
-                else:
-                    # no idea
-                    self.file.seek(pos)
-                    break
-            else:
-                break
-        input=c
-        if not self.subroutine:
-            progress=pos*50/self.filelen
-            # only update progress bar if need to
-            if self.progress!=progress:
-                Window.DrawProgressBar(float(pos)*0.5/self.filelen,
-                                       "Importing %s%% ..." % progress)
-                self.progress=progress
-        while 1:
-            pos=self.file.tell()
-            c=self.file.read(1)
-            if not c:
-                raise ParseError(ParseError.TOKEN, "<EOF>")
-            elif c in self.whitespace:
-                if c == '\n':
-                    if self.fileformat<8:
-                        self.lineno += 1
-                    else:
-                        self.file.seek(pos)	# stay on this line
-                break
-            input=input+c
-            
-        if self.verbose>2:
-            print "Token:\t\"%s\"" % input
-
-        if self.fileformat>6:
-            # names
-            u=input.lower()
-            for i in range(len(Token.NAMES)):
-                if u==Token.NAMES[i].lower():
-                    return i
-            if self.fileformat==7 and u=='end':
-                return Token.END
-        else:
-            # numbers
-            try:
-                return int(input)
-            except ValueError:
-                raise ParseError(ParseError.TOKEN, input)
-        raise ParseError(ParseError.TOKEN, input)
-        
     #------------------------------------------------------------------------
     def getInt(self):
-        c=self.getInput()
         try:
-            return int(c)
+            return int(self.line.pop(0))
+        except IndexError:
+            raise ParseError(ParseError.INTEGER)
         except ValueError:
             raise ParseError(ParseError.INTEGER, c)
     
     #------------------------------------------------------------------------
     def getFloat(self):
-        c=self.getInput()
         try:
-            return float(c)
+            return float(self.line.pop(0))
+        except IndexError:
+            raise ParseError(ParseError.FLOAT)
         except ValueError:
             raise ParseError(ParseError.FLOAT, c)
     
     #------------------------------------------------------------------------
     def getCol(self):
-        v=[]
-        for i in range(3):
-            c=self.getFloat()
-            if self.fileformat<8:
-                c=c/10.0
-            v.append(c)
-        return v
+        if self.fileformat<8:
+            return [self.getFloat()/10.0 for i in range(3)]
+        else:
+            return [self.getFloat() for i in range(3)]
 
     #------------------------------------------------------------------------
     def getAttr(self):
-        v=[self.getFloat() for i in range(3)]
-        return v
+        return [self.getFloat() for i in range(3)]
 
     #------------------------------------------------------------------------
     def getVertex(self):
-        v=[]
-        for i in range(3):
-            v.append(self.getFloat())
+        v=[self.getFloat() for i in range(3)]
         # Rotate to Blender format
         return Vertex(round( v[0],Vertex.ROUND),
                       round(-v[2],Vertex.ROUND),
@@ -808,124 +572,74 @@ class OBJimport:
     
     #------------------------------------------------------------------------
     def getUV(self):
-        uv=[]
-        for i in range(2):
-            uv.append(self.getFloat())
-        return UV(uv[0],uv[1])
-        
+        u=self.getFloat()
+        v=self.getFloat()
+        return UV(u,v)
+
     #------------------------------------------------------------------------
-    def getCR(self):
-        while 1:
-            c = self.file.read(1)
-            if not c:
-                return Token.END
-            if c in self.whitespace:
-                if c == '\n':
-                    self.lineno += 1
-                    self.comment=''
-                    return
-            else:
-                break
-        input=c
-        while 1:
-            c = self.file.read(1)
-            if not c:
-                return Token.END
-            if c == '\n':
-                self.lineno += 1
-                pos=self.file.tell()
-                break
-            input+=c            
-
-        if self.fileformat>=8:
-            return
-
-        # Gather comment to help with merge
-        while input and input[0]=='/':
-            input=input[1:]
-        self.comment = input.strip()
-        # Export used to attach these prefixes to comments
-        for c in ["Mesh: ", "Mesh(alpha): ", "Light: ", "Line: "]:
-            if self.comment.find (c) == 0:
-                self.comment=self.comment[len(c):]
-        # Special handling for aircraft.obj
-        if self.comment.find ("verts following are a tristrip for ") == 0:
-            if self.comment[35:]=="FUSELAGE    station 0":
-                self.fusecount=self.fusecount+1
-            self.comment=self.comment[35:47].strip()
+    def getCR(self, optional=False):
+        while True:
+            line=self.file.readline()
+            self.lineno+=1
+            if not line:
+                if optional:
+                    return False
+                else:
+                    raise ParseError(ParseError.MISC, 'Unexpected <EOF>')
+            self.line=line.split('#')[0].split('//')[0].split()
+            if self.line:
+                if self.verbose>2: print 'Input:\t%s' % self.line
+                return True
+            elif line.startswith('####_'):
+                # check for special comments
+                self.line=[line.strip()]
+                if self.verbose>2: print 'Input:\t%s' % self.line
+                return True
+            elif not optional:
+                raise ParseError(ParseError.MISC, 'Unexpected <EOL>')
 
     #------------------------------------------------------------------------
     def readHeader(self):
-        c=self.file.read(1)
-        if self.verbose>2:
-            print "Input:\t\"%s\"" % c
+        c=self.file.readline().strip()
+        if self.verbose>2: print 'Input:\t"%s"' % c
         if not c in ['A', 'I']:
             raise ParseError(ParseError.HEADER)
         
-        self.getCR()
-        c = self.file.read(1)
-        if self.verbose>2:
-            print "Input:\t\"%s\"" % c
-        if c=="2":
-            self.getCR()
+        c = self.file.readline().split()
+        self.lineno=2
+        if not c: raise ParseError(ParseError.HEADER)
+        if self.verbose>2: print 'Input:\t"%s"' % c[0]
+        if c[0]=="2":
             self.fileformat=6
-            if self.verbose>1:
-                print "Info:\tThis is an X-Plane v6 format file"
-        elif c=="7" and self.file.read(2)=="00":
-            self.getCR()
-            if self.file.read(3)!="OBJ":
+            if self.verbose>1: print "Info:\tThis is an X-Plane v6 format file"
+        elif c[0]=="700":
+            if self.file.readline().split('#')[0].split('//')[0].split()[0]!="OBJ":
                 raise ParseError(ParseError.HEADER)
-            self.getCR()
             self.fileformat=7
-            if self.verbose>1:
-                print "Info:\tThis is an X-Plane v7 format file"
-        elif c=="8" and self.file.read(2)=="00":
-            self.getCR()
-            if self.file.read(3)!="OBJ":
+            self.lineno=3
+            if self.verbose>1: print "Info:\tThis is an X-Plane v7 format file"
+        elif c[0]=="800":
+            if self.file.readline().split('#')[0].split('//')[0].split()[0]!="OBJ":
                 raise ParseError(ParseError.HEADER)
-            self.getCR()
             self.fileformat=8
-            if self.verbose>1:
-                print "Info:\tThis is an X-Plane v8 format file"
+            self.lineno=3
+            if self.verbose>1: print "Info:\tThis is an X-Plane v8 format file"
         else:
             raise ParseError(ParseError.HEADER)
 
+        while True:
+            line=self.file.readline()
+            self.lineno+=1
+            if not line: raise ParseError(ParseError.MISC, 'Unexpected <EOF>')
+            line=line.strip()
+            if line: break
+        
         # read texture
+        tex = line.split('#')[0].split('//')[0].strip()
         if self.fileformat>=8:
-            t=self.getToken()
-            if t!=Token.TEXTURE:
+            if not tex.startswith("TEXTURE"):
                 raise ParseError(ParseError.HEADER)
-        else:
-            # skip to first non-whitespace
-            while 1:
-                pos = self.file.tell()
-                c = self.file.read(1)
-                if not c:
-                    raise ParseError(ParseError.HEADER)
-                if c == '\n':
-                    self.lineno += 1 
-                if not c in self.whitespace:
-                    self.file.seek(pos)
-                    break
-
-        # read to newline or comment - include spaces
-        tex=""
-        hitspace=False
-        while 1:
-            pos = self.file.tell()
-            c = self.file.read(1)
-            if not c:
-                raise ParseError(ParseError.HEADER)
-            if c in [' ','\t']:
-                hitspace=True
-            if (c == '\n' or
-                (c == '/' and hitspace and self.fileformat<8) or
-                (c == '#' and self.fileformat>=8)):
-                self.file.seek(pos)
-                break
-            tex = tex + c
-        self.getCR()
-        tex = tex.strip()
+            tex=tex[7:].strip()
 
         if tex.lower() in ['', 'none']:
             self.image=Image.New('none',1024,1024,24)
@@ -956,677 +670,563 @@ class OBJimport:
                         newfile.write(file.read())
                         newfile.close()
                         texname=newname
-                        print "Info:\tCreated new texture file \"%s\"" % (
+                        print 'Info:\tCreated new texture file "%s"' % (
                             texname)
                     elif self.verbose>1:
-                        print "Info:\tUsing texture file \"%s\"" % texname
+                        print 'Info:\tUsing texture file "%s"' % texname
                     file.close()
                     try:
                         self.image = Image.Load(texname)
                         self.image.getSize()	# force load
                     except:
-                        print "Warn:\tTexture file \"%s\" cannot be read" % texname
+                        print 'Warn:\tTexture file "%s" cannot be read' % texname
                         self.image=Image.New(basename(texname),1024,1024,24)
                     return
             
         self.image=Image.New(basename(base),1024,1024,24)
-        print "Warn:\tTexture file \"%s\" not found" % base
+        print 'Warn:\tTexture file "%s" not found' % base
             
     #------------------------------------------------------------------------
     def readObjects (self, scene):
 
-        if self.fileformat==8:
-            while 1:
-                t=self.getToken()
+        while True:
+            if not self.subroutine:
+                pos=self.file.tell()
+                progress=pos*50/self.filelen
+                # only update progress bar if need to
+                if self.progress!=progress:
+                    Window.DrawProgressBar(float(pos)*0.5/self.filelen,
+                                           "Importing %s%% ..." % progress)
+                    self.progress=progress
 
-                if t==Token.END:
-                    # global attributes
-                    if (self.drawgroup or self.lod or self.slung) and not self.subroutine:
-                        ob = Object.New("Empty", "Attributes")
-                        ob.drawSize=0.1
-                        #ob.drawMode=2	# 2=OB_PLAINAXES
-                        if self.drawgroup:
-                            ob.addProperty("group_%s" % self.drawgroup[0],
-                                           self.drawgroup[1])
-                        if self.slung:
-                            ob.addProperty("slung_load_weight", self.slung)
-                        if self.lod:
-                            for i in range(4):
-                                if self.lod[i]!=[0,1000,4000,10000][i]:
-                                    ob.addProperty("LOD_%d" % i, self.lod[i])
-                        scene.link(ob)
-                        cur=Window.GetCursorPos()
-                        ob.setLocation(cur[0], cur[1], cur[2])
-                    # write meshes
-                    self.mergeMeshes()
-                    for i in range(len(self.curmesh)):
-                        Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
-                                               "Adding %d%% ..." % (
-                            90+(i*10.0)/len(self.curmesh)))
-                        last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
-                    return last
+            if not self.getCR(True): break
+            
+            t=self.line.pop(0)
+            if self.fileformat==6:
+                try:
+                    t=int(t)
+                    if self.verbose>2: print 'Token:\t%d' % t
+                except:
+                    raise ParseError(ParseError.TOKEN, t)
 
-                elif t==Token.VLIGHT:
-                    v=self.getVertex()
-                    c=self.getCol()
-                    self.vlight.append((v,c))
+            if t in ['end', 99]:
+                break
+            
+            # v8
+            
+            elif t=='VT':
+                v=self.getVertex()
+                n=self.getVertex()	# normal
+                uv=self.getUV()
+                self.vt.append((v,uv,n))
 
-                elif t==Token.VLINE:
-                    v=self.getVertex()
-                    c=self.getCol()
-                    self.vline.append((v,c))
+            elif t=='VLINE':
+                v=self.getVertex()
+                c=self.getCol()
+                self.vline.append((v,c))
 
-                elif t==Token.VT:
-                    v=self.getVertex()
-                    n=self.getVertex()	# normal
-                    uv=self.getUV()
-                    self.vt.append((v,uv,n))
+            elif t=='VLIGHT':
+                v=self.getVertex()
+                c=self.getCol()
+                self.vlight.append((v,c))
 
-                elif t==Token.IDX:
-                    self.idx.append(self.getInt())
+            elif t=='IDX10':
+                self.idx.extend([self.getInt() for i in range(10)])
 
-                elif t==Token.IDX10:
-                    for i in range(10):
-                        self.idx.append(self.getInt())
+            elif t=='IDX':
+                self.idx.append(self.getInt())
 
-                elif t==Token.LIGHTS:
+            elif t=='LIGHTS':
+                self.addpendingbone()
+                a=self.getInt()
+                b=self.getInt()
+                for i in range(a,a+b):
+                    (v,c)=self.vlight[i]
+                    self.addLamp(scene,v,c)
+
+            elif t=='LIGHT_NAMED':
+                self.addpendingbone()
+                name=self.getInput()
+                v=self.getVertex()
+                self.addLamp(scene,v,None,name)
+
+            elif t=='LINES':
+                self.addpendingbone()
+                a=self.getInt()
+                b=self.getInt()
+                for i in range(a,a+b,2):
+                    v=[]
+                    for j in range(i,i+2):
+                        (vj,cj)=self.vline[self.idx[j]]
+                        v.append(vj)
+                        c=cj	# use second colour value
+                    self.addLine(scene,v,c)
+
+            elif t=='TRIS':
+                self.addpendingbone()
+                a=self.getInt()
+                b=self.getInt()
+                for i in range(a,a+b,3):
+                    v=[]
+                    uv=[]
+                    n=[]
+                    for j in range(i,i+3):
+                        (vj,uvj,nj)=self.vt[self.idx[j]]
+                        v.append(vj)
+                        uv.append(uvj)
+                        n.append(nj)
+                    # autodetect flatness if ATTR_no_shade not supplied
+                    if (not self.flat and
+                        n[0].equals(n[1]) and
+                        n[1].equals(n[2])):
+                        # Should check that vertex normals equal plane
+                        # normal, but unlikely that won't be true.
+                        self.flat=True
+                        self.addFan(scene,t,v,uv)
+                        self.flat=False
+                    else:
+                        self.addFan(scene,t,v,uv)
+
+            elif t=='ANIM_begin':
+                if not self.arm:
+                    self.off=[Vertex(0,0,0)]
+                    self.bones=[None]
+                    self.armob = Object.New("Armature")
+                    self.arm=Armature.Armature("Armature")
+                    self.arm.drawNames=True
+                    self.arm.drawType=Armature.STICK
+                    self.arm.restPosition=True	# for easier parenting
+                    self.armob.link(self.arm)
+                    if self.layer:
+                        self.armob.Layer=OBJimport.LAYER[self.layer]
+                    cur=Window.GetCursorPos()
+                    self.armob.setLocation(cur[0], cur[1], cur[2])
+                    self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
+                    self.action = Armature.NLA.NewAction()
+                    self.action.setActive(self.armob)
+                    self.arm.makeEditable()
+                else:
                     self.addpendingbone()
-                    a=self.getInt()
-                    b=self.getInt()
-                    for i in range(a,a+b):
-                        (v,c)=self.vlight[i]
-                        self.addLamp(scene,v,c)
-
-                elif t==Token.LIGHT_NAMED:
-                    self.addpendingbone()
-                    name=self.getInput()
-                    v=self.getVertex()
-                    self.addLamp(scene,v,name)
-
-                elif t==Token.LINES:
-                    self.addpendingbone()
-                    a=self.getInt()
-                    b=self.getInt()
-                    for i in range(a,a+b,2):
-                        v=[]
-                        for j in range(i,i+2):
-                            (vj,cj)=self.vline[self.idx[j]]
-                            v.append(vj)
-                            c=cj	# use second colour value
-                        self.addLine(scene,v,c)
-
-                elif t==Token.TRIS:
-                    self.addpendingbone()
-                    a=self.getInt()
-                    b=self.getInt()
-                    for i in range(a,a+b,3):
-                        v=[]
-                        uv=[]
-                        n=[]
-                        for j in range(i,i+3):
-                            (vj,uvj,nj)=self.vt[self.idx[j]]
-                            v.append(vj)
-                            uv.append(uvj)
-                            n.append(nj)
-                        # autodetect flatness if ATTR_no_shade not supplied
-                        if (not self.flat and
-                            n[0].equals(n[1]) and
-                            n[1].equals(n[2])):
-                            # Should check that vertex normals equal plane
-                            # normal, but unlikely that won't be true.
-                            self.flat=True
-                            self.addFan(scene,t,v,uv)
-                            self.flat=False
-                        else:
-                            self.addFan(scene,t,v,uv)
-
-                elif t==Token.ANIM_BEGIN:
-                    if not self.arm:
-                        self.off=[Vertex(0,0,0)]
-                        self.bones=[None]
-                        self.armob = Object.New("Armature")
-                        self.arm=Armature.Armature("Armature")
-                        self.arm.drawNames=True
-                        self.arm.drawType=Armature.STICK
-                        self.arm.restPosition=True	# for easier parenting
-                        self.armob.link(self.arm)
-                        if self.layer:
-                            self.armob.Layer=OBJimport.LAYER[self.layer]
-                        cur=Window.GetCursorPos()
-                        self.armob.setLocation(cur[0], cur[1], cur[2])
+                    self.off.append(self.off[-1])
+                    self.bones.append(None)
+                    
+            elif t=='ANIM_end':
+                if not len(self.off):
+                    raise ParseError(ParseError.MISC,
+                                     'ANIM_END with no matching ANIM_BEGIN')
+                self.addpendingbone()
+                self.off.pop()
+                self.bones.pop()
+                if not self.off:
+                    # Back at top level
+                    #print self.off, self.bones
+                    self.arm.restPosition=False
+                    self.arm.update()
+                    scene.objects.link(self.armob)
+                    self.arm=None
+                    self.armob=None
+                    self.action=None
+                    
+            elif t=='ANIM_trans':
+                p1=self.getVertex()
+                p2=self.getVertex()
+                v1=self.getFloat()
+                v2=self.getFloat()
+                dataref=self.getInput().split('/')
+                name=dataref[-1]
+                self.off[-1]=self.off[-1]+p1
+                if not self.pendingbone:
+                    if len(self.bones)==1:
+                        # first bone in Armature - move armature location
+                        self.armob.setLocation(self.off[-1].x+self.armob.LocX, self.off[-1].y+self.armob.LocY, self.off[-1].z+self.armob.LocZ)
                         self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
-                        self.action = Armature.NLA.NewAction()
-                        self.action.setActive(self.armob)
-                        self.arm.makeEditable()
+                        self.off[-1]=Vertex(0,0,0)
                     else:
+                        # first bone at this level - adjust previous tail
+                        #self.arm.bones[self.bones[-2]].tail=self.off[-1].toVector(3)
+                        pass
+                    if not p1.equals(p2):
+                        # not just a shift
+                        if '[' in name: name=name[:name.index('[')]
+                        if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
+                            # custom or ambiguous dataref
+                            self.armob.addProperty(name, '/'.join(dataref[:-1])+'/')
+                        if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
+                        if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
+                        head=self.off[-1]
+                        #tail=self.off[-1]+(p2-p1).normalize()*0.1
+                        tail=self.off[-1]+Vertex(0,0.1,0)
+                        m1=Matrix().identity().resize4x4()
+                        m2=TranslationMatrix((p2-p1).toVector(4))
+                        self.pendingbone=(dataref[-1], head, tail, m1, m2)
+
+            elif t=='ANIM_rotate':
+                p=self.getVertex()
+                r1=self.getFloat()
+                r2=self.getFloat()
+                v1=self.getFloat()
+                v2=self.getFloat()
+                dataref=self.getInput().split('/')
+                while r2>=360 or r2<=-360:
+                    # hack!
+                    r2/=2
+                    v2/=2
+                name=dataref[-1]
+                if '[' in name: name=name[:name.index('[')]
+                if len(dataref)>1 and not name in datarefs:
+                    self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
+                if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
+                if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
+                head=self.off[-1]
+                #tail=self.off[-1]+Vertex(p.y,p.z,p.x)*0.1
+                tail=self.off[-1]+Vertex(0,0.1,0)
+                m1=RotationMatrix(r1,4,'r',p.toVector(3))
+                m2=RotationMatrix(r2,4,'r',p.toVector(3))
+                if self.pendingbone:
+                    (name, head, tail, o1, o2)=self.pendingbone
+                    if name!=dataref[-1]: #or m2[3]==Vector(0,0,0,1):
+                        # Different dataref - new bone!
                         self.addpendingbone()
-                        self.off.append(self.off[-1])
-                        self.bones.append(None)
-                    
-                elif t==Token.ANIM_END:
-                    if not len(self.off):
-                        raise ParseError(ParseError.MISC,
-                                         'ANIM_END with no matching ANIM_BEGIN')
-                    self.addpendingbone()
-                    self.off.pop()
-                    self.bones.pop()
-                    if not self.off:
-                        # Back at top level
-                        #print self.off, self.bones
-                        self.arm.restPosition=False
-                        self.arm.update()
-                        scene.link(self.armob)
-                        self.arm=None
-                        self.armob=None
-                        self.action=None
-                    
-                elif t==Token.ANIM_TRANS:
-                    p1=self.getVertex()
-                    p2=self.getVertex()
-                    v1=self.getFloat()
-                    v2=self.getFloat()
-                    dataref=self.getInput().split('/')
-                    self.off[-1]=self.off[-1]+p1
-                    if not self.pendingbone:
-                        if len(self.bones)==1:
-                            # first bone in Armature - move armature location
-                            self.armob.setLocation(self.off[-1].x+self.armob.LocX, self.off[-1].y+self.armob.LocY, self.off[-1].z+self.armob.LocZ)
-                            self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
-                            self.off[-1]=Vertex(0,0,0)
-                        else:
-                            # first bone at this level - adjust previous tail
-                            #self.arm.bones[self.bones[-2]].tail=self.off[-1].toVector(3)
-                            pass
-                        if not p1.equals(p2):
-                            # not just a shift
-                            name=dataref[-1]
-                            if '[' in name: name=name[:name.index('[')]
-                            if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
-                                # custom or ambiguous dataref
-                                self.armob.addProperty(name, '/'.join(dataref[:-1])+'/')
-                            if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
-                            if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
-                            head=self.off[-1]
-                            #tail=self.off[-1]+(p2-p1).normalize()*0.1
-                            tail=self.off[-1]+Vertex(0,0.1,0)
-                            m1=Matrix().identity().resize4x4()
-                            m2=TranslationMatrix((p2-p1).toVector(4))
-                            self.pendingbone=(dataref[-1], head, tail, m1, m2)
-
-                elif t==Token.ANIM_ROTATE:
-                    p=self.getVertex()
-                    r1=self.getFloat()
-                    r2=self.getFloat()
-                    v1=self.getFloat()
-                    v2=self.getFloat()
-                    dataref=self.getInput().split('/')
-                    while r2>=360 or r2<=-360:
-                        # hack!
-                        r2/=2
-                        v2/=2
-                    name=dataref[-1]
-                    if '[' in name: name=name[:name.index('[')]
-                    if len(dataref)>1 and not name in datarefs:
-                        self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
-                    if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
-                    if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
-                    head=self.off[-1]
-                    #tail=self.off[-1]+Vertex(p.y,p.z,p.x)*0.1
-                    tail=self.off[-1]+Vertex(0,0.1,0)
-                    m1=RotationMatrix(r1,4,'r',p.toVector(3))
-                    m2=RotationMatrix(r2,4,'r',p.toVector(3))
-                    if self.pendingbone:
-                        (name, head, tail, o1, o2)=self.pendingbone
-                        if name!=dataref[-1]: #or m2[3]==Vector(0,0,0,1):
-                            # Different dataref - new bone!
-                            self.addpendingbone()
-                        else:
-                            m1=m1*o1
-                            m2=m2*o2
-                    self.pendingbone=(dataref[-1], head, tail, m1, m2)
-
-                elif t in [Token.ANIM_SHOW, Token.ANIM_HIDE]:
-                    v1=self.getFloat()
-                    v2=self.getFloat()
-                    dataref=self.getInput().split('/')
-                    name=dataref[-1]
-                    if '[' in name: name=name[:name.index('[')]
-                    if len(dataref)>1 and not name in datarefs:
-                        self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
-                    if t==Token.ANIM_SHOW:
-                        self.armob.addProperty(dataref[-1]+'_show_v1', v1)
-                        self.armob.addProperty(dataref[-1]+'_show_v2', v2)
                     else:
-                        self.armob.addProperty(dataref[-1]+'_hide_v1', v1)
-                        self.armob.addProperty(dataref[-1]+'_hide_v2', v2)
-                           
-                elif t==Token.HARD:
-                    surface=self.getInput(True)
-                    if surface:
-                        self.hard = surface
-                    else:
-                        self.hard = True
-                elif t==Token.NO_HARD:
-                    self.hard = False
+                        m1=m1*o1
+                        m2=m2*o2
+                self.pendingbone=(dataref[-1], head, tail, m1, m2)
 
-                elif t==Token.COCKPIT:
-                    self.panel = True
-                elif t==Token.NO_COCKPIT:
-                    self.panel = False
-
-                elif t==Token.SHADE_FLAT:
-                    self.flat = True
-                elif t==Token.SHADE_SMOOTH:
-                    self.flat = False
-                
-                elif t==Token.POLY_OS:
-                    n = self.getFloat()
-                    self.poly = (n!=0)
-
-                elif t==Token.DEPTH:
-                    self.poly=False
-                elif t==Token.NO_DEPTH:
-                    self.poly=True
-
-                elif t==Token.CULL:
-                    self.twoside = False
-                elif t in [Token.NO_CULL, Token.NOCULL]:
-                    self.twoside = True
-
-                elif t==Token.ALPHA:
-                    self.alpha = True
-                elif t==Token.NO_ALPHA:
-                    self.alpha = False
-
-                elif t==Token.LAYER_GROUP:
-                    self.drawgroup=(self.getInput(), self.getInt())
-                    
-                elif t==Token.SLUNG_LOAD_WEIGHT:
-                    self.slung=self.getFloat()
-                    
-                elif t==Token.LOD:
-                    x=int(self.getFloat())
-                    y=int(self.getFloat())
-                    if not self.layer:
-                        print "Info:\tMultiple Levels Of Detail found"
-                    if self.layer==0 and x!=0:
-                        self.lod=[x,1000,4000,10000]
-                    if self.layer<3:
-                        self.layer+=1
-                    if y!=[0,1000,4000,10000][self.layer]:
-                        if not self.lod: self.lod=[0,1000,4000,10000]
-                        self.lod[self.layer]=y
-                    # Reset attributes
-                    self.hard=False
-                    self.twoside=False
-                    self.flat=False
-                    self.alpha=False
-                    self.panel=False
-                    self.poly=False
-                    self.mat=self.mats[0]
-                
-                elif t==Token.RESET:
-                    self.hard=False
-                    self.twoside=False
-                    self.flat=False
-                    self.alpha=False
-                    self.panel=False
-                    self.poly=False
-                    self.mat=self.mats[0]
-
-                elif t in [Token.DIFUSE_RGB, Token.DIFFUSE_RGB]:
-                    self.mat=self.mat.clone()
-                    self.mat.d=self.getAttr()
-                    for m in self.mats:
-                        if self.mat.equals(m):
-                            self.mat=m
-                    else:
-                        self.mats.append(self.mat)
-
-                elif t==Token.EMISSION_RGB:
-                    self.mat=self.mat.clone()
-                    self.mat.e=self.getAttr()
-                    for m in self.mats:
-                        if self.mat.equals(m):
-                            self.mat=m
-                    else:
-                        self.mats.append(self.mat)
-
-                elif t==Token.SHINY_RAT:
-                    self.mat=self.mat.clone()
-                    self.mat.s=self.getFloat()
-                    for m in self.mats:
-                        if self.mat.equals(m):
-                            self.mat=m
-                    else:
-                        self.mats.append(self.mat)
-
-                elif t in [Token.POINT_COUNTS, Token.TEXTURE_LIT]:
-                    # Silently ignore
-                    self.getCR()
-
+            elif t in ['ANIM_show', 'ANIM_hide']:
+                v1=self.getFloat()
+                v2=self.getFloat()
+                dataref=self.getInput().split('/')
+                name=dataref[-1]
+                if '[' in name: name=name[:name.index('[')]
+                if len(dataref)>1 and not name in datarefs:
+                    self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
+                if t=='ANIM_show':
+                    self.armob.addProperty(dataref[-1]+'_show_v1', v1)
+                    self.armob.addProperty(dataref[-1]+'_show_v2', v2)
                 else:
-                    print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
-                    self.getCR()
-                
-        elif self.fileformat==7:
-            while 1:
-                t=self.getToken()
+                    self.armob.addProperty(dataref[-1]+'_hide_v1', v1)
+                    self.armob.addProperty(dataref[-1]+'_hide_v2', v2)
 
-                if t==Token.END:
-                    # global attributes
-                    if (self.drawgroup or self.lod) and not self.subroutine:
-                        ob = Object.New("Empty", "Attributes")
-                        ob.drawSize=0.1
-                        #ob.drawMode=2	# 2=OB_PLAINAXES
-                        if self.drawgroup:
-                            ob.addProperty("group %s" % self.drawgroup[0],
-                                           self.drawgroup[1])
-                        if self.lod:
-                            for i in range(4):
-                                if self.lod[i]!=[0,1000,4000,10000][i]:
-                                    ob.addProperty("LOD_%d" % i, self.lod[i])
-                        scene.link(ob)
-                        cur=Window.GetCursorPos()
-                        ob.setLocation(cur[0], cur[1], cur[2])
-                    # write meshes
-                    self.mergeMeshes()
-                    for i in range(len(self.curmesh)):
-                        Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
-                                               "Adding %d%% ..." % (
-                            90+(i*10.0)/len(self.curmesh)))
-                        last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
-                    return last
-                
-                elif t==Token.LIGHT:
-                    self.getCR()
-                    v=self.getVertex()
-                    c=self.getCol()
-                    self.addLamp(scene,v,c)
+            elif t=='ATTR_hard':
+                self.hard = self.getInput(True) or True
+            elif t=='ATTR_no_hard':
+                self.hard = False
 
-                elif t==Token.LINE:
-                    self.getCR()
-                    v = []
-                    for i in range(2):
-                        v.append(self.getVertex())
-                        c=self.getCol()	# use second colour value
-                    self.addLine(scene,v,c)
+            elif t=='ATTR_cockpit':
+                self.panel = True
+            elif t=='ATTR_no_cockpit':
+                self.panel = False
 
-                elif t==Token.TRI:
+            elif t in ['smoke_black', 'smoke_white']:
+                self.addpendingbone()
+                v=self.getVertex()
+                c=self.getFloat()
+                self.addLamp(scene,v,c,t)
+
+            elif t in ['POINT_COUNTS', 'TEXTURE_LIT']:
+                pass	# Silently ignore
+
+            # v7
+
+            elif t=='light':
+                self.getCR()
+                v=self.getVertex()
+                c=self.getCol()
+                self.addLamp(scene,v,c)
+
+            elif t=='line':
+                v = []
+                for i in range(2):
                     self.getCR()
-                    v = []
-                    uv = []
-                    for i in range(3):
+                    v.append(self.getVertex())
+                    c=self.getCol()	# use second colour value
+                self.addLine(scene,v,c)
+
+            elif t=='tri':
+                self.getCR()
+                v = []
+                uv = []
+                for i in range(3):
+                    v.append(self.getVertex())
+                    uv.append(self.getUV())
+                self.addFan(scene,t,v,uv)
+
+            elif t in ['quad', 'quad_hard', 'quad_movie', 'quad_cockpit']:
+                if t=='quad_hard':
+                    self.hard=True
+                elif t=='quad_cockpit':
+                    self.panel=True
+                v = []
+                uv = []
+                for i in range(4):
+                    self.getCR()
+                    v.append(self.getVertex())
+                    uv.append(self.getUV())
+                self.addStrip(scene,t,v,uv,[3,2,1,0])
+                self.hard=False
+                self.panel=False
+                                     
+            elif t=='polygon':
+                # add centre point, duplicate first point, use Tri_Fan
+                v = []
+                uv = []
+                cv = [0,0,0]
+                cuv = [0,0]
+                n = self.getInt()
+                for i in range(n):
+                    self.getCR()
+                    v.append(self.getVertex())
+                    cv[0]+=v[i].x
+                    cv[1]+=v[i].y
+                    cv[2]+=v[i].z
+                    uv.append(self.getUV())
+                    cuv[0]+=uv[i].s
+                    cuv[1]+=uv[i].t
+                cv[0]/=n
+                cv[1]/=n
+                cv[2]/=n
+                cuv[0]/=n
+                cuv[1]/=n
+                v.append(v[0])
+                uv.append(uv[0])
+                v.insert(0,Vertex(cv[0],cv[1],cv[2]))
+                uv.insert(0,UV(cuv[0],cuv[1]))
+                self.addFan(scene,t,v,uv)
+
+            elif t=='quad_strip':
+                n = self.getInt()
+                v = []
+                uv = []
+                while n:
+                    self.getCR()
+                    v.append(self.getVertex())
+                    uv.append(self.getUV())
+                    if self.line:
+                        # second pair on same line
                         v.append(self.getVertex())
                         uv.append(self.getUV())
-                    self.addFan(scene,t,v,uv)
-
-                elif t in [Token.QUAD,
-                           Token.QUAD_HARD,
-                           Token.QUAD_MOVIE,
-                           Token.QUAD_COCKPIT]:
-                    self.getCR()
-                    if t==Token.QUAD_HARD:
-                        self.hard=True
-                    elif t==Token.QUAD_COCKPIT:
-                        self.panel=True
-                    v = []
-                    uv = []
-                    for i in range(4):
-                        v.append(self.getVertex())
-                        uv.append(self.getUV())
-                    self.addStrip(scene,t,v,uv,[3,2,1,0])
-                    self.hard=False
-                    self.panel=False
-                                         
-                elif t==Token.POLYGON:
-                    # add centre point, duplicate first point, use Tri_Fan
-                    v = []
-                    uv = []
-                    cv = [0,0,0]
-                    cuv = [0,0]
-                    n = self.getInt()
-                    self.getCR()
-                    for i in range(n):
-                        v.append(self.getVertex())
-                        cv[0]+=v[i].x
-                        cv[1]+=v[i].y
-                        cv[2]+=v[i].z
-                        uv.append(self.getUV())
-                        cuv[0]+=uv[i].s
-                        cuv[1]+=uv[i].t
-                    cv[0]/=n
-                    cv[1]/=n
-                    cv[2]/=n
-                    cuv[0]/=n
-                    cuv[1]/=n
-                    v.append(v[0])
-                    uv.append(uv[0])
-                    v.insert(0,Vertex(cv[0],cv[1],cv[2]))
-                    uv.insert(0,UV(cuv[0],cuv[1]))
-                    self.addFan(scene,t,v,uv)
-
-                elif t==Token.QUAD_STRIP:
-                    n = self.getInt()
-                    self.getCR()
-                    v = []
-                    uv = []
-                    for i in range(n):
-                        v.append(self.getVertex())
-                        uv.append(self.getUV())
-                    self.addStrip(scene,t,v,uv,[1,0,2,3])
-                        
-                elif t==Token.TRI_STRIP:
-                    v = []
-                    uv = []
-                    n = self.getInt()
-                    self.getCR()
-                    for i in range(n):
-                        v.append(self.getVertex())
-                        uv.append(self.getUV())
-                    self.addStrip(scene,t,v,uv,[0,1,2])
-
-                elif t==Token.TRI_FAN:
-                    v = []
-                    uv = []
-                    n = self.getInt()
-                    self.getCR()
-                    for i in range(n):
-                        v.append(self.getVertex())
-                        uv.append(self.getUV())
-                    self.addFan(scene,t,v,uv)
+                        n-=2
+                    else:
+                        n-=1
+                self.addStrip(scene,t,v,uv,[1,0,2,3])
                     
-                elif t==Token.SHADE_FLAT:
+            elif t=='tri_strip':
+                v = []
+                uv = []
+                n = self.getInt()
+                for i in range(n):
                     self.getCR()
-                    self.flat = True
-                elif t==Token.SHADE_SMOOTH:
-                    self.getCR()
-                    self.flat = False
-                
-                elif t==Token.POLY_OS:
-                    n = self.getFloat()
-                    self.getCR()
-                    self.poly = (n!=0)
+                    v.append(self.getVertex())
+                    uv.append(self.getUV())
+                self.addStrip(scene,t,v,uv,[0,1,2])
 
-                elif t==Token.DEPTH:
+            elif t=='tri_fan':
+                v = []
+                uv = []
+                n = self.getInt()
+                for i in range(n):
                     self.getCR()
-                    self.poly=False
-                elif t==Token.NO_DEPTH:
-                    self.getCR()
-                    self.poly=True
-
-                elif t==Token.CULL:
-                    self.getCR()
-                    self.twoside = False
-                elif t in [Token.NO_CULL, Token.NOCULL]:
-                    self.getCR()
-                    self.twoside = True
-
-                elif t==Token.LAYER_GROUP:
-                    self.drawgroup=(self.getInput(), self.getInt())
-                    self.getCR()
+                    v.append(self.getVertex())
+                    uv.append(self.getUV())
+                self.addFan(scene,t,v,uv)
                     
-                elif t==Token.LOD:
-                    x=int(self.getFloat())
-                    y=int(self.getFloat())
+            # v6
+
+            elif t==1:	# light
+                c=self.getCol()
+                self.getCR()
+                v=self.getVertex()
+                self.addLamp(scene,v,c)
+            
+            elif t==2:	# line
+                v = []
+                c=self.getCol()
+                for i in range(2):
                     self.getCR()
-                    if not self.layer:
-                        print "Info:\tMultiple Levels Of Detail found"
-                    if self.layer==0 and x!=0:
-                        self.lod=[x,1000,4000,10000]
-                    if self.layer<3:
-                        self.layer+=1
-                    if y!=[0,1000,4000,10000][self.layer]:
-                        if not self.lod: self.lod=[0,1000,4000,10000]
-                        self.lod[self.layer]=y
-                    # Reset attributes
-                    self.twoside=False
-                    self.flat=False
-                    self.poly=False
-                    self.mat=self.mats[0]
+                    v.append(self.getVertex())
+                self.addLine(scene,v,c)
+
+            elif t==3:	# tri
+                v = []
+                uv = []
+                for i in range(4):
+                    uv.append(self.getFloat())	# s s t t
+                for i in range(3):
+                    self.getCR()
+                    v.append(self.getVertex())
+                # UV order appears to be arbitrary
+                self.addFan(scene,t,v,[UV(uv[1],uv[3]),
+                                        UV(uv[1],uv[2]),
+                                        UV(uv[0],uv[2])])
+            elif t in [4,5,8]:	# quad, quad_hard, quad_movie
+                if t==5:
+                    self.hard=True
+                v = []
+                uv = []
+                for i in range(4):
+                    uv.append(self.getFloat())
+                for i in range(4):
+                    self.getCR()
+                    v.append(self.getVertex())
+                self.addStrip(scene,t,v,[UV(uv[1],uv[3]),
+                                         UV(uv[1],uv[2]),
+                                         UV(uv[0],uv[2]),
+                                         UV(uv[0],uv[3])],
+                              [3,2,1,0])
+                self.hard=False
+
+            elif isinstance(t,int) and t<0:	# Quad strip
+                n = -t	# number of pairs
+                v = []
+                uv = []
+                for i in range(n):
+                    self.getCR()
+                    v.append(self.getVertex())
+                    v.append(self.getVertex())
+                    s=self.getUV()		# s s t t
+                    t=self.getUV()
+                    uv.append(UV(s.s,t.s))
+                    uv.append(UV(s.t,t.t))
+                self.addStrip(scene,'quad_strip',v,uv,[1,0,2,3])
+
+            # generic state
+            
+            elif t=='slung_load_weight':
+                self.slung=self.getFloat()
+
+            elif t=='ATTR_shade_flat':
+                self.flat = True
+            elif t=='ATTR_shade_smooth':
+                self.flat = False
+            
+            elif t=='ATTR_poly_os':
+                n = self.getFloat()
+                self.poly = (n!=0)
+
+            elif t=='ATTR_depth':
+                self.poly=False
+            elif t=='ATTR_no_depth':
+                self.poly=True
+
+            elif t=='ATTR_cull':
+                self.twoside = False
+            elif t in ['ATTR_no_cull', 'ATTR_nocull']:
+                self.twoside = True
+
+            elif t=='####_alpha':
+                self.alpha = True
+            elif t=='####_no_alpha':
+                self.alpha = False
+
+            elif t=='ATTR_layer_group':
+                self.drawgroup=(self.getInput(), self.getInt())
                 
-                elif t==Token.RESET:
-                    self.getCR()
-                    self.twoside=False
-                    self.flat=False
-                    self.poly=False
-                    self.mat=self.mats[0]
+            elif t=='ATTR_LOD':
+                x=int(self.getFloat())
+                y=int(self.getFloat())
+                if not self.layer:
+                    print "Info:\tMultiple Levels Of Detail found"
+                if self.layer==0 and x!=0:
+                    self.lod=[x,1000,4000,10000]
+                if self.layer<3:
+                    self.layer+=1
+                if y!=[0,1000,4000,10000][self.layer]:
+                    if not self.lod: self.lod=[0,1000,4000,10000]
+                    self.lod[self.layer]=y
+                # Reset attributes
+                self.hard=False
+                self.twoside=False
+                self.flat=False
+                self.alpha=False
+                self.panel=False
+                self.poly=False
+                self.mat=self.mats[0]
+            
+            elif t=='ATTR_reset':
+                self.hard=False
+                self.twoside=False
+                self.flat=False
+                self.alpha=False
+                self.panel=False
+                self.poly=False
+                self.mat=self.mats[0]
 
-                elif t in [Token.DIFUSE_RGB, Token.DIFFUSE_RGB]:
-                    self.mat=self.mat.clone()
-                    self.mat.d=self.getAttr()
-                    for m in self.mats:
-                        if self.mat.equals(m):
-                            self.mat=m
-                    else:
-                        self.mats.append(self.mat)
-
-                elif t==Token.EMISSION_RGB:
-                    self.mat=self.mat.clone()
-                    self.mat.e=self.getAttr()
-                    for m in self.mats:
-                        if self.mat.equals(m):
-                            self.mat=m
-                    else:
-                        self.mats.append(self.mat)
-
-                elif t==Token.SHINY_RAT:
-                    self.mat=self.mat.clone()
-                    self.mat.s=self.getFloat()
-                    for m in self.mats:
-                        if self.mat.equals(m):
-                            self.mat=m
-                    else:
-                        self.mats.append(self.mat)
-
+            elif t in ['ATTR_diffuse_rgb', 'ATTR_difuse_rgb']:
+                self.mat=self.mat.clone()
+                self.mat.d=self.getAttr()
+                for m in self.mats:
+                    if self.mat.equals(m):
+                        self.mat=m
                 else:
-                    print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
-                    if t in [Token.LIGHT_NAMED, Token.LIGHT_CUSTOM]:
-                        n=0	# not really
-                    elif t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
-                        n=4
-                    elif t in [Token.AMBIENT_RGB, Token.SPECULAR_RGB]:
-                        n=3
-                    elif t in [Token.BLEND, Token.NO_BLEND]:
-                        n=0
-                    else:
-                        raise ParseError(ParseError.TOKEN, Token.NAMES[t])
+                    self.mats.append(self.mat)
 
-                    for i in range(n):
-                        self.getFloat()
-                    self.getCR()
-
-        else:	# v6
-            while 1:
-                t=self.getToken()
-
-                if t==Token.END:
-                    # write meshes
-                    self.mergeMeshes()
-                    for i in range(len(self.curmesh)):
-                        Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
-                                               "Adding %d%% ..." % (
-                            90+(i*10.0)/len(self.curmesh)))
-                        last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
-                    return last
-    
-                elif t==Token.LIGHT:
-                    c=self.getCol()
-                    self.getCR()
-                    v=self.getVertex()
-                    self.addLamp(scene,v,c)
-                
-                elif t==Token.LINE:
-                    v = []
-                    c=self.getCol()
-                    self.getCR()
-                    for i in range(2):
-                        v.append(self.getVertex())
-                    self.addLine(scene,v,c)
-
-                elif t==Token.TRI:
-                    v = []
-                    uv = []
-                    for i in range(4):
-                        uv.append(self.getFloat())	# s s t t
-                    self.getCR()
-                    for i in range(3):
-                        v.append(self.getVertex())
-                    # UV order appears to be arbitrary
-                    self.addFan(scene,t,v,[UV(uv[1],uv[3]),
-                                            UV(uv[1],uv[2]),
-                                            UV(uv[0],uv[2])])
-                elif t in [Token.QUAD,
-                           Token.QUAD_HARD,
-                           Token.QUAD_MOVIE]:
-                    if t==Token.QUAD_HARD:
-                        self.hard=True
-                    v = []
-                    uv = []
-                    for i in range(4):
-                        uv.append(self.getFloat())
-                    self.getCR()
-                    for i in range(4):
-                        v.append(self.getVertex())
-                    self.addStrip(scene,t,v,[UV(uv[1],uv[3]),
-                                             UV(uv[1],uv[2]),
-                                             UV(uv[0],uv[2]),
-                                             UV(uv[0],uv[3])],
-                                  [3,2,1,0])
-                    self.hard=False
-
-                elif t<0:	# Quad strip
-                    self.getCR()
-                    n = -t	# number of pairs
-                    v = []
-                    uv = []
-                    for i in range(n):
-                        v.append(self.getVertex())
-                        v.append(self.getVertex())
-                        s=self.getUV()		# s s t t
-                        t=self.getUV()
-                        uv.append(UV(s.s,t.s))
-                        uv.append(UV(s.t,t.t))
-                    self.addStrip(scene,Token.QUAD_STRIP,v,uv,[1,0,2,3])
-
+            elif t=='ATTR_emission_rgb':
+                self.mat=self.mat.clone()
+                self.mat.e=self.getAttr()
+                for m in self.mats:
+                    if self.mat.equals(m):
+                        self.mat=m
                 else:
-                    print "Warn:\tIgnoring unsupported \"%s\"" % Token.NAMES[t]
-                    self.getCR()
-                    if t in [Token.SMOKE_BLACK, Token.SMOKE_WHITE]:
-                        n=16
-                    else:
-                        raise ParseError(ParseError.TOKEN, ("%s" % t))
-                        
-                    for i in range(n):
-                        self.getFloat()
+                    self.mats.append(self.mat)
+
+            elif t=='ATTR_shiny_rat':
+                self.mat=self.mat.clone()
+                self.mat.s=self.getFloat()
+                for m in self.mats:
+                    if self.mat.equals(m):
+                        self.mat=m
+                else:
+                    self.mats.append(self.mat)
+
+            elif (self.fileformat>6 and t.startswith('ATTR_')) or t in [
+                'LIGHT_CUSTOM']:
+                print 'Warn:\tIgnoring unsupported "%s"' % t
+
+            else:
+                raise ParseError(ParseError.MISC,
+                                 'Unrecognised Command "%s"' % t)
+
+
+        # global attributes
+        if (self.drawgroup or self.lod or self.slung) and not self.subroutine:
+            ob = Object.New("Empty", "Attributes")
+            ob.drawSize=0.1
+            #ob.drawMode=2	# 2=OB_PLAINAXES
+            if self.drawgroup:
+                ob.addProperty("group_%s" % self.drawgroup[0],
+                               self.drawgroup[1])
+            if self.slung:
+                ob.addProperty("slung_load_weight", self.slung)
+            if self.lod:
+                for i in range(4):
+                    if self.lod[i]!=[0,1000,4000,10000][i]:
+                        ob.addProperty("LOD_%d" % i, self.lod[i])
+            scene.objects.link(ob)
+            cur=Window.GetCursorPos()
+            ob.setLocation(cur[0], cur[1], cur[2])
+        
+        # write meshes
+        self.mergeMeshes()
+        for i in range(len(self.curmesh)):
+            Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
+                                   "Adding %d%% ..." % (
+                90+(i*10.0)/len(self.curmesh)))
+            last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
+        return last
 
     #------------------------------------------------------------------------
-    def addLamp(self, scene, v, c):
+    def addLamp(self, scene, v, c, name=None):
         propname=None
-        if isinstance(c, str):
-            name=c	# named light
+        e=1.0
+        if name:	# named light
             # try to be helpful - some names that we know about
-            if name in ['airplane_nav_left', 'airplane_beacon'] or name.endswith('_red'):
+            if name=='smoke_black':
+                e=c
+                c=[0,0,0]
+            elif name=='smoke_white':
+                e=c
+                c=[0.5,0.5,0.5]
+            elif name in ['airplane_nav_left', 'airplane_beacon'] or name.endswith('_red'):
                 c=[1,0,0]
             elif name in ['airplane_nav_right', 'taxi_center_light', 'taxi_g'] or name.endswith('_green'):
                 c=[0,1,0]
@@ -1667,21 +1267,21 @@ class OBJimport:
             name="Lamp"
 
         if self.verbose>1:
-            print "Info:\tImporting Lamp at line %s \"%s\"" % (
-                self.lineno, name)
+            print 'Info:\tImporting Lamp at line %s "%s"' % (self.lineno, name)
         lamp=Lamp.New("Lamp", name)
         lamp.col=c
+        lamp.energy=e
         lamp.dist=4.0	# arbitrary - stop lamp colouring whole object
         #amp.mode |= Lamp.Modes.Sphere
         ob = Object.New("Lamp", name)
         if propname: ob.addProperty('name', propname)
         ob.link(lamp)
-        scene.link(ob)
+        scene.objects.link(ob)
         if self.layer:
             ob.Layer=OBJimport.LAYER[self.layer]
         if self.armob:
             if self.bones:
-                boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+                boneloc=Vertex(self.arm.bones[self.bones[-1]].head)
             else:	# Bone can be None if no_ref
                 boneloc=Vertex(0,0,0)
             loc=Vertex(self.armob.loc)+boneloc-self.off[-1]+v
@@ -1696,14 +1296,15 @@ class OBJimport:
         
     #------------------------------------------------------------------------
     def addLine(self,scene,v,c):
-        name=self.name("Line")
+        name="Line"
         if self.verbose>1:
-            print "Info:\tImporting Line at line %s \"%s\"" % (
-                self.lineno, name)
+            print 'Info:\tImporting Line at line %s "%s"' % (self.lineno, name)
 
         if self.armob:
             if self.bones:
-                boneloc=Vertex(self.arm.bones[self.bones[-1]].head['ARMATURESPACE'])
+                print self.arm.bones[self.bones[-1]]
+                print self.arm.bones[self.bones[-1]].head
+                boneloc=Vertex(self.arm.bones[self.bones[-1]].head)
             else:	# Bone can be None if no_ref
                 boneloc=Vertex(0,0,0)
             centre=boneloc-self.off[-1]
@@ -1768,7 +1369,7 @@ class OBJimport:
             cur=Window.GetCursorPos()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         mesh.update(1)
-        scene.link(ob)
+        scene.objects.link(ob)
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         self.nprim+=1
 
@@ -1779,10 +1380,9 @@ class OBJimport:
         if self.fileformat>=8:
             name="Mesh"
         else:
-            name=self.name(Token.NAMES[token])
+            name=token
         if self.verbose>1:
-            print "Info:\tImporting %s at line %s \"%s\"" % (
-                Token.NAMES[token], self.lineno, name)
+            print 'Info:\tImporting %s at line %s "%s"' % (token, self.lineno, name)
         nv=len(v)
 
         flags=0
@@ -1835,22 +1435,14 @@ class OBJimport:
         # input v: list of co-ords, uv: corresponding list of uv points
         #	vorder: order of vertices within each face
 
-        # Hack: Work round duplicate fuselage bug in Plane-Maker 8.0x.
-        if self.comment=="FUSELAGE" and self.fusecount==2:
-            return
-
-        name=self.name(Token.NAMES[token])
-        if token==Token.QUAD_HARD:
-            name=self.name(Token.NAMES[Token.QUAD])
-        elif token==Token.QUAD_MOVIE:
-            name=self.name("Movie")
-        elif token==Token.QUAD_COCKPIT:
-            name=self.name("Panel")
+        if token=='quad_cockpit':
+            name="Panel"
+        else:
+            name='Quad'
         if self.verbose>1:
-            print "Info:\tImporting %s at line %s \"%s\"" % (
-                Token.NAMES[token], self.lineno, name)
+            print 'Info:\tImporting %s at line %s "%s"' % (token, self.lineno, name)
         nv=len(v)
-        assert not nv%2, "Odd %s vertices in \"%s\"" % (nv, name)
+        assert not nv%2, 'Odd %s vertices in "%s"' % (nv, name)
 
         flags=0
         if self.hard:
@@ -1917,7 +1509,6 @@ class OBJimport:
     # add faces to existing or new mesh
     def addToMesh (self,scene,name,faces,surface,layers,anim,mat):
         # New faces are added to the existing mesh if:
-        #  - they share the same comment, or
         #  - any of the new faces has a common edge with any existing face in
         #    the mesh (and existing and new faces have the same flags).
         # We assume that all the new faces have common edges with each other
@@ -1930,16 +1521,12 @@ class OBJimport:
              not (self.curmesh[-1].surface and surface)) and
             self.curmesh[-1].anim==anim and
             self.curmesh[-1].mat==mat and
-            (self.merge>=2 or anim or
-             (self.comment and self.comment==self.lastcomment) or
-             self.curmesh[-1].abut(faces))):
+            (self.merge>=2 or self.curmesh[-1].abut(faces))):
             self.curmesh[-1].addFaces(name, faces)
             if surface: self.curmesh[-1].surface=surface
         else:
             # No common edge - new mesh required
             self.curmesh.append(MyMesh(name, faces, surface, layers, anim, mat))
-
-        self.lastcomment=self.comment
 
     #------------------------------------------------------------------------
     # last chance - try to merge meshes that abut each other
@@ -2021,13 +1608,6 @@ class OBJimport:
         self.pendingbone=None
         self.bones[-1]=name
 
-    #------------------------------------------------------------------------
-    def name (self, fallback):
-        if self.comment=='':
-            name=fallback
-        else:
-            name=self.comment	# [:19].strip()
-        return name
 
 #------------------------------------------------------------------------
 def file_callback (filename):
@@ -2039,18 +1619,16 @@ def file_callback (filename):
         Blender.Window.DrawProgressBar(0, 'ERROR')
         if e.type == ParseError.HEADER:
             msg='This is not a valid X-Plane v6, v7 or v8 OBJ file'
+        elif e.type == ParseError.NAME:
+            msg='Missing dataref or light name at line %s\n' % obj.lineno
+        elif e.type == ParseError.MISC:
+            msg='%s at line %s' % (e.value, obj.lineno)
         else:
-            if e.type == ParseError.TOKEN:
-                msg='Expecting a Token, found "%s" at line %s' % (
-                    e.value, obj.lineno)
-            elif e.type == ParseError.INTEGER:
-                msg='Expecting an integer, found "%s" at line %s' % (
-                    e.value, obj.lineno)
-            elif e.type == ParseError.FLOAT:
-                msg='Expecting a number, found "%s" at line %s\n' % (
-                    e.value, obj.lineno)
+            thing=ParseError.TEXT[e.type]
+            if e.value:
+                msg='Expecting a %s, found "%s" at line %s' % (thing, e.value, obj.lineno)
             else:
-                msg='%s at line %s' % (e.value, obj.lineno)
+                msg='Missing %s at line %s' % (thing, obj.lineno)
         print "ERROR:\t%s\n" % msg
         Blender.Draw.PupMenu("ERROR: %s" % msg)
         Blender.Window.DrawProgressBar(1, 'ERROR')
