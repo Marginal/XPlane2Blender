@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------
-# X-Plane exporter helper classes for blender 2.34 or above
+# X-Plane exporter helper classes for blender 2.43 or above
 #
 # Copyright (c) 2004,2005,2006 Jonathan Harris
 # 
@@ -190,6 +190,9 @@
 #
 # 2007-02-26 v2.35
 #  - Select problematic objects on error.
+#
+# 2007-05-09 v2.37
+#  - Support for smoke_black and smoke_white.
 #
 
 import sys
@@ -493,8 +496,7 @@ class OBJexport7:
 
     #------------------------------------------------------------------------
     def export(self, scene):
-        theObjects = []
-        theObjects = scene.getChildren()
+        theObjects = scene.objects
 
         print "Starting OBJ export to " + self.filename
         if not checkFile(self.filename):
@@ -639,20 +641,29 @@ class OBJexport7:
     #------------------------------------------------------------------------
     def writeLamp(self, object):
         lamp=object.getData()
-        name=lamp.getName()
+        name=object.name
         special=0
         
         if lamp.getType() != Lamp.Types.Lamp:
             print "Info:\tIgnoring Area, Spot, Sun or Hemi lamp \"%s\"" % name
             return
         
-        if self.verbose:
-            print "Info:\tExporting Light \"%s\"" % name
-
         if '.' in name:
             sname=name[:name.index('.')]
         else:
             sname=name
+        if name in ['smoke_black', 'smoke_white']:
+            if self.iscsl:
+                print "Info:\tIgnoring \"%s\"" % sname
+            else:
+                if self.verbose: print "Info:\tExporting \"%s\"" % sname
+                self.file.write("%s\t%s\t%4.2f\t\t//\n\n" % (
+                    sname, Vertex(0,0,0, object.getMatrix()), lamp.energy))
+                self.nprim+=1
+            return
+
+        if self.verbose:
+            print "Info:\tExporting Light \"%s\"" % name
         lname=sname.lower().split()
         c=[0,0,0]
         if self.iscsl:

@@ -1,7 +1,7 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane v8 Object (.obj)'
-Blender: 242
+Blender: 243
 Group: 'Export'
 Tooltip: 'Export to X-Plane v8 format object (.obj)'
 """
@@ -23,9 +23,9 @@ Limitations:<br>
 """
 
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.40 or above
+# X-Plane exporter for blender 2.43 or above
 #
-# Copyright (c) 2004,2005,2006 Jonathan Harris
+# Copyright (c) 2004-2007 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -197,13 +197,25 @@ class VLIGHT:
 class NLIGHT:
     def __init__(self, v, n):
         self.v=v
-        self.n=n	# (str) name or (list) custom
+        self.n=n	# name
 
     def __str__ (self):
-        return "%s\t%s%s" % (self.n, '\t'*(2-len(self.n)/8), self.v)
+        return "LIGHT_NAMED\t%s\t%s%s" % (self.n, '\t'*(2-len(self.n)/8), self.v)
 
     def equals (self, b):
-        return (self.v.equals(b.v) and self.c==b.c)
+        return (self.v.equals(b.v) and self.n==b.n)
+
+class SMOKE:
+    def __init__(self, v, n, p):
+        self.v=v
+        self.n=n	# smoke_black or smoke_white
+        self.p=p	# puff
+
+    def __str__ (self):
+        return "%s\t%s\t%4.2f" % (self.n, self.v, self.p)
+
+    def equals (self, b):
+        return (self.v.equals(b.v) and self.n==b.n and self.p==b.p)
 
 
 class Prim:
@@ -299,8 +311,7 @@ class OBJexport8:
 
     #------------------------------------------------------------------------
     def export(self, scene):
-        theObjects = []
-        theObjects = scene.getChildren()
+        theObjects = scene.objects
 
         print 'Starting OBJ export to ' + self.filename
         if not checkFile(self.filename):
@@ -510,7 +521,7 @@ class OBJexport8:
                         for i in range(len(self.nlights)):
                             if self.nlights[i].match(layer, group, passhi, False, DEFMAT, anim):
                                 self.updateAttr(0, DEFMAT, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, group, anim)
-                                self.file.write("%sLIGHT_NAMED\t%s\n" %
+                                self.file.write("%s%s\n" %
                                                 (anim.ins(), self.nlights[i].i))
                             
                         # Tris
@@ -577,6 +588,10 @@ class OBJexport8:
             c[0]=lamp.col[0]
             c[1]=lamp.col[1]
             c[2]=lamp.col[2]
+        elif name in ['smoke_black', 'smoke_white']:
+            light.i=SMOKE(Vertex(0,0,0, mm), name, lamp.energy)
+            self.nlights.append(light)
+            return            
         else:	# named light
             for prop in object.getAllProperties():
                 if prop.name.lower()=='name': name=str(prop.data).strip()
@@ -1395,7 +1410,7 @@ try:
 except ExportError, e:
     Blender.Window.WaitCursor(0)
     Blender.Window.DrawProgressBar(0, 'ERROR')
-    for o in scene.getChildren(): o.select(0)
+    for o in scene.objects: o.select(0)
     if e.objs:
         layers=[]
         for o in e.objs:
