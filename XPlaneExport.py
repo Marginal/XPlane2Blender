@@ -657,7 +657,7 @@ class OBJexport7:
                 print "Info:\tIgnoring \"%s\"" % sname
             else:
                 if self.verbose: print "Info:\tExporting \"%s\"" % sname
-                self.file.write("%s\t%s\t%4.2f\t\t//\n\n" % (
+                self.file.write("%s\t%s\t%4.2f\t//\n\n" % (
                     sname, Vertex(0,0,0, object.getMatrix()), lamp.energy))
                 self.nprim+=1
             return

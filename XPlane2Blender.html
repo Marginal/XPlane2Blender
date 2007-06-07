@@ -39,8 +39,7 @@ All X-Plane scenery primitives are supported apart from
 <code>smoke_black</code> and <code>smoke_white</code>.</p>
 <h3>Requirements</h3>
 <p>Runs on Windows 98 or later, Mac OS 10.3.9 or later, and Linux.</p>
-<p>Requires <a href="http://www.blender.org/Download/">Blender
-2.42</a> or later (2.43 or later recommended).<br>
+<p>Requires <a href="http://www.blender.org/Download/">Blender 2.43</a> or later.<br>
 <small>Mac OS users should download the "Python 2.3"
 build of Blender unless you know that you have installed Python 2.4.<br>
 Linux users should download the build that corresponds to the Python
@@ -122,9 +121,9 @@ reported in the Console window as lines starting "Warn" or "Error".</p>
 single file. But note that the X-Plane <code>.obj</code>
 file format only supports the use of one texture file, so you'll have
 to create a single larger file containg all required textures.
-You can create this single file automatically using
-<samp>Image&nbsp;&rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>
-from a <samp>UV/Image Editor</samp> window.</p>
+You can create this single file automatically by selecting all the objects
+and, in a <samp>UV/Image Editor</samp> window, choosing
+<samp>Image&nbsp;&rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>.</p>
 
 <h3>Importing planes</h3>
 <p>First, move the 3D Cursor to where you want the imported plane or weapon
@@ -331,8 +330,8 @@ used to illuminate your model in Blender).</li>
     <dl>
       <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
       <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
-      <dd><code>Pulse</code>, <code>Strobe</code>, <code>Traffic</code> -
-As for X-Plane v7 objects. (R,G,B settings are ignored).</dd>
+      <dd><code>Pulse</code>, <code>Strobe</code>, <code>Traffic</code>, <code>smoke_black</code>, <code>smoke_white</code>  -
+As for X-Plane v7 objects; see below. (R,G,B settings are ignored).</dd>
       <dd><i>other</i> -
 X-Plane pre-defined "named" light. (Supported by X-Plane 8.50 and later. R,G,B settings are ignored). The name of the X-Plane light is taken from the value of a <a href="#properties">property</a> named <code>name</code> if this exists, otherwise from the name of the lamp object.</dd>
     </dl></li>
@@ -342,6 +341,7 @@ X-Plane pre-defined "named" light. (Supported by X-Plane 8.50 and later. R,G,B s
       <dd><code>Pulse</code> or <code>airplane_beacon</code> - Red pulsing anti-collision light. (R,G,B settings are ignored).</dd>
       <dd><code>Strobe</code> or <code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
       <dd><code>Traffic</code> - Cycles red, orange, green. (R,G,B settings are ignored).</dd>
+      <dd><code>smoke_black</code> or <code>smoke_white</code> - Not really a light; emits smoke. The size of the smoke puffs is determined by the Energy setting in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>) (R,G,B settings are ignored).</dd>
       <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
     </dl></li>
   <li>Lamp objects with certain names have special behaviours when exported to
@@ -865,10 +865,10 @@ Face Select</samp> mode after import.</li>
 <h4>Export object</h4>
 <ul>
   <li>Only Lamps and Mesh Faces (including "lines") are exported.</li>
-  <li>All faces must share a single texture file (this is
-a limitation of the X-Plane <code>.obj</code> file
-formats) apart from cockpit panel faces which can additionally use the
-cockpit panel texture. You can use
+  <li>All faces must share a single texture file apart from cockpit panel
+faces which can additionally use the cockpit panel texture
+(this is a limitation of the X-Plane <code>.obj</code> file formats).
+You can use
 <samp>Image&nbsp;&rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>
 to merge multiple texture files into one file.</li>
 </ul>

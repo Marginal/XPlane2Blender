@@ -380,7 +380,7 @@ def readDSF(path):
 
         ob = Object.New("Mesh", names[flags])
         ob.link(mesh)
-        Scene.GetCurrent().link(ob)
+        Scene.GetCurrent().objects.link(ob)
 
         mesh.sel=True
         mesh.remDoubles(0.001)	# must be after linked to object

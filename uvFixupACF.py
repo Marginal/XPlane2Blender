@@ -1,7 +1,7 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'Merge _paint and _paint2'
-Blender: 234
+Blender: 243
 Group: 'Image'
 Tooltip: 'Merge X-Plane plane_paint and plane_paint2 bitmaps'
 """
@@ -65,8 +65,7 @@ for ext in ['.png', '.PNG', '.bmp', '.BMP']:
         tex=Image.Load(newfile+ext)
         dim=tex.getSize()
 
-        objects = Scene.getCurrent().getChildren()
-        for ob in objects:
+        for ob in Scene.objects:
             if ob.getType() == "Mesh" and ob.getData().hasFaceUV():
                 mesh = ob.getData()
                 for face in mesh.faces:

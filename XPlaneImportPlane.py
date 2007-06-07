@@ -1664,7 +1664,7 @@ class ACFimport:
         #lamp.mode |= Lamp.Modes.Sphere
         ob = Object.New("Lamp", lamp.name)
         ob.link(lamp)
-        self.scene.link(ob)
+        self.scene.objects.link(ob)
         ob.Layer=ACFimport.LAYER1|ACFimport.LAYER2|ACFimport.LAYER3
         ob.setLocation(centre.x, centre.y, centre.z)
 
@@ -1676,7 +1676,7 @@ class ACFimport:
         mesh.update(1)	# recalc normals
         ob = Object.New("Mesh", name)
         ob.link(mesh)
-        self.scene.link(ob)
+        self.scene.objects.link(ob)
         ob.Layer=layer
         ob.setMatrix(mm)	# no longer sets rot/scale in 2.43
         ob.setLocation(*mm.translationPart())

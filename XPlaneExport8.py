@@ -118,6 +118,7 @@ Limitations:<br>
 #
 # 2007-05-09 v2.37
 #  - Allow a bone to be a child of a bone in another armature.
+#  - Support for smoke_black and smoke_white.
 #
 
 

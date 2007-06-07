@@ -1,7 +1,7 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane v7 Object (.obj)'
-Blender: 240
+Blender: 243
 Group: 'Export'
 Tooltip: 'Export to X-Plane v7 format object (.obj)'
 """
@@ -23,9 +23,9 @@ Limitations:<br>
 """
 
 #------------------------------------------------------------------------
-# X-Plane exporter for blender 2.34 or above
+# X-Plane exporter for blender 2.43 or above
 #
-# Copyright (c) 2004,2005 Jonathan Harris
+# Copyright (c) 2004-2007 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -69,7 +69,7 @@ try:
 except ExportError, e:
     Window.WaitCursor(0)
     Window.DrawProgressBar(0, 'ERROR')
-    for o in scene.getChildren(): o.select(0)
+    for o in scene.objects: o.select(0)
     if e.objs:
         layers=[]
         for o in e.objs:
