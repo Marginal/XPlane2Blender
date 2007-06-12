@@ -1,7 +1,7 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane Plane or Weapon (.acf, .wpn)...'
-Blender: 242
+Blender: 243
 Group: 'Import'
 Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 """

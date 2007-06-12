@@ -1,7 +1,7 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane Terrain (.dsf)...'
-Blender: 242
+Blender: 243
 Group: 'Import'
 Tooltip: 'Import X-Plane terrain'
 """

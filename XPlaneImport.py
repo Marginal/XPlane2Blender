@@ -1,7 +1,7 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane Object (.obj)...'
-Blender: 242
+Blender: 243
 Group: 'Import'
 Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 """
