@@ -192,6 +192,9 @@ Limitations:<br>
 # 2007-06-06 v2.37
 #  - Rewrote parser to be more tolerant.
 #
+# 2007-06-12 v2.38
+#  - Fixes for new parser.
+#
 
 import sys
 import Blender
