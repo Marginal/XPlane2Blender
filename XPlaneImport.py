@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.37"
+__version__ = "2.38"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -631,11 +631,10 @@ class OBJimport:
             line=self.file.readline()
             self.lineno+=1
             if not line: raise ParseError(ParseError.MISC, 'Unexpected <EOF>')
-            line=line.strip()
-            if line: break
+            tex = line.split('#')[0].split('//')[0].strip()
+            if tex: break
         
         # read texture
-        tex = line.split('#')[0].split('//')[0].strip()
         if self.fileformat>=8:
             if not tex.startswith("TEXTURE"):
                 raise ParseError(ParseError.HEADER)
@@ -943,10 +942,10 @@ class OBJimport:
                 self.addLine(scene,v,c)
 
             elif t=='tri':
-                self.getCR()
                 v = []
                 uv = []
                 for i in range(3):
+                    self.getCR()
                     v.append(self.getVertex())
                     uv.append(self.getUV())
                 self.addFan(scene,t,v,uv)
