@@ -8,7 +8,7 @@ Tooltip: 'Copy selected texture assignment to other faces'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.38"
+__version__ = "2.39"
 __bpydoc__ = """\
 This script duplicates a face's texture assignment across many faces.
 
@@ -243,27 +243,27 @@ class StripError(Exception):
 
 try:
     if Blender.Window.EditMode():
-        raise StripError("Please enter UV Face Select mode first.")
+        raise StripError("Please enter UV Face Select mode first")
     
     objects = Blender.Object.GetSelected ()
     if len(objects) == 0:
-        raise StripError("Please select a mesh in Object mode first.")
+        raise StripError("Please select a mesh in Object mode first")
     elif len(objects) != 1:
-        raise StripError("Please select only one mesh in Object mode first.")
+        raise StripError("Please select only one mesh in Object mode first")
                      
     ob = objects[0]
     if ob.getType() != "Mesh":
-        raise StripError("Selected object is not a Mesh.")
+        raise StripError("Selected object is not a Mesh")
 
     mesh = ob.getData()
     meshname = ob.name
     faces = mesh.getSelectedFaces ()
     if len (faces) != 1:
-        raise StripError("Please select exactly one face.")
+        raise StripError("Please select exactly one face")
 
     face = faces[0]
     if not (mesh.hasFaceUV() or (face.mode & NMesh.FaceModes.TEX)):
-        raise StripError("Selected face doesn't have a texture.")
+        raise StripError("Selected face doesn't have a texture")
 
     # 'Hard' faces can't be in a strip
     face.mode |= NMesh.FaceModes.DYNAMIC
@@ -272,4 +272,4 @@ try:
     Draw.Register (gui, event, bevent)
 
 except StripError, e:
-    Draw.PupMenu ("ERROR:\t" + e.msg)
+    Draw.PupMenu ("ERROR%%t|%s" + e.msg)

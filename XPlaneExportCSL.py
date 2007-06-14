@@ -9,7 +9,7 @@ __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = ["XPlane2Blender, http://marginal.org.uk/x-planescenery/",
            "X-IvAp, http://www.ivao.aero/softdev/X-IvAp/"]
-__version__ = "2.38"
+__version__ = "2.39"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane CSL .obj
 format for use with XSquawkbox and X-IvAp.
@@ -56,28 +56,43 @@ from Blender import Draw, Window
 from XPlaneExport import OBJexport7, ExportError
 
 if Window.EditMode(): Window.EditMode(0)
-baseFileName=Blender.Get('filename')
-l = baseFileName.lower().rfind('.blend')
-if l!=-1:
-    baseFileName=baseFileName[:l]
-
-obj=OBJexport7(baseFileName+'.obj', __version__, True)
-scene = Blender.Scene.GetCurrent()
 try:
+    obj=None
+    scene = Blender.Scene.GetCurrent()
+
+    baseFileName=Blender.Get('filename')
+    l = baseFileName.lower().rfind('.blend')
+    if l==-1: raise ExportError('Save this .blend file first')
+    baseFileName=baseFileName[:l]
+    obj=OBJexport7(baseFileName+'.obj', __version__, True)
     obj.export(scene)
 except ExportError, e:
-    Window.WaitCursor(0)
-    Window.DrawProgressBar(0, 'ERROR')
     for o in scene.objects: o.select(0)
     if e.objs:
         layers=[]
-        for o in e.objs:
+        if isinstance(e.objs, tuple):
+            (o,mesh,faces)=e.objs
             o.select(1)
-            for layer in o.layers:
-                if layer<=3 and not layer in layers: layers.append(layer)
+            layers=o.layers
+            for f in mesh.faces: f.sel=0
+            if faces:
+                for f in faces: f.sel=1
+                for i in range(len(mesh.faces)):
+                    if mesh.faces[i]==faces[0]:
+                        mesh.activeFace=i
+                        break
+        else:
+            for o in e.objs:
+                o.select(1)
+                for layer in o.layers:
+                    if (layer<=3 or not o.Layers&7) and not layer in layers:
+                        layers.append(layer)
         Window.ViewLayers(layers)
         Window.RedrawAll()
-    print "ERROR:\t%s\n" % e.msg
-    Draw.PupMenu("ERROR: %s" % e.msg)
-    Window.DrawProgressBar(1, 'ERROR')
-    if obj.file: obj.file.close()
+    if e.msg:
+        Window.WaitCursor(0)
+        Window.DrawProgressBar(0, 'ERROR')
+        print "ERROR:\t%s.\n" % e.msg
+        Draw.PupMenu("ERROR%%t|%s" % e.msg)
+        Window.DrawProgressBar(1, 'ERROR')
+    if obj and obj.file: obj.file.close()

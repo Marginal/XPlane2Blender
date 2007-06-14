@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.38"
+__version__ = "2.39"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -198,7 +198,7 @@ Limitations:<br>
 
 import sys
 import Blender
-from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Window
+from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, Vector
 from XPlaneUtils import Vertex, UV, Face, getDatarefs
 from os.path import abspath, basename, curdir, dirname, join, normpath, sep, splitdrive
@@ -464,6 +464,7 @@ class OBJimport:
         self.panelimage=None
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
+        self.log=[]
         
         # random stuff
         self.whitespace=[' ','\t','\n']
@@ -502,7 +503,7 @@ class OBJimport:
         #clock=time.clock()	# Processor time
         if self.verbose:
             print "Starting OBJ import from " + self.filename
-        Blender.Window.WaitCursor(1)
+        Window.WaitCursor(1)
     
         self.file = open(self.filename, 'rU')
         self.file.seek(0,2)
@@ -521,9 +522,13 @@ class OBJimport:
         scene.update(1)
         if not self.subroutine:
             Window.DrawProgressBar(1, "Finished")
-        if self.verbose:
-            print "Finished - imported %s primitives\n" % self.nprim
+            Window.WaitCursor(0)
         #print "%s CPU time\n" % (time.clock()-clock)
+        if self.verbose:
+            Window.RedrawAll()
+            print "Finished - imported %s primitives\n" % self.nprim
+            if not self.log: self.log=['OK']
+            Draw.PupMenu(("Imported %s primitives%%t|" % self.nprim)+'|'.join(self.log))
         return ob
 
     #------------------------------------------------------------------------
@@ -672,8 +677,8 @@ class OBJimport:
                         newfile.write(file.read())
                         newfile.close()
                         texname=newname
-                        print 'Info:\tCreated new texture file "%s"' % (
-                            texname)
+                        print 'Info:\tCreated new texture file "%s"' % texname
+                        self.log.append('Created new texture file "%s"' % texname)
                     elif self.verbose>1:
                         print 'Info:\tUsing texture file "%s"' % texname
                     file.close()
@@ -681,12 +686,14 @@ class OBJimport:
                         self.image = Image.Load(texname)
                         self.image.getSize()	# force load
                     except:
-                        print 'Warn:\tTexture file "%s" cannot be read' % texname
+                        print 'Warn:\tCannot read texture file "%s"' % texname
+                        self.log.append('Cannot read texture file "%s"' % texname)
                         self.image=Image.New(basename(texname),1024,1024,24)
                     return
             
         self.image=Image.New(basename(base),1024,1024,24)
         print 'Warn:\tTexture file "%s" not found' % base
+        self.log.append('Texture file "%s" not found' % base)
             
     #------------------------------------------------------------------------
     def readObjects (self, scene):
@@ -1120,6 +1127,9 @@ class OBJimport:
             elif t=='####_no_alpha':
                 self.alpha = False
 
+            elif t.startswith('####_'):	# eg ####_group
+                pass
+
             elif t=='ATTR_layer_group':
                 self.drawgroup=(self.getInput(), self.getInt())
                 
@@ -1128,6 +1138,7 @@ class OBJimport:
                 y=int(self.getFloat())
                 if not self.layer:
                     print "Info:\tMultiple Levels Of Detail found"
+                    self.log.append("Multiple Levels Of Detail found")
                 if self.layer==0 and x!=0:
                     self.lod=[x,1000,4000,10000]
                 if self.layer<3:
@@ -1183,6 +1194,7 @@ class OBJimport:
             elif (self.fileformat>6 and t.startswith('ATTR_')) or t in [
                 'LIGHT_CUSTOM']:
                 print 'Warn:\tIgnoring unsupported "%s"' % t
+                self.log.append('Ignoring unsupported "%s"' % t)
 
             else:
                 raise ParseError(ParseError.MISC,
@@ -1304,8 +1316,6 @@ class OBJimport:
 
         if self.armob:
             if self.bones:
-                print self.arm.bones[self.bones[-1]]
-                print self.arm.bones[self.bones[-1]].head
                 boneloc=Vertex(self.arm.bones[self.bones[-1]].head)
             else:	# Bone can be None if no_ref
                 boneloc=Vertex(0,0,0)
@@ -1617,8 +1627,8 @@ def file_callback (filename):
     try:
         obj.doimport()
     except ParseError, e:
-        Blender.Window.WaitCursor(0)
-        Blender.Window.DrawProgressBar(0, 'ERROR')
+        Window.WaitCursor(0)
+        Window.DrawProgressBar(0, 'ERROR')
         if e.type == ParseError.HEADER:
             msg='This is not a valid X-Plane v6, v7 or v8 OBJ file'
         elif e.type == ParseError.NAME:
@@ -1632,10 +1642,10 @@ def file_callback (filename):
             else:
                 msg='Missing %s at line %s' % (thing, obj.lineno)
         print "ERROR:\t%s\n" % msg
-        Blender.Draw.PupMenu("ERROR: %s" % msg)
-        Blender.Window.DrawProgressBar(1, 'ERROR')
+        Draw.PupMenu("ERROR%%t|%s" % msg)
+        Window.RedrawAll()
+        Window.DrawProgressBar(1, 'ERROR')
     obj.file.close()
-    Blender.Redraw()
 
 #------------------------------------------------------------------------
 # main routine
@@ -1645,7 +1655,7 @@ try:
 except IOError, e:
     Window.DrawProgressBar(0, 'ERROR')
     print "ERROR:\t%s\n" % e.strerror
-    Blender.Draw.PupMenu("ERROR: %s" % e.strerror)
+    Draw.PupMenu("ERROR%%t|%s" % e.strerror)
     Window.DrawProgressBar(1, 'ERROR')
 else:
     Window.FileSelector(file_callback,"Import OBJ")

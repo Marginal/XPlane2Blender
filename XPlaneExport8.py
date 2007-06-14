@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.38"
+__version__ = "2.39"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -120,6 +120,11 @@ Limitations:<br>
 #  - Allow a bone to be a child of a bone in another armature.
 #  - Support for smoke_black and smoke_white.
 #
+# 2007-06-14 v2.39
+#  - Use Mesh instead of NMesh for speed.
+#  - Support for mesh modifiers.
+#  - Info and warnings reported in popup menu - selects objects referred to.
+#
 
 
 #
@@ -142,7 +147,7 @@ Limitations:<br>
 
 import sys
 import Blender
-from Blender import Armature, NMesh, Lamp, Image, Draw, Window
+from Blender import Armature, Mesh, Lamp, Image, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, MatMultVec, Vector, Quaternion, Euler
 from XPlaneUtils import Vertex, UV, MatrixrotationOnly, getDatarefs
 from XPlaneExport import *
@@ -278,6 +283,7 @@ class OBJexport8:
         self.slung=0
         self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
+        self.log=[]
 
         # attributes controlling export
         self.hard=False
@@ -289,12 +295,12 @@ class OBJexport8:
         self.layer=0
         self.group=None
         self.lod=None		# list of lod limits
-        self.anim=Anim(None)
+        self.anim=Anim(self, None)
 
         # Global vertex lists
         self.vt=[]
         self.vline=[]
-        self.anims=[Anim(None)]
+        self.anims=[Anim(self, None)]
         self.mats=[DEFMAT]	# list of (diffuse, emission, shiny)
         if Blender.Get('version')>=242:	# new in 2.42
             self.groups=Blender.Group.Get()
@@ -320,8 +326,7 @@ class OBJexport8:
 
         Window.WaitCursor(1)
         Window.DrawProgressBar(0, 'Examining textures')
-        (self.texture,self.havepanel,self.layermask,
-         self.lod)=getTexture(theObjects,self.layermask,self.iscockpit,False,8)
+        self.texture=getTexture(self,theObjects,False,8)
         if self.havepanel:
             self.iscockpit=True
             self.layermask=1
@@ -332,14 +337,20 @@ class OBJexport8:
         self.file = open(self.filename, 'w')
         self.writeHeader ()
         self.writeObjects (theObjects)
-        checkLayers (theObjects, self.iscockpit)
+        checkLayers (self, theObjects)
         
         Blender.Set('curframe', frame)
         #scene.update(1)
         #scene.makeCurrent()	# see Blender bug #4696
         Window.DrawProgressBar(1, 'Finished')
+        Window.WaitCursor(0)
         #print "%s CPU time" % (time.clock()-clock)
         print "Finished - exported %s primitives\n" % self.nprim
+        if self.log:
+            r=Draw.PupMenu(("Exported %s primitives%%t|" % self.nprim)+'|'.join([a[0] for a in self.log]))
+            if r>0: raise ExportError(None, self.log[r-1][1])
+        else:
+            Draw.PupMenu("Exported %s primitives%%t|OK" % self.nprim)
 
     #------------------------------------------------------------------------
     def writeHeader (self):
@@ -385,6 +396,8 @@ class OBJexport8:
                     self.sortLine(object)
                 else:
                     self.sortMesh(object)
+            #elif objType in ['Curve','Surf']:
+            #    self.sortMesh(object)
             elif objType in ['Lamp', 'Armature']:
                 pass	# these dealt with separately
             elif objType == 'Empty':
@@ -395,9 +408,9 @@ class OBJexport8:
                             raise ExportError('Invalid drawing group "%s" in "%s"' % (self.drawgroup[0], object.name), [object])
                     elif prop.type in ['INT', 'FLOAT', 'STRING'] and prop.name.strip()=='slung_load_weight':
                         self.slung=prop.data
-            else:
-                print "Warn:\tIgnoring %s \"%s\"" % (objType.lower(),
-                                                     object.name)
+            elif objType not in ['Camera','Lattice']:
+                print 'Warn:\tIgnoring %s "%s"' % (objType.lower(),object.name)
+                self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name),[object]))
 
         # Lights
         for o in range (len(theObjects)-1,-1,-1):
@@ -542,7 +555,7 @@ class OBJexport8:
                                     n=n+1
 
         # Close animations in final layer
-        while not self.anim.equals(Anim(None)):
+        while not self.anim.equals(Anim(self, None)):
             self.anim=self.anim.anim
             self.file.write("%sANIM_end\n" % self.anim.ins())
 
@@ -563,11 +576,12 @@ class OBJexport8:
         special=0
         
         if lamp.getType() != Lamp.Types.Lamp:
-            print "Info:\tIgnoring Area, Spot, Sun or Hemi lamp \"%s\"" % name
+            print 'Info:\tIgnoring Area, Spot, Sun or Hemi lamp "%s"' % name
+            self.log.append(('Ignoring Area, Spot, Sun or Hemi lamp "%s"' % name, [object]))
             return
         
         if self.verbose:
-            print "Info:\tExporting Light \"%s\"" % name
+            print 'Info:\tExporting Light "%s"' % name
 
         if '.' in name: name=name[:name.index('.')]
         lname=name.lower().split()
@@ -607,7 +621,7 @@ class OBJexport8:
     #------------------------------------------------------------------------
     def sortLine(self, object):
         if self.verbose:
-            print "Info:\tExporting Line \"%s\"" % object.name
+            print 'Info:\tExporting Line "%s"' % object.name
 
         (anim, mm)=self.makeAnim(object)
         line=Prim(object.Layer, self.findgroup(object), 0, False, DEFMAT, anim)
@@ -656,10 +670,16 @@ class OBJexport8:
     #------------------------------------------------------------------------
     def sortMesh(self, object):
 
-        nmesh=object.getData()
+        mesh=object.getData(mesh=True)
+        mats=mesh.materials
+
+        if object.getType()!='Mesh' or object.modifiers:
+            # use dummy mesh with modifiers applied instead
+            mesh=Mesh.New()
+            mesh.getFromObject(object)
         
         (anim, mm)=self.makeAnim(object)
-        hasanim=not anim.equals(Anim(None))
+        hasanim=not anim.equals(Anim(self, None))
         nm=MatrixrotationOnly(mm, object)
         # Vertex order, taking into account negative scaling
         if object.SizeX*object.SizeY*object.SizeZ<0:
@@ -668,10 +688,10 @@ class OBJexport8:
             seq=[[],[],[],[2,1,0],[3,2,1,0]]
 
         if self.verbose:
-            print "Info:\tExporting Mesh \"%s\"" % object.name
+            print 'Info:\tExporting Mesh "%s"' % object.name
                 
         if self.debug:
-            print "Mesh \"%s\" %s faces" % (object.name, len(nmesh.faces))
+            print 'Mesh "%s" %s faces' % (object.name, len(mesh.faces))
 
         group=self.findgroup(object)
         if self.iscockpit:
@@ -689,26 +709,28 @@ class OBJexport8:
 
         # Optimisation: Children of animations might be dupes. This test only
         # looks for exact duplicates, but this can reduce vertex count by ~10%.
-        twosideerr=0
-        harderr=0
-        degenerr=0
+        twosideerr=[]
+        harderr=[]
+        degenerr=[]
+        mode=Mesh.FaceModes.DYNAMIC
         if hasanim:
             animcands=list(self.animcands)	# List of candidate tris
             trino=0
             fudge=Vertex.LIMIT*10		# Be more lenient
-            for f in nmesh.faces:
+            for f in mesh.faces:
+                if mesh.faceUV: mode=f.mode
                 n=len(f.v)
                 if not n in [3,4]:
                     pass
-                elif not (f.mode & NMesh.FaceModes.INVISIBLE):
+                elif not (mode & Mesh.FaceModes.INVISIBLE):
                     for i in seq[n]:
-                        nmv=f.v[i]
-                        vertex=Vertex(nmv[0], nmv[1], nmv[2], mm)
+                        nmv=f.verts[i]
+                        vertex=Vertex(nmv.co[0], nmv.co[1], nmv.co[2], mm)
                         if not f.smooth:
                             norm=Vertex(f.no, nm)
                         else:
                             norm=Vertex(nmv.no, nm)
-                        if f.mode & NMesh.FaceModes.TEX:
+                        if mode & Mesh.FaceModes.TEX:
                             uv=UV(f.uv[i][0], f.uv[i][1])
                         else:	# File format requires something - using (0,0)
                             uv=UV(0,0)
@@ -727,13 +749,14 @@ class OBJexport8:
             else:
                 # Success - re-use tris starting at self.vt[animcands[0]]
                 trino=0
-                for f in nmesh.faces:
+                for f in mesh.faces:
+                    if mesh.faceUV: mode=f.mode
                     n=len(f.v)
                     if not n in [3,4]:
-                        degenerr+=1
-                    elif not (f.mode & NMesh.FaceModes.INVISIBLE):
-                        if f.mat<len(nmesh.materials):
-                            material=nmesh.materials[f.mat]
+                        degenerr.append(f)
+                    elif not (mode & Mesh.FaceModes.INVISIBLE):
+                        if f.mat<len(mats):
+                            material=mats[f.mat]
                             # diffuse, emission, shiny
                             mat=((material.R, material.G, material.B),
                                  (material.mirR*material.emit,
@@ -744,24 +767,24 @@ class OBJexport8:
                             mat=DEFMAT
                         face=Prim(object.Layer, group, 0, False, mat, anim)
            
-                        if f.mode & NMesh.FaceModes.TEX:
+                        if mode & Mesh.FaceModes.TEX:
                             if len(f.uv)!=n:
-                                raise ExportError("Missing UV in mesh \"%s\"" % object.name, [object])
-                            if f.transp == NMesh.FaceTranspModes.ALPHA:
+                                raise ExportError('Missing UV in mesh "%s"' % object.name, [object])
+                            if f.transp == Mesh.FaceTranspModes.ALPHA:
                                 face.flags|=Prim.ALPHA
         
-                        if f.mode & NMesh.FaceModes.TWOSIDE:
+                        if mode & Mesh.FaceModes.TWOSIDE:
                             face.flags|=Prim.TWOSIDE
-                            twosideerr=twosideerr+1
+                            twosideerr.append(f)
         
-                        if not f.mode&NMesh.FaceModes.TILES or self.iscockpit:
+                        if not mode&Mesh.FaceModes.TILES or self.iscockpit:
                             face.flags|=Prim.NPOLY
                             
-                        if f.image and 'panel.' in f.image.name.lower():
+                        if mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
                             face.flags|=Prim.PANEL
-                        elif not (f.mode&NMesh.FaceModes.DYNAMIC or self.iscockpit):
+                        elif not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
                             face.surface=surface
-                            harderr=harderr+1
+                            harderr.append(f)
 
                         for i in range(n):
                             face.i.append(self.tris[animcands[0]+trino].i[i])
@@ -770,29 +793,29 @@ class OBJexport8:
                         trino+=1
                 
                 if degenerr and self.verbose:
-                    print "Info:\tIgnoring %s degenerate face(s) in mesh \"%s\"" % (degenerr, object.name)
+                    print 'Info:\tIgnoring %s degenerate face(s) in mesh "%s"' % (len(degenerr), object.name)
+                    self.log.append(('Ignoring %s degenerate face(s) in mesh "%s"' % (len(degenerr), object.name), (object, mesh, degenerr)))
                 if harderr:
-                    print "Info:\tFound %s hard face(s) in mesh \"%s\"" % (harderr, object.name)
+                    print 'Info:\tFound %s hard face(s) in mesh "%s"' % (len(harderr), object.name)
+                    self.log.append(('Found %s hard face(s) in mesh "%s"' % (len(harderr), object.name), (object, mesh, harderr)))
                 if twosideerr:
-                    print "Info:\tFound %s two-sided face(s) in mesh \"%s\"" % (twosideerr, object.name)
-
+                    print 'Info:\tFound %s two-sided face(s) in mesh "%s"' % (len(twosideerr), object.name)
+                    self.log.append(('Found %s two-sided face(s) in mesh "%s"' % (len(twosideerr), object.name), (object, mesh, twosideerr)))
                 return
 
         # Either no animation, or no matching animation
-        twosideerr=0
-        harderr=0
-        degenerr=0
         starttri=len(self.tris)
         # Optimisation: Build list of faces and vertices
-        vti = [[] for i in range(len(nmesh.verts))]	# indices into vt
+        vti = [[] for i in range(len(mesh.verts))]	# indices into vt
 
-        for f in nmesh.faces:
+        for f in mesh.faces:
+            if mesh.faceUV: mode=f.mode
             n=len(f.v)
             if not n in [3,4]:
-                degenerr+=1
-            elif not (f.mode & NMesh.FaceModes.INVISIBLE):
-                if f.mat<len(nmesh.materials):
-                    material=nmesh.materials[f.mat]
+                degenerr.append(f)
+            elif not (mode & Mesh.FaceModes.INVISIBLE):
+                if f.mat<len(mats) and mats[f.mat]:
+                    material=mats[f.mat]
                     # diffuse, emission, shiny
                     mat=((material.R, material.G, material.B),
                          (material.mirR*material.emit,
@@ -803,33 +826,33 @@ class OBJexport8:
                     mat=DEFMAT
                 face=Prim(object.Layer, group, 0, False, mat, anim)
    
-                if f.mode & NMesh.FaceModes.TEX:
+                if mode & Mesh.FaceModes.TEX:
                     if len(f.uv)!=n:
-                        raise ExportError('Missing UV for face in mesh "%s"' % object.name, [object])
-                    if f.transp == NMesh.FaceTranspModes.ALPHA:
+                        raise ExportError('Missing UV for face in mesh "%s"' % object.name, (object, mesh, [f]))
+                    if f.transp == Mesh.FaceTranspModes.ALPHA:
                         face.flags|=Prim.ALPHA
 
-                if f.mode & NMesh.FaceModes.TWOSIDE:
+                if mode & Mesh.FaceModes.TWOSIDE:
                     face.flags|=Prim.TWOSIDE
-                    twosideerr=twosideerr+1
+                    twosideerr.append(f)
 
-                if not f.mode&NMesh.FaceModes.TILES or self.iscockpit:
+                if not mode&Mesh.FaceModes.TILES or self.iscockpit:
                     face.flags|=Prim.NPOLY
                     
-                if f.image and 'panel.' in f.image.name.lower():
+                if mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
                     face.flags|=Prim.PANEL
-                elif not (f.mode&NMesh.FaceModes.DYNAMIC or self.iscockpit):
+                elif not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
                     face.surface=surface
-                    harderr=harderr+1
+                    harderr.append(f)
 
                 for i in seq[n]:
-                    nmv=f.v[i]
-                    vertex=Vertex(nmv[0], nmv[1], nmv[2], mm)
+                    nmv=f.verts[i]
+                    vertex=Vertex(nmv.co[0], nmv.co[1], nmv.co[2], mm)
                     if not f.smooth:
                         norm=Vertex(f.no, nm)
                     else:
                         norm=Vertex(nmv.no, nm)
-                    if f.mode & NMesh.FaceModes.TEX:
+                    if mode & Mesh.FaceModes.TEX:
                         uv=UV(f.uv[i][0], f.uv[i][1])
                     else:	# File format requires something - using (0,0)
                         uv=UV(0,0)
@@ -858,14 +881,14 @@ class OBJexport8:
             self.animcands.append(starttri)
 
         if degenerr and self.verbose:
-            print 'Info:\tIgnoring %s degenerate face(s) in mesh "%s"' % (
-                degenerr, object.name)
+            print 'Info:\tIgnoring %s degenerate face(s) in mesh "%s"' % (len(degenerr), object.name)
+            self.log.append(('Ignoring %s degenerate face(s) in mesh "%s"' % (len(degenerr), object.name), (object, mesh, degenerr)))
         if harderr:
-            print 'Info:\tFound %s hard face(s) in mesh "%s"' % (
-                harderr, object.name)
+            print 'Info:\tFound %s hard face(s) in mesh "%s"' % (len(harderr), object.name)
+            self.log.append(('Found %s hard face(s) in mesh "%s"' % (len(harderr), object.name), (object, mesh, harderr)))
         if twosideerr:
-            print 'Info:\tFound %s two-sided face(s) in mesh "%s"' % (
-                twosideerr, object.name)
+            print 'Info:\tFound %s two-sided face(s) in mesh "%s"' % (len(twosideerr), object.name)
+            self.log.append(('Found %s two-sided face(s) in mesh "%s"' % (len(twosideerr), object.name), (object, mesh, twosideerr)))
 
 
     #------------------------------------------------------------------------
@@ -882,12 +905,12 @@ class OBJexport8:
 
         #return (Anim(None), mm)	# test - return frame 1 position
 
-        anim=Anim(child)
+        anim=Anim(self, child)
 
         # Add parent anims first
         al=[]
         a=anim
-        while not a.equals(Anim(None)):
+        while not a.equals(Anim(self, None)):
             al.insert(0, a)
             a=a.anim
 
@@ -946,7 +969,7 @@ class OBJexport8:
 
         if layer!=self.layer:
             # Reset all attributes
-            while not self.anim.equals(Anim(None)):
+            while not self.anim.equals(Anim(self, None)):
                 self.anim=self.anim.anim
                 self.file.write("%sANIM_end\n" % self.anim.ins())
             self.hard=False
@@ -967,11 +990,11 @@ class OBJexport8:
             olda=[]
             newa=[]
             a=self.anim
-            while not a.equals(Anim(None)):
+            while not a.equals(Anim(self, None)):
                 olda.insert(0, a)
                 a=a.anim
             a=anim
-            while not a.equals(Anim(None)):
+            while not a.equals(Anim(self, None)):
                 newa.insert(0, a)
                 a=a.anim
             for i in range(len(olda)-1,-1,-1):
@@ -1078,7 +1101,7 @@ class OBJexport8:
 
 #------------------------------------------------------------------------
 class Anim:
-    def __init__(self, child, bone=None):
+    def __init__(self, expobj, child, bone=None):
         self.dataref=None	# None if null
         self.r=[]	# 0, 1 or 2 rotation vectors
         self.a=[]	# rotation angles (iff self.r)
@@ -1102,29 +1125,29 @@ class Anim:
                 
         if not bone:
             bonename=child.getParentBoneName()
-            if not bonename: raise ExportError('%s "%s" has an armature as its parent. Make "%s" the child of a bone.' % (child.getType(), child.name, child.name), [child])
+            if not bonename: raise ExportError('%s "%s" has an armature as its parent. Make "%s" the child of a bone' % (child.getType(), child.name, child.name), [child])
             bones=object.getData().bones
             if bonename in bones.keys():
                 bone=bones[bonename]
             else:
-                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Either make "%s" the child of an existing bone, or clear its parent.' % (child.getType(), child.name, bonename, child.name), [child])
+                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Either make "%s" the child of an existing bone, or clear its parent' % (child.getType(), child.name, bonename, child.name), [child])
 
         if bone.parent:
             #print "bp", child, bone.parent
-            self.anim=Anim(child, bone.parent)
+            self.anim=Anim(expobj, child, bone.parent)
         elif object.parent and object.parent.getType()=='Armature':
             # child's parent armature is itself parented to an armature
             bonename=object.getParentBoneName()
-            if not bonename: raise ExportError('Bone "%s" has an armature as its parent. Make "%s" the child of another bone.' % (bone.name, bone.name), [child])
+            if not bonename: raise ExportError('Bone "%s" has an armature as its parent. Make "%s" the child of another bone' % (bone.name, bone.name), [child])
             bones=object.parent.getData().bones
             if bonename in bones.keys():
                 parentbone=bones[bonename]
             else:
-                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Either make "%s" the child of an existing bone, or clear its parent.' % (child.getType(), child.name, bonename, child.name), [child])
+                raise ExportError('%s "%s" has a deleted bone "%s" as its parent. Either make "%s" the child of an existing bone, or clear its parent' % (child.getType(), child.name, bonename, child.name), [child])
             #print "ob", object, parentbone
-            self.anim=Anim(object, parentbone)
+            self.anim=Anim(expobj, object, parentbone)
         else:
-            self.anim=Anim(None)
+            self.anim=Anim(expobj, None)
 
         if not bone.parent:
             # Hide/show values if eldest bone in its armature
@@ -1142,13 +1165,14 @@ class Anim:
         if not (object.getAction() and
                 object.getAction().getAllChannelIpos().has_key(bone.name)):
             print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
+            expobj.log.append(('Ignoring bone "%s" in armature "%s" - you haven\'t created any animation keys' % (bone.name, object.name), [object]))
 
             if self.showhide:
                 # Create a dummy animation to hold hide/show values
                 self.dataref='no_ref'	# mustn't eval to False
                 self.t=[Vertex(0,0,0),Vertex(0,0,0)]
             elif bone.parent:
-                foo=Anim(child, bone.parent)
+                foo=Anim(expobj, child, bone.parent)
                 self.dataref=foo.dataref
                 self.r=foo.r
                 self.a=foo.a
@@ -1243,7 +1267,7 @@ class Anim:
                      bone.matrix['ARMATURESPACE'].translationPart(),mm)
             # Child offset should be relative to parent
             anim=self.anim
-            while not anim.equals(Anim(None)):
+            while not anim.equals(Anim(expobj, None)):
                 t=t-anim.t[0]	# mesh location is relative to first frame
                 anim=anim.anim
             self.t.append(t)
@@ -1314,13 +1338,13 @@ class Anim:
             (path, n)=datarefs[ref]
             dataref=path+name
             if n==0:
-                raise ExportError('Dataref %s can\'t be used for animation.' % path+ref, [object])
+                raise ExportError('Dataref %s can\'t be used for animation' % path+ref, [object])
             elif n==1 and idx!=None:
-                raise ExportError('Dataref %s is not an array. Rename the %s to "%s".' % (path+ref, thing, ref), [object])
+                raise ExportError('Dataref %s is not an array. Rename the %s to "%s"' % (path+ref, thing, ref), [object])
             elif n!=1 and idx==None:
-                raise ExportError('Dataref %s is an array. Rename the %s to "%s[0]" to use the first value, etc.' % (path+ref, thing, ref), [object])
+                raise ExportError('Dataref %s is an array. Rename the %s to "%s[0]" to use the first value, etc' % (path+ref, thing, ref), [object])
             elif n!=1 and idx>=n:
-                raise ExportError('Dataref %s has usable values from [0] to [%d]; but you specified [%d].' % (path+ref, n-1, idx), [object])
+                raise ExportError('Dataref %s has usable values from [0] to [%d]; but you specified [%d]' % (path+ref, n-1, idx), [object])
         else:
             dataref=None
             for tmpref in seq:
@@ -1332,13 +1356,13 @@ class Anim:
                             if path and path[-1]!='/': path=path+'/'
                             dataref=path+name
                         else:
-                            raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s".' % (ref, object.name), [object])
+                            raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s"' % (ref, object.name), [object])
                         break
             if not dataref:
                 if ref in datarefs:
-                    raise ExportError('Dataref %s is ambiguous. Add a new string property named %s with the path name of the dataref that you want to use.' % (ref, ref), [object])
+                    raise ExportError('Dataref %s is ambiguous. Add a new string property named %s with the path name of the dataref that you want to use' % (ref, ref), [object])
                 else:
-                    raise ExportError('Unrecognised dataref "%s" for %s in armature "%s".' % (ref, thing, object.name), [object])
+                    raise ExportError('Unrecognised dataref "%s" for %s in armature "%s"' % (ref, thing, object.name), [object])
             
         # dataref values v1 & v2
         for tmpref in seq:
@@ -1351,7 +1375,7 @@ class Anim:
                         elif prop.type=='FLOAT':
                             vals[val-first]=round(prop.data, Vertex.ROUND)
                         else:
-                            raise ExportError('Unsupported data type for "%s" in armature "%s".' % (valstr, object.name), [object])
+                            raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [object])
         if vals[0]==None or vals[1]==None: vals=None
         return (dataref, vals)
         
@@ -1390,7 +1414,7 @@ class Anim:
     def ins(self):
         t=''
         anim=self
-        while not anim.equals(Anim(None)):
+        while not anim.equals(Anim(self, None)):
             t=t+"\t"
             anim=anim.anim
         return t
@@ -1398,36 +1422,51 @@ class Anim:
 
 #------------------------------------------------------------------------
 if Window.EditMode(): Window.EditMode(0)
-baseFileName=Blender.Get('filename')
-l = baseFileName.lower().rfind('.blend')
-if l!=-1:
-    baseFileName=baseFileName[:l]
-obj=None
 try:
+    obj=None
+    scene = Blender.Scene.GetCurrent()
+
+    baseFileName=Blender.Get('filename')
+    l = baseFileName.lower().rfind('.blend')
+    if l==-1: raise ExportError('Save this .blend file first')
+    baseFileName=baseFileName[:l]
     datarefs=getDatarefs()
     obj=OBJexport8(baseFileName+'.obj')
-    scene = Blender.Scene.GetCurrent()
     obj.export(scene)
 except ExportError, e:
-    Blender.Window.WaitCursor(0)
-    Blender.Window.DrawProgressBar(0, 'ERROR')
     for o in scene.objects: o.select(0)
     if e.objs:
         layers=[]
-        for o in e.objs:
+        if isinstance(e.objs, tuple):
+            (o,mesh,faces)=e.objs
             o.select(1)
-            for layer in o.layers:
-                if layer<=3 and not layer in layers: layers.append(layer)
+            layers=o.layers
+            for f in mesh.faces: f.sel=0
+            if faces:
+                for f in faces: f.sel=1
+                for i in range(len(mesh.faces)):
+                    if mesh.faces[i]==faces[0]:
+                        mesh.activeFace=i
+                        break
+        else:
+            for o in e.objs:
+                o.select(1)
+                for layer in o.layers:
+                    if (layer<=3 or not o.Layers&7) and not layer in layers:
+                        layers.append(layer)
         Window.ViewLayers(layers)
         Window.RedrawAll()
-    print "ERROR:\t%s\n" % e.msg
-    Blender.Draw.PupMenu("ERROR: %s" % e.msg)
-    Blender.Window.DrawProgressBar(1, 'ERROR')
+    if e.msg:
+        Window.WaitCursor(0)
+        Window.DrawProgressBar(0, 'ERROR')
+        print "ERROR:\t%s.\n" % e.msg
+        Draw.PupMenu("ERROR%%t|%s" % e.msg)
+        Window.DrawProgressBar(1, 'ERROR')
     if obj and obj.file: obj.file.close()
 except IOError, e:
-    Blender.Window.WaitCursor(0)
-    Blender.Window.DrawProgressBar(0, 'ERROR')
+    Window.WaitCursor(0)
+    Window.DrawProgressBar(0, 'ERROR')
     print "ERROR:\t%s\n" % e.strerror
-    Blender.Draw.PupMenu("ERROR: %s" % e.strerror)
-    Blender.Window.DrawProgressBar(1, 'ERROR')
+    Draw.PupMenu("ERROR%%t|%s" % e.strerror)
+    Window.DrawProgressBar(1, 'ERROR')
     if obj and obj.file: obj.file.close()

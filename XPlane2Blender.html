@@ -103,8 +103,6 @@ Extract the contents of the zip file to this folder.</td>
 </table>
 <p>(Re)start Blender. This file can now be viewed by choosing
 <samp>Help&nbsp;&rarr; X-Plane</samp> in Blender.</p>
-<p>On Mac OS, also run the "Console" application that comes with
-Mac OS X and which is found under "Utilities".</p>
 <p>You can now delete the temporary folder.</p>
 
 <h3>Importing objects</h3>
@@ -114,9 +112,7 @@ just press <samp style="font-weight: bold;">Shift&nbsp;C</samp>
 to centre the 3D Cursor at the origin.</p>
 <p>Choose <samp>File&nbsp;&rarr; Import&nbsp;&rarr; X-Plane Object</samp>,
 select a <code>.obj</code> file and press <samp>Import&nbsp;OBJ</samp>.</p>
-<p>The scenery is
-imported at the 3d Cursor position. Any problems with the import are
-reported in the Console window as lines starting "Warn" or "Error".</p>
+<p>The scenery is imported at the 3d Cursor position.</p>
 <p>You can import multiple <code>.obj</code> files and re-export them as a
 single file. But note that the X-Plane <code>.obj</code>
 file format only supports the use of one texture file, so you'll have
@@ -137,9 +133,7 @@ is located at the 3D Cursor (for making cockpit & misc objects) or so that the
 "centre of gravity" is located at the 3D Cursor (for making CSLs and static
 scenery).</p>
 <p>Then select a <code>.acf</code> or <code>.wpn</code> file and press
-<samp>Import&nbsp;OBJ&nbsp;or&nbsp;WPN</samp>.
-Any problems with the import will be reported
-in the Console window as lines starting "Warn" or "Error".</p>
+<samp>Import&nbsp;ACF&nbsp;or&nbsp;WPN</samp>.</p>
 <p>The script creates up to three versions of the plane or weapon in
 Blender, one in each of layers 1, 2 and 3. The versions in layers 2 and
 3 use approximately
@@ -154,9 +148,8 @@ planes</a> below.</p>
 
 <h3>Exporting objects</h3>
 <p>First, choose <samp>File&nbsp;&rarr; Save As&#8230;</samp> and save the
-<code>.blend</code> file in the aircraft or
-scenery folder where you want the <code>.obj</code> file to end up.
-Then choose:
+<code>.blend</code> file in the aircraft or scenery folder where you want
+the <code>.obj</code> file to end up. Then choose:
 <dl>
   <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;CSL&nbsp;Object</samp> or</dd>
   <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;v7&nbsp;Object</samp> or</dd>
@@ -164,9 +157,8 @@ Then choose:
 </dl>
 <p>The object is exported in the same folder and with the same name
 as the current Blender file, but with a <code>.obj</code> extension. 
-Always check the Console window for messages reporting any problems
-with the export, which are displayed as lines starting "Warn" or
-"Error".</p>
+Blender may display some informational messages - click on one of these
+messages to see which object(s) the message refers to.</p>
 <p>If there is an error then the scripts will attempt to identify and
 highlight the offending Blender object(s).</p>
 <p><samp><b>csl: </b></samp>These objects are intended for use with
@@ -898,7 +890,7 @@ no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.38 &copy; 2004-2007
+      <td class="banner">Version 2.39 &copy; 2004-2007
       <a href="mailto:x-plane@marginal.org.uk">Jonathan Harris</a>
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/2.5/"><img style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" alt="Creative Commons License" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
