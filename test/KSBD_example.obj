@@ -7,7 +7,7 @@ KSBD_example		// Texture
 
 ATTR_LOD	0 1000	// Layer 1
 
-smoke_white	   0.0000   35.0000    0.0000	2.00		// 
+smoke_white	   0.0000   35.0000    0.0000	2.00	//
 
 line			// Line
   -6.0000   40.0000   -6.0000	5.0    5.0    5.0   
@@ -475,4 +475,4 @@ ATTR_LOD	5000 10000	// Layer 3
 
 end			// eof
 
-// Built with Blender 2.44. Exported with XPlane2Blender 2.37.
+// Built with Blender 2.44. Exported with XPlane2Blender 2.39.
