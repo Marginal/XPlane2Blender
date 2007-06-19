@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.39"
+__version__ = "2.40"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -124,6 +124,9 @@ Limitations:<br>
 #  - Use Mesh instead of NMesh for speed.
 #  - Support for mesh modifiers.
 #  - Info and warnings reported in popup menu - selects objects referred to.
+#
+# 2007-06-19 v2.40
+#  - Fix for models with groups and multiple LODs.
 #
 
 
@@ -782,7 +785,7 @@ class OBJexport8:
                             
                         if mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
                             face.flags|=Prim.PANEL
-                        elif not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
+                        elif object.Layer&1 and not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
                             face.surface=surface
                             harderr.append(f)
 
@@ -841,7 +844,7 @@ class OBJexport8:
                     
                 if mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
                     face.flags|=Prim.PANEL
-                elif not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
+                elif object.Layer&1 and not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
                     face.surface=surface
                     harderr.append(f)
 
@@ -1024,7 +1027,7 @@ class OBJexport8:
             self.file.write("%s####_no_alpha\n" % self.anim.ins())
 
         # Turn Ons
-        if self.group!=group:
+        if self.group!=group and group:
             self.file.write("%s####_group\t%s\n" %(self.anim.ins(),group.name))
             
         if hard and self.hard!=hard:
