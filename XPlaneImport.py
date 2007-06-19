@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.39"
+__version__ = "2.40"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -194,6 +194,10 @@ Limitations:<br>
 #
 # 2007-06-12 v2.38
 #  - Fixes for new parser.
+#
+# 2007-06-19 v2.40
+#  - Imported objects are selected.
+#  - Fix for animated lights.
 #
 
 import sys
@@ -414,8 +418,8 @@ class MyMesh:
         # must be after object linked to scene
         mesh.sel=True
         mesh.remDoubles(Vertex.LIMIT)
-        mesh.sel=False
         mesh.calcNormals()
+        if not subroutine: ob.select(1)
         return ob
 
 
@@ -1298,8 +1302,10 @@ class OBJimport:
                 boneloc=Vertex(self.arm.bones[self.bones[-1]].head)
             else:	# Bone can be None if no_ref
                 boneloc=Vertex(0,0,0)
-            loc=Vertex(self.armob.loc)+boneloc-self.off[-1]+v
-            ob.setLocation(loc.x, loc.y, loc.z)
+            centre=v+boneloc-self.off[-1]
+            ob.setLocation(self.armob.LocX+centre.x,
+                           self.armob.LocY+centre.y,
+                           self.armob.LocZ+centre.z)
             self.armob.makeParent([ob])
             if 'makeParentBone' in dir(self.armob):	# new in 2.43
                 self.armob.makeParentBone([ob],self.bones[-1])
@@ -1651,6 +1657,7 @@ def file_callback (filename):
 # main routine
 #------------------------------------------------------------------------
 try:
+    for o in Blender.Scene.GetCurrent().objects: o.select(0)
     datarefs=getDatarefs()
 except IOError, e:
     Window.DrawProgressBar(0, 'ERROR')
