@@ -212,7 +212,18 @@ class NLIGHT:
         return "LIGHT_NAMED\t%s\t%s%s" % (self.n, '\t'*(2-len(self.n)/8), self.v)
 
     def equals (self, b):
-        return (self.v.equals(b.v) and self.n==b.n)
+        return (isinstance(b,NLIGHT) and self.v.equals(b.v) and self.n==b.n)
+
+class CLIGHT:
+    def __init__(self, d, r):
+        self.d=d
+        self.r=r	# dataref
+
+    def __str__ (self):
+        return "LIGHT_CUSTOM\t%s\t%s" % (self.d, self.r)
+
+    def equals (self, b):
+        return (isinstance(b,CLIGHT) and self.v.equals(b.v) and self.n==b.n)
 
 class SMOKE:
     def __init__(self, v, n, p):
@@ -224,7 +235,7 @@ class SMOKE:
         return "%s\t%s\t%4.2f" % (self.n, self.v, self.p)
 
     def equals (self, b):
-        return (self.v.equals(b.v) and self.n==b.n and self.p==b.p)
+        return (isinstance(b,SMOKE) and self.v.equals(b.v) and self.n==b.n and self.p==b.p)
 
 
 class Prim:

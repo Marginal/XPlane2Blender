@@ -1,1 +1,2 @@
-import VTOL/F35b
+custom lights (quad w/ texture co-ords + material sliders or properties)
+detect misc objects? (no panel texture)
