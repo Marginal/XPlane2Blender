@@ -1,7 +1,9 @@
 #!/bin/bash
 # Installation script for MacOS X
+
 clear
 echo Installing Blender scripts . . .
+echo
 
 cd "`dirname "$0"`"
 IFS="
@@ -18,8 +20,8 @@ else
     LS=echo;
 fi
 
-# Candidate application locations
-DIRS=$($LS -dump | awk 'match($0, "/.*/.*[B|b]lender.*\.app") { print substr($0, RSTART) "/Contents/MacOS/.blender/scripts" }' | sort -u)
+# Candidate application locations (but completely ignore Trash)
+DIRS=$($LS -dump | awk '!match($0, "\.Trash") && match($0, "/.*/.*[B|b]lender.*\.app") { print substr($0, RSTART) "/Contents/MacOS/.blender/scripts" }' | sort -u)
 
 # Remove old files from everywhere
 FILES="../Bpymenus
@@ -49,8 +51,8 @@ DataRefs.txt"
 for I in "$HOME/.blender/scripts" $DIRS; do
     for J in $FILES; do
         if [ -e "$I/$J" ]; then
-	    rm "$I/$J";
-	fi
+            rm -f "$I/$J";
+        fi
     done;
 done
 
@@ -75,24 +77,45 @@ fi
 # Copy new
 DONE=
 for I in $DIRS; do
-    if [ -d "$I" ] && [ -w "$I" ]; then
-	DIROK=1
-	cp -f $FILES "$I" 2>/dev/null
-	for J in $FILES; do
-	    if ! [ -r "$I/$J" ]; then DIROK=; fi;
-	done
-	if [ "$DIROK" ]; then
-	    DONE="$DONE
+    if [ -d "$I" ]; then
+        if [ -w "$I" ]; then
+            DIROK=1
+            cp -f $FILES "$I" 2>/dev/null
+            for J in $FILES; do
+                if ! [ -r "$I/$J" ]; then DIROK=; fi;
+            done
+            if [ "$DIROK" ]; then
+                DONE="$DONE
   $I";
-	fi;
+            fi;
+        else
+            echo "Can't install scripts in folder:
+  $I"
+            if ! [ -O "$I" ]; then
+                echo this folder is owned by `ls -ld "$I"|awk '{print $3}'`.;
+            fi
+            echo;
+        fi;
     fi;
 done
 
-echo
 if [ "$DONE" ]; then
-    echo "Installed scripts in folder:"
-    echo "$DONE"
-else
-    echo Failed to find the correct location for the scripts !!!
+    echo "Installed scripts in folder(s):$DONE"
+    echo
+    exit 0;
 fi
+
+for I in $DIRS; do
+    if [[ -d "$I" && "$I" != /Volumes/* ]]; then
+	echo Failed to find the correct location for the scripts !!!
+	echo
+	exit 1;
+    fi;
+done
+
+# User only has Blender on disk images
+echo Failed !!!
+echo Install the Blender application, eg by copying it from the disk image
+echo to your Applications folder or Desktop, then run this installer again.
 echo
+exit 1
