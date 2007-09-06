@@ -483,11 +483,14 @@ class OBJexport8:
                         counts.append(len(index))
                         indices.extend(index)
 
-            # Lights
-            for o in range (nobj-1,-1,-1):
-                object=theObjects[o]
-                if (object.getType()=='Lamp' and object.Layer&layer):
-                    self.sortLamp(object)
+                        # Lights
+                        offsets.append(len(self.lights))
+                        if passhi==Prim.LIGHTS:
+                            for o in range (nobj-1,-1,-1):
+                                object=theObjects[o]
+                                if (object.getType()=='Lamp' and object.Layer&layer and self.findgroup(object)==group):
+                                    self.sortLamp(object)
+                        counts.append(len(self.lights)-offsets[-1])
 
         self.nprim=len(self.vt)+len(self.vline)+len(self.lights)+len(self.nlights)
         self.file.write("POINT_COUNTS\t%d %d %d %d\n\n" % (len(self.vt),
@@ -552,20 +555,11 @@ class OBJexport8:
                         n=n+1
                         
                         # Lights
-                        i=0
-                        while i<len(self.lights):
-                            if self.lights[i].match(layer, group, passhi, False, DEFMAT, anim):
-                                self.updateAttr(layer, group, anim)
-                                for j in range(i+1, len(self.lights)):
-                                    if not self.lights[j].match(layer, group, passhi, False, DEFMAT, anim):
-                                        break
-                                else:
-                                    j=len(self.lights)	# point past last match
-                                self.file.write("%sLIGHTS\t%d %d\n" %
-                                                (anim.ins(), i, j-i))
-                                i=j
-                            else:
-                                i=i+1
+                        if counts[n]:
+                            self.updateAttr(layer, group, anim)
+                            self.file.write("%sLIGHTS\t%d %d\n" %
+                                            (anim.ins(),offsets[n],counts[n]))
+                        n=n+1
     
                         # Named lights
                         for i in range(len(self.nlights)):
