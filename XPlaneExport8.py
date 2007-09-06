@@ -144,6 +144,7 @@ Limitations:<br>
 #  - Animations
 #  - PANEL - most expensive
 #  - ALPHA - must be last for correctness. Renderer will merge with previous.
+#  - Lines and lights
 #  - Group
 #  - Layer
 #
@@ -252,13 +253,16 @@ class Prim:
     BUCKET1=TWOSIDE|NPOLY
     # anim comes here
     BUCKET2=PANEL|ALPHA
+    # lines and lights drawn here
+    LINES  =PANEL|ALPHA
+    LIGHTS =PANEL|ALPHA
     # group comes here
     # layer comes here
 
     def __init__ (self, layer, group, flags, surface, mat, anim):
         self.i=[]	# indices for lines & tris, VLIGHT/NLIGHT for lights
         self.anim=anim
-        self.flags=flags
+        self.flags=flags	# bitmask
         self.surface=surface	# tris: one of Prim.SURFACES
         self.mat=mat		# tris: (diffuse, emission, shiny)
         self.group=group
@@ -300,7 +304,7 @@ class OBJexport8:
         self.log=[]
 
         # attributes controlling export
-        self.hard=False
+        self.surface=False
         self.mat=DEFMAT
         self.twoside=False
         self.npoly=True
@@ -451,16 +455,6 @@ class OBJexport8:
                     for anim in self.anims:
                         tris3=[tri for tri in tris2 if tri.anim.equals(anim)]
 
-                        # Lines
-                        index=[]
-                        offsets.append(len(indices))
-                        for line in self.lines:
-                            if line.match(layer, group, passhi, False, DEFMAT, anim):
-                                index.append(line.i[0])
-                                index.append(line.i[1])
-                        counts.append(len(index))
-                        indices.extend(index)
-    
                         # Tris
                         for passno in range(passhi,passhi+Prim.BUCKET1+1):
                             tris4=[tri for tri in tris3 if tri.flags==passno]
@@ -481,6 +475,16 @@ class OBJexport8:
                                     counts.append(len(index))
                                     indices.extend(index)
 
+                        # Lines
+                        index=[]
+                        offsets.append(len(indices))
+                        for line in self.lines:
+                            if line.match(layer, group, passhi, False, DEFMAT, anim):
+                                index.append(line.i[0])
+                                index.append(line.i[1])
+                        counts.append(len(index))
+                        indices.extend(index)
+    
         self.nprim=len(self.vt)+len(self.vline)+len(self.lights)+len(self.nlights)
         self.file.write("POINT_COUNTS\t%d %d %d %d\n\n" % (len(self.vt),
                                                            len(self.vline),
@@ -522,9 +526,23 @@ class OBJexport8:
             for group in [None]+self.groups:
                 for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
                     for anim in self.anims:
+                        # Tris
+                        for passno in range(passhi,passhi+Prim.BUCKET1+1):
+                            for mat in self.mats:
+                                for surface in surfaces:
+                                    if counts[n]:
+                                        self.updateAttr(layer, group, anim,
+                                                        surface, mat,
+                                                        passno&Prim.TWOSIDE,
+                                                        passno&Prim.NPOLY,
+                                                        passno&Prim.PANEL,
+                                                        passno&Prim.ALPHA)
+                                        self.file.write("%sTRIS\t%d %d\n" %
+                                                        (anim.ins(), offsets[n],counts[n]))
+                                    n=n+1
                         # Lines
                         if counts[n]:
-                            self.updateAttr(0, DEFMAT, 0, 1, 0, 0, layer, group, anim)
+                            self.updateAttr(layer, group, anim)
                             self.file.write("%sLINES\t%d %d\n" %
                                             (anim.ins(),offsets[n],counts[n]))
                         n=n+1
@@ -533,7 +551,7 @@ class OBJexport8:
                         i=0
                         while i<len(self.lights):
                             if self.lights[i].match(layer, group, passhi, False, DEFMAT, anim):
-                                self.updateAttr(0, DEFMAT, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, group, anim)
+                                self.updateAttr(layer, group, anim)
                                 for j in range(i+1, len(self.lights)):
                                     if not self.lights[j].match(layer, group, passhi, False, DEFMAT, anim):
                                         break
@@ -548,25 +566,9 @@ class OBJexport8:
                         # Named lights
                         for i in range(len(self.nlights)):
                             if self.nlights[i].match(layer, group, passhi, False, DEFMAT, anim):
-                                self.updateAttr(0, DEFMAT, 0, 1, passhi&Prim.PANEL, passhi&Prim.ALPHA, layer, group, anim)
+                                self.updateAttr(layer, group, anim)
                                 self.file.write("%s%s\n" %
                                                 (anim.ins(), self.nlights[i].i))
-                            
-                        # Tris
-                        for passno in range(passhi,passhi+Prim.BUCKET1+1):
-                            for mat in self.mats:
-                                for surface in surfaces:
-                                    if counts[n]:
-                                        self.updateAttr(surface,
-                                                        mat,
-                                                        passno&Prim.TWOSIDE,
-                                                        passno&Prim.NPOLY,
-                                                        passno&Prim.PANEL,
-                                                        passno&Prim.ALPHA,
-                                                        layer, group, anim)
-                                        self.file.write("%sTRIS\t%d %d\n" %
-                                                        (anim.ins(), offsets[n],counts[n]))
-                                    n=n+1
 
         # Close animations in final layer
         while not self.anim.equals(Anim(self, None)):
@@ -583,7 +585,7 @@ class OBJexport8:
     def sortLamp(self, object):
 
         (anim, mm)=self.makeAnim(object)
-        light=Prim(object.Layer, self.findgroup(object), Prim.ALPHA, False, DEFMAT, anim)
+        light=Prim(object.Layer, self.findgroup(object), Prim.LIGHTS, False, DEFMAT, anim)
         
         lamp=object.getData()
         name=object.name
@@ -638,7 +640,7 @@ class OBJexport8:
             print 'Info:\tExporting Line "%s"' % object.name
 
         (anim, mm)=self.makeAnim(object)
-        line=Prim(object.Layer, self.findgroup(object), 0, False, DEFMAT, anim)
+        line=Prim(object.Layer, self.findgroup(object), Prim.LINES, False, DEFMAT, anim)
 
         mesh=object.getData()
         face=mesh.faces[0]
@@ -979,19 +981,22 @@ class OBJexport8:
 
 
     #------------------------------------------------------------------------
-    def updateAttr(self, hard, mat, twoside, npoly, panel, alpha, layer, group, anim):
+    def updateAttr(self, layer, group, anim, surface=None, mat=None, twoside=None, npoly=None, panel=None, alpha=None):
+        # Write in sort order for readability
 
         if layer!=self.layer:
             # Reset all attributes
             while not self.anim.equals(Anim(self, None)):
                 self.anim=self.anim.anim
                 self.file.write("%sANIM_end\n" % self.anim.ins())
-            self.hard=False
+
+            self.surface=False
             self.mat=DEFMAT
             self.twoside=False
             self.npoly=True
             self.panel=False
             self.alpha=False
+            self.group=None
                 
             if self.layermask==1:
                 self.file.write("\n")
@@ -1019,60 +1024,24 @@ class OBJexport8:
         else:
             newa=olda=[]
     
-        # For readability, write turn-offs before turn-ons
-
-        if self.hard and not hard:
-            self.file.write("%sATTR_no_hard\n" % self.anim.ins())
-
-        if self.twoside and not twoside:
-            self.file.write("%sATTR_cull\n" % self.anim.ins())
-
-        if self.npoly and not npoly:
-            self.file.write("%sATTR_poly_os\t2\n" % self.anim.ins())
-
-        if self.panel and not panel:
-            self.file.write("%sATTR_no_cockpit\n" % self.anim.ins())
-
-        # alpha is implicit - doesn't appear in output file
-        if self.alpha and not alpha:
-            self.file.write("%s####_no_alpha\n" % self.anim.ins())
-
-        # Turn Ons
-        if self.group!=group and group:
+        if self.group!=group:
             self.file.write("%s####_group\t%s\n" %(self.anim.ins(),group.name))
-            
-        if hard and self.hard!=hard:
-            if hard==True:
-                self.file.write("%sATTR_hard\n" % self.anim.ins())
-            else:
-                self.file.write("%sATTR_hard\t%s\n" % (self.anim.ins(), hard))
-
-        if self.mat!=mat and mat==DEFMAT:
-            self.file.write("%sATTR_reset\n" % self.anim.ins())
-        else:
-            # diffuse, emission, shiny
-            if self.mat[0]!=mat[0]:
-                self.file.write("%sATTR_diffuse_rgb\t%6.3f %6.3f %6.3f\n" % (
-                    self.anim.ins(), mat[0][0], mat[0][1], mat[0][2]))
-            if self.mat[1]!=mat[1]:
-                self.file.write("%sATTR_emission_rgb\t%6.3f %6.3f %6.3f\n" % (
-                    self.anim.ins(), mat[1][0], mat[1][1], mat[1][2]))
-            if self.mat[2]!=mat[2]:
-                self.file.write("%sATTR_shiny_rat\t%6.3f\n" % (
-                    self.anim.ins(), mat[2]))
-            
-        if twoside and not self.twoside:
-            self.file.write("%sATTR_no_cull\n" % self.anim.ins())
-
-        if npoly and not self.npoly:
-            self.file.write("%sATTR_poly_os\t0\n" % self.anim.ins())
-
-        if panel and not self.panel:
-            self.file.write("%sATTR_cockpit\n" % self.anim.ins())
+            self.group=group
 
         # alpha is implicit - doesn't appear in output file
-        if alpha and not self.alpha:
-            self.file.write("%s####_alpha\n" % self.anim.ins())
+        if alpha!=None:
+            if self.alpha and not alpha:
+                self.file.write("%s####_no_alpha\n" % self.anim.ins())
+            elif alpha and not self.alpha:
+                self.file.write("%s####_alpha\n" % self.anim.ins())
+            self.alpha=alpha
+
+        if panel!=None:
+            if self.panel and not panel:
+                self.file.write("%sATTR_no_cockpit\n" % self.anim.ins())
+            elif panel and not self.panel:
+                self.file.write("%sATTR_cockpit\n" % self.anim.ins())
+            self.panel=panel
 
         for i in newa[len(olda):]:
             self.file.write("%sANIM_begin\n" % self.anim.ins())
@@ -1105,13 +1074,43 @@ class OBJexport8:
                     0, self.anim.a[1],
                     self.anim.v[0], self.anim.v[1], self.anim.dataref))
 
-        self.hard=hard
-        self.mat=mat
-        self.twoside=twoside
-        self.npoly=npoly
-        self.panel=panel
-        self.alpha=alpha
-        self.group=group
+        if npoly!=None:
+            if self.npoly and not npoly:
+                self.file.write("%sATTR_poly_os\t2\n" % self.anim.ins())
+            elif npoly and not self.npoly:
+                self.file.write("%sATTR_poly_os\t0\n" % self.anim.ins())
+            self.npoly=npoly
+
+        if twoside!=None:
+            if self.twoside and not twoside:
+                self.file.write("%sATTR_cull\n" % self.anim.ins())
+            elif twoside and not self.twoside:
+                self.file.write("%sATTR_no_cull\n" % self.anim.ins())
+            self.twoside=twoside
+
+        if mat!=None:
+            if self.mat!=mat and mat==DEFMAT:
+                self.file.write("%sATTR_reset\n" % self.anim.ins())
+            else:
+                # diffuse, emission, shiny
+                if self.mat[0]!=mat[0]:
+                    self.file.write("%sATTR_diffuse_rgb\t%6.3f %6.3f %6.3f\n" % (self.anim.ins(), mat[0][0], mat[0][1], mat[0][2]))
+                if self.mat[1]!=mat[1]:
+                    self.file.write("%sATTR_emission_rgb\t%6.3f %6.3f %6.3f\n" % (self.anim.ins(), mat[1][0], mat[1][1], mat[1][2]))
+                if self.mat[2]!=mat[2]:
+                    self.file.write("%sATTR_shiny_rat\t%6.3f\n" % (self.anim.ins(), mat[2]))
+            self.mat=mat
+
+        if surface!=None:
+            if self.surface and not surface:
+                self.file.write("%sATTR_no_hard\n" % self.anim.ins())
+            elif surface and self.surface!=surface:
+                if surface==True:
+                    self.file.write("%sATTR_hard\n" % self.anim.ins())
+                else:
+                    self.file.write("%sATTR_hard\t%s\n" % (self.anim.ins(), surface))
+            self.surface=surface
+
 
 #------------------------------------------------------------------------
 class Anim:
