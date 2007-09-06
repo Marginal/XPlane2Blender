@@ -2475,10 +2475,10 @@ xflt, "ASTAB_AShi_beta_k",
 xflt, "ASTAB_AShi_betadot_k",
 xflt, "ASTAB_AShi_max_phidot",
 xflt, "ASTAB_AShi_phidot_k",
-xchr, "WEARONS_wpn_name[24][500]",
-xflt, "WEARONS_x_wpn_att[24]",
-xflt, "WEARONS_y_wpn_att[24]",
-xflt, "WEARONS_z_wpn_att[24]",
+xchr, "WEAPONS_wpn_name[24][500]",
+xflt, "WEAPONS_x_wpn_att[24]",
+xflt, "WEAPONS_y_wpn_att[24]",
+xflt, "WEAPONS_z_wpn_att[24]",
 xflt, "AUTO_est_Vs_msc",
 xflt, "AUTO_size_x",
 xflt, "AUTO_size_z",
@@ -3693,7 +3693,7 @@ class ACF:
             acffile.close()
             raise ParseError("Can't read %4.2f format planes!" % (self.HEADER_version/100.0))
         if dmp:
-            dmp.write("%6x:t\HEADER_version:\t%s\n" % (1,self.HEADER_version))
+            dmp.write("%6x:\tHEADER_version:\t%s\n" % (1,self.HEADER_version))
 
         self.parse(acffile, dmp, defs, fmt, prefix, prg)
         if dmp: dmp.close()
@@ -3945,11 +3945,11 @@ class v7gear:
 
 class v7watt:
     def __init__(self, acf, v7):
-        self.watt_name=acf.WEARONS_wpn_name[v7]
+        self.watt_name=acf.WEAPONS_wpn_name[v7]
         self.watt_con=0
-        self.watt_x=acf.WEARONS_x_wpn_att[v7]
-        self.watt_y=acf.WEARONS_y_wpn_att[v7]
-        self.watt_z=acf.WEARONS_z_wpn_att[v7]
+        self.watt_x=acf.WEAPONS_x_wpn_att[v7]
+        self.watt_y=acf.WEAPONS_y_wpn_att[v7]
+        self.watt_z=acf.WEAPONS_z_wpn_att[v7]
         self.watt_psi=acf.WEAPONS_psi_wpn_att[v7]
         self.watt_the=acf.WEAPONS_the_wpn_att[v7]
         self.watt_phi=acf.WEAPONS_roll_wpn_att[v7]
