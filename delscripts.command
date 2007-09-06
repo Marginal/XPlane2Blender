@@ -1,8 +1,17 @@
 #!/bin/bash
 
-if [ -e "$HOME/.blender/scripts" ]; then
-    echo "Deleted scripts folder"
-    rm -rf "$HOME/.blender/scripts";
+clear
+echo
+
+FOO=~/.blender/scripts
+
+if [ -e "$FOO" ]; then
+    rm -rf "$FOO"
+    if [ -e "$FOO" ]; then
+        echo "Couldn't delete ~/.blender/scripts folder !!!";
+    else
+        echo "Deleted ~/.blender/scripts folder.";
+    fi;
 else
-    echo "Didn't find scripts folder";
+    echo "~/.blender/scripts doesn't exist.";
 fi
