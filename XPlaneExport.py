@@ -199,6 +199,9 @@
 #  - Support for mesh modifiers.
 #  - Info and warnings reported in popup menu - selects objects referred to.
 #
+# 2007-09-06 v2.41
+#  - Tweaked ordering: Lines and Lights after tris. npoly has highest priority.
+#
 
 import sys
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
@@ -458,16 +461,16 @@ class MyMesh:
 #
 #  1. Output header and texture file name.
 #  2. For each layer:
-#     3. Output lights and lines in the order that they're found.
-#        Build up list of meshes, each mesh listing faces and vertices.
+#     3. Build up list of meshes, each mesh listing faces and vertices.
 #     4. Output mesh faces in all combinations of the following attributes:
 #        - HARD
 #        - TWOSIDE
 #        - FLAT
-#	 - NPOLY - negative so polygon offsets come first
 #        - ALPHA
 #        - PANEL
+#        - NPOLY - negative so polygon offsets come first
 #        For each attribute, sort on polygon type.
+#     5. Output lights and lines in the order that they're found.
 #
 
 #------------------------------------------------------------------------
@@ -578,14 +581,14 @@ class OBJexport7:
             npasses=Face.BUCKET+1
         else:
             npasses=1
-        objlen=objlen*(1+npasses)
+        objlen=objlen*(2+npasses)
 
         for layer in lseq:
             meshes=[]
 
             self.updateLayer(layer)
 
-            # 1st pass: Output Lamps and Lines, build meshes
+            # 1st pass: Build meshes
             for o in range (len(theObjects)-1,-1,-1):
                 object=theObjects[o]
                 if not object.Layer&layer:
@@ -597,13 +600,10 @@ class OBJexport7:
                 nobj=nobj+1
 
                 objType=object.getType()
-                if objType == "Mesh":
-                    if isLine(object, self.linewidth):
-                        self.writeLine(object)
-                    else:
-                        meshes.append(self.sortMesh(object, layer))
+                if objType == "Mesh" and not isLine(object, self.linewidth):
+                    meshes.append(self.sortMesh(object, layer))
                 elif objType == "Lamp":
-                    self.writeLamp(object)
+                    pass	# Handled later
                 elif objType == 'Empty':
                     for prop in object.getAllProperties():
                         if prop.type in ['INT', 'FLOAT'] and prop.name.startswith('group '):
@@ -611,7 +611,6 @@ class OBJexport7:
                 elif objType not in ['Camera','Lattice']:
                     print 'Warn:\tIgnoring %s "%s"' % (objType.lower(), object.name)
                     self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name), [object]))
-                    
 
             # Hack! Find a kosher panel texture and put it last
             if self.havepanel:
@@ -653,7 +652,25 @@ class OBJexport7:
                 for (strip, firstvertex, name) in strips:
                     if len(strip)==1 and len(strip[0].v)==4:
                         self.writeStrip(strip, firstvertex, name)
-                    
+
+            # last pass: Output Lines and Lamps
+            for o in range (len(theObjects)-1,-1,-1):
+                object=theObjects[o]
+                if not object.Layer&layer:
+                    continue
+                
+                Window.DrawProgressBar(float(nobj)/objlen,
+                                       "Exporting %s%% ..." % (
+                    nobj*100/objlen))
+                nobj=nobj+1
+
+                objType=object.getType()
+                if objType == "Mesh" and isLine(object, self.linewidth):
+                    self.writeLine(object)
+                elif objType == "Lamp":
+                    self.writeLamp(object)
+
+
         self.file.write("end\t\t\t// eof\n\n")
         self.file.write("// Built with Blender %4.2f. Exported with XPlane2Blender %s.\n" % (float(Blender.Get('version'))/100, self.version))
 
