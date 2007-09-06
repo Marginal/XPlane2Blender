@@ -128,6 +128,9 @@ Limitations:<br>
 # 2007-06-19 v2.40
 #  - Fix for models with groups and multiple LODs.
 #
+# 2007-09-06 v2.41
+#  - Tweaked ordering: Lines and Lights after tris. npoly has highest priority.
+#
 
 
 #
@@ -138,12 +141,13 @@ Limitations:<br>
 # So we have to sort on export to ensure alpha comes after non-alpha. We also
 # sort to minimise attribute state changes, in rough order of expense:
 #  - Hard - should be first. Renderer merges hard polys with similar non-hard.
-#  - Materials
 #  - TWOSIDE
-#  - NPOLY - negative so polygon offsets come first
+#  - Materials
 #  - Animations
-#  - PANEL - most expensive
+#  - PANEL - most expensive, put as late as we can
 #  - ALPHA - must be last for correctness. Renderer will merge with previous.
+#  - NPOLY - negative so polygon offsets come first. Assumed to be on ground
+#            so no ordering issues, so can be higher priority than ALPHA.
 #  - Lines and lights
 #  - Group
 #  - Layer
@@ -242,20 +246,20 @@ class SMOKE:
 class Prim:
     # Flags in sort order
     TWOSIDE=1
-    NPOLY=2
-    PANEL=4	# Should be 2nd last
-    ALPHA=8	# Must be last
+    PANEL=2	# Should be 2nd last
+    ALPHA=4	# Must be last
+    NPOLY=8
 
     SURFACES=[False, True, 'water', 'concrete', 'asphalt', 'grass', 'dirt', 'gravel', 'lakebed', 'snow', 'shoulder', 'blastpad']	# default is first
 
     # surface comes here
+    BUCKET1=TWOSIDE
     # material comes here
-    BUCKET1=TWOSIDE|NPOLY
     # anim comes here
-    BUCKET2=PANEL|ALPHA
+    BUCKET2=PANEL|ALPHA|NPOLY
     # lines and lights drawn here
-    LINES  =PANEL|ALPHA
-    LIGHTS =PANEL|ALPHA
+    LINES  =BUCKET2
+    LIGHTS =BUCKET2
     # group comes here
     # layer comes here
 
@@ -430,12 +434,6 @@ class OBJexport8:
                 print 'Warn:\tIgnoring %s "%s"' % (objType.lower(),object.name)
                 self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name),[object]))
 
-        # Lights
-        for o in range (len(theObjects)-1,-1,-1):
-            object=theObjects[o]
-            if (object.getType()=='Lamp' and object.Layer&self.layermask):
-                self.sortLamp(object)
-
         # Build indices
         indices=[]
         offsets=[]
@@ -448,7 +446,7 @@ class OBJexport8:
             tris1=[tri for tri in self.tris if tri.layer&layer]
             for group in [None]+self.groups:
                 tris2=[tri for tri in tris1 if tri.group==group]
-                for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
+                for passhi in range(0, Prim.BUCKET2+1, Prim.BUCKET1+1):
                     Window.DrawProgressBar(0.4+progress/(10*len(lseq)),
                                            "Exporting %d%% ..." % (40+progress*10/len(lseq)))
                     progress+=1
@@ -456,10 +454,10 @@ class OBJexport8:
                         tris3=[tri for tri in tris2 if tri.anim.equals(anim)]
 
                         # Tris
-                        for passno in range(passhi,passhi+Prim.BUCKET1+1):
-                            tris4=[tri for tri in tris3 if tri.flags==passno]
-                            for mat in self.mats:
-                                tris5=[tri for tri in tris4 if tri.mat==mat]
+                        for mat in self.mats:
+                            tris4=[tri for tri in tris3 if tri.mat==mat]
+                            for passno in range(passhi,passhi+Prim.BUCKET1+1):
+                                tris5=[tri for tri in tris4 if tri.flags==passno]
                                 for surface in surfaces:
                                     index=[]
                                     offsets.append(len(indices))
@@ -484,7 +482,13 @@ class OBJexport8:
                                 index.append(line.i[1])
                         counts.append(len(index))
                         indices.extend(index)
-    
+
+            # Lights
+            for o in range (nobj-1,-1,-1):
+                object=theObjects[o]
+                if (object.getType()=='Lamp' and object.Layer&layer):
+                    self.sortLamp(object)
+
         self.nprim=len(self.vt)+len(self.vline)+len(self.lights)+len(self.nlights)
         self.file.write("POINT_COUNTS\t%d %d %d %d\n\n" % (len(self.vt),
                                                            len(self.vline),
@@ -524,11 +528,11 @@ class OBJexport8:
         n=0
         for layer in lseq:
             for group in [None]+self.groups:
-                for passhi in [0,Prim.PANEL,Prim.ALPHA,Prim.PANEL|Prim.ALPHA]:
+                for passhi in range(0, Prim.BUCKET2+1, Prim.BUCKET1+1):
                     for anim in self.anims:
                         # Tris
-                        for passno in range(passhi,passhi+Prim.BUCKET1+1):
-                            for mat in self.mats:
+                        for mat in self.mats:
+                            for passno in range(passhi,passhi+Prim.BUCKET1+1):
                                 for surface in surfaces:
                                     if counts[n]:
                                         self.updateAttr(layer, group, anim,
@@ -1028,6 +1032,13 @@ class OBJexport8:
             self.file.write("%s####_group\t%s\n" %(self.anim.ins(),group.name))
             self.group=group
 
+        if npoly!=None:
+            if self.npoly and not npoly:
+                self.file.write("%sATTR_poly_os\t2\n" % self.anim.ins())
+            elif npoly and not self.npoly:
+                self.file.write("%sATTR_poly_os\t0\n" % self.anim.ins())
+            self.npoly=npoly
+
         # alpha is implicit - doesn't appear in output file
         if alpha!=None:
             if self.alpha and not alpha:
@@ -1073,13 +1084,6 @@ class OBJexport8:
                     self.anim.ins(), self.anim.r[1],
                     0, self.anim.a[1],
                     self.anim.v[0], self.anim.v[1], self.anim.dataref))
-
-        if npoly!=None:
-            if self.npoly and not npoly:
-                self.file.write("%sATTR_poly_os\t2\n" % self.anim.ins())
-            elif npoly and not self.npoly:
-                self.file.write("%sATTR_poly_os\t0\n" % self.anim.ins())
-            self.npoly=npoly
 
         if twoside!=None:
             if self.twoside and not twoside:
