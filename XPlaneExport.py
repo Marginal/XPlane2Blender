@@ -412,7 +412,7 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
 
     # just return bare filename
     print "Warn:\tCan't guess path for texture file. Please edit the .obj file to fix."
-    self.log.append(("Can't guess path for texture file. Please edit the .obj file to fix", []))
+    expobj.log.append(("Can't guess path for texture file. Please edit the .obj file to fix", []))
     return basename(texture)
 
 #------------------------------------------------------------------------
