@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.41"
+__version__ = "2.42"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -198,6 +198,9 @@ Limitations:<br>
 # 2007-06-19 v2.40
 #  - Imported objects are selected.
 #  - Fix for animated lights.
+#
+# 2006-09-17 v2.42
+#  - Detect mirrored flat faces, and don't remove doubles from them.
 #
 
 import sys
@@ -415,10 +418,31 @@ class MyMesh:
             ob.Layer=(self.layers&MyMesh.LAYERMASK)
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         
-        # must be after object linked to scene
-        mesh.sel=True
+        # following must be after object linked to scene
+        
+        # do flat faces separately
+        norms=[]
+        for face in mesh.faces:
+            if not face.smooth and face.no not in norms:
+                norms.append(face.no)
+        for norm in norms:
+            mesh.sel=False
+            for face in mesh.faces:
+                if not face.smooth and face.no==norm:
+                    face.sel=True
+            mesh.remDoubles(Vertex.LIMIT)
+
+        # smooth faces
+        mesh.sel=False
+        for face in mesh.faces:
+            if face.smooth:
+                face.sel=True
         mesh.remDoubles(Vertex.LIMIT)
-        mesh.calcNormals()
+
+        mesh.sel=True
+        mesh.calcNormals()	# calculate vertex normals
+        mesh.sel=False
+
         if not subroutine: ob.select(1)
         return ob
 
@@ -470,9 +494,6 @@ class OBJimport:
         self.nprim=0		# Number of X-Plane objects imported
         self.log=[]
         
-        # random stuff
-        self.whitespace=[' ','\t','\n']
-
         # flags controlling import
         self.layer=0
         self.lod=None		# list of lod limits

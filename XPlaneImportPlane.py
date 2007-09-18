@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.41"
+__version__ = "2.42"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -136,6 +136,9 @@ Limitations:<br>
 #
 # 2006-03-18 v2.36
 #  - Fixes for importing planes on Mac & Linux.
+#
+# 2006-09-17 v2.42
+#  - Landing gear and flat wings imported as flat.
 #
 
 import sys
@@ -644,8 +647,8 @@ class ACFimport:
 
         if iscrappy:
             # Not worth toggling culling just for this, so repeat the face
-            self.addFace(mesh, rv, ruv, image)
-            self.addFace(mesh, lv, luv, image)
+            self.addFace(mesh, rv, ruv, image, False)
+            self.addFace(mesh, lv, luv, image, False)
         else:
             self.addFacePart(mesh, rv, ruv, 0,        chord1,   rwidth, twidth,
                              image)
@@ -1524,13 +1527,13 @@ class ACFimport:
                      [UV(door.inn_s1,door.inn_t2),
                       UV(door.inn_s1,door.inn_t1),
                       UV(door.inn_s2,door.inn_t1),
-                      UV(door.inn_s2,door.inn_t2)], self.image)
+                      UV(door.inn_s2,door.inn_t2)], self.image, False)
         v.reverse()
         self.addFace(mesh, v,
                      [UV(door.out_s2,door.out_t2),
                       UV(door.out_s2,door.out_t1),
                       UV(door.out_s1,door.out_t1),
-                      UV(door.out_s1,door.out_t2)], self.image)
+                      UV(door.out_s1,door.out_t2)], self.image, False)
         self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
 
@@ -1705,10 +1708,10 @@ class ACFimport:
         face=NMesh.Face()
         face.mode |= NMesh.FaceModes.TEX|NMesh.FaceModes.DYNAMIC
         face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TILES)
-        #if dbl:
-        #    face.mode |= NMesh.FaceModes.TWOSIDE
-        #face.transp=NMesh.FaceTranspModes.ALPHA
-        face.smooth=1
+        if remdbl:
+            face.smooth=1
+        else:
+            face.smooth=0
         
         for rv in v:
             for nmv in mesh.verts:
