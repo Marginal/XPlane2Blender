@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.42"
+__version__ = "2.43"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -334,6 +334,7 @@ class OBJexport8:
         self.tris=[]
         self.lines=[]
         self.lights=[]
+        self.vlights=[]
         self.nlights=[]		# named and custom lights
 
         self.animcands=[]	# indices into tris of candidates for reuse
@@ -420,8 +421,10 @@ class OBJexport8:
                     self.sortMesh(object)
             #elif objType in ['Curve','Surf']:
             #    self.sortMesh(object)
-            elif objType in ['Lamp', 'Armature']:
-                pass	# these dealt with separately
+            elif objType=='Lamp':
+                self.sortLamp(object)
+            elif objType=='Armature':
+                pass	# dealt with separately
             elif objType == 'Empty':
                 for prop in object.getAllProperties():
                     if prop.type in ['INT', 'FLOAT'] and prop.name.strip().startswith('group_'):
@@ -484,18 +487,17 @@ class OBJexport8:
                         indices.extend(index)
 
                         # Lights
-                        offsets.append(len(self.lights))
-                        if passhi==Prim.LIGHTS:
-                            for o in range (nobj-1,-1,-1):
-                                object=theObjects[o]
-                                if (object.getType()=='Lamp' and object.Layer&layer and self.findgroup(object)==group):
-                                    self.sortLamp(object)
-                        counts.append(len(self.lights)-offsets[-1])
+                        offsets.append(len(self.vlights))
+                        for light in self.lights:
+                            if light.match(layer, group, passhi, False, DEFMAT, anim):
+                                # ensure 1 LIGHTS statement
+                                self.vlights.append(light)
+                        counts.append(len(self.vlights)-offsets[-1])
 
-        self.nprim=len(self.vt)+len(self.vline)+len(self.lights)+len(self.nlights)
+        self.nprim=len(self.vt)+len(self.vline)+len(self.vlights)+len(self.nlights)
         self.file.write("POINT_COUNTS\t%d %d %d %d\n\n" % (len(self.vt),
                                                            len(self.vline),
-                                                           len(self.lights),
+                                                           len(self.vlights),
                                                            len(indices)))
         Window.DrawProgressBar(0.8, 'Exporting 80% ...')
         for vt in self.vt:
@@ -508,9 +510,9 @@ class OBJexport8:
         if self.vline:
             self.file.write("\n")
 
-        for light in self.lights:
+        for light in self.vlights:
             self.file.write("VLIGHT\t%s\n" % light.i)
-        if self.lights:
+        if self.vlights:
             self.file.write("\n")
 
         Window.DrawProgressBar(0.9, 'Exporting 90% ...')
