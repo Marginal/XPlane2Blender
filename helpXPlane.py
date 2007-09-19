@@ -8,7 +8,7 @@ Tooltip: 'XPlane2Blender manual'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.42"
+__version__ = "2.43"
 __bpydoc__ = """\
 This script opens the default web browser at the XPlane2Blender manual.
 """
