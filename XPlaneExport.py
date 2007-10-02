@@ -202,6 +202,9 @@
 # 2007-09-06 v2.41
 #  - Tweaked ordering: Lines and Lights after tris. npoly has highest priority.
 #
+# 2007-10-02 v2.44
+#  - Only correctly named files are treated as cockpit objects.
+#
 
 import sys
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
@@ -251,7 +254,8 @@ def checkLayers (expobj, theObjects):
 def getTexture (expobj, theObjects, iscsl, fileformat):
     texture=None
     multierr=[]
-    panelerr=False
+    panelerr=(fileformat==7 and expobj.iscockpit)
+    havepanel=False
     nobj=len(theObjects)
     texlist=[]
     layers=0
@@ -294,16 +298,12 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
                 #print object.getName()
                 for face in mesh.faces:
                     if (face.mode&Mesh.FaceModes.TEX) and face.image:
-                        if 'panel.' in face.image.name.lower():
-                            # Check that at least one panel texture is OK
+                        if expobj.iscockpit and 'panel.' in face.image.name.lower():
+                            havepanel=True
                             if len(face.v)==3 and fileformat==7:
                                 raise ExportError('Only quads can use the instrument panel texture,\n\tbut I found a tri using the panel texture in "%s"' % object.name, (object, mesh, [face]))
-                            if not expobj.havepanel:
-                                expobj.havepanel=True
-                                expobj.iscockpit=True
-                                expobj.layermask=1
-                                panelerr=(fileformat==7)
                             if panelerr:
+                                # Check that at least one panel texture is OK
                                 try:
                                     height=face.image.getSize()[1]
                                 except RuntimeError:
@@ -351,7 +351,7 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     if multierr:
         raise ExportError("The OBJ format supports one texture file, but you've used multiple texture files; see the Console for a list of the files", multierr)
                                 
-    if panelerr:
+    if havepanel and panelerr:
         raise ExportError("At least one face that uses the instrument panel texture must be within the top 768 lines of the panel texture")
 
     if not texture:
@@ -491,11 +491,10 @@ class OBJexport7:
         self.version=version
         self.iscsl=iscsl
         self.iscockpit=(not iscsl and (
-            "_cockpit.obj" in filename.lower() or
-            "_cockpit_inn.obj" in filename.lower() or
-            "_cockpit_out.obj" in filename.lower()))
+            filename.lower().endswith("_cockpit.obj") or
+            filename.lower().endswith("_cockpit_inn.obj") or
+            filename.lower().endswith("_cockpit_out.obj")))
         self.layermask=1
-        self.havepanel=False
         self.texture=None
         self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
@@ -522,9 +521,6 @@ class OBJexport7:
         Blender.Window.WaitCursor(1)
         Window.DrawProgressBar(0, "Examining textures")
         self.texture=getTexture(self, theObjects, self.iscsl, 7)
-        if self.havepanel:
-            self.iscockpit=True
-            self.layermask=1
 
         if self.iscockpit and self.iscsl:
             raise ExportError("Can't export a cockpit object as a CSL")
@@ -613,14 +609,14 @@ class OBJexport7:
                     self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name), [object]))
 
             # Hack! Find a kosher panel texture and put it last
-            if self.havepanel:
+            if self.iscockpit:
                 panelsorted=0
                 i=len(meshes)-1
-                while not panelsorted:
+                while i>=0 and not panelsorted:
                     if meshes[i].faces:
                         for j in range(len(meshes[i].faces)):
                             if meshes[i].faces[j].kosher:
-                                mesh=Mesh(meshes[i].name)
+                                mesh=MyMesh(meshes[i].name)
                                 mesh.faces.append(meshes[i].faces[j])
                                 meshes[i].faces[j]=0	# Remove original face
                                 meshes.append(mesh)
@@ -845,7 +841,7 @@ class OBJexport7:
                 if not f.smooth and not self.iscsl:
                     face.flags|=Face.FLAT
 
-                if mode&Mesh.FaceModes.TEX and f.image and f.image.name.lower().find("panel.")!=-1:
+                if self.iscockpit and mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
                     face.flags|=Face.PANEL
                     try:
                         height=f.image.getSize()[1]

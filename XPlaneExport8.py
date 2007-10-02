@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.43"
+__version__ = "2.44"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -130,6 +130,12 @@ Limitations:<br>
 #
 # 2007-09-06 v2.41
 #  - Tweaked ordering: Lines and Lights after tris. npoly has highest priority.
+#
+# 2007-09-19 v2.43
+#  - Fix for lights in animated models.
+#
+# 2007-10-02 v2.44
+#  - Only correctly named files are treated as cockpit objects.
 #
 
 
@@ -295,11 +301,10 @@ class OBJexport8:
         #--- class private don't touch ---
         self.file=None
         self.filename=filename
-        self.iscockpit=(('_cockpit.obj' in filename.lower()) or
-                        ('_cockpit_inn.obj' in filename.lower()) or
-                        ('_cockpit_out.obj' in filename.lower()))
+        self.iscockpit=(filename.lower().endswith("_cockpit.obj") or
+                        filename.lower().endswith("_cockpit_inn.obj") or
+                        filename.lower().endswith("_cockpit_out.obj"))
         self.layermask=1
-        self.havepanel=False
         self.texture=None
         self.drawgroup=None
         self.slung=0
@@ -350,9 +355,6 @@ class OBJexport8:
         Window.WaitCursor(1)
         Window.DrawProgressBar(0, 'Examining textures')
         self.texture=getTexture(self,theObjects,False,8)
-        if self.havepanel:
-            self.iscockpit=True
-            self.layermask=1
         
         #clock=time.clock()	# Processor time
         frame=Blender.Get('curframe')
@@ -796,7 +798,7 @@ class OBJexport8:
                         if not mode&Mesh.FaceModes.TILES or self.iscockpit:
                             face.flags|=Prim.NPOLY
                             
-                        if mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
+                        if self.iscockpit and mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
                             face.flags|=Prim.PANEL
                         elif object.Layer&1 and not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
                             face.surface=surface
@@ -855,7 +857,7 @@ class OBJexport8:
                 if not mode&Mesh.FaceModes.TILES or self.iscockpit:
                     face.flags|=Prim.NPOLY
                     
-                if mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
+                if self.iscockpit and mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
                     face.flags|=Prim.PANEL
                 elif object.Layer&1 and not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
                     face.surface=surface

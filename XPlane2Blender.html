@@ -260,8 +260,8 @@ versions of the plane in layers 2 and 3 which are only viewed in
 X-Plane from &gt;1000m and &gt;4000m respectively.</li>
 </ul>
 <h3>Creating 3D cockpits</h3>
-<p>X-Plane 3D cockpits are just normal v7 or v8 scenery objects.
-However cockpits can't contain multiple <a href="#Level_Of_Detail">Levels
+<p>X-Plane 3D cockpits are just normal v7 or v8 scenery objects except
+that cockpits can't contain multiple <a href="#Level_Of_Detail">Levels
 of Detail</a>, so only objects in Blender layer 1 are exported.
 If you want to keep objects in your Blender scene for reference but
 which you don't want to export - eg the plane fuselage - then put them
@@ -269,6 +269,8 @@ in layer 4 or greater before exporting.</p>
 <p>Choose <samp>File&nbsp;&rarr; Save As</samp> and save
 the blender file in the same folder as your plane's <code>.acf</code>
 file with the name <code><i>airplane</i>_cockpit.blend</code>,
+<code><i>airplane</i>_cockpit_INN.blend</code> or
+<code><i>airplane</i>_cockpit_OUT.blend</code>,
 where <i>airplane</i> is the name of your plane's <code>.acf</code>
 file.</p>
 <p>Normally you will want to import your plane into Blender to
@@ -744,9 +746,9 @@ from a large distance it can be displayed with reduced detail without you
 noticing the difference. By displaying distant objects with reduced detail
 we can simulate a more complex scene than would be possible if all
 objects were drawn at maximum detail.</p>
-<p>Use Layers to draw scenery and CSLs (but not Cockpits or Misc Objects) with
-multiple Levels Of Detail. Objects in layers 1-3 are visible in X-Plane
-at the following distances:</p>
+<p>Use Layers to draw scenery and CSLs (but not aircraft Cockpits or
+Misc Objects) with multiple Levels Of Detail. Objects in layers 1-3 are
+visible in X-Plane at the following distances:</p>
 <div style="margin-left: 40px;">
 <table style="text-align: left;" border="0">
   <thead>
@@ -891,7 +893,7 @@ that you make using these tools, but you are under no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.43 &copy; 2004-2007
+      <td class="banner">Version 2.44 &copy; 2004-2007
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
 <img alt="Creative Commons License" style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
