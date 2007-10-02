@@ -1,4 +1,4 @@
-2 860 Sun Jan 21 16:13:06 2007
+2 861 Tue Oct  2 14:03:32 2007
 
 sim/aircraft/acf_struct	int[10]	y	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
@@ -459,6 +459,19 @@ sim/aircraft/overflow/acf_has_cowl_handle	int	y	???	Aircraft has Cowl Handle
 sim/aircraft/overflow/acf_has_fuel_all	int	y	???	Aircraft has Fuel All
 sim/aircraft/overflow/acf_has_fuel_any	int	y	???	Aircraft has Fuel Any
 sim/aircraft/overflow/acf_has_radios	int	y	???	Aircraft has Radios
+sim/aircraft/overflow/has_tail_beac	int	y	???	???
+sim/aircraft/overflow/has_hsi	int	y	???	???
+sim/aircraft/overflow/has_radalt	int	y	???	???
+sim/aircraft/overflow/has_FADEC_switch	int	y	???	???
+sim/aircraft/overflow/has_kts_mac	int	y	???	???
+sim/aircraft/overflow/has_yawdamp_but	int	y	???	???
+sim/aircraft/overflow/has_crosstie_but	int	y	???	???
+sim/aircraft/overflow/has_litemap_tex_2	int	y	???	???
+sim/aircraft/overflow/has_bat_switch	int	y	???	???
+sim/aircraft/overflow/has_gen_switch	int	y	???	???
+sim/aircraft/overflow/has_inv_switch	int	y	???	???
+sim/aircraft/overflow/has_transonic_audio	int	y	???	???
+sim/aircraft/overflow/has_pre_rotate	int	y	???	???
 sim/airfoils/afl_clB	float[292]	y
 sim/airfoils/afl_Lpow	float	y	???	???
 sim/airfoils/afl_Lstall	float	y	???	???
@@ -594,6 +607,7 @@ sim/cockpit/misc/vacuum	float	y	???	Vacuum Ratio
 sim/cockpit/misc/vacuum2	float	y	???	Vacuum 2 Ratio
 sim/cockpit/misc/ah_adjust	float	y	pixels	Adjustment to the artificial horizon bars (pilot)
 sim/cockpit/misc/ah_adjust2	float	y	pixels	Adjustment to the artificial horizon bars (copilot)
+sim/cockpit/misc/compass_indicated	float	n	degm	Indicated cockpit heading in magnetic degrees
 sim/cockpit/pressure/bleed_air_on	int	y	bool	Bleeding air is on (legacy)
 sim/cockpit/pressure/bleed_air_mode	int	y	enum	0=off,1=L,2=B,3=R,4=APU
 sim/cockpit/pressure/cabin_altitude_set_m_msl	float	y	???	The desired cabin altitude (BEFORE 730 this was incorrectly int type)
@@ -758,6 +772,7 @@ sim/cockpit/switches/prop_sync_on	int	y	???	Is prop sync on
 sim/cockpit/switches/puffers_on	int	y	???	Are puffers on
 sim/cockpit/switches/water_scoop	int	y	???	Is water scoop active
 sim/cockpit/switches/arresting_gear	int	y	???	Is the arresting gear deployed
+sim/cockpit/switches/canopy_req	int	y	???	Is the canopy handle open
 sim/cockpit/switches/dumping_fuel	int	y	???	Are we dumping fuel
 sim/cockpit/switches/tot_ener_audio	int	y	???	???
 sim/cockpit/switches/EFIS_map_mode	int	y	???	Is the moving map showing the map or another HSI
@@ -773,6 +788,8 @@ sim/cockpit/switches/EFIS_shows_VORs	int	y	boolean	Does the EFIS show VORs?
 sim/cockpit/switches/EFIS_shows_NDBs	int	y	boolean	Does the EFIS show NDBs?
 sim/cockpit/switches/HITS_mode	int	y	enum	What mode is the HITS display in
 sim/cockpit/switches/argus_mode	int	y	enum	What mode is the Argus 2000 in
+sim/cockpit/switches/no_smoking	int	y	boolean 	No Smoking
+sim/cockpit/switches/fasten_seat_belts	int	y	boolean 	Fasten Seat Belts
 sim/cockpit/warnings/ECAM_warning_on	int	y	???	Is there a warning lit on the ECAM
 sim/cockpit/warnings/warning_suppression_timeout	float	y	???	Time when master warning goes on again (after supression)
 sim/cockpit/warnings/master_caution_timeout	float	y	???	Time master caution will go out
@@ -808,6 +825,9 @@ sim/cockpit/weapons/bombs_armed	int	y	???	Are bombs armed
 sim/cockpit/weapons/firing_mode	int	y	???	Firing mode (single, ripple, etc. for bombs)
 sim/cockpit/weapons/firing_rate	int	y	???	Firing rate (for bombs)
 sim/cockpit/weapons/plane_target_index	int	y	???	Index of plane that is being targeted
+sim/cockpit/weapons/chaff_time_left	float	y	???	???
+sim/cockpit/weapons/flare_time_left	float	y	???	???
+sim/cockpit/weapons/wpn_sel_console	int	y	???	INDIVIDUAL weapon selected
 sim/flightmodel/controls/sbrkrat	float	y	???	Requested speed brake deployment
 sim/flightmodel/controls/flaprqst	float	y	???	Requested flap deployment
 sim/flightmodel/controls/slatrqst	float	y	???	Requested Slat deplyoment - note that in XP8 you cannot independently control slats.
@@ -852,6 +872,8 @@ sim/flightmodel/controls/dihed_rqst	float	y	???	???
 sim/flightmodel/controls/vect_rat	float	y	???	???
 sim/flightmodel/controls/incid_rat	float	y	???	???
 sim/flightmodel/controls/dihed_rat	float	y	???	???
+sim/flightmodel/controls/tailhook_ratio	float	y	ratio	tailhook delpoyment ratio, 0 is up 1 is down
+sim/flightmodel/controls/canopy_ratio	float	y	ratio	canopy deployment ratio, 0 is down 1 is up
 sim/flightmodel/controls/wing1l_ail1def	float	y	degrees	Deflection Wing 1 Left Aileron 1
 sim/flightmodel/controls/wing1l_ail2def	float	y	degrees	Deflection Wing 1 Left Aileron 2
 sim/flightmodel/controls/wing1r_ail1def	float	y	degrees	Deflection Wing 1 Right Aileron 1
@@ -1232,6 +1254,22 @@ sim/flightmodel/controls/mwing17_retract_max	float	y	ratio	Misc Wing 17 Retract 
 sim/flightmodel/controls/mwing18_retract_max	float	y	ratio	Misc Wing 18 Retract Max
 sim/flightmodel/controls/mwing19_retract_max	float	y	ratio	Misc Wing 19 Retract Max
 sim/flightmodel/controls/mwing20_retract_max	float	y	ratio	Misc Wing 20 Retract Max
+sim/flightmodel/controls/wing1l_elv1def	float	y	degrees	Deflection Wing 1 Left Elevator 1
+sim/flightmodel/controls/wing1l_elv2def	float	y	degrees	Deflection Wing 1 Left Elevator 2
+sim/flightmodel/controls/wing1r_elv1def	float	y	degrees	Deflection Wing 1 Right Elevator 1
+sim/flightmodel/controls/wing1r_elv2def	float	y	degrees	Deflection Wing 1 Right Elevator 2
+sim/flightmodel/controls/wing2l_elv1def	float	y	degrees	Deflection Wing 2 Left Elevator 1
+sim/flightmodel/controls/wing2l_elv2def	float	y	degrees	Deflection Wing 2 Left Elevator 2
+sim/flightmodel/controls/wing2r_elv1def	float	y	degrees	Deflection Wing 2 Right Elevator 1
+sim/flightmodel/controls/wing2r_elv2def	float	y	degrees	Deflection Wing 2 Right Elevator 2
+sim/flightmodel/controls/wing3l_elv1def	float	y	degrees	Deflection Wing 3 Left Elevator 1
+sim/flightmodel/controls/wing3l_elv2def	float	y	degrees	Deflection Wing 3 Left Elevator 2
+sim/flightmodel/controls/wing3r_elv1def	float	y	degrees	Deflection Wing 3 Right Elevator 1
+sim/flightmodel/controls/wing3r_elv2def	float	y	degrees	Deflection Wing 3 Right Elevator 2
+sim/flightmodel/controls/wing4l_elv1def	float	y	degrees	Deflection Wing 4 Left Elevator 1
+sim/flightmodel/controls/wing4l_elv2def	float	y	degrees	Deflection Wing 4 Left Elevator 2
+sim/flightmodel/controls/wing4r_elv1def	float	y	degrees	Deflection Wing 4 Right Elevator 1
+sim/flightmodel/controls/wing4r_elv2def	float	y	degrees	Deflection Wing 4 Right Elevator 2
 sim/flightmodel/cyclic/cyclic_ailn_blad_alph	float[8]	n	??? Blade	alpha
 sim/flightmodel/cyclic/cyclic_ailn_disc_tilt	float[8]	n	???	Disc tilt
 sim/flightmodel/cyclic/cyclic_elev_blad_alph	float[8]	n	???	Blade alpha
@@ -1267,7 +1305,7 @@ sim/flightmodel/engine/ENGN_prop	float[8]	y	rad/sec	Commanded Prop Speed (per en
 sim/flightmodel/engine/ENGN_sigma	float[8]	y	???	Sigma (per engine)
 sim/flightmodel/engine/ENGN_thro	float[8]	y	ratio	Throttle (per engine) as set by user, 0 = idle, 1 = max
 sim/flightmodel/engine/ENGN_thro_use	float[8]	y	ratio 	Throttle (per engine) when overridden by you, plus with thrust vectors
-sim/flightmodel/engine/ENGN_thro_override	float	y	ratio 	An override from 0.0 to max fwd thrust for overriding all throttles.  Set to -999.0 to disengage.
+sim/flightmodel/engine/ENGN_thro_override	float	y	ratio 	An override from 0.0 to max fwd thrust for overriding all throttles.  Set to -2.0 to disengage.
 sim/flightmodel/engine/ENGN_TRQ	float[8]	y	NewtonMeters	Torque (per engine)
 sim/flightmodel/engine/ENGN_running	int[8]	y	boolean	Engine on and using fuel (only reliable in 740 and later)
 sim/flightmodel/engine/ENGN_burning	int[8]	y	boolean	Afterburner on (only reliable in 740 and later)
@@ -1695,8 +1733,8 @@ sim/multiplayer/position/plane1_x	double	y	meters	Plane 1 x location
 sim/multiplayer/position/plane1_y	double	y	meters	Plane 1 y location
 sim/multiplayer/position/plane1_z	double	y	meters	Plane 1 z location
 sim/multiplayer/position/plane1_the	float	y	degrees	Plane 1 theta (pitch)
-sim/multiplayer/position/plane1_phi	float	y	degrees	Plane 1 phi (heading)
-sim/multiplayer/position/plane1_psi	float	y	degrees	Plane 1 psi (roll)
+sim/multiplayer/position/plane1_phi	float	y	degrees	Plane 1 phi (roll)
+sim/multiplayer/position/plane1_psi	float	y	degrees	Plane 1 psi (heading)
 sim/multiplayer/position/plane1_gear_deploy	float[10]	y	ratio	Plane 1 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane1_flap_ratio	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane1_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1712,8 +1750,8 @@ sim/multiplayer/position/plane2_x	double	y	meters	Plane 2 x location
 sim/multiplayer/position/plane2_y	double	y	meters	Plane 2 y location
 sim/multiplayer/position/plane2_z	double	y	meters	Plane 2 z location
 sim/multiplayer/position/plane2_the	float	y	degrees	Plane 2 theta (pitch)
-sim/multiplayer/position/plane2_phi	float	y	degrees	Plane 2 phi (heading)
-sim/multiplayer/position/plane2_psi	float	y	degrees	Plane 2 psi (roll)
+sim/multiplayer/position/plane2_phi	float	y	degrees	Plane 2 phi (roll)
+sim/multiplayer/position/plane2_psi	float	y	degrees	Plane 2 psi (heading)
 sim/multiplayer/position/plane2_gear_deploy	float[10]	y	ratio	Plane 2 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane2_flap_ratio	float	y	ratio	Plane 2 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane2_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1729,8 +1767,8 @@ sim/multiplayer/position/plane3_x	double	y	meters	Plane 3 x location
 sim/multiplayer/position/plane3_y	double	y	meters	Plane 3 y location
 sim/multiplayer/position/plane3_z	double	y	meters	Plane 3 z location
 sim/multiplayer/position/plane3_the	float	y	degrees	Plane 3 theta (pitch)
-sim/multiplayer/position/plane3_phi	float	y	degrees	Plane 3 phi (heading)
-sim/multiplayer/position/plane3_psi	float	y	degrees	Plane 3 psi (roll)
+sim/multiplayer/position/plane3_phi	float	y	degrees	Plane 3 phi (roll)
+sim/multiplayer/position/plane3_psi	float	y	degrees	Plane 3 psi (heading)
 sim/multiplayer/position/plane3_gear_deploy	float[10]	y	ratio	Plane 3 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane3_flap_ratio	float	y	ratio	Plane 3 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane3_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1746,8 +1784,8 @@ sim/multiplayer/position/plane4_x	double	y	meters	Plane 4 x location
 sim/multiplayer/position/plane4_y	double	y	meters	Plane 4 y location
 sim/multiplayer/position/plane4_z	double	y	meters	Plane 4 z location
 sim/multiplayer/position/plane4_the	float	y	degrees	Plane 4 theta (pitch)
-sim/multiplayer/position/plane4_phi	float	y	degrees	Plane 4 phi (heading)
-sim/multiplayer/position/plane4_psi	float	y	degrees	Plane 4 psi (roll)
+sim/multiplayer/position/plane4_phi	float	y	degrees	Plane 4 phi (roll)
+sim/multiplayer/position/plane4_psi	float	y	degrees	Plane 4 psi (heading)
 sim/multiplayer/position/plane4_gear_deploy	float[10]	y	ratio	Plane 4 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane4_flap_ratio	float	y	ratio	Plane 4 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane4_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1763,8 +1801,8 @@ sim/multiplayer/position/plane5_x	double	y	meters	Plane 5 x location
 sim/multiplayer/position/plane5_y	double	y	meters	Plane 5 y location
 sim/multiplayer/position/plane5_z	double	y	meters	Plane 5 z location
 sim/multiplayer/position/plane5_the	float	y	degrees	Plane 5 theta (pitch)
-sim/multiplayer/position/plane5_phi	float	y	degrees	Plane 5 phi (heading)
-sim/multiplayer/position/plane5_psi	float	y	degrees	Plane 5 psi (roll)
+sim/multiplayer/position/plane5_phi	float	y	degrees	Plane 5 phi (roll)
+sim/multiplayer/position/plane5_psi	float	y	degrees	Plane 5 psi (heading)
 sim/multiplayer/position/plane5_gear_deploy	float[10]	y	ratio	Plane 5 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane5_flap_ratio	float	y	ratio	Plane 5 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane5_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1780,8 +1818,8 @@ sim/multiplayer/position/plane6_x	double	y	meters	Plane 6 x location
 sim/multiplayer/position/plane6_y	double	y	meters	Plane 6 y location
 sim/multiplayer/position/plane6_z	double	y	meters	Plane 6 z location
 sim/multiplayer/position/plane6_the	float	y	degrees	Plane 6 theta (pitch)
-sim/multiplayer/position/plane6_phi	float	y	degrees	Plane 6 phi (heading)
-sim/multiplayer/position/plane6_psi	float	y	degrees	Plane 6 psi (roll)
+sim/multiplayer/position/plane6_phi	float	y	degrees	Plane 6 phi (roll)
+sim/multiplayer/position/plane6_psi	float	y	degrees	Plane 6 psi (heading)
 sim/multiplayer/position/plane6_gear_deploy	float[10]	y	ratio	Plane 6 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane6_flap_ratio	float	y	ratio	Plane 6 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane6_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1797,8 +1835,8 @@ sim/multiplayer/position/plane7_x	double	y	meters	Plane 7 x location
 sim/multiplayer/position/plane7_y	double	y	meters	Plane 7 y location
 sim/multiplayer/position/plane7_z	double	y	meters	Plane 7 z location
 sim/multiplayer/position/plane7_the	float	y	degrees	Plane 7 theta (pitch)
-sim/multiplayer/position/plane7_phi	float	y	degrees	Plane 7 phi (heading)
-sim/multiplayer/position/plane7_psi	float	y	degrees	Plane 7 psi (roll)
+sim/multiplayer/position/plane7_phi	float	y	degrees	Plane 7 phi (roll)
+sim/multiplayer/position/plane7_psi	float	y	degrees	Plane 7 psi (heading)
 sim/multiplayer/position/plane7_gear_deploy	float[10]	y	ratio	Plane 7 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane7_flap_ratio	float	y	ratio	Plane 7 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane7_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1814,8 +1852,8 @@ sim/multiplayer/position/plane8_x	double	y	meters	Plane 8 x location
 sim/multiplayer/position/plane8_y	double	y	meters	Plane 8 y location
 sim/multiplayer/position/plane8_z	double	y	meters	Plane 8 z location
 sim/multiplayer/position/plane8_the	float	y	degrees	Plane 8 theta (pitch)
-sim/multiplayer/position/plane8_phi	float	y	degrees	Plane 8 phi (heading)
-sim/multiplayer/position/plane8_psi	float	y	degrees	Plane 8 psi (roll)
+sim/multiplayer/position/plane8_phi	float	y	degrees	Plane 8 phi (roll)
+sim/multiplayer/position/plane8_psi	float	y	degrees	Plane 8 psi (heading)
 sim/multiplayer/position/plane8_gear_deploy	float[10]	y	ratio	Plane 8 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane8_flap_ratio	float	y	ratio	Plane 8 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane8_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1831,8 +1869,8 @@ sim/multiplayer/position/plane9_x	double	y	meters	Plane 9 x location
 sim/multiplayer/position/plane9_y	double	y	meters	Plane 9 y location
 sim/multiplayer/position/plane9_z	double	y	meters	Plane 9 z location
 sim/multiplayer/position/plane9_the	float	y	degrees	Plane 9 theta (pitch)
-sim/multiplayer/position/plane9_phi	float	y	degrees	Plane 9 phi (heading)
-sim/multiplayer/position/plane9_psi	float	y	degrees	Plane 9 psi (roll)
+sim/multiplayer/position/plane9_phi	float	y	degrees	Plane 9 phi (roll)
+sim/multiplayer/position/plane9_psi	float	y	degrees	Plane 9 psi (heading)
 sim/multiplayer/position/plane9_gear_deploy	float[10]	y	ratio	Plane 9 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane9_flap_ratio	float	y	ratio	Plane 9 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane9_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
@@ -1997,8 +2035,8 @@ sim/multiplayer/position/plane10_x	double	y	meters	Plane 10 x location
 sim/multiplayer/position/plane10_y	double	y	meters	Plane 10 y location
 sim/multiplayer/position/plane10_z	double	y	meters	Plane 10 z location
 sim/multiplayer/position/plane10_the	float	y	degrees	Plane 10 theta (pitch)
-sim/multiplayer/position/plane10_phi	float	y	degrees	Plane 10 phi (heading)
-sim/multiplayer/position/plane10_psi	float	y	degrees	Plane 10 psi (roll)
+sim/multiplayer/position/plane10_phi	float	y	degrees	Plane 10 phi (roll)
+sim/multiplayer/position/plane10_psi	float	y	degrees	Plane 10 psi (heading)
 sim/multiplayer/position/plane10_gear_deploy	float[10]	y	ratio	Plane 10 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane10_flap_ratio	float	y	ratio	Plane 10 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane10_flap_ratio2	float	y	ratio	Plane 10 flap lowering 0 = clean, 1 = max flaps
@@ -2020,8 +2058,8 @@ sim/multiplayer/position/plane11_x	double	y	meters	Plane 11 x location
 sim/multiplayer/position/plane11_y	double	y	meters	Plane 11 y location
 sim/multiplayer/position/plane11_z	double	y	meters	Plane 11 z location
 sim/multiplayer/position/plane11_the	float	y	degrees	Plane 11 theta (pitch)
-sim/multiplayer/position/plane11_phi	float	y	degrees	Plane 11 phi (heading)
-sim/multiplayer/position/plane11_psi	float	y	degrees	Plane 11 psi (roll)
+sim/multiplayer/position/plane11_phi	float	y	degrees	Plane 11 phi (roll)
+sim/multiplayer/position/plane11_psi	float	y	degrees	Plane 11 psi (heading)
 sim/multiplayer/position/plane11_gear_deploy	float[10]	y	ratio	Plane 11 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane11_flap_ratio	float	y	ratio	Plane 11 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane11_flap_ratio2	float	y	ratio	Plane 11 flap lowering 0 = clean, 1 = max flaps
@@ -2043,8 +2081,8 @@ sim/multiplayer/position/plane12_x	double	y	meters	Plane 12 x location
 sim/multiplayer/position/plane12_y	double	y	meters	Plane 12 y location
 sim/multiplayer/position/plane12_z	double	y	meters	Plane 12 z location
 sim/multiplayer/position/plane12_the	float	y	degrees	Plane 12 theta (pitch)
-sim/multiplayer/position/plane12_phi	float	y	degrees	Plane 12 phi (heading)
-sim/multiplayer/position/plane12_psi	float	y	degrees	Plane 12 psi (roll)
+sim/multiplayer/position/plane12_phi	float	y	degrees	Plane 12 phi (roll)
+sim/multiplayer/position/plane12_psi	float	y	degrees	Plane 12 psi (heading)
 sim/multiplayer/position/plane12_gear_deploy	float[10]	y	ratio	Plane 12 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane12_flap_ratio	float	y	ratio	Plane 12 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane12_flap_ratio2	float	y	ratio	Plane 12 flap lowering 0 = clean, 1 = max flaps
@@ -2066,8 +2104,8 @@ sim/multiplayer/position/plane13_x	double	y	meters	Plane 13 x location
 sim/multiplayer/position/plane13_y	double	y	meters	Plane 13 y location
 sim/multiplayer/position/plane13_z	double	y	meters	Plane 13 z location
 sim/multiplayer/position/plane13_the	float	y	degrees	Plane 13 theta (pitch)
-sim/multiplayer/position/plane13_phi	float	y	degrees	Plane 13 phi (heading)
-sim/multiplayer/position/plane13_psi	float	y	degrees	Plane 13 psi (roll)
+sim/multiplayer/position/plane13_phi	float	y	degrees	Plane 13 phi (roll)
+sim/multiplayer/position/plane13_psi	float	y	degrees	Plane 13 psi (heading)
 sim/multiplayer/position/plane13_gear_deploy	float[10]	y	ratio	Plane 13 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane13_flap_ratio	float	y	ratio	Plane 13 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane13_flap_ratio2	float	y	ratio	Plane 13 flap lowering 0 = clean, 1 = max flaps
@@ -2089,8 +2127,8 @@ sim/multiplayer/position/plane14_x	double	y	meters	Plane 14 x location
 sim/multiplayer/position/plane14_y	double	y	meters	Plane 14 y location
 sim/multiplayer/position/plane14_z	double	y	meters	Plane 14 z location
 sim/multiplayer/position/plane14_the	float	y	degrees	Plane 14 theta (pitch)
-sim/multiplayer/position/plane14_phi	float	y	degrees	Plane 14 phi (heading)
-sim/multiplayer/position/plane14_psi	float	y	degrees	Plane 14 psi (roll)
+sim/multiplayer/position/plane14_phi	float	y	degrees	Plane 14 phi (roll)
+sim/multiplayer/position/plane14_psi	float	y	degrees	Plane 14 psi (heading)
 sim/multiplayer/position/plane14_gear_deploy	float[10]	y	ratio	Plane 14 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane14_flap_ratio	float	y	ratio	Plane 14 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane14_flap_ratio2	float	y	ratio	Plane 14 flap lowering 0 = clean, 1 = max flaps
@@ -2112,8 +2150,8 @@ sim/multiplayer/position/plane15_x	double	y	meters	Plane 15 x location
 sim/multiplayer/position/plane15_y	double	y	meters	Plane 15 y location
 sim/multiplayer/position/plane15_z	double	y	meters	Plane 15 z location
 sim/multiplayer/position/plane15_the	float	y	degrees	Plane 15 theta (pitch)
-sim/multiplayer/position/plane15_phi	float	y	degrees	Plane 15 phi (heading)
-sim/multiplayer/position/plane15_psi	float	y	degrees	Plane 15 psi (roll)
+sim/multiplayer/position/plane15_phi	float	y	degrees	Plane 15 phi (roll)
+sim/multiplayer/position/plane15_psi	float	y	degrees	Plane 15 psi (heading)
 sim/multiplayer/position/plane15_gear_deploy	float[10]	y	ratio	Plane 15 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane15_flap_ratio	float	y	ratio	Plane 15 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane15_flap_ratio2	float	y	ratio	Plane 15 flap lowering 0 = clean, 1 = max flaps
@@ -2135,8 +2173,8 @@ sim/multiplayer/position/plane16_x	double	y	meters	Plane 16 x location
 sim/multiplayer/position/plane16_y	double	y	meters	Plane 16 y location
 sim/multiplayer/position/plane16_z	double	y	meters	Plane 16 z location
 sim/multiplayer/position/plane16_the	float	y	degrees	Plane 16 theta (pitch)
-sim/multiplayer/position/plane16_phi	float	y	degrees	Plane 16 phi (heading)
-sim/multiplayer/position/plane16_psi	float	y	degrees	Plane 16 psi (roll)
+sim/multiplayer/position/plane16_phi	float	y	degrees	Plane 16 phi (roll)
+sim/multiplayer/position/plane16_psi	float	y	degrees	Plane 16 psi (heading)
 sim/multiplayer/position/plane16_gear_deploy	float[10]	y	ratio	Plane 16 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane16_flap_ratio	float	y	ratio	Plane 16 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane16_flap_ratio2	float	y	ratio	Plane 16 flap lowering 0 = clean, 1 = max flaps
@@ -2158,8 +2196,8 @@ sim/multiplayer/position/plane17_x	double	y	meters	Plane 17 x location
 sim/multiplayer/position/plane17_y	double	y	meters	Plane 17 y location
 sim/multiplayer/position/plane17_z	double	y	meters	Plane 17 z location
 sim/multiplayer/position/plane17_the	float	y	degrees	Plane 17 theta (pitch)
-sim/multiplayer/position/plane17_phi	float	y	degrees	Plane 17 phi (heading)
-sim/multiplayer/position/plane17_psi	float	y	degrees	Plane 17 psi (roll)
+sim/multiplayer/position/plane17_phi	float	y	degrees	Plane 17 phi (roll)
+sim/multiplayer/position/plane17_psi	float	y	degrees	Plane 17 psi (heading)
 sim/multiplayer/position/plane17_gear_deploy	float[10]	y	ratio	Plane 17 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane17_flap_ratio	float	y	ratio	Plane 17 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane17_flap_ratio2	float	y	ratio	Plane 17 flap lowering 0 = clean, 1 = max flaps
@@ -2181,8 +2219,8 @@ sim/multiplayer/position/plane18_x	double	y	meters	Plane 18 x location
 sim/multiplayer/position/plane18_y	double	y	meters	Plane 18 y location
 sim/multiplayer/position/plane18_z	double	y	meters	Plane 18 z location
 sim/multiplayer/position/plane18_the	float	y	degrees	Plane 18 theta (pitch)
-sim/multiplayer/position/plane18_phi	float	y	degrees	Plane 18 phi (heading)
-sim/multiplayer/position/plane18_psi	float	y	degrees	Plane 18 psi (roll)
+sim/multiplayer/position/plane18_phi	float	y	degrees	Plane 18 phi (roll)
+sim/multiplayer/position/plane18_psi	float	y	degrees	Plane 18 psi (heading)
 sim/multiplayer/position/plane18_gear_deploy	float[10]	y	ratio	Plane 18 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane18_flap_ratio	float	y	ratio	Plane 18 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane18_flap_ratio2	float	y	ratio	Plane 18 flap lowering 0 = clean, 1 = max flaps
@@ -2204,8 +2242,8 @@ sim/multiplayer/position/plane19_x	double	y	meters	Plane 19 x location
 sim/multiplayer/position/plane19_y	double	y	meters	Plane 19 y location
 sim/multiplayer/position/plane19_z	double	y	meters	Plane 19 z location
 sim/multiplayer/position/plane19_the	float	y	degrees	Plane 19 theta (pitch)
-sim/multiplayer/position/plane19_phi	float	y	degrees	Plane 19 phi (heading)
-sim/multiplayer/position/plane19_psi	float	y	degrees	Plane 19 psi (roll)
+sim/multiplayer/position/plane19_phi	float	y	degrees	Plane 19 phi (roll)
+sim/multiplayer/position/plane19_psi	float	y	degrees	Plane 19 psi (heading)
 sim/multiplayer/position/plane19_gear_deploy	float[10]	y	ratio	Plane 19 gear deployment for 6 gear. 0 = up, 1 = down
 sim/multiplayer/position/plane19_flap_ratio	float	y	ratio	Plane 19 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane19_flap_ratio2	float	y	ratio	Plane 19 flap lowering 0 = clean, 1 = max flaps
@@ -2537,7 +2575,7 @@ sim/operation/failures/rel_pyl8b	int	y	failure_enum	Engine Pylon 8b Separate
 sim/operation/failures/rel_instrument	int[300]	y	enum	Failures for every panel instrument.  Based on instrument index number.  (WARNING: this is a risky thing to use.)
 sim/operation/failures/rel_g_gia1	int	y	failure_enum	GIA 1
 sim/operation/failures/rel_g_gia2	int	y	failure_enum	GIA 2
-sim/operation/failures/real_adc_comp	int	y	failure_enum	air data computer
+sim/operation/failures/rel_adc_comp	int	y	failure_enum	air data computer
 sim/operation/failures/rel_g_asi	int	y	failure_enum	airspeed
 sim/operation/failures/rel_g_alt	int	y	failure_enum	altimeter
 sim/operation/failures/rel_g_vvi	int	y	failure_enum	vvi
@@ -2733,8 +2771,8 @@ sim/weapons/weapon_count	int	n	int	This is the number of weapons available via d
 sim/weapons/wpn_struct	int[25]	n	Pointers	Pointers to the raw weapon structs.
 sim/weapons/type	int[25]	y	???	For the geometry we scan right into the acf structure unused array-spaces.
 sim/weapons/free_flyer	int[25]	y	???	Weapon can go fly free... rocket or bomb
-sim/weapons/action_mode	int[25]	n	enum	0 = In carriage/still in the gun/reloaded, 1 = firing, and 2 = destroyed 
-sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc. 
+sim/weapons/action_mode	int[25]	n	enum	0 = In carriage/still in the gun/reloaded, 1 = firing, and 2 = destroyed
+sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc.
 sim/weapons/y_wpn_att	float[25]	y	???	Code to do the weapons as well as everything else.
 sim/weapons/z_wpn_att	float[25]	y
 sim/weapons/cgY	float[25]	y
