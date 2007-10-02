@@ -204,6 +204,7 @@
 #
 # 2007-10-02 v2.44
 #  - Only correctly named files are treated as cockpit objects.
+#  - Fix for export v7 cockpit objects with panel (broken in 2.39).
 #
 
 import sys
