@@ -8,7 +8,7 @@ Tooltip: 'Merge X-Plane plane_paint and plane_paint2 bitmaps'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.44"
+__version__ = "2.45"
 __bpydoc__ = """\
 This script fixes up an imported plane's texture assignments to use
 a single bitmap file.
@@ -54,6 +54,9 @@ Usage:<br>
 # 2006-04-07 v2.20
 #  - New file
 #
+# 2006-10-16 v2.45
+#  - Fix for Blender 2.45
+#
 
 import Blender
 from Blender import Draw, Image, Scene, NMesh
@@ -65,7 +68,7 @@ for ext in ['.png', '.PNG', '.bmp', '.BMP']:
         tex=Image.Load(newfile+ext)
         dim=tex.getSize()
 
-        for ob in Scene.objects:
+        for ob in Scene.GetCurrent().objects:
             if ob.getType() == "Mesh" and ob.getData().hasFaceUV():
                 mesh = ob.getData()
                 for face in mesh.faces:
