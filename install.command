@@ -9,15 +9,14 @@ cd "`dirname "$0"`"
 IFS="
 "
 
-# Find lsregister
-if [ -x /System/Library/Frameworks/ApplicationServices.framework/Frameworks/LaunchServices.framework/Support/lsregister ] ;then
-    LS=/System/Library/Frameworks/ApplicationServices.framework/Frameworks/LaunchServices.framework/Support/lsregister;
-elif [ -x /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister ] ; then
+LS=/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister	# MacOS 10.5
+if [ ! -x $LS ]; then
     # From http://developer.apple.com/documentation/Carbon/Conceptual/MDImporters/Concepts/Troubleshooting.html
-    LS=/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister;
-else
-    echo Can\'t find the lsregister tool!
-    LS=echo;
+    LS=/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister	# MacOS 10.3 & 10.4
+    if [ ! -x $LS ]; then
+        echo Can\'t find the lsregister tool!
+        LS=echo;
+    fi;
 fi
 
 # Candidate application locations (but completely ignore Trash)
@@ -107,9 +106,9 @@ fi
 
 for I in $DIRS; do
     if [[ -d "$I" && "$I" != /Volumes/* ]]; then
-	echo Failed to find the correct location for the scripts !!!
-	echo
-	exit 1;
+        echo Failed to find the correct location for the scripts !!!
+        echo
+        exit 1;
     fi;
 done
 
