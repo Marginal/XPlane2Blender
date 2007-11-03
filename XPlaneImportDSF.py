@@ -1,20 +1,20 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane Terrain (.dsf)...'
-Blender: 243
+Blender: 244
 Group: 'Import'
 Tooltip: 'Import X-Plane terrain'
 """
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.44"
+__version__ = "2.45"
 __bpydoc__ = """\
 This script imports X-Plane DSF terrain into Blender.
 """
 
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.42 or above
+# X-Plane importer for blender 2.44 or above
 #
 # Copyright (c) 2006,2007 Jonathan Harris
 # 
@@ -24,33 +24,45 @@ This script imports X-Plane DSF terrain into Blender.
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.5:
+#   Attribution-Noncommercial-Share Alike 3.0:
 #
 #   You are free:
-#     * to copy, distribute, display, and perform the work
-#     * to make derivative works
-#     * to make commercial use of the work
+#    * to Share - to copy, distribute and transmit the work
+#    * to Remix - to adapt the work
+#
 #   Under the following conditions:
-#     * Attribution: You must give the original author credit.
-#     * Share Alike: If you alter, transform, or build upon this work, you
-#       may distribute the resulting work only under a license identical to
-#       this one.
-#   For any reuse or distribution, you must make clear to others the license
-#   terms of this work.
+#    * Attribution. You must attribute the work in the manner specified
+#      by the author or licensor (but not in any way that suggests that
+#      they endorse you or your use of the work).
+#    * Noncommercial. You may not use this work for commercial purposes.
+#    * Share Alike. If you alter, transform, or build upon this work,
+#      you may distribute the resulting work only under the same or
+#      similar license to this one.
+#
+#   For any reuse or distribution, you must make clear to others the
+#   license terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
+#   http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 #
 # 2006-10-09
 #
 
-from Blender import Draw, Window, Object, Mesh, Material, Scene
-from math import cos, pi
+from Blender import Draw, Window, Image, Lamp, Material, Mesh, Object, Scene, Texture
+from Blender.Mathutils import Vector
+
+from math import cos, pi, radians
+from os import listdir, walk
+from os.path import abspath, basename, dirname, exists, isdir, join, pardir, normpath
 from struct import unpack
 
-onedeg=1852*60		# 1 degree of longitude at equator (60nm)
-d2r=pi/180.0
+hscale=1000
+vscale=1.0/100
+resolution=8*65535
+minres=1.0/resolution
+
+libterrain={}
 
 
 def readDSF(path):
@@ -73,14 +85,14 @@ def readDSF(path):
     overlay=0
     for i in range(0, len(c)-1, 2):
         if c[i]=='sim/overlay': overlay=int(c[i+1])
-        elif c[i]=='sim/south': centrelat=int(c[i+1])+0.5
-        elif c[i]=='sim/west': centrelon=int(c[i+1])+0.5
+        elif c[i]=='sim/south': lat=int(c[i+1])
+        elif c[i]=='sim/west': lon=int(c[i+1])
         properties.append((c[i],c[i+1]))
     h.seek(headend)
     if overlay:
         # Overlay DSF - bail early
         h.close()
-        return
+        raise IOError, (0, "This is an overlay DSF", path)
 
     # Definitions Atom
     if h.read(4)!='NFED':
@@ -170,7 +182,7 @@ def readDSF(path):
         curpool=pool[i]
         n=len(curpool[0])
         newpool=[[] for j in range(n)]
-        for plane in range(3):	# Only do lon,lat and height # (len(curpool)):
+        for plane in range(len(curpool)):
             (scale,offset)=scal[i][plane]
             scale=scale/65535
             for j in range(n):
@@ -187,12 +199,13 @@ def readDSF(path):
     near=0
     far=-1
     flags=0	# 0=physical, 1=overlay
-    f=[[],[]]
-    v=[[],[]]
-    hscale=99.0/(hlen-geodend)
+    f=[[[],[]] for i in range(len(terrain))]
+    v=[[[],[]] for i in range(len(terrain))]
+    t=[[[],[]] for i in range(len(terrain))]
+    pscale=99.0/(hlen-geodend)
     progress=0
     while h.tell()<cmdsend:
-        now=int((h.tell()-geodend)*hscale)
+        now=int((h.tell()-geodend)*pscale)
         if progress!=now:
             progress=now
             Window.DrawProgressBar(progress/100.0, "Importing %2d%%"%progress)
@@ -263,41 +276,42 @@ def readDSF(path):
 
         elif c==23:	# Patch Triangle
             (l,)=unpack('<B', h.read(1))
-            n=len(v[flags])
+            n=len(v[idx][flags])
             for i in range(n,n+l,3):
-                if idx:	# not water
-                    f[flags].append([i+2,i+1,i])
+                f[idx][flags].append([i+2,i+1,i])
             for i in range(l):
                 (d,)=unpack('<H', h.read(2))
-                if idx:	# not water
-                    p=pool[curpool][d]
-                    v[flags].append([(p[0]-centrelon)*onedeg*cos(d2r*p[1]),
-                                     (p[1]-centrelat)*onedeg, p[2]])
+                p=pool[curpool][d]
+                v[idx][flags].append([(p[0]-lon)*hscale,
+                                      (p[1]-lat)*hscale, p[2]*vscale])
+                if len(p)>=7:
+                    t[idx][flags].append([p[5],p[6]])
+                    
             
         elif c==24:	# Patch Triangle - cross-pool
             (l,)=unpack('<B', h.read(1))
-            n=len(v[flags])
+            n=len(v[idx][flags])
             for i in range(n,n+l,3):
-                if idx:	# not water
-                    f[flags].append([i+2,i+1,i])
+                f[idx][flags].append([i+2,i+1,i])
             for i in range(l):
                 (c,d)=unpack('<HH', h.read(4))
-                if idx:	# not water
-                    p=pool[c][d]
-                    v[flags].append([(p[0]-centrelon)*onedeg*cos(d2r*p[1]),
-                                     (p[1]-centrelat)*onedeg, p[2]])
+                p=pool[c][d]
+                v[idx][flags].append([(p[0]-lon)*hscale,
+                                      (p[1]-lat)*hscale, p[2]*vscale])
+                if len(p)>=7:
+                    t[idx][flags].append([p[5],p[6]])
 
         elif c==25:	# Patch Triangle Range
             (first,last)=unpack('<HH', h.read(4))
-            n=len(v[flags])
+            n=len(v[idx][flags])
             for i in range(n,n+last-first,3):
-                if idx:	# not water
-                    f[flags].append([i+2,i+1,i])
+                f[idx][flags].append([i+2,i+1,i])
             for d in range(first,last):
-                if idx:	# not water
-                    p=pool[curpool][d]
-                    v[flags].append([(p[0]-centrelon)*onedeg*cos(d2r*p[1]),
-                                     (p[1]-centrelat)*onedeg, p[2]])
+                p=pool[curpool][d]
+                v[idx][flags].append([(p[0]-lon)*hscale,
+                                      (p[1]-lat)*hscale, p[2]*vscale])
+                if len(p)>=7:
+                    t[idx][flags].append([p[5],p[6]])
             
         #elif c==26:	# Patch Triangle Strip (not used by DSF2Text)
         #elif c==27:
@@ -305,41 +319,41 @@ def readDSF(path):
         
         elif c==29:	# Patch Triangle Fan
             (l,)=unpack('<B', h.read(1))
-            n=len(v[flags])
+            n=len(v[idx][flags])
             for i in range(1,l-1):
-                if idx:	# not water
-                    f[flags].append([n+i+1,n+i,n])
+                f[idx][flags].append([n+i+1,n+i,n])
             for i in range(l):
                 (d,)=unpack('<H', h.read(2))
-                if idx:	# not water
-                    p=pool[curpool][d]
-                    v[flags].append([(p[0]-centrelon)*onedeg*cos(d2r*p[1]),
-                                     (p[1]-centrelat)*onedeg, p[2]])
+                p=pool[curpool][d]
+                v[idx][flags].append([(p[0]-lon)*hscale,
+                                      (p[1]-lat)*hscale, p[2]*vscale])
+                if len(p)>=7:
+                    t[idx][flags].append([p[5],p[6]])
             
         elif c==30:	# Patch Triangle Fan - cross-pool
             (l,)=unpack('<B', h.read(1))
-            n=len(v[flags])
+            n=len(v[idx][flags])
             for i in range(1,l-1):
-                if idx:	# not water
-                    f[flags].append([n+i+1,n+i,n])
+                f[idx][flags].append([n+i+1,n+i,n])
             for i in range(l):
                 (c,d)=unpack('<HH', h.read(4))
-                if idx:	# not water
-                    p=pool[c][d]
-                    v[flags].append([(p[0]-centrelon)*onedeg*cos(d2r*p[1]),
-                                     (p[1]-centrelat)*onedeg, p[2]])
+                p=pool[c][d]
+                v[idx][flags].append([(p[0]-lon)*hscale,
+                                      (p[1]-lat)*hscale, p[2]*vscale])
+                if len(p)>=7:
+                    t[idx][flags].append([p[5],p[6]])
 
         elif c==31:	# Patch Triangle Fan Range
             (first,last)=unpack('<HH', h.read(4))
-            n=len(v[flags])
+            n=len(v[idx][flags])
             for i in range(1,last-first-1):
-                if idx:	# not water
-                    f[flags].append([n+i+1,n+i,n])
+                f[idx][flags].append([n+i+1,n+i,n])
             for d in range(first, last):
-                if idx:	# not water
-                    p=pool[curpool][d]
-                    v[flags].append([(p[0]-centrelon)*onedeg*cos(d2r*p[1]),
-                                     (p[1]-centrelat)*onedeg, p[2]])
+                p=pool[curpool][d]
+                v[idx][flags].append([(p[0]-lon)*hscale,
+                                      (p[1]-lat)*hscale, p[2]*vscale])
+                if len(p)>=7:
+                    t[idx][flags].append([p[5],p[6]])
 
         elif c==32:	# Comment
             (l,)=unpack('<B', h.read(1))
@@ -354,37 +368,80 @@ def readDSF(path):
             h.read(l)
             
         else:
-            raise IOError, (c, "Unrecognised command (%d)" % c, path)
+            raise IOError, (c, "Unrecognised command (%d)" % c, c)
 
     h.close()
 
     Window.DrawProgressBar(0.99, "Realising")
 
-    water=Material.New("Water")
-    water.rgbCol=[0.5, 0.5, 1.0]
-    base=Material.New("Base")
-    base.rgbCol=[0.5, 1.0, 0.5]
-    overlay=Material.New("Overlay")
-    overlay.rgbCol=[1.0, 0.5, 0.5]
-    materials=[[base,water],[overlay,water]]
-    names=['Base','Overlay']
-    
-    for flags in [0]:	# was [1,0]
-        mesh=Mesh.New(names[flags])
-        mesh.materials+=materials[flags]
-        mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
-        mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
-        mesh.verts.extend(v[flags])
-        mesh.faces.extend(f[flags])
-        mesh.update()
+    scene=Scene.GetCurrent()
+    scene.layers=[1,2]
 
-        ob = Object.New("Mesh", names[flags])
-        ob.link(mesh)
-        Scene.GetCurrent().objects.link(ob)
+    for flags in [0]:# was [1,0]:	# overlay first so overlays
+        for idx in range(len(terrain)):
+            if not f[idx][flags]: continue
+            if idx:
+                name=basename(terrain[idx])[:-4]
+                if flags: name=name+'.2'
+                if terrain[idx] in libterrain:
+                    (texture, angle, xscale, zscale)=readTER(libterrain[terrain[idx]])
+                elif exists(join(dirname(path), pardir, pardir, terrain[idx])):
+                    (texture, angle, xscale, zscale)=readTER(abspath(join(dirname(path), pardir, pardir, terrain[idx])))
+                else:
+                    raise IOError(0, 'Terrain %s not found' % terrain[idx], terrain[idx])
+                try:
+                    mat=Material.Get(name)
+                except:
+                    mat=Material.New(name)
+                    mat.rgbCol=[1.0, 1.0, 1.0]
+                    mat.spec=0
+                    try:
+                        img=Image.Get(basename(texture))
+                    except:
+                        img=Image.Load(texture)
+                    tex=Texture.New(name)
+                    tex.setType('Image')
+                    tex.image=img
+                    mat.setTexture(0, tex)
+                    if flags:
+                        mat.zOffset=1
+                        mat.mode |= Material.Modes.ZTRANSP
+                    mtex=mat.getTextures()[0]
+                    mtex.size=(xscale*250, zscale*250, 0)
+                    mtex.zproj=Texture.Proj.NONE
+                    if t[idx][flags]:
+                        mtex.texco=Texture.TexCo.UV
+                    else:
+                        mtex.texco=Texture.TexCo.GLOB
+            else:
+                name=terrain[idx]
+                mat=Material.New(terrain[idx])
+                mat.rgbCol=[0.1, 0.1, 0.2]
+                mat.spec=0
+            
+            mesh=Mesh.New(name)
+            mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
+            mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
+            mesh.materials += [mat]
+            mesh.verts.extend(v[idx][flags])
+            mesh.faces.extend(f[idx][flags])
+            if t[idx][flags]:
+                faceno=0
+                for face in mesh.faces:
+                    face.uv=[Vector(t[idx][flags][i][0], t[idx][flags][i][1]) for i in f[idx][flags][faceno]]
+                    face.image=img
+                    faceno+=1
+            mesh.update()
 
-        mesh.sel=True
-        mesh.remDoubles(0.001)	# must be after linked to object
-        mesh.sel=False
+            ob = Object.New("Mesh", name)
+            ob.link(mesh)
+            scene.objects.link(ob)
+            ob.Layer=flags+1
+            ob.addProperty('terrain', terrain[idx])
+
+            mesh.sel=True
+            mesh.remDoubles(0.001)	# must be after linked to object
+            mesh.sel=False
 
         if 0:	# Unreliable
             for face in mesh.faces:
@@ -393,17 +450,118 @@ def readDSF(path):
                         break
                 else:
                     face.mat=1	# water
+                    
+    lamp=Lamp.New("Lamp", "Sun")
+    ob = Object.New("Lamp", "Sun")
+    ob.link(lamp)
+    scene.objects.link(ob)
+    lamp.type=1
+    ob.Layer=3
+    ob.setLocation(500, 500, 1000)
 
 
+#------------------------------------------------------------------------
+def readTER(path):
+    texture=None
+    angle=0
+    xscale=zscale=0
+    h=file(path, 'rU')
+    if not (h.readline().strip() in ['I','A'] and
+            h.readline().strip()=='800' and
+            h.readline().strip()=='TERRAIN'):
+        raise IOError, (0, "%s is not a valid terrain file" % path, path)
+    for line in h:
+        line=line.strip()
+        c=line.split()
+        if not c: continue
+        if c[0] in ['BASE_TEX', 'BASE_TEX_NOWRAP']:
+            texture=line[len(c[0]):].strip().replace(':','/').replace('\\','/')
+            texture=abspath(join(dirname(path), texture))
+        elif c[0]=='PROJECTED':
+            xscale=1/float(c[1])
+            zscale=1/float(c[2])
+        elif c[0]=='PROJECT_ANGLE':
+            if float(c[1])==0 and float(c[2])==1 and float(c[3])==0:
+                # no idea what rotation about other axes means
+                angle=int(float(c[4]))
+    h.close()
+    return (texture, angle, xscale, zscale)
+
+
+#------------------------------------------------------------------------
+def readLIBs(libpath, libterrain):
+    for d in listdir(libpath):
+        if not isdir(join(libpath,d)): continue
+        for filename in listdir(join(libpath,d)):
+            if filename.lower()!='library.txt': continue
+            path=join(libpath,d)
+            h=open(join(path,filename), 'rU')
+            if not h.readline().strip()[0] in ['I','A']:
+                raise IOError
+            if not h.readline().split()[0]=='800':
+                raise IOError
+            if not h.readline().split()[0]=='LIBRARY':
+                raise IOError
+            for line in h:
+                c=line.split()
+                if not c: continue
+                if c[0] in ['EXPORT', 'EXPORT_RATIO', 'EXPORT_EXTEND']:
+                    if c[0]=='EXPORT_RATIO': c.pop(1)
+                if len(c)<3 or c[1][-4:].lower() not in ['.ter','net']: continue
+                c.pop(0)
+                name=c[0].replace(':','/').replace('\\','/')
+                if not name in libterrain:
+                    #if len(basename(name))>25: print basename(name)[:-4], len(basename(name)[:-4])
+                    c.pop(0)
+                    obj=normpath(join(path, ' '.join(c).replace(':','/').replace('\\','/')))
+                    libterrain[name]=obj
+            h.close()
+            break
+
+        
 #------------------------------------------------------------------------
 def file_callback (filename):
     print "Starting DSF import from " + filename
     Window.WaitCursor(1)
-    Window.DrawProgressBar(0, "Importing")
-    readDSF(filename)
+
+    if 1:#XXXtry:
+        xppath=normpath(join(dirname(filename),pardir,pardir,pardir,pardir))
+        dirs=[i.lower() for i in listdir(xppath)]
+        if 'default scenery' in dirs and 'custom scenery' not in dirs:
+            xppath=normpath(join(xppath,pardir))
+
+        # Process libraries
+        Window.DrawProgressBar(0, "Scanning libraries")
+        for d in listdir(xppath):
+            if d.lower()=='custom scenery':
+                readLIBs(join(xppath,d), libterrain)
+                break
+        for d in listdir(xppath):
+            if d.lower()=='resources':
+                for d2 in listdir(join(xppath,d)):
+                    if d2.lower()=='default scenery':
+                        readLIBs(join(xppath,d,d2), libterrain)
+                        break
+                break
+        
+        Window.DrawProgressBar(0, "Importing")
+        readDSF(filename)
+    elif 0:#except IOError, e:
+        Window.WaitCursor(0)
+        Window.DrawProgressBar(1, "ERROR")
+        print("ERROR:\t%s.\n" % e.strerror)
+        Draw.PupMenu("ERROR: %s" % e.strerror)
+        return
+    elif 0:#except:
+        Window.WaitCursor(0)
+        Window.DrawProgressBar(1, "ERROR")
+        print("ERROR:\tCan't read DSF.\n")
+        Draw.PupMenu("ERROR: Can't read DSF")
+        return
+    else:
+        Window.WaitCursor(0)
     Window.DrawProgressBar(1, "Finished")
     Window.RedrawAll()
-    Window.WaitCursor(0)
     print "Finished\n"
 
 
