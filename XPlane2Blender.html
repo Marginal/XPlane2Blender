@@ -344,25 +344,25 @@ exporting to X-Plane.</p>
   <li>Only Lamp objects of type "Lamp" are exported to X-Plane. Lamp objects
 of types "Area", "Spot", "Semi" and "Hemi" are ignored (and so can be
 used to illuminate your model in Blender).</li>
-  <li>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v8 object:
+  <li><samp style="font-weight: bold;">v8: </samp>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v8 object:
     <dl>
-      <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
-      <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
-      <dd><code>Pulse</code>, <code>Strobe</code>, <code>Traffic</code>, <code>smoke_black</code>, <code>smoke_white</code>  -
+      <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
+      <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
+      <dd><code>Traffic</code>, <code>smoke_black</code>, <code>smoke_white</code>  -
 As for X-Plane v7 objects; see below. (R,G,B settings are ignored).</dd>
       <dd><i>other</i> -
 X-Plane pre-defined "named" or "custom" light. (Supported by X-Plane 8.50 and later. R,G,B settings are ignored). The name of the X-Plane light is taken from the value of a <a href="#properties">property</a> named <code>name</code> if this exists, otherwise from the name of the lamp object.</dd>
     </dl></li>
-  <li>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v7 object:
+  <li><samp style="font-weight: bold;">v7: </samp>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v7 object:
     <dl>
-      <dd><code>Flash</code> - Flashing light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
-      <dd><code>Pulse</code> or <code>airplane_beacon</code> - Red pulsing anti-collision light. (R,G,B settings are ignored).</dd>
-      <dd><code>Strobe</code> or <code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
+      <dd><code>Flash</code> - Flashing light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
+      <dd><code>airplane_beacon</code> - Red pulsing anti-collision light. (R,G,B settings are ignored).</dd>
+      <dd><code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
       <dd><code>Traffic</code> - Cycles red, orange, green. (R,G,B settings are ignored).</dd>
-      <dd><code>smoke_black</code> or <code>smoke_white</code> - Not really a light; emits smoke. The size of the smoke puffs is determined by the Energy setting in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>) (R,G,B settings are ignored).</dd>
-      <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
+      <dd><code>smoke_black</code> or <code>smoke_white</code> - Not really a light; emits smoke. The size of the smoke puffs is determined by the Energy slider on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>) (R,G,B settings are ignored).</dd>
+      <dd><i>other</i> - Normal light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
     </dl></li>
-  <li>Lamp objects with certain names have special behaviours when exported to
+  <li><samp style="font-weight: bold;">csl: </samp>Lamp objects with certain names have special behaviours when exported to
 an X-Plane CSL object. The XSquawkBox documentation strongly recommends
 that you use these special lights:
     <dl>
@@ -372,8 +372,38 @@ that you use these special lights:
       <dd><code>airplane_nav_right</code> - Green navigation/position light. (R,G,B settings are ignored).</dd>
       <dd><code>airplane_beacon</code> - Red pulsing anti-collision light, on when engines are running. (R,G,B settings are ignored).</dd>
       <dd><code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
-      <dd><i>other</i> - Normal light. The colour is determined by the R,G,B settings in the <samp>Lamp</samp> Shading panel (<samp style="font-weight: bold;">F5</samp>).</dd>
+      <dd><i>other</i> - Normal light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
     </dl>
+  </li>
+  <li><samp style="font-weight: bold;">v8: </samp>Custom lights
+(supported by X-Plane 8.50 and later) are created using the vertices from a
+Mesh object:<br>
+In the <samp>Material buttons</samp> panels
+(<samp style="font-weight: bold;">F5</samp>) add a new material to the mesh,
+then press the <samp>Halo</samp> button on the <samp>Links and Pipeline</samp>
+panel. You should use just one material.
+    <ul>
+      <li>The <samp>Halo</samp> button and the
+<samp>R</samp>,<samp>G</samp>,<samp>B</samp>,<samp>A</samp> sliders on the
+<samp>Material</samp> panel control the light's R,G,B and A values.
+Alternatively you can create <a href="#properties">properties</a> named
+<code>R</code>, <code>G</code>, <code>B</code> and/or <code>A</code> to
+set these values.</li>
+      <li>The <samp>HaloSize</samp> control on the <samp>Shaders</samp> panel
+controls the light's S value.<br>
+Also press the <samp>HaloTex</samp> button on this panel to make Blender render the light correctly.</li>
+    </ul>
+In the <samp>Texture buttons</samp> panels
+(<samp style="font-weight: bold;">F6</samp>) add a new texture to the
+material, and change the <samp>Texture&nbsp;Type</samp> to <code>Image</code>.
+You should use just one texture.
+    <ul>
+      <li>On the <samp>Image</samp> panel load the texture file that contains
+the light that you want to use.</li>
+      <li>On the <samp>Map Image</samp> panel press the <samp>UseAlpha</samp> button.<br>
+Use the <samp>MinX</samp>, <samp>MinX</samp>, <samp>MaxX</samp>, <samp>MaxY</samp> settings to select a subset of the texture.</li>
+    </ul>
+To drive the custom light using a dataref add a <a href="#properties">property</a> named <code>name</code>, and give it a String value.
   </li>
 </ul>
 <h4><a name="Meshes"></a>Meshes</h4>
@@ -449,14 +479,14 @@ over drawing order.</li>
     </ul>
   </li>
   <li><samp style="font-weight: bold;">v8: </samp>In
-the <samp>Material buttons</samp> Shading panels
+the <samp>Material buttons</samp> panels
 (<samp style="font-weight: bold;">F5</samp>) you can change the way that
 the mesh reacts to light by specifying a material. Changing between materials
 in X-Plane is expensive so you should ensure that you only use a few materials
 in your model.
 Press <samp>Add New</samp> to create a new material, or choose an existing
-material (if any) from the drop-down list.
-Only a few of the Blender's many material buttons affect X-Plane:
+material (if any) from the drop-down list. You should use just one material.<br>
+Only a few of Blender's many material buttons affect X-Plane:
     <ul>
       <li><samp>Col</samp> button and the
 <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the
@@ -568,7 +598,7 @@ property's value to the rest of the dataref name.
 <i>eg</i> the plugin registers the custom dataref
 <code>my_org/widget/volume</code>; to use this dataref name the bone
 <code>volume</code> and add a property named
-<code>volume</code> with the string value <code>my_org/widget/</code>.</p>
+<code>volume</code> with the String value <code>my_org/widget/</code>.</p>
 <p>You can make all of the lamps and meshes in an animation disappear
 when a dataref is within a certain range by adding a pair of
 <a href="#properties">properties</a> to the armature named
@@ -919,7 +949,7 @@ that you make using these tools, but you are under no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.45 &copy; 2004-2007
+      <td class="banner">Version 2.46 &copy; 2004-2007
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
 <img alt="Creative Commons License" style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>

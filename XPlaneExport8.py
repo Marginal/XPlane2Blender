@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.45"
+__version__ = "2.46"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 .obj
 format for placement with World-Maker.
@@ -137,6 +137,9 @@ Limitations:<br>
 # 2007-10-02 v2.44
 #  - Only correctly named files are treated as cockpit objects.
 #
+# 2007-11-27 v2.46
+#  - Support for custom lights.
+#
 
 
 #
@@ -226,12 +229,16 @@ class NLIGHT:
         return (isinstance(b,NLIGHT) and self.v.equals(b.v) and self.n==b.n)
 
 class CLIGHT:
-    def __init__(self, d, r):
-        self.d=d
-        self.r=r	# dataref
+    def __init__(self, v, rgba, s, uv1, uv2, d):
+        self.v=v
+        self.rgba=rgba
+        self.s=s
+        self.uv1=uv1
+        self.uv2=uv2
+        self.d=d	# dataref
 
     def __str__ (self):
-        return "LIGHT_CUSTOM\t%s\t%s" % (self.d, self.r)
+        return "LIGHT_CUSTOM\t%s\t%6.3f %6.3f %6.3f %6.3f %9.4f\t%s %s\t%s" % (self.v, self.rgba[0], self.rgba[1], self.rgba[2], self.rgba[3], self.s, self.uv1, self.uv2, self.d)
 
     def equals (self, b):
         return (isinstance(b,CLIGHT) and self.v.equals(b.v) and self.n==b.n)
@@ -419,6 +426,8 @@ class OBJexport8:
             if objType == 'Mesh':
                 if isLine(object, self.linewidth):
                     self.sortLine(object)
+                elif isLight(object):
+                    self.sortLamp(object)                    
                 else:
                     self.sortMesh(object)
             #elif objType in ['Curve','Surf']:
@@ -435,9 +444,9 @@ class OBJexport8:
                             raise ExportError('Invalid drawing group "%s" in "%s"' % (self.drawgroup[0], object.name), [object])
                     elif prop.type in ['INT', 'FLOAT', 'STRING'] and prop.name.strip()=='slung_load_weight':
                         self.slung=prop.data
-            elif objType not in ['Camera','Lattice']:
-                print 'Warn:\tIgnoring %s "%s"' % (objType.lower(),object.name)
-                self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name),[object]))
+            #elif objType not in ['Camera','Lattice']:
+            #    print 'Warn:\tIgnoring %s "%s"' % (objType.lower(),object.name)
+            #    self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name),[object]))
 
         # Build indices
         indices=[]
@@ -565,7 +574,7 @@ class OBJexport8:
                                             (anim.ins(),offsets[n],counts[n]))
                         n=n+1
     
-                        # Named lights
+                        # Named and custom lights
                         for i in range(len(self.nlights)):
                             if self.nlights[i].match(layer, group, passhi, False, DEFMAT, anim):
                                 self.updateAttr(layer, group, anim)
@@ -587,8 +596,51 @@ class OBJexport8:
     def sortLamp(self, object):
 
         (anim, mm)=self.makeAnim(object)
+
+        if object.getType()=='Mesh':
+            # This is actually a custom light - material has HALO set
+            mesh=object.getData(mesh=True)
+            mats=mesh.materials
+            for f in mesh.faces:
+                material=mats[f.mat]
+                rgba=[material.R, material.G, material.B, material.alpha]
+                mtex=material.getTextures()[0]
+                if mtex:
+                    uv1=UV(mtex.tex.crop[0], mtex.tex.crop[1])
+                    uv2=UV(mtex.tex.crop[2], mtex.tex.crop[3])
+                else:
+                    uv1=UV(0,0)
+                    uv2=UV(1,1)
+                break
+
+            # get RGBA and name properties
+            dataref='NULL'
+            for prop in object.getAllProperties():
+                if prop.name in ['R','G','B','A']:
+                    if prop.type in ['INT', 'FLOAT']:
+                        rgba[['R','G','B','A'].index(prop.name)]=float(prop.data)
+                    else:
+                        raise ExportError('Unsupported data type for property "%s" in custom light "%s"' % (prop.name, object.name), [object])
+                elif prop.name=='name':
+                    if prop.type!='STRING': raise ExportError('Unsupported data type for dataref in custom light "%s"' % object.name, [object])
+                    ref=prop.data.strip()
+                    if ref in datarefs and datarefs[ref]:
+                        (path, n)=datarefs[ref]
+                        dataref=path+ref
+                        if n!=9: raise ExportError('Dataref %s can\'t be used for custom lights' % dataref, [object])
+                    else:
+                        dataref=getcustomdataref(object, 'custom light', [ref])
+                        
+            for v in mesh.verts:
+                light=Prim(object.Layer, self.findgroup(object), Prim.LIGHTS, False, DEFMAT, anim)
+                light.i=CLIGHT(Vertex(v.co[0], v.co[1], v.co[2], mm),
+                               rgba, material.haloSize, 
+                               uv1, uv2, dataref)
+                self.nlights.append(light)
+            return
+
         light=Prim(object.Layer, self.findgroup(object), Prim.LIGHTS, False, DEFMAT, anim)
-        
+
         lamp=object.getData()
         name=object.name
         special=0
@@ -662,7 +714,7 @@ class OBJexport8:
                   (v[i+2].y+v[(i+3)%4].y)/2,
                   (v[i+2].z+v[(i+3)%4].z)/2)
 
-        if len(mesh.materials)>face.mat:
+        if len(mesh.materials)>face.mat and mesh.materials[face.mat]:
             c=[mesh.materials[face.mat].R,
                mesh.materials[face.mat].G,
                mesh.materials[face.mat].B,]
@@ -773,7 +825,7 @@ class OBJexport8:
                     if not n in [3,4]:
                         degenerr.append(f)
                     elif not (mode & Mesh.FaceModes.INVISIBLE):
-                        if f.mat<len(mats):
+                        if f.mat<len(mats) and mats[f.mat]:
                             material=mats[f.mat]
                             # diffuse, emission, shiny
                             mat=((material.R, material.G, material.B),
@@ -1325,10 +1377,10 @@ class Anim:
     def getdataref(self, object, name, suffix, first):
         if not suffix:
             vals=[0,1]
-            thing='bone'
+            thing='bone in armature' 
         else:
             vals=[None,None]
-            thing='property'
+            thing='property in armature'
             
         l=name.find('.')
         if l!=-1: name=name[:l]
@@ -1361,24 +1413,8 @@ class Anim:
             elif n!=1 and idx>=n:
                 raise ExportError('Dataref %s has usable values from [0] to [%d]; but you specified [%d]' % (path+ref, n-1, idx), [object])
         else:
-            dataref=None
-            for tmpref in seq:
-                for prop in props:
-                    if prop.name.strip()==tmpref:
-                        # custom dataref
-                        if prop.type=='STRING':
-                            path=prop.data.strip()
-                            if path and path[-1]!='/': path=path+'/'
-                            dataref=path+name
-                        else:
-                            raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s"' % (ref, object.name), [object])
-                        break
-            if not dataref:
-                if ref in datarefs:
-                    raise ExportError('Dataref %s is ambiguous. Add a new string property named %s with the path name of the dataref that you want to use' % (ref, ref), [object])
-                else:
-                    raise ExportError('Unrecognised dataref "%s" for %s in armature "%s"' % (ref, thing, object.name), [object])
-            
+            dataref=getcustomdataref(object, thing, seq)
+
         # dataref values v1 & v2
         for tmpref in seq:
             for val in [first,first+1]:
@@ -1393,7 +1429,7 @@ class Anim:
                             raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [object])
         if vals[0]==None or vals[1]==None: vals=None
         return (dataref, vals)
-        
+
 
     #------------------------------------------------------------------------
     def __str__ (self):
@@ -1433,6 +1469,29 @@ class Anim:
             t=t+"\t"
             anim=anim.anim
         return t
+
+
+#------------------------------------------------------------------------
+def getcustomdataref(object, thing, names):
+    dataref=None
+    props=object.getAllProperties()
+    for tmpref in names:
+        for prop in props:
+            if prop.name.strip()==tmpref:
+                # custom dataref
+                if prop.type=='STRING':
+                    path=prop.data.strip()
+                    if path and path[-1]!='/': path=path+'/'
+                    dataref=path+names[-1]
+                else:
+                    raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s"' % (names[0], object.name), [object])
+                break
+    if not dataref:
+        if names[0] in datarefs:
+            raise ExportError('Dataref %s is ambiguous. Add a new string property named %s with the path name of the dataref that you want to use' % (names[0], names[0]), [object])
+        else:
+            raise ExportError('Unrecognised dataref "%s" for %s "%s"' % (names[0], thing, object.name), [object])
+    return dataref
 
 
 #------------------------------------------------------------------------

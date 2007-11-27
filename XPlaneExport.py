@@ -206,11 +206,14 @@
 #  - Only correctly named files are treated as cockpit objects.
 #  - Fix for export v7 cockpit objects with panel (broken in 2.39).
 #
+# 2007-11-27 v2.46
+#  - Support for custom lights.
+#
 
 import sys
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
 import Blender
-from Blender import Mesh, Lamp, Image, Draw, Window
+from Blender import Material, Mesh, Lamp, Image, Draw, Window
 from XPlaneUtils import Vertex, UV, Face
 #import time
 
@@ -295,7 +298,18 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
             
         if objType == "Mesh":
             mesh=object.getData(mesh=True)
-            if mesh.faceUV:
+            if isLight(object):
+                material=mesh.materials[0]
+                mtex=material.getTextures()[0]
+                if mtex:
+                    image=mtex.tex.image
+                    if image:
+                        texture=checkdup(image.filename, thisdir, texture, texlist, multierr, object)
+                        continue
+                print 'Warn:\tIgnoring custom light "%s" with no texture' % object.name
+                expobj.log.append(('Ignoring custom light "%s" with no texture' % object.name, [object]))
+                    
+            elif mesh.faceUV:
                 #print object.getName()
                 for face in mesh.faces:
                     if (face.mode&Mesh.FaceModes.TEX) and face.image:
@@ -316,35 +330,7 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
                                 else:
                                     panelerr=0
                         else:
-                            # Canonicalise pathnames to avoid false dupes
-                            if face.image.filename[0:2] in ['//', '\\\\']:
-                                # Path is relative to .blend file
-                                fixedfile=join(thisdir,face.image.filename[2:])
-                            else:
-                                fixedfile=abspath(face.image.filename)
-                            if sep=='\\':
-                                if fixedfile[0] in ['/', '\\']:
-                                    # Add Windows drive letter
-                                    (drive,foo)=splitdrive(Blender.sys.progname)
-                                    fixedfile=drive.lower()+fixedfile
-                                else:
-                                    # Lowercase Windows drive lettter
-                                    fixedfile=fixedfile[0].lower()+fixedfile[1:]
-
-                            # Check for multiple textures
-                            if ((not texture) or
-                                (str.lower(fixedfile)==str.lower(texture))):
-                                texture = fixedfile
-                                texlist.append(str.lower(fixedfile))
-                            else:
-                                if not multierr:
-                                    print "Warn:\tMultiple texture files found:"
-                                    print texture
-                                if not object in multierr:
-                                    multierr.append(object)
-                                if not str.lower(fixedfile) in texlist:
-                                    texlist.append(str.lower(fixedfile))
-                                    print fixedfile
+                            texture=checkdup(face.image.filename, thisdir, texture, texlist, multierr, object)
         elif (expobj.iscockpit and objType == "Lamp"
               and object.getType() == Lamp.Types.Lamp):
             raise ExportError("Cockpit objects can't contain lights",[object])
@@ -406,18 +392,52 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     for i in range(min(len(a),len(b))):
         if a[i].lower()!=b[i].lower():
             if i==0: break	# it's hopeless
-            if 'Custom Scenery' in a[i:]+b[i:] or 'Aircraft' in a[i:]+b[i:]:
-                break	# Can't step out of scenery or aircraft package
             c=''
             for l in range(i,len(a)-1): c+='../'
             for l in range(i,len(b)-1): c+=b[l]+'/'
             if ' ' in c: break	# spaces not allowed
+            if '/Custom Scenery' in c or '/Aircraft' in c or '/X-Plane' in c:
+                break	# Can't step out of scenery or aircraft package
             return c+basename(texture)
 
     # just return bare filename
     print "Warn:\tCan't guess path for texture file. Please edit the .obj file to fix."
     expobj.log.append(("Can't guess path for texture file. Please edit the .obj file to fix", []))
     return basename(texture)
+
+#------------------------------------------------------------------------
+def checkdup(filename, thisdir, texture, texlist, multierr, object):
+    # Canonicalise pathnames to avoid false dupes
+    if filename[0:2] in ['//', '\\\\']:
+        # Path is relative to .blend file
+        fixedfile=join(thisdir,filename[2:])
+    else:
+        fixedfile=abspath(filename)
+    if sep=='\\':
+        if fixedfile[0] in ['/', '\\']:
+            # Add Windows drive letter
+            (drive,foo)=splitdrive(Blender.sys.progname)
+            fixedfile=drive.lower()+fixedfile
+        else:
+            # Lowercase Windows drive lettter
+            fixedfile=fixedfile[0].lower()+fixedfile[1:]
+
+    # Check for multiple textures
+    if ((not texture) or
+        (str.lower(fixedfile)==str.lower(texture))):
+        texture = fixedfile
+        texlist.append(str.lower(fixedfile))
+    else:
+        if not multierr:
+            print "Warn:\tMultiple texture files found:"
+            print texture
+        if not object in multierr:
+            multierr.append(object)
+        if not str.lower(fixedfile) in texlist:
+            texlist.append(str.lower(fixedfile))
+            print fixedfile
+    return texture
+
 
 #------------------------------------------------------------------------
 def isLine(object, linewidth):
@@ -439,6 +459,16 @@ def isLine(object, linewidth):
             v[i+2].equals(v[(i+3)%4],linewidth)):
             return True
     return False
+
+
+#------------------------------------------------------------------------
+def isLight(object):
+    # A custom light is represented as a mesh with a material
+    # that has the Halo 
+
+    mesh=object.getData(mesh=True)
+    mats=mesh.materials
+    return len(mats) and mats[0] and mats[0].mode&Material.Modes.HALO
 
 
 class MyMesh:
@@ -597,17 +627,21 @@ class OBJexport7:
                 nobj=nobj+1
 
                 objType=object.getType()
-                if objType == "Mesh" and not isLine(object, self.linewidth):
-                    meshes.append(self.sortMesh(object, layer))
+                if objType == "Mesh":
+                    if isLight(object):
+                        print 'Warn:\tIgnoring custom light "%s"' % object.name
+                        self.log.append(('Ignoring custom light "%s"' % object.name, [object]))                    
+                    elif not isLine(object, self.linewidth):
+                        meshes.append(self.sortMesh(object, layer))
                 elif objType == "Lamp":
                     pass	# Handled later
                 elif objType == 'Empty':
                     for prop in object.getAllProperties():
                         if prop.type in ['INT', 'FLOAT'] and prop.name.startswith('group '):
                             self.file.write("\nATTR_layer_group\t%s\t%d\t//\n\n" % (prop.name[6:].strip(), int(prop.data)))
-                elif objType not in ['Camera','Lattice']:
-                    print 'Warn:\tIgnoring %s "%s"' % (objType.lower(), object.name)
-                    self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name), [object]))
+                #elif objType not in ['Camera','Lattice']:
+                #    print 'Warn:\tIgnoring %s "%s"' % (objType.lower(), object.name)
+                #    self.log.append(('Ignoring %s "%s"' % (objType.lower(), object.name), [object]))
 
             # Hack! Find a kosher panel texture and put it last
             if self.iscockpit:
