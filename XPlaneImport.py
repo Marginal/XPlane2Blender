@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.46"
+__version__ = "3.00"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -199,13 +199,17 @@ Limitations:<br>
 #  - Imported objects are selected.
 #  - Fix for animated lights.
 #
-# 2006-09-17 v2.42
+# 2007-09-17 v2.42
 #  - Detect mirrored flat faces, and don't remove doubles from them.
+#
+# 2007-12-01 v3.00
+#  - Import custom lights.
+#  - Put Armatures in correct layers.
 #
 
 import sys
 import Blender
-from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Draw, Window
+from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Texture, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, Vector
 from XPlaneUtils import Vertex, UV, Face, getDatarefs
 from os.path import abspath, basename, curdir, dirname, join, normpath, sep, splitdrive
@@ -784,6 +788,15 @@ class OBJimport:
                 v=self.getVertex()
                 self.addLamp(scene,v,None,name)
 
+            elif t=='LIGHT_CUSTOM':
+                self.addpendingbone()
+                v=self.getVertex()
+                rgba=[self.getFloat() for i in range(4)]
+                s=self.getFloat()
+                uv=[self.getFloat() for i in range(4)]
+                name=self.getInput()
+                self.addCustomLight(scene,v,rgba,s,uv,name)
+
             elif t=='LINES':
                 self.addpendingbone()
                 a=self.getInt()
@@ -831,8 +844,6 @@ class OBJimport:
                     self.arm.drawType=Armature.STICK
                     self.arm.restPosition=True	# for easier parenting
                     self.armob.link(self.arm)
-                    if self.layer:
-                        self.armob.Layer=OBJimport.LAYER[self.layer]
                     cur=Window.GetCursorPos()
                     self.armob.setLocation(cur[0], cur[1], cur[2])
                     self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
@@ -857,6 +868,8 @@ class OBJimport:
                     self.arm.restPosition=False
                     self.arm.update()
                     scene.objects.link(self.armob)
+                    if self.layer:
+                        self.armob.Layer=OBJimport.LAYER[self.layer]
                     self.arm=None
                     self.armob=None
                     self.action=None
@@ -1216,8 +1229,7 @@ class OBJimport:
                 else:
                     self.mats.append(self.mat)
 
-            elif (self.fileformat>6 and t.startswith('ATTR_')) or t in [
-                'LIGHT_CUSTOM']:
+            elif self.fileformat>6 and t.startswith('ATTR_'):
                 print 'Warn:\tIgnoring unsupported "%s"' % t
                 self.log.append('Ignoring unsupported "%s"' % t)
 
@@ -1336,6 +1348,97 @@ class OBJimport:
         self.nprim+=1
         
     #------------------------------------------------------------------------
+    def addCustomLight(self,scene,v,rgba,size,uv,dataref):
+        if dataref in ['none', 'NULL']:
+            name='Custom light'
+            dataref=None
+        else:
+            dataref=dataref.split('/')
+            name=dataref[-1]
+        if self.verbose>1:
+            print 'Info:\tImporting Custom Light at line %s "%s"' % (self.lineno, name)
+
+        # Custom lights shouldn't be merged, so add immediately
+        clampedrgba=[]
+        for i in range(4):
+            if 0<=rgba[i]<=1:
+                clampedrgba.append(round(rgba[i],3))
+            else:
+                clampedrgba.append(1.0)
+        uv=tuple([round(uv[i],3) for i in range(4)])
+
+        for mat in Material.Get():
+            if (mat.mode&(Material.Modes.HALO|Material.Modes.HALOTEX)==(Material.Modes.HALO|Material.Modes.HALOTEX) and
+                round(mat.R,3)==clampedrgba[0] and
+                round(mat.G,3)==clampedrgba[1] and
+                round(mat.B,3)==clampedrgba[2] and
+                round(mat.alpha,3)==clampedrgba[3] and
+                mat.haloSize==size):
+                mtex=mat.getTextures()[0]
+                if mtex and tuple([round(mtex.tex.crop[i],3) for i in range(4)])==uv:
+                    break
+        else:
+            tex=Texture.New(name)
+            tex.type=Texture.Types.IMAGE
+            tex.image=self.image
+            tex.imageFlags|=Texture.ImageFlags.USEALPHA
+            tex.setExtend('Clip')
+            tex.crop=uv
+            
+            mat=Material.New(name)
+            mat.mode|=(Material.Modes.HALO|Material.Modes.HALOTEX)
+            mat.rgbCol=clampedrgba[:3]
+            mat.alpha=clampedrgba[3]
+            mat.haloSize=size
+            mat.setTexture(0, tex)
+        
+        mesh=Mesh.New(name)
+        mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
+        mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
+
+        face=NMesh.Face()
+        face.mat=0
+        face.mode &= ~(Mesh.FaceModes.TEX|Mesh.FaceModes.TILES)
+        face.mode |= (Mesh.FaceModes.TWOSIDE|Mesh.FaceModes.DYNAMIC)
+        mesh.verts.extend([[0,0,0]])
+        mesh.faces.extend([[0,0]])
+
+        ob = Object.New("Mesh", name)
+        ob.link(mesh)
+        scene.objects.link(ob)
+        if self.armob:
+            if self.bones:
+                boneloc=Vertex(self.arm.bones[self.bones[-1]].head)
+                ob.setLocation(self.armob.LocX+boneloc.x+v.x,
+                               self.armob.LocY+boneloc.y+v.y,
+                               self.armob.LocZ+boneloc.z+v.z)
+            else:	# Bone can be None if no_ref
+                ob.setLocation(self.armob.LocX+v.x,
+                               self.armob.LocY+v.y,
+                               self.armob.LocZ+v.z)
+            self.armob.makeParent([ob])
+            if 'makeParentBone' in dir(self.armob):	# new in 2.43
+                self.armob.makeParentBone([ob],self.bones[-1])
+        else:
+            cur=Window.GetCursorPos()
+            ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
+        if self.layer:
+            ob.Layer=OBJimport.LAYER[self.layer]
+
+        if dataref:
+            ob.addProperty('name', name)
+            if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
+                # custom or ambiguous dataref
+                ob.addProperty(name, '/'.join(dataref[:-1])+'/')
+        if rgba[0]!=clampedrgba[0]: ob.addProperty('R', rgba[0])
+        if rgba[1]!=clampedrgba[1]: ob.addProperty('G', rgba[1])
+        if rgba[2]!=clampedrgba[2]: ob.addProperty('B', rgba[2])
+        if rgba[3]!=clampedrgba[3]: ob.addProperty('A', rgba[3])
+            
+        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
+        self.nprim+=1
+
+    #------------------------------------------------------------------------
     def addLine(self,scene,v,c):
         name="Line"
         if self.verbose>1:
@@ -1385,7 +1488,7 @@ class OBJimport:
             face.v.append(nmv)
 
         mat=Mat(c)
-        for m in self.mats:
+        for m in self.mats[1:]:	# skip default material
             if mat.equals(m):
                 mat=m
         else:
