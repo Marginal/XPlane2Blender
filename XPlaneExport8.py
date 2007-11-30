@@ -137,8 +137,9 @@ Limitations:<br>
 # 2007-10-02 v2.44
 #  - Only correctly named files are treated as cockpit objects.
 #
-# 2007-11-27 v2.46
+# 2007-11-30 v2.46
 #  - Support for custom lights.
+#  - Fix for bones connected to parent with "Con" button.
 #
 
 
@@ -1321,7 +1322,8 @@ class Anim:
             # mm.rotationPart() scaled to be unit size for rotation axis
             rm=MatrixrotationOnly(mm, object)
             
-            if (ipo.getCurve('LocX') and
+            if (not (bone.parent and Armature.CONNECTED in bone.options) and
+                ipo.getCurve('LocX') and
                 ipo.getCurve('LocY') and
                 ipo.getCurve('LocZ')):
                 t = Vector([ipo.getCurveCurval('LocX'),
