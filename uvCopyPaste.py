@@ -8,7 +8,7 @@ Tooltip: 'Copy selected texture assignment to other faces'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.45"
+__version__ = "2.46"
 __bpydoc__ = """\
 This script duplicates a face's texture assignment across many faces.
 
@@ -272,4 +272,4 @@ try:
     Draw.Register (gui, event, bevent)
 
 except StripError, e:
-    Draw.PupMenu ("ERROR%%t|%s" + e.msg)
+    Draw.PupMenu ("ERROR%%t|%s" % e.msg)
