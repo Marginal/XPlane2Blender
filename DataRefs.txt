@@ -1,4 +1,4 @@
-2 861 Tue Oct  2 14:03:32 2007
+2 900 Mon Nov 12 18:27:49 2007
 
 sim/aircraft/acf_struct	int[10]	y	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
@@ -466,12 +466,14 @@ sim/aircraft/overflow/has_FADEC_switch	int	y	???	???
 sim/aircraft/overflow/has_kts_mac	int	y	???	???
 sim/aircraft/overflow/has_yawdamp_but	int	y	???	???
 sim/aircraft/overflow/has_crosstie_but	int	y	???	???
+sim/aircraft/overflow/has_HUD_pwr	int	y	???	???
 sim/aircraft/overflow/has_litemap_tex_2	int	y	???	???
 sim/aircraft/overflow/has_bat_switch	int	y	???	???
 sim/aircraft/overflow/has_gen_switch	int	y	???	???
 sim/aircraft/overflow/has_inv_switch	int	y	???	???
 sim/aircraft/overflow/has_transonic_audio	int	y	???	???
 sim/aircraft/overflow/has_pre_rotate	int	y	???	???
+sim/aircraft/overflow/has_wpn_sel_ins	int	y	???	???
 sim/airfoils/afl_clB	float[292]	y
 sim/airfoils/afl_Lpow	float	y	???	???
 sim/airfoils/afl_Lstall	float	y	???	???
@@ -826,7 +828,11 @@ sim/cockpit/weapons/firing_mode	int	y	???	Firing mode (single, ripple, etc. for 
 sim/cockpit/weapons/firing_rate	int	y	???	Firing rate (for bombs)
 sim/cockpit/weapons/plane_target_index	int	y	???	Index of plane that is being targeted
 sim/cockpit/weapons/chaff_time_left	float	y	???	???
+sim/cockpit/weapons/chaff_now	int	y	???	???
+sim/cockpit/weapons/chaff_max	int	y	???	???
 sim/cockpit/weapons/flare_time_left	float	y	???	???
+sim/cockpit/weapons/flare_now	int	y	???	???
+sim/cockpit/weapons/flare_max	int	y	???	???
 sim/cockpit/weapons/wpn_sel_console	int	y	???	INDIVIDUAL weapon selected
 sim/flightmodel/controls/sbrkrat	float	y	???	Requested speed brake deployment
 sim/flightmodel/controls/flaprqst	float	y	???	Requested flap deployment
@@ -1657,15 +1663,18 @@ sim/graphics/view/click_3d_x	float	n	0-1	coordinates of the panel click in 3-d
 sim/graphics/view/click_3d_y	float	n	0-1	as texture coords (E.g. 0-1)
 sim/joystick/has_joystick	int	n	boolean	Do we have a joystick?
 sim/joystick/mouse_is_joystick	int	n	boolean	Is the mouse acting as a joystick?
-sim/joystick/yolk_pitch_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling pitch.  Use override_joystick
-sim/joystick/yolk_roll_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling roll
-sim/joystick/yolk_heading_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling yaw.	  Use override_artstab
+sim/joystick/yoke_pitch_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling pitch.  Use override_joystick
+sim/joystick/yolk_pitch_ratio	float	y	[-1..1]	Legacy - this spelling error is still present for
+sim/joystick/yoke_roll_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling roll
+sim/joystick/yolk_roll_ratio	float	y	[-1..1]	Legacy - this spelling error is still present for backward compatibility with older plugins.
+sim/joystick/yoke_heading_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling yaw.	  Use override_artstab
+sim/joystick/yolk_heading_ratio	float	y	[-1..1]	Legacy - this spelling error is still present for backward compatibility with older plugins.
 sim/joystick/artstab_pitch_ratio	float	y	[-1..1]	The artificial stability input modifications for pitch
 sim/joystick/artstab_roll_ratio	float	y	[-1..1]	The artificial stability input modifications for roll
 sim/joystick/artstab_heading_ratio	float	y	[-1..1]	The artificial stability input modifications for yaw
-sim/joystick/FC_hdng	float	y	fc	Flight Control Heading (sum of yolk plus artificial stability)
-sim/joystick/FC_ptch	float	y	fc	Flight Control Pitch (sum of yolk plus artificial stability)
-sim/joystick/FC_roll	float	y	fc	Flight Control Roll (sum of yolk plus artificial stability)
+sim/joystick/FC_hdng	float	y	fc	Flight Control Heading (sum of yoke plus artificial stability)
+sim/joystick/FC_ptch	float	y	fc	Flight Control Pitch (sum of yoke plus artificial stability)
+sim/joystick/FC_roll	float	y	fc	Flight Control Roll (sum of yoke plus artificial stability)
 sim/joystick/joystick_pitch_nullzone	float	y	ratio	The nullzone size for the pitch axis
 sim/joystick/joystick_roll_nullzone	float	y	ratio	The nullzone size for the roll axis
 sim/joystick/joystick_heading_nullzone	float	y	ratio	The nullzone size for the heading axis
@@ -1743,9 +1752,9 @@ sim/multiplayer/position/plane1_speedbrake_ratio	float	y	ratio	Plane 1 speed bra
 sim/multiplayer/position/plane1_slat_ratio	float	y	ratio	Plane 1 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane1_wing_sweep	float	y	ratio	Plane 1 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane1_throttle	float[8]	y	ratio	Plane 1 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane1_yolk_pitch	float	y	ratio	Plane 1 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane1_yolk_roll	float	y	ratio	Plane 1 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane1_yolk_yaw	float	y	ratio	Plane 1 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane1_yolk_pitch	float	y	ratio	Plane 1 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane1_yolk_roll	float	y	ratio	Plane 1 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane1_yolk_yaw	float	y	ratio	Plane 1 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane2_x	double	y	meters	Plane 2 x location
 sim/multiplayer/position/plane2_y	double	y	meters	Plane 2 y location
 sim/multiplayer/position/plane2_z	double	y	meters	Plane 2 z location
@@ -1757,12 +1766,12 @@ sim/multiplayer/position/plane2_flap_ratio	float	y	ratio	Plane 2 flap lowering 0
 sim/multiplayer/position/plane2_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane2_spoiler_ratio	float	y	ratio	Plane 2 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane2_speedbrake_ratio	float	y	ratio	Plane 2 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane2_slat_ratio	float	y	ratio	Plane 2 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane2_sla1_ratio	float	y	ratio	Plane 2 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane2_wing_sweep	float	y	ratio	Plane 2 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane2_throttle	float[8]	y	ratio	Plane 2 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane2_yolk_pitch	float	y	ratio	Plane 2 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane2_yolk_roll	float	y	ratio	Plane 2 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane2_yolk_yaw	float	y	ratio	Plane 2 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane2_yolk_pitch	float	y	ratio	Plane 2 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane2_yolk_roll	float	y	ratio	Plane 2 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane2_yolk_yaw	float	y	ratio	Plane 2 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane3_x	double	y	meters	Plane 3 x location
 sim/multiplayer/position/plane3_y	double	y	meters	Plane 3 y location
 sim/multiplayer/position/plane3_z	double	y	meters	Plane 3 z location
@@ -1774,12 +1783,12 @@ sim/multiplayer/position/plane3_flap_ratio	float	y	ratio	Plane 3 flap lowering 0
 sim/multiplayer/position/plane3_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane3_spoiler_ratio	float	y	ratio	Plane 3 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane3_speedbrake_ratio	float	y	ratio	Plane 3 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane3_slat_ratio	float	y	ratio	Plane 3 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane3_sla1_ratio	float	y	ratio	Plane 3 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane3_wing_sweep	float	y	ratio	Plane 3 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane3_throttle	float[8]	y	ratio	Plane 3 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane3_yolk_pitch	float	y	ratio	Plane 3 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane3_yolk_roll	float	y	ratio	Plane 3 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane3_yolk_yaw	float	y	ratio	Plane 3 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane3_yolk_pitch	float	y	ratio	Plane 3 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane3_yolk_roll	float	y	ratio	Plane 3 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane3_yolk_yaw	float	y	ratio	Plane 3 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane4_x	double	y	meters	Plane 4 x location
 sim/multiplayer/position/plane4_y	double	y	meters	Plane 4 y location
 sim/multiplayer/position/plane4_z	double	y	meters	Plane 4 z location
@@ -1791,12 +1800,12 @@ sim/multiplayer/position/plane4_flap_ratio	float	y	ratio	Plane 4 flap lowering 0
 sim/multiplayer/position/plane4_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane4_spoiler_ratio	float	y	ratio	Plane 4 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane4_speedbrake_ratio	float	y	ratio	Plane 4 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane4_slat_ratio	float	y	ratio	Plane 4 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane4_sla1_ratio	float	y	ratio	Plane 4 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane4_wing_sweep	float	y	ratio	Plane 4 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane4_throttle	float[8]	y	ratio	Plane 4 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane4_yolk_pitch	float	y	ratio	Plane 4 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane4_yolk_roll	float	y	ratio	Plane 4 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane4_yolk_yaw	float	y	ratio	Plane 4 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane4_yolk_pitch	float	y	ratio	Plane 4 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane4_yolk_roll	float	y	ratio	Plane 4 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane4_yolk_yaw	float	y	ratio	Plane 4 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane5_x	double	y	meters	Plane 5 x location
 sim/multiplayer/position/plane5_y	double	y	meters	Plane 5 y location
 sim/multiplayer/position/plane5_z	double	y	meters	Plane 5 z location
@@ -1808,12 +1817,12 @@ sim/multiplayer/position/plane5_flap_ratio	float	y	ratio	Plane 5 flap lowering 0
 sim/multiplayer/position/plane5_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane5_spoiler_ratio	float	y	ratio	Plane 5 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane5_speedbrake_ratio	float	y	ratio	Plane 5 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane5_slat_ratio	float	y	ratio	Plane 5 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane5_sla1_ratio	float	y	ratio	Plane 5 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane5_wing_sweep	float	y	ratio	Plane 5 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane5_throttle	float[8]	y	ratio	Plane 5 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane5_yolk_pitch	float	y	ratio	Plane 5 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane5_yolk_roll	float	y	ratio	Plane 5 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane5_yolk_yaw	float	y	ratio	Plane 5 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane5_yolk_pitch	float	y	ratio	Plane 5 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane5_yolk_roll	float	y	ratio	Plane 5 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane5_yolk_yaw	float	y	ratio	Plane 5 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane6_x	double	y	meters	Plane 6 x location
 sim/multiplayer/position/plane6_y	double	y	meters	Plane 6 y location
 sim/multiplayer/position/plane6_z	double	y	meters	Plane 6 z location
@@ -1825,12 +1834,12 @@ sim/multiplayer/position/plane6_flap_ratio	float	y	ratio	Plane 6 flap lowering 0
 sim/multiplayer/position/plane6_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane6_spoiler_ratio	float	y	ratio	Plane 6 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane6_speedbrake_ratio	float	y	ratio	Plane 6 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane6_slat_ratio	float	y	ratio	Plane 6 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane6_sla1_ratio	float	y	ratio	Plane 6 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane6_wing_sweep	float	y	ratio	Plane 6 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane6_throttle	float[8]	y	ratio	Plane 6 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane6_yolk_pitch	float	y	ratio	Plane 6 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane6_yolk_roll	float	y	ratio	Plane 6 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane6_yolk_yaw	float	y	ratio	Plane 6 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane6_yolk_pitch	float	y	ratio	Plane 6 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane6_yolk_roll	float	y	ratio	Plane 6 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane6_yolk_yaw	float	y	ratio	Plane 6 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane7_x	double	y	meters	Plane 7 x location
 sim/multiplayer/position/plane7_y	double	y	meters	Plane 7 y location
 sim/multiplayer/position/plane7_z	double	y	meters	Plane 7 z location
@@ -1842,12 +1851,12 @@ sim/multiplayer/position/plane7_flap_ratio	float	y	ratio	Plane 7 flap lowering 0
 sim/multiplayer/position/plane7_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane7_spoiler_ratio	float	y	ratio	Plane 7 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane7_speedbrake_ratio	float	y	ratio	Plane 7 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane7_slat_ratio	float	y	ratio	Plane 7 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane7_sla1_ratio	float	y	ratio	Plane 7 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane7_wing_sweep	float	y	ratio	Plane 7 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane7_throttle	float[8]	y	ratio	Plane 7 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane7_yolk_pitch	float	y	ratio	Plane 7 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane7_yolk_roll	float	y	ratio	Plane 7 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane7_yolk_yaw	float	y	ratio	Plane 7 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane7_yolk_pitch	float	y	ratio	Plane 7 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane7_yolk_roll	float	y	ratio	Plane 7 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane7_yolk_yaw	float	y	ratio	Plane 7 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane8_x	double	y	meters	Plane 8 x location
 sim/multiplayer/position/plane8_y	double	y	meters	Plane 8 y location
 sim/multiplayer/position/plane8_z	double	y	meters	Plane 8 z location
@@ -1859,12 +1868,12 @@ sim/multiplayer/position/plane8_flap_ratio	float	y	ratio	Plane 8 flap lowering 0
 sim/multiplayer/position/plane8_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane8_spoiler_ratio	float	y	ratio	Plane 8 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane8_speedbrake_ratio	float	y	ratio	Plane 8 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane8_slat_ratio	float	y	ratio	Plane 8 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane8_sla1_ratio	float	y	ratio	Plane 8 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane8_wing_sweep	float	y	ratio	Plane 8 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane8_throttle	float[8]	y	ratio	Plane 8 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane8_yolk_pitch	float	y	ratio	Plane 8 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane8_yolk_roll	float	y	ratio	Plane 8 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane8_yolk_yaw	float	y	ratio	Plane 8 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane8_yolk_pitch	float	y	ratio	Plane 8 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane8_yolk_roll	float	y	ratio	Plane 8 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane8_yolk_yaw	float	y	ratio	Plane 8 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane9_x	double	y	meters	Plane 9 x location
 sim/multiplayer/position/plane9_y	double	y	meters	Plane 9 y location
 sim/multiplayer/position/plane9_z	double	y	meters	Plane 9 z location
@@ -1876,12 +1885,12 @@ sim/multiplayer/position/plane9_flap_ratio	float	y	ratio	Plane 9 flap lowering 0
 sim/multiplayer/position/plane9_flap_ratio2	float	y	ratio	Plane 1 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane9_spoiler_ratio	float	y	ratio	Plane 9 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane9_speedbrake_ratio	float	y	ratio	Plane 9 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane9_slat_ratio	float	y	ratio	Plane 9 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane9_sla1_ratio	float	y	ratio	Plane 9 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane9_wing_sweep	float	y	ratio	Plane 9 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane9_throttle	float[8]	y	ratio	Plane 9 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane9_yolk_pitch	float	y	ratio	Plane 9 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane9_yolk_roll	float	y	ratio	Plane 9 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane9_yolk_yaw	float	y	ratio	Plane 9 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane9_yolk_pitch	float	y	ratio	Plane 9 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane9_yolk_roll	float	y	ratio	Plane 9 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane9_yolk_yaw	float	y	ratio	Plane 9 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane1_lat	double	n	degs	Plane 1 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane1_lon	double	n	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane1_el	double	n	meters	position then these will not be accurate unless the plane updates them.
@@ -2042,12 +2051,12 @@ sim/multiplayer/position/plane10_flap_ratio	float	y	ratio	Plane 10 flap lowering
 sim/multiplayer/position/plane10_flap_ratio2	float	y	ratio	Plane 10 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane10_spoiler_ratio	float	y	ratio	Plane 10 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane10_speedbrake_ratio	float	y	ratio	Plane 10 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane10_slat_ratio	float	y	ratio	Plane 10 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane10_sla1_ratio	float	y	ratio	Plane 10 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane10_wing_sweep	float	y	ratio	Plane 10 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane10_throttle	float[8]	y	ratio	Plane 10 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane10_yolk_pitch	float	y	ratio	Plane 10 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane10_yolk_roll	float	y	ratio	Plane 10 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane10_yolk_yaw	float	y	ratio	Plane 10 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane10_yolk_pitch	float	y	ratio	Plane 10 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane10_yolk_roll	float	y	ratio	Plane 10 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane10_yolk_yaw	float	y	ratio	Plane 10 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane10_lat	double	y	degs	Plane 10 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane10_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane10_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2065,12 +2074,12 @@ sim/multiplayer/position/plane11_flap_ratio	float	y	ratio	Plane 11 flap lowering
 sim/multiplayer/position/plane11_flap_ratio2	float	y	ratio	Plane 11 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane11_spoiler_ratio	float	y	ratio	Plane 11 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane11_speedbrake_ratio	float	y	ratio	Plane 11 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane11_slat_ratio	float	y	ratio	Plane 11 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane11_sla1_ratio	float	y	ratio	Plane 11 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane11_wing_sweep	float	y	ratio	Plane 11 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane11_throttle	float[8]	y	ratio	Plane 11 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane11_yolk_pitch	float	y	ratio	Plane 11 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane11_yolk_roll	float	y	ratio	Plane 11 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane11_yolk_yaw	float	y	ratio	Plane 11 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane11_yolk_pitch	float	y	ratio	Plane 11 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane11_yolk_roll	float	y	ratio	Plane 11 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane11_yolk_yaw	float	y	ratio	Plane 11 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane11_lat	double	y	degs	Plane 11 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane11_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane11_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2088,12 +2097,12 @@ sim/multiplayer/position/plane12_flap_ratio	float	y	ratio	Plane 12 flap lowering
 sim/multiplayer/position/plane12_flap_ratio2	float	y	ratio	Plane 12 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane12_spoiler_ratio	float	y	ratio	Plane 12 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane12_speedbrake_ratio	float	y	ratio	Plane 12 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane12_slat_ratio	float	y	ratio	Plane 12 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane12_sla1_ratio	float	y	ratio	Plane 12 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane12_wing_sweep	float	y	ratio	Plane 12 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane12_throttle	float[8]	y	ratio	Plane 12 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane12_yolk_pitch	float	y	ratio	Plane 12 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane12_yolk_roll	float	y	ratio	Plane 12 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane12_yolk_yaw	float	y	ratio	Plane 12 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane12_yolk_pitch	float	y	ratio	Plane 12 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane12_yolk_roll	float	y	ratio	Plane 12 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane12_yolk_yaw	float	y	ratio	Plane 12 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane12_lat	double	y	degs	Plane 12 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane12_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane12_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2111,12 +2120,12 @@ sim/multiplayer/position/plane13_flap_ratio	float	y	ratio	Plane 13 flap lowering
 sim/multiplayer/position/plane13_flap_ratio2	float	y	ratio	Plane 13 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane13_spoiler_ratio	float	y	ratio	Plane 13 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane13_speedbrake_ratio	float	y	ratio	Plane 13 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane13_slat_ratio	float	y	ratio	Plane 13 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane13_sla1_ratio	float	y	ratio	Plane 13 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane13_wing_sweep	float	y	ratio	Plane 13 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane13_throttle	float[8]	y	ratio	Plane 13 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane13_yolk_pitch	float	y	ratio	Plane 13 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane13_yolk_roll	float	y	ratio	Plane 13 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane13_yolk_yaw	float	y	ratio	Plane 13 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane13_yolk_pitch	float	y	ratio	Plane 13 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane13_yolk_roll	float	y	ratio	Plane 13 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane13_yolk_yaw	float	y	ratio	Plane 13 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane13_lat	double	y	degs	Plane 13 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane13_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane13_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2134,12 +2143,12 @@ sim/multiplayer/position/plane14_flap_ratio	float	y	ratio	Plane 14 flap lowering
 sim/multiplayer/position/plane14_flap_ratio2	float	y	ratio	Plane 14 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane14_spoiler_ratio	float	y	ratio	Plane 14 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane14_speedbrake_ratio	float	y	ratio	Plane 14 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane14_slat_ratio	float	y	ratio	Plane 14 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane14_sla1_ratio	float	y	ratio	Plane 14 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane14_wing_sweep	float	y	ratio	Plane 14 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane14_throttle	float[8]	y	ratio	Plane 14 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane14_yolk_pitch	float	y	ratio	Plane 14 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane14_yolk_roll	float	y	ratio	Plane 14 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane14_yolk_yaw	float	y	ratio	Plane 14 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane14_yolk_pitch	float	y	ratio	Plane 14 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane14_yolk_roll	float	y	ratio	Plane 14 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane14_yolk_yaw	float	y	ratio	Plane 14 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane14_lat	double	y	degs	Plane 14 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane14_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane14_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2157,12 +2166,12 @@ sim/multiplayer/position/plane15_flap_ratio	float	y	ratio	Plane 15 flap lowering
 sim/multiplayer/position/plane15_flap_ratio2	float	y	ratio	Plane 15 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane15_spoiler_ratio	float	y	ratio	Plane 15 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane15_speedbrake_ratio	float	y	ratio	Plane 15 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane15_slat_ratio	float	y	ratio	Plane 15 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane15_sla1_ratio	float	y	ratio	Plane 15 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane15_wing_sweep	float	y	ratio	Plane 15 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane15_throttle	float[8]	y	ratio	Plane 15 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane15_yolk_pitch	float	y	ratio	Plane 15 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane15_yolk_roll	float	y	ratio	Plane 15 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane15_yolk_yaw	float	y	ratio	Plane 15 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane15_yolk_pitch	float	y	ratio	Plane 15 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane15_yolk_roll	float	y	ratio	Plane 15 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane15_yolk_yaw	float	y	ratio	Plane 15 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane15_lat	double	y	degs	Plane 15 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane15_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane15_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2180,12 +2189,12 @@ sim/multiplayer/position/plane16_flap_ratio	float	y	ratio	Plane 16 flap lowering
 sim/multiplayer/position/plane16_flap_ratio2	float	y	ratio	Plane 16 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane16_spoiler_ratio	float	y	ratio	Plane 16 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane16_speedbrake_ratio	float	y	ratio	Plane 16 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane16_slat_ratio	float	y	ratio	Plane 16 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane16_sla1_ratio	float	y	ratio	Plane 16 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane16_wing_sweep	float	y	ratio	Plane 16 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane16_throttle	float[8]	y	ratio	Plane 16 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane16_yolk_pitch	float	y	ratio	Plane 16 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane16_yolk_roll	float	y	ratio	Plane 16 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane16_yolk_yaw	float	y	ratio	Plane 16 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane16_yolk_pitch	float	y	ratio	Plane 16 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane16_yolk_roll	float	y	ratio	Plane 16 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane16_yolk_yaw	float	y	ratio	Plane 16 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane16_lat	double	y	degs	Plane 16 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane16_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane16_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2203,12 +2212,12 @@ sim/multiplayer/position/plane17_flap_ratio	float	y	ratio	Plane 17 flap lowering
 sim/multiplayer/position/plane17_flap_ratio2	float	y	ratio	Plane 17 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane17_spoiler_ratio	float	y	ratio	Plane 17 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane17_speedbrake_ratio	float	y	ratio	Plane 17 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane17_slat_ratio	float	y	ratio	Plane 17 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane17_sla1_ratio	float	y	ratio	Plane 17 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane17_wing_sweep	float	y	ratio	Plane 17 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane17_throttle	float[8]	y	ratio	Plane 17 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane17_yolk_pitch	float	y	ratio	Plane 17 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane17_yolk_roll	float	y	ratio	Plane 17 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane17_yolk_yaw	float	y	ratio	Plane 17 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane17_yolk_pitch	float	y	ratio	Plane 17 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane17_yolk_roll	float	y	ratio	Plane 17 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane17_yolk_yaw	float	y	ratio	Plane 17 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane17_lat	double	y	degs	Plane 17 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane17_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane17_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2226,12 +2235,12 @@ sim/multiplayer/position/plane18_flap_ratio	float	y	ratio	Plane 18 flap lowering
 sim/multiplayer/position/plane18_flap_ratio2	float	y	ratio	Plane 18 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane18_spoiler_ratio	float	y	ratio	Plane 18 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane18_speedbrake_ratio	float	y	ratio	Plane 18 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane18_slat_ratio	float	y	ratio	Plane 18 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane18_sla1_ratio	float	y	ratio	Plane 18 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane18_wing_sweep	float	y	ratio	Plane 18 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane18_throttle	float[8]	y	ratio	Plane 18 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane18_yolk_pitch	float	y	ratio	Plane 18 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane18_yolk_roll	float	y	ratio	Plane 18 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane18_yolk_yaw	float	y	ratio	Plane 18 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane18_yolk_pitch	float	y	ratio	Plane 18 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane18_yolk_roll	float	y	ratio	Plane 18 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane18_yolk_yaw	float	y	ratio	Plane 18 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane18_lat	double	y	degs	Plane 18 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane18_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane18_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2249,12 +2258,12 @@ sim/multiplayer/position/plane19_flap_ratio	float	y	ratio	Plane 19 flap lowering
 sim/multiplayer/position/plane19_flap_ratio2	float	y	ratio	Plane 19 flap lowering 0 = clean, 1 = max flaps
 sim/multiplayer/position/plane19_spoiler_ratio	float	y	ratio	Plane 19 spoiler ratio (0 = clean, 1 = max spoilers)
 sim/multiplayer/position/plane19_speedbrake_ratio	float	y	ratio	Plane 19 speed brake ratio (0 = clean, 1 = max speed brakes)
-sim/multiplayer/position/plane19_slat_ratio	float	y	ratio	Plane 19 slat deployment ratio 0 = clean, 1 = max slats
+sim/multiplayer/position/plane19_sla1_ratio	float	y	ratio	Plane 19 slat deployment ratio 0 = clean, 1 = max slats
 sim/multiplayer/position/plane19_wing_sweep	float	y	ratio	Plane 19 wing sweep, 0 = normal, 1 = most sweep
 sim/multiplayer/position/plane19_throttle	float[8]	y	ratio	Plane 19 Percent of max throttle per 8 engines (0 = none, 1 = full fwd, -1 = full reverse)
-sim/multiplayer/position/plane19_yolk_pitch	float	y	ratio	Plane 19 Commanded pitch (1.0 = max climb, -1.0 = max dive, 0.0 = level.)
-sim/multiplayer/position/plane19_yolk_roll	float	y	ratio	Plane 19 Commanded roll (1.0 = max roll right, -1.0 = max roll left, 0.0 = no roll)
-sim/multiplayer/position/plane19_yolk_yaw	float	y	ratio	Plane 19 Commanded yaw (1.0 = max yaw right, -1.0 = max yaw left, 0.0 = no yaw)
+sim/multiplayer/position/plane19_yolk_pitch	float	y	ratio	Plane 19 Commanded pitch (Legacy for compatibility - use sim/multiplayer/controls/yoke_pitch_ratio)
+sim/multiplayer/position/plane19_yolk_roll	float	y	ratio	Plane 19 Commanded roll (Legacy for compatibility - use sim/multiplayer/controls/yoke_roll_ratio)
+sim/multiplayer/position/plane19_yolk_yaw	float	y	ratio	Plane 19 Commanded yaw (Legacy for compatibility - use sim/multiplayer/controls/yoke_heading_ratio)
 sim/multiplayer/position/plane19_lat	double	y	degs	Plane 19 Lat lon and elevation.  NOTE: your plugin must set the plane's
 sim/multiplayer/position/plane19_lon	double	y	degs	position by writing x, y and z.  Also if another plugin is upating plane
 sim/multiplayer/position/plane19_el	double	y	meters	position then these will not be accurate unless the plane updates them.
@@ -2710,7 +2719,7 @@ sim/operation/override/override_camera	int	y	boolean	Override camera control.  N
 sim/operation/override/override_annunciators	int	y	boolean	Override annunciators
 sim/operation/override/override_autopilot	int	y	boolean	Override the autopilot's brains
 sim/operation/override/override_pfc_autopilot_lites	int	y	boolean	Override partial control of a PFC jet cockpit (not for the faint at heart!)
-sim/operation/override/override_joystick_heading	int	y	boolean	Override just heading of the yolk
+sim/operation/override/override_joystick_heading	int	y	boolean	Override just heading of the yoke
 sim/operation/override/override_joystick_pitch	int	y	boolean	Override just heading of the pitch
 sim/operation/override/override_joystick_roll	int	y	boolean	Override just heading of the roll
 sim/operation/override/override_throttles	int	y	boolean	Override the throttles (use ENGN_thro_use to control them)
@@ -2721,7 +2730,7 @@ sim/operation/override/override_fms_advance	int	y	boolean	Override the FMS going
 sim/operation/override/override_fuel_flow	int	y	boolean	overrides fuel flow variable sim/flightmodel/engine/ENGN_FF_
 sim/operation/override/override_itt_egt	int	y	boolean	overrides engine temp vars sim/flightmodel/engine/ENGN_EGT_c and ENGN_ITT_c
 sim/operation/override/override_control_surfaces	int	y	boolean	overides individual control surfaces, e.g. sim/flightmodel/controls/lail1def
-sim/operation/prefs/has_view_bitmap	int[9]	n	boolean	Do we have a panel for this angle?
+sim/operation/prefs/has_view_bitmap	int[9]	n	boolean	Do we have a panel for this angle? - Ben says, this actually indicated whether we had an old v6-style panel.  Deprecated for v9, where v6 panels are not supported!
 sim/operation/prefs/startup_on_ramp	int	y	boolean	Start up on the ramp?
 sim/operation/prefs/startup_running	int	y	boolean	Start up with the plane running?
 sim/operation/prefs/autopilot_grab_cur_speed	int	y	boolean	On engage, does the autopilot set itself to the current speed?
@@ -2752,6 +2761,7 @@ sim/operation/sound/speech_on	int	y	boolean	Is speech synth on (set by user)
 sim/operation/sound/radio_chatter_on	int	y	boolean	Turn off background radio chatter
 sim/operation/sound/master_sound_volume	float	y	0-1	Master audio level in X-Plane
 sim/operation/windows/system_window	int	n	HWND	This is X-Plane's system native window as an int (either an HWND or WindowRef)
+sim/test/test_float	float	y	ratio	this test dataref is used internally for testing our models
 sim/time/timer_is_running_sec	int	y	boolean	Is the timer running?
 sim/time/total_running_time_sec	float	y	seconds	Total time the sim has been up
 sim/time/total_flight_time_sec	float	y	seconds	Total time since the flight got reset by something
@@ -2771,8 +2781,8 @@ sim/weapons/weapon_count	int	n	int	This is the number of weapons available via d
 sim/weapons/wpn_struct	int[25]	n	Pointers	Pointers to the raw weapon structs.
 sim/weapons/type	int[25]	y	???	For the geometry we scan right into the acf structure unused array-spaces.
 sim/weapons/free_flyer	int[25]	y	???	Weapon can go fly free... rocket or bomb
-sim/weapons/action_mode	int[25]	n	enum	0 = In carriage/still in the gun/reloaded, 1 = firing, and 2 = destroyed
-sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc.
+sim/weapons/action_mode	int[25]	n	enum	0 = In carriage/still in the gun/reloaded, 1 = firing, and 2 = destroyed 
+sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc. 
 sim/weapons/y_wpn_att	float[25]	y	???	Code to do the weapons as well as everything else.
 sim/weapons/z_wpn_att	float[25]	y
 sim/weapons/cgY	float[25]	y
@@ -2912,3 +2922,425 @@ sim/weather/meteorite_density	float	y	??	The density of meteorites in space.
 sim/weather/runway_friction	float	y	??	The friction constant for runways (how wet they are).
 sim/weather/wind_direction_degt	float	n	[0-359)	The effective direction of the wind at the plane's location.
 sim/weather/wind_speed_kt	float	n	kts >= 0	The effective speed of the wind at the plane's location.
+sim/cockpit2/annunciators/master_caution	int	n	boolean	This goes off any time there is a major problem with the bird: like it is on fire or something    // array of annunciators... kept as array for UDP IO
+sim/cockpit2/annunciators/master_warning	int	n	boolean	This goes off whenever there is some more moderate problem with the bird... maybe lo fuel pressure ot qty
+sim/cockpit2/annunciators/master_accept	int	n	boolean	Hit this button to CLEAR the master caution and warning: it says that you hear the fucking buzzer and to shut it up already
+sim/cockpit2/annunciators/autopilot_disconnect	int	n	boolean	This goes off for a few moments when the autopilot disconnects.. you wanna KNOW if otto just quit on you!
+sim/cockpit2/annunciators/low_vacuum	int	n	boolean	The vacuum pressure, which drives the instruments in the old prop planes, is low: the artificial horizon may loose it is orientation!
+sim/cockpit2/annunciators/low_voltage	int	n	boolean	The voltage os too high or low on one of the electrical buses
+sim/cockpit2/annunciators/fuel_quantity	int	n	boolean	Fuel qty. no points for guessing if it is too high or too low to trigger this one
+sim/cockpit2/annunciators/hydraulic_pressure	int	n	boolean	Hydraulic pressure. should indicate if press is lo or hi
+sim/cockpit2/annunciators/speedbrake	int	n	boolean	Speedbrake deployed: good to know so you do not forget it.. if i told you that oriental people are more likely to ride the brakes, you would call me a racist, but it is still true! ;-)
+sim/cockpit2/annunciators/GPWS	int	n	boolean	Ground proximity warning system: PULL UP! PULL UP! my lancair does this during my typical red-baron approaches!
+sim/cockpit2/annunciators/ice	int	n	boolean	Ice detected on the plane.. most people agree this is NOT a good thing.
+sim/cockpit2/annunciators/low_rotor	int	n	boolean	Rotor rpm on the helo has dropped below normal operating: power availability will be reduced!
+sim/cockpit2/annunciators/high_rotor	int	n	boolean	Rotor rpm on the helo has exceeded normal operating: power availability will be reduced, and god knows if the blades will stay ON!
+sim/cockpit2/annunciators/pitot_heat	int	n	boolean	Pitot heat is OFF (YUP! OFF!) turn it on to heat up the pitot tube, which measures air pressure to give you air speed.
+sim/cockpit2/annunciators/transonic	int	n	boolean	You are about to break the speed of sound when accelerating, or drop below the speed of sound if decelerating! the handling of the plane will change!
+sim/cockpit2/annunciators/fuel_pressure	int	n	boolean	Fuel pressure is lo, or maybe hi, for this engine    // x8
+sim/cockpit2/annunciators/oil_pressure	int	n	boolean	Oil pressure is lo, or maybe hi, for this engine    // x8
+sim/cockpit2/annunciators/oil_temperature	int	n	boolean	Oil temperature hi for this engine    // x8
+sim/cockpit2/annunciators/inverter	int	n	boolean	The inverter has failed! the plane cannot convert ac from the generators to dc for the instruments.     // x8
+sim/cockpit2/annunciators/generator	int	n	boolean	The generator has failed! the plane cannot charge up. this may happen at lo rpm and go away as the engine revs. happens with my plane    // x8
+sim/cockpit2/annunciators/chip_detect	int	n	boolean	We detected chips of metal in the engine somewhere. most people agree this is not good.    // x8
+sim/cockpit2/annunciators/engine_fire	int	n	boolean	The engine is on FIRE! this adds to excitement    // x8
+sim/cockpit2/annunciators/auto_ignition	int	n	boolean	The jet or turbine engine has the igniter CONSTANTLY ON, being sure to keep the fire burning even if rain gets in there or something.    // x8
+sim/cockpit2/annunciators/reverser_deployed	int	n	boolean	Thrust-reverse deployed!    // x8
+sim/cockpit2/annunciators/afterburner	int	n	boolean	Afterburners on!    // x8
+sim/cockpit2/annunciators/stall_warning	int	n	boolean	Stall warning going off, yes or no.
+sim/cockpit2/annunciators/gear_warning	int	n	boolean	Gear warning going off, yes or no.
+sim/cockpit2/annunciators/no_smoking	int	n	boolean	No smoking alert on, yes or no.
+sim/cockpit2/annunciators/fasten_seatbelt	int	n	boolean	Seatbelt sign on, yes or no.
+sim/cockpit2/autopilot/autopilot_source	int	y	enum	Autopilot source system, pilots (0) or copilots (1).
+sim/cockpit2/autopilot/autothrottle_enabled	int	y	boolean	Auto-throttle on, 0 or 1.
+sim/cockpit2/autopilot/heading_mode	int	n	enum	Autopilot heading mode.
+sim/cockpit2/autopilot/altitude_mode	int	n	enum	Autopilot altitude mode.
+sim/cockpit2/autopilot/bank_angle_mode	int	y	enum	Maximum bank angle mode, 0->6. Higher number is steeper allowable bank.
+sim/cockpit2/autopilot/flight_director_mode	int	y	enum	Flight director mode, 0 is off, 1 is on, 2 is on with autopilot servos.
+sim/cockpit2/autopilot/airspeed_is_mach	int	y	boolean	Autopilot airspeed is Mach number rather than knots.
+sim/cockpit2/autopilot/vnav_armed	int	n	boolean	FMS is armed, 0 or 1.
+sim/cockpit2/autopilot/altitude_hold_armed	int	n	boolean	Altitude is armed, 0 or 1.
+sim/cockpit2/autopilot/hnav_armed	int	n	boolean	Localizer is armed, 0 or 1.
+sim/cockpit2/autopilot/glideslope_armed	int	n	boolean	Glideslope is armed, 0 or 1.
+sim/cockpit2/autopilot/backcourse_on	int	n	boolean	Back course is armed, 0 or 1.
+sim/cockpit2/autopilot/airspeed_dial_kts_mach	float	y	knots/mach	Airspeed hold value, knots or Mach depending on km_is_mach.
+sim/cockpit2/autopilot/heading_dial_deg_mag_pilot	float	y	degrees_magnetic	Heading hold commanded, in degrees magnetic.
+sim/cockpit2/autopilot/heading_dial_deg_mag_copilot	float	y	degrees_magnetic	Heading hold commanded, in degrees magnetic.
+sim/cockpit2/autopilot/vvi_dial_fpm	float	y	feet/minute	VVI commanded in FPM.
+sim/cockpit2/autopilot/altitude_dial_ft	float	y	feet	VVI commanded in FPM.
+sim/cockpit2/autopilot/altitude_hold_ft	float	n	feet	Altitude hold commanded in feet indicated.
+sim/cockpit2/autopilot/altitude_vnav_ft	float	n	feet	Altitude hold commanded in feet indicated.
+sim/cockpit2/autopilot/sync_hold_pitch_deg	float	y	degrees	Pitch-hold commanded in degrees up.
+sim/cockpit2/autopilot/sync_hold_roll_deg	float	y	degrees	Roll-hold commanded in degrees right.
+sim/cockpit2/autopilot/flight_director_pitch_deg	float	n	degrees	Flight director pitch deflection in degrees, pos up.
+sim/cockpit2/autopilot/flight_director_roll_deg	float	n	degrees	Flight director roll deflection in degrees, pos right.
+sim/cockpit2/controls/yoke_pitch_ratio	float	y	ratio	This is how much the yoke is deflected in the cockpit, in ratio, where -1.0 is full down, and 1.0 is full up.
+sim/cockpit2/controls/yoke_roll_ratio	float	y	ratio	This is how much the yoke is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right.
+sim/cockpit2/controls/yoke_heading_ratio	float	y	ratio	This is how much the rudder is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right.
+sim/cockpit2/controls/yoke_pitch2_ratio	float	y	ratio	This is how much the SECONDARY yoke is deflected in the cockpit, in ratio, where -1.0 is full down, and 1.0 is full up. Secondary yokes can control secondary flight controls.
+sim/cockpit2/controls/yoke_roll2_ratio	float	y	ratio	This is how much the SECONDARY yoke is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right. Secondary yokes can control secondary flight controls.
+sim/cockpit2/controls/yoke_heading2_ratio	float	y	ratio	This is how much the SECONDARY rudder is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right. Secondary yokes can control secondary flight controls.
+sim/cockpit2/controls/speedbrake_ratio	float	y	ratio	This is how much the speebrake HANDLE is deflected, in ratio, where 0.0 is fully retracted, 0.5 is halfway down, and 1.0 is fully down, and -0.5 is speedbrakes ARMED.
+sim/cockpit2/controls/wingsweep_ratio	float	y	ratio	Requested sweep, in ratio. 0.0 is no sweep requested, 1 is max sweep requested.
+sim/cockpit2/controls/thrust_vector_ratio	float	y	ratio	Requested thrust vector, in ratio. 0.0 is no thrust vector requested, 1 is max thrust vector requested.
+sim/cockpit2/controls/dihedral_ratio	float	y	ratio	Requested dihedral, in ratio. 0.0 is no dihedral requested, 1 is max dihedral requested.
+sim/cockpit2/controls/incidence_ratio	float	y	ratio	Requested incidence, in ratio. 0.0 is no incidence requested, 1 is max incidence requested.
+sim/cockpit2/controls/wing_retraction_ratio	float	y	ratio	Requested wing-retraction, in ratio. 0.0 is no wing-retraction requested, 1 is max wing-retraction requested.
+sim/cockpit2/controls/flap_ratio	float	y	ratio	This is the flap HANDLE location, in ratio, where 0.0 is handle fully retracted, and 1.0 is handle fully extended.
+sim/cockpit2/controls/parking_brake_ratio	float	y	ratio	This is the overall brake requested by the parking brake button... 0.0 is none, 1.0 is complete.
+sim/cockpit2/controls/left_brake_ratio	float	y	ratio	This is additional left brake requested by pedal deflection, 0.0 to 1.0.
+sim/cockpit2/controls/right_brake_ratio	float	y	ratio	This is additional right brake requested by pedal deflection, 0.0 to 1.0.
+sim/cockpit2/controls/gear_handle_down	int	y	boolean	Gear handle location. 0 is up. 1 i down.  (note that this doesn'
+sim/cockpit2/controls/nosewheel_steer_on	int	y	boolean	Is the nosewheel steering turned on? 0 or 1.  This must be off AND the tail wheel must be unlocked to free castor.
+sim/cockpit2/controls/tailwheel_lock_ratio	float	y	ratio	Tail-wheel lockig ratio. 0 for free-castoring, 1 for totally locked.
+sim/cockpit2/controls/aileron_trim	float	y	ratio	Aileron trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the aileron trim is deflected enough to move the ailerons through 30% of their travel, then that is an aileron trim of 0.3.
+sim/cockpit2/controls/elevator_trim	float	y	ratio	Elevator trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the elevator trim is deflected enough to move the elevators through 30% of their travel, then that is an elevator trim of 0.3.
+sim/cockpit2/controls/rudder_trim	float	y	ratio	Rudder trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rudder trim is deflected enough to move the rudders through 30% of their travel, then that is an rudder trim of 0.3.
+sim/cockpit2/controls/rotor_trim	float	y	ratio	Rotor trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rotor trim is deflected enough to move the rotor through 30% of its travel, then that is a rotor trim of 0.3.
+sim/cockpit2/EFIS/map_mode	int	y	enum	Map mode. 0=approach, 1=vor,2=map,3=nav,4=plan
+sim/cockpit2/EFIS/map_mode_is_HSI	int	y	boolean	Map is in HSI mode, 0 or 1.
+sim/cockpit2/EFIS/map_range	int	y	enum	Map range, 1->6, where 6 is the longest range.
+sim/cockpit2/EFIS/argus_mode	int	y	enum	Argus mode, 7=departure,8=enroute,9=approach,10=radar_on
+sim/cockpit2/EFIS/ecam_mode	int	y	enum	ECAM mode, 0=engine,1=fuel,2=controls,3=hydraulics,4=failures
+sim/cockpit2/EFIS/EFIS_weather_on	int	y	boolean	On the moving map, show the weather or not.
+sim/cockpit2/EFIS/EFIS_tcas_on	int	y	boolean	On the moving map, show the TCAS or not.
+sim/cockpit2/EFIS/EFIS_airport_on	int	y	boolean	On the moving map, show the airports or not.
+sim/cockpit2/EFIS/EFIS_fix_on	int	y	boolean	On the moving map, show the fixes or not.
+sim/cockpit2/EFIS/EFIS_vor_on	int	y	boolean	On the moving map, show the VORs or not.
+sim/cockpit2/EFIS/EFIS_ndb_on	int	y	boolean	On the moving map, show the NDBs or not.
+sim/cockpit2/EFIS/EFIS_1_selection_pilot	int	y	enum	EFIS waypoint 1 is showing: 0=ADF1, 1=OFF, or 2=VOR1 -- Pilot
+sim/cockpit2/EFIS/EFIS_1_selection_copilot	int	y	enum	EFIS waypoint 2 is showing: 0=ADF1, 1=OFF, or 2=VOR1 -- Copilot
+sim/cockpit2/EFIS/EFIS_2_selection_pilot	int	y	enum	EFIS waypoint 1 is showing: 0=ADF2, 1=OFF, or 2=VOR2 -- Pilot
+sim/cockpit2/EFIS/EFIS_2_selection_copilot	int	y	enum	EFIS waypoint 2 is showing: 0=ADF2, 1=OFF, or 2=VOR2 -- Copilot
+sim/cockpit2/EFIS/EFIS_page	int[6]	y	boolean	An array of EFIS page switches for selecting which EFIS page is visible.
+sim/cockpit2/electrical/inverter_on	int[8]	y	boolean	Inverter turned on, 0 or 1.
+sim/cockpit2/electrical/battery_on	int[8]	y	boolean	Battery turned on, 0 or 1.
+sim/cockpit2/electrical/battery_amps	float[8]	n	amps	Battery amperage, in (surprisingly) amps.
+sim/cockpit2/electrical/battery_voltage_actual_volts	float[8]	n	volts	Actual battery voltage in, umm, volts?
+sim/cockpit2/electrical/battery_voltage_indicated_volts	float[8]	n	volts	Indicated battery voltage in, umm, volts? ...The indication may be different than the actual voltage!
+sim/cockpit2/electrical/generator_on	int[8]	y	boolean	Generator turned on, 0 or 1.
+sim/cockpit2/electrical/generator_amps	float[8]	n	amps	Generator amperage.
+sim/cockpit2/electrical/APU_generator_on	int	y	boolean	APU generator is turned on, 0 or 1. 
+sim/cockpit2/electrical/APU_generator_amps	float	y	amps	APU generator amperage.
+sim/cockpit2/electrical/APU_starter_switch	int	y	boolean	APU power switch, 0 is off, 1 is on, 2 is start-er-up!
+sim/cockpit2/electrical/APU_N1_percent	float	n	percent	N1 of the APU
+sim/cockpit2/electrical/APU_running	int	n	boolean	APU actually running, 0 or 1.
+sim/cockpit2/engine/actuators/cyclic_elevator_deg	float[engines]	y	degrees          	This is the longitudnal cyclic COMMAND, in degrees. Positive forwards cyclic.
+sim/cockpit2/engine/actuators/cyclic_aileron_deg	float[engines]	y	degrees	This is the lateral cyclic COMMAND, in degrees. Positive right cyclic.
+sim/cockpit2/engine/actuators/throttle_ratio	float[engines]	y	ratio             	Throttle position of the handle itself, from 0.0 (idle) to 1.0 (max normal).
+sim/cockpit2/engine/actuators/prop_rotation_speed_rad_sec	float[engines]	y	radians/second          Prop handle position, in radians per second of requested prop	rpm.
+sim/cockpit2/engine/actuators/mixture_ratio	float[engines]	y	ratio             	Mixture handle position, 0.0 (cutoff) to 1.0 (full rich).
+sim/cockpit2/engine/actuators/carb_heat_ratio	float[engines]	y	ratio             	Carb-heat handle position, 0.0 (none) to 1.0 (full).
+sim/cockpit2/engine/actuators/cowl_flap_ratio	float[engines]	y	ratio             	Cowl-flap handle position, 0.0 (none) to 1.0 (full open).
+sim/cockpit2/engine/actuators/alternate_air_ratio	float[engines]	y	ratio             	Alternate air handle position, 0.0 (off) to 1.0 (on).
+sim/cockpit2/engine/actuators/primer_ratio	float[engines]	y	ratio             	Primer handle position, 0.0 (none) to 1.0 (on).
+sim/cockpit2/engine/actuators/afterburner_enabled	int[engines]	y	boolean             	Afterburner enabled, on or off.
+sim/cockpit2/engine/actuators/igniter_on	int[engines]	y	boolean         	Igniter, on or off.
+sim/cockpit2/engine/actuators/ignition_on	int[engines]	y	boolean             	Ignition, on or off.
+sim/cockpit2/engine/actuators/fadec_on	int[engines]	y	boolean             	Fadec, ok or off.
+sim/cockpit2/engine/actuators/primer_on	int[engines]	y	boolean             	Primer button, on or off.
+sim/cockpit2/engine/actuators/fuel_pump_on	int[engines]	y	boolean             	Fuel pump, on or off.
+sim/cockpit2/engine/actuators/idle_speed	int[engines]	y	boolean             	Idle speed, hi=1 or lo=0.
+sim/cockpit2/engine/actuators/prop_mode	int[engines]	y	enum             	This is the propeller and engine operation mode. It is used for props and jets. Mode 0 is feathered, 1 is normal, 2 is in beta, and reverse (prop or jet) is mode 3.
+sim/cockpit2/engine/actuators/prop_pitch_deg	float[engines]	y	degrees             	This is the REQUESTED pitch of the prop in degrees from its flat-pitch setting.
+sim/cockpit2/engine/indicators/N1_percent	float[engines]	n	percent	N1, %.			
+sim/cockpit2/engine/indicators/N2_percent	float[engines]	n	percent	N2, %.			
+sim/cockpit2/engine/indicators/MPR_in_hg	float[engines]	n	inches_hg	Manifold pressure, inches HG.			
+sim/cockpit2/engine/indicators/EPR_ratio	float[engines]	n	ratio	EPR, ratio.			
+sim/cockpit2/engine/indicators/torque_n_mtr	float[engines]	n	newton_meters	Torque, NM.		
+sim/cockpit2/engine/indicators/fuel_flow_kg_sec	float[engines]	n	kilograms/second	FF, kilograms per second.		
+sim/cockpit2/engine/indicators/ITT_deg_C	float[engines]	n	degrees_C	ITT, deg.			
+sim/cockpit2/engine/indicators/EGT_deg_C	float[engines]	n	degrees_C	EGT, deg.			
+sim/cockpit2/engine/indicators/CHT_deg_C	float[engines]	n	degrees_C	CHT, deg.			
+sim/cockpit2/engine/indicators/fuel_pressure_psi	float[engines]	n	pounds/square_inch	Fuel pressure, psi.			
+sim/cockpit2/engine/indicators/oil_pressure_psi	float[engines]	n	pounds/square_inch	Oil pressure, psi.			
+sim/cockpit2/engine/indicators/oil_temperature_deg_C	float[engines]	n	degrees_C	Oil temp, deg.			
+sim/cockpit2/engine/indicators/oil_quantity_ratio	float[engines]	n	ratio	Oil quantity, 0.0 to 1.0.			
+sim/cockpit2/engine/indicators/power_watts	float[engines]	n	watts	Actual engine power output.
+sim/cockpit2/fuel/fuel_tank_selector	int	y	enum	0=none,1=left,2=center,3=right,4=all
+sim/cockpit2/fuel/fuel_tank_transfer_to	int	y	enum	0=none,1=left,2=center,3=right
+sim/cockpit2/fuel/fuel_tank_transfer_from	int	y	enum	0=none,1=left,2=center,3=right
+sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot	float	y	inches_hg	Barometric pressure setting, inches HG.  Pilot side.
+sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot	float	y	inches_hg	Barometric pressure setting, inches HG.  Copilot side.
+sim/cockpit2/gauges/actuators/radio_altemeter_bug_ft_pilot	float	y	feet	Radio altitude bug entered into the radio altimeter. Pilot side.
+sim/cockpit2/gauges/actuators/radio_altimeter_bug_ft_copilot	float	y	feet	Radio altitude bug entered into the radio altimeter. Copilot side.
+sim/cockpit2/gauges/actuators/artificial_horizon_adjust_deg_pilot	float	y	degrees	Artifical horizon pitch-reference adjustement. Pilot side.
+sim/cockpit2/gauges/actuators/artificial_horizon_adjust_deg_copilot	float	y	degrees	Artifical horizon pitch-reference adjustement. Copilot side.
+sim/cockpit2/gauges/actuators/arispeed_bug_deg	float	y	degrees	ASI bug location on the dial, in degrees, 0 straight up, positive clockwise.
+sim/cockpit2/gauges/indicators/slip_deg	float	n	degrees	Slip indication, in degrees of ball deflection from centered.
+sim/cockpit2/gauges/indicators/compass_heading_deg_mag	float	n	degrees_magnetic	Indicated heading of the wet compass, in degrees.
+sim/cockpit2/gauges/indicators/airspeed_kts_pilot	float	n	knots	Indicated airspeed in knots, pilot.
+sim/cockpit2/gauges/indicators/airspeed_kts_copilot	float	n	knots	Indicated airspeed in knots, copilot.
+sim/cockpit2/gauges/indicators/altitude_ft_pilot	float	n	feet	Indicated height, MSL, in feet, primary system, based on pilots barometric pressure input.
+sim/cockpit2/gauges/indicators/altitude_ft_copilot	float	n	feet	Indicated height, MSL, in feet, primary system, based on co-pilots barometric pressure input.
+sim/cockpit2/gauges/indicators/vvi_fpm_pilot	float	n	feet/minute	Indicated vertical speed in feet per minute, pilot system.
+sim/cockpit2/gauges/indicators/vvi_fpm_copilot	float	n	feet/minute	Indicated vertical speed in feet per minute, copilot system.
+sim/cockpit2/gauges/indicators/turn_rate_roll_deg_pilot	float	n	degrees	Indicated rate-of-turn, in degrees deflection, for newer roll-augmented turn-indicators.  Pilot side.
+sim/cockpit2/gauges/indicators/turn_rate_roll_deg_copilot	float	n	degrees	Indicated rate-of-turn, in degrees deflection, for newer roll-augmented turn-indicators.  Copilot side.
+sim/cockpit2/gauges/indicators/turn_rate_heading_deg_pilot	float	n	degrees	Indicated rate-of-turn, in degrees deflection, for old-style turn-indicators.  Pilot side.
+sim/cockpit2/gauges/indicators/turn_rate_heading_deg_copilot	float	n	degrees	Indicated rate-of-turn, in degrees deflection, for old-style turn-indicators.  Copiot side.
+sim/cockpit2/gauges/indicators/heading_AHARS_deg_mag_pilot	float	n	degrees_magnetic	Indicated magetic heading, in degrees.  Source: AHARS.  Side: Pilot
+sim/cockpit2/gauges/indicators/heading_AHARS_deg_mag_copilot	float	n	degrees_magnetic	Indicated magetic heading, in degrees.  Source: AHARS.  Side: Copilot
+sim/cockpit2/gauges/indicators/heading_electric_deg_mag_pilot	float	n	degrees_magnetic	Indicated magetic heading, in degrees.  Source: electric gyro.  Side: Pilot
+sim/cockpit2/gauges/indicators/heading_electric_deg_mag_copilot	float	n	degrees_magnetic	Indicated magetic heading, in degrees.  Source: electric gyro.  Side: Copilot
+sim/cockpit2/gauges/indicators/heading_vacuum_deg_mag_pilot	float	n	degrees_magnetic	Indicated magetic heading, in degrees.  Source: vacuum gyro.  Side: Pilot
+sim/cockpit2/gauges/indicators/heading_vacuum_deg_mag_copilot	float	n	degrees_magnetic	Indicated magetic heading, in degrees.  Source: vacuum gyro.  Side: Copilot
+sim/cockpit2/gauges/indicators/pitch_AHARS_deg_pilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: AHARS.  Side: Pilot
+sim/cockpit2/gauges/indicators/pitch_AHARS_deg_copilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: AHARS.  Side: Copilot
+sim/cockpit2/gauges/indicators/pitch_electric_deg_pilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: electric gyro.  Side: Pilot
+sim/cockpit2/gauges/indicators/pitch_electric_deg_copilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: electric gyro.  Side: Copilot
+sim/cockpit2/gauges/indicators/pitch_vacuum_deg_pilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: vacuum gyro.  Side: Pilot
+sim/cockpit2/gauges/indicators/pitch_vacuum_deg_copilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: vacuum gyro.  Side: Copilot
+sim/cockpit2/gauges/indicators/roll_AHARS_deg_pilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: AHARS.  Side: Pilot
+sim/cockpit2/gauges/indicators/roll_AHARS_deg_copilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: AHARS.  Side: Copilot
+sim/cockpit2/gauges/indicators/roll_electric_deg_pilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: electric gyro.  Side: Pilot
+sim/cockpit2/gauges/indicators/roll_electric_deg_copilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: electric gyro.  Side: Copilot
+sim/cockpit2/gauges/indicators/roll_vacuum_deg_pilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: vacuum gyro.  Side: Pilot
+sim/cockpit2/gauges/indicators/roll_vacuum_deg_copilot	float	n	degrees	Indicated roll, in degrees, positive right.	 Source: vacuum gyro.  Side: Copilot
+sim/cockpit2/gauges/indicators/wind_heading_deg_mag	float	n	degrees_magnetic	Wind direction currently acting on the plane, in degrees magnetic.
+sim/cockpit2/gauges/indicators/wind_speed_kts	float	n	knots	Wind speed currently acting on the plane, in knots true.
+sim/cockpit2/ice/ice_all_on	int	y	boolean	De-ice switch, 0 or 1.	De-ice - all systems. This is the master switch for the de-icing systems.
+sim/cockpit2/ice/ice_inlet_heat_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - inlet heat. This switch turns on de-icing heat in the engine air inlet keep ice from choking your engine.
+sim/cockpit2/ice/ice_prop_heat_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - prop heat. This switch turns on de-icing of the propeller(s) to keep ice from building up on your prop.
+sim/cockpit2/ice/ice_window_heat_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - windshield heat. This switch turns on windshield de-icing to keep ice from blocking your vision.
+sim/cockpit2/ice/ice_pitot_heat_on_pilot	int	y	boolean	De-ice switch, 0 or 1.  De-ice - pitot tube heat. This switch turns on de-icing heat in the pitot tube. If it freezes up your airspeed indicator and altimeter stop working. Airspeed and altitude related autopilot functions are also affected.
+sim/cockpit2/ice/ice_pitot_heat_on_copilot	int	y	boolean	De-ice switch, 0 or 1.  Pitot tube heat, co-pilot. This switch turns on de-icing heat in the co-pilot side pitot tube. If it freezes up your airspeed indicator and altimeter stop working. Airspeed and altitude related autopilot functions are also affected.
+sim/cockpit2/ice/ice_AOA_heat_on	int	y	boolean	De-ice switch, 0 or 1.  AOA sensor heat. This switch turns on de-icing heat for the AOA sensor. If it freezes up your AOA indicator stops working. AOA sensor failure will also affect the aircraft's artificial stability system if it has one.
+sim/cockpit2/ice/ice_surfce_heat_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - bleed air. This switch directs warm air from the engines into the wing leading edges to keep them free of ice.
+sim/cockpit2/ice/ice_surface_boot_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - peneumatic. This switch inflates flexible bladders on the wing leading edges to pop off accumulated ice.
+sim/cockpit2/ice/ice_inertial_separator_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - inertial separator. This switch causes the engine intake air to follow a crooked path, allowing ice, sleet, etc., to be separated from the intake air.
+sim/cockpit2/ice/ice_auto_ignite_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - auto-ignition. This switch turns on a continuous ignition source in the engine to automatically relight it if there is a flameout.
+sim/cockpit2/ice/ice_detect_on	int	y	boolean	De-ice switch, 0 or 1.  Ice-detection: Turn this switch on to enable ide-detection... if the system detects ice, it will light up the ICE annunciator.
+sim/cockpit2/pressurization/actuators/bleed_air_mode	int	y	enum	Bleed air mode, 0=of, 1=left,2=both,3=right,4=apu,5=auto
+sim/cockpit2/pressurization/actuators/dump_all_on	int	y	boolean	Dump all pressurization, 0 or 1.
+sim/cockpit2/pressurization/actuators/dump_to_altitude_on	int	y	feet	Dump pressurization to the current altitude, 0 or 1.
+sim/cockpit2/pressurization/actuators/cabin_altitude_ft	float	y	feet	Cabin altitude commanded, feet.
+sim/cockpit2/pressurization/actuators/cabin_vvi_fpm	float	y	feet/minute	Cabin VVI commanded, feet.
+sim/cockpit2/pressurization/actuators/max_allowable_altitude_ft	float	y	feet	Maximum allowable altitude for this airplane to maintain the requested cabin altitude.
+sim/cockpit2/pressurization/indicators/cabin_altitude_ft	float	n	feet	Cabin altitude actually occurring, feet.
+sim/cockpit2/pressurization/indicators/cabin_vvi_fpm	float	n	feet/minute	Cabin VVI actually occurring, fpm.
+sim/cockpit2/pressurization/indicators/pressure_diffential_psi	float	n	pounds/square_inch	Cabin differential pressure, psi.
+sim/cockpit2/radios/actuators/nav1_power	int	y	boolean	Nav radio 1 off or on, 0 or 1.
+sim/cockpit2/radios/actuators/nav2_power	int	y	boolean	Nav radio 2 off or on, 0 or 1.
+sim/cockpit2/radios/actuators/com1_power	int	y	boolean	Com radio 1 off or on, 0 or 1.
+sim/cockpit2/radios/actuators/com2_power	int	y	boolean	Com radio 2 off or on, 0 or 1.
+sim/cockpit2/radios/actuators/adf1_power	int	y	enum	ADF radio 1 off or on, 0 = off, 1 = antenna, 2 = on, 3 = tone, 4 = test
+sim/cockpit2/radios/actuators/adf2_power	int	y	enum	ADF radio 2 off or on, 0 = off, 1 = antenna, 2 = on, 3 = tone, 4 = test
+sim/cockpit2/radios/actuators/gps_power	int	y	boolean	GPS off or on, 0 or 1.
+sim/cockpit2/radios/actuators/dme_power	int	y	boolean	DME radio 1 off or on, 0 or 1.
+sim/cockpit2/radios/actuators/nav1_frequency_hz	int	y	hertz	Nav radio 1 frequency, hz
+sim/cockpit2/radios/actuators/nav2_frequency_hz	int	y	hertz	Nav radio 2 frequency, hz
+sim/cockpit2/radios/actuators/com1_frequency_hz	int	y	hertz	Com radio 1 frequency, hz
+sim/cockpit2/radios/actuators/com2_frequency_hz	int	y	hertz	Com radio 2 frequency, hz
+sim/cockpit2/radios/actuators/adf1_frequency_hz	int	y	hertz	ADF radio 1 frequency, hz
+sim/cockpit2/radios/actuators/adf2_frequency_hz	int	y	hertz	ADF radio 2 frequency, hz
+sim/cockpit2/radios/actuators/dme_frequency_hz	int	y	hertz	DME radio frequency, hz
+sim/cockpit2/radios/actuators/nav1_standby_frequency_hz	int	y	hertz	Nav radio 1 standby frequency, hz
+sim/cockpit2/radios/actuators/nav2_standby_frequency_hz	int	y	hertz	Nav radio 2 standby frequency, hz
+sim/cockpit2/radios/actuators/com1_standby_frequency_hz	int	y	hertz	Com radio 1 standby frequency, hz
+sim/cockpit2/radios/actuators/com2_standby_frequency_hz	int	y	hertz	Com radio 2 standby frequency, hz
+sim/cockpit2/radios/actuators/adf1_standby_frequency_hz	int	y	hertz	ADF radio 1 standby frequency, hz
+sim/cockpit2/radios/actuators/adf2_standby_frequency_hz	int	y	hertz	ADF radio 2 standby frequency, hz
+sim/cockpit2/radios/actuators/dme_standby_frequency_hz	int	y	hertz	DME radio standby frequency, hz
+sim/cockpit2/radios/actuators/nav1_obs_deg_mag_pilot	float	y	degrees_magnetic	OBS 1 (pilot side) selection, in degrees magnetic.
+sim/cockpit2/radios/actuators/nav2_obs_deg_mag_pilot	float	y	degrees_magnetic	OBS 2 (pilot isde) selection, in degrees magnetic.
+sim/cockpit2/radios/actuators/nav1_obs_deg_mag_copilot	float	y	degrees_magnetic	OBS 1 (copilot side) selection, in degrees magnetic.
+sim/cockpit2/radios/actuators/nav2_obs_deg_mag_copilot	float	y	degrees_magnetic	OBS 2 (copilot isde) selection, in degrees magnetic.
+sim/cockpit2/radios/actuators/adf1_card_heading_deg_mag_pilot	float	y	degrees_magnetic	CARD selection for ADF 1, pilot side, in degrees magnetic.
+sim/cockpit2/radios/actuators/adf2_card_heading_deg_mag_pilot	float	y	degrees_magnetic	CARD selection for ADF 2, pilot side, in degrees magnetic.
+sim/cockpit2/radios/actuators/adf1_card_heading_deg_mag_copilot	float	y	degrees_magnetic	CARD selection for ADF 1, copilot side, in degrees magnetic.
+sim/cockpit2/radios/actuators/adf2_card_heading_deg_mag_copilot	float	y	degrees_magnetic	CARD selection for ADF 2, copilot side, in degrees magnetic.
+sim/cockpit2/radios/actuators/nav1_course_deg_mag_pilot	float	y	degrees_magnetic	Selected course based on nav1, pilot, degrees magnetic.  This is OBS for VORs, or localizer heading for ILS
+sim/cockpit2/radios/actuators/nav2_course_deg_mag_pilot	float	y	degrees_magnetic	Selected course based on nav2, pilot, degrees magnetic.  This is OBS for VORs, or localizer heading for ILS
+sim/cockpit2/radios/actuators/nav1_course_deg_mag_copilot	float	y	degrees_magnetic	Selected course based on nav1, copilot, degrees magnetic.  This is OBS for VORs, or localizer heading for ILS
+sim/cockpit2/radios/actuators/nav2_course_deg_mag_copilot	float	y	degrees_magnetic	Selected course based on nav2, copilot, degrees magnetic.  This is OBS for VORs, or localizer heading for ILS
+sim/cockpit2/radios/actuators/HSI_source_select_pilot	int	y	enum	HSI source to display: 0 for Nav1, 1 for Nav2, 2 for GPS.
+sim/cockpit2/radios/actuators/HSI_source_select_copilot	int	y	enum	HSI source to display: 0 for Nav1, 1 for Nav2, 2 for GPS.
+sim/cockpit2/radios/actuators/RMI_source_select_pilot	int	y	enum	RMI source to display: 0 for Nav1, 1 for Nav2, 2 for GPS.
+sim/cockpit2/radios/actuators/RMI_source_select_copilot	int	y	enum	RMI source to display: 0 for Nav1, 1 for Nav2, 2 for GPS.
+sim/cockpit2/radios/actuators/RMI_left_use_adf_pilot	int	y	enum	RMI is taking ADF (1) or VOR (0).
+sim/cockpit2/radios/actuators/RMI_left_use_adf_copilot	int	y	enum	RMI is taking ADF (1) or VOR (0).
+sim/cockpit2/radios/actuators/RMI_right_use_adf_pilot	int	y	enum	RMI is taking ADF (1) or VOR (0).
+sim/cockpit2/radios/actuators/RMI_right_use_adf_copilot	int	y	enum	RMI is taking ADF (1) or VOR (0).
+sim/cockpit2/radios/actuators/DME_mode	int	y	enum	DME display mode, where 0 is remote, 1 is frequency, and 2 is groundspeed-time.
+sim/cockpit2/radios/actuators/DME_slave_source	int	y	enum	DME display selection of what NAV radio to display. 0 for Nav1, 1for Nav2.
+sim/cockpit2/radios/actuators/nav_com_adf_mode	int	y	enum	Frequency-to-change selection for the all-in-one radio, 0->5 are Nav1, Nav2, Com1, Com2, ADF1, ADF2.
+sim/cockpit2/radios/actuators/transponder_code	int	y	transponder_code	Current Transponder code (0000-7777)
+sim/cockpit2/radios/actuators/audio_com_selection	int	y	enum	6=com1,7=com2
+sim/cockpit2/radios/actuators/audio_nav_selection	int	y	enum	0=nav1,1=nav2,2=adf1,3=adf2,9=none
+sim/cockpit2/radios/actuators/audio_dme_enabled	int	y	boolean	Is DME audio enabled?  This only matters if the current selection has DME
+sim/cockpit2/radios/actuators/audio_marker_enabled	int	y	boolean	Is audio for the marker beacons enabled?
+sim/cockpit2/radios/indicators/nav1_bearing_deg_mag	float	n	degrees_magnetic	Indicated relative bearing to the nav1 navaid
+sim/cockpit2/radios/indicators/nav2_bearing_deg_mag	float	n	degrees_magnetic	Indicated relative bearing to the nav2 navaid
+sim/cockpit2/radios/indicators/adf1_bearing_deg_mag	float	n	degrees_magnetic	Indicated relative bearing to the adf1 navaid
+sim/cockpit2/radios/indicators/adf2_bearing_deg_mag	float	n	degrees_magnetic	Indicated relative bearing to the adf2 navaid
+sim/cockpit2/radios/indicators/gps_bearing_deg_mag	float	n	degrees_magnetic	Indicated relative bearing to the selected GPS destination
+sim/cockpit2/radios/indicators/nav1_relative_bearing_deg	float	n	degrees	Indicated relative bearing to the nav1 navaid
+sim/cockpit2/radios/indicators/nav2_relative_bearing_deg	float	n	degrees	Indicated relative bearing to the nav2 navaid
+sim/cockpit2/radios/indicators/adf1_relative_bearing_deg	float	n	degrees	Indicated relative bearing to the adf1 navaid
+sim/cockpit2/radios/indicators/adf2_relative_bearing_deg	float	n	degrees	Indicated relative bearing to the adf2 navaid
+sim/cockpit2/radios/indicators/gps_relative_bearing_deg	float	n	degrees	Indicated relative bearing to the selected GPS destination
+sim/cockpit2/radios/indicators/nav1_flag_from_to_pilot	int	n	enum	Nav-To-From indication, nav1, pilot, 0 is flag, 1 is to, 2 is from.
+sim/cockpit2/radios/indicators/nav2_flag_from_to_pilot	int	n	enum	Nav-To-From indication, nav2, pilot, 0 is flag, 1 is to, 2 is from.
+sim/cockpit2/radios/indicators/nav1_flag_from_to_copilot	int	n	enum	Nav-To-From indication, nav1, copilot, 0 is flag, 1 is to, 2 is from.
+sim/cockpit2/radios/indicators/nav2_flag_from_to_copilot	int	n	enum	Nav-To-From indication, nav2, copilot, 0 is flag, 1 is to, 2 is from.
+sim/cockpit2/radios/indicators/nav1_hdef_dots_pilot	float	n	dots	CDI lateral deflection in dots, nav1, pilot
+sim/cockpit2/radios/indicators/nav2_hdef_dots_pilot	float	n	dots	CDI lateral deflection in dots, nav2, pilot
+sim/cockpit2/radios/indicators/gps_hdef_dots_pilot	float	n	dots	CDI lateral deflection in dots, gps, pilot
+sim/cockpit2/radios/indicators/nav1_hdef_dots_copilot	float	n	dots	CDI lateral deflection in dots, nav1, copilot
+sim/cockpit2/radios/indicators/nav2_hdef_dots_copilot	float	n	dots	CDI lateral deflection in dots, nav2, copilot
+sim/cockpit2/radios/indicators/gps_hdef_dots_copilot	float	n	dots	CDI lateral deflection in dots, gps, copilot
+sim/cockpit2/radios/indicators/nav1_vdef_dots_pilot	float	n	dots	CDI vertical deflection in dots, nav1, pilot
+sim/cockpit2/radios/indicators/nav2_vdef_dots_pilot	float	n	dots	CDI vertical deflection in dots, nav2, pilot
+sim/cockpit2/radios/indicators/nav1_vdef_dots_copilot	float	n	dots	CDI vertical deflection in dots, nav1, copilot
+sim/cockpit2/radios/indicators/nav2_vdef_dots_copilot	float	n	dots	CDI vertical deflection in dots, nav2, copilot
+sim/cockpit2/radios/indicators/nav1_has_dme	int	n	boolean	Is there a DME signal from nav1's DME?	1 if yes, 0 if no
+sim/cockpit2/radios/indicators/nav2_has_dme	int	n	boolean	Is there a DME signal from nav2's DME?	1 if yes, 0 if no
+sim/cockpit2/radios/indicators/adf1_has_dme	int	n	boolean	Is there a DME signal from ADF1's DME?	1 if yes, 0 if no
+sim/cockpit2/radios/indicators/adf2_has_dme	int	n	boolean	Is there a DME signal from ADF2's DME?	1 if yes, 0 if no
+sim/cockpit2/radios/indicators/gps_has_dme	int	n	boolean	Is there a DME signal from GPS?	1 if yes, 0 if no
+sim/cockpit2/radios/indicators/dme_has_dme	int	n	boolean	Is there a DME signal from standalone DME?	1 if yes, 0 if no
+sim/cockpit2/radios/indicators/nav1_dme_distance_nm	float	n	nautical_miles	nav1 DME distance in nautical miles.
+sim/cockpit2/radios/indicators/nav2_dme_distance_nm	float	n	nautical_miles	nav2 DME distance in nautical miles.
+sim/cockpit2/radios/indicators/adf1_dme_distance_nm	float	n	nautical_miles	adf1 DME distance in nautical miles.
+sim/cockpit2/radios/indicators/adf2_dme_distance_nm	float	n	nautical_miles	adf2 DME distance in nautical miles.
+sim/cockpit2/radios/indicators/gps_dme_distance_nm	float	n	nautical_miles	gps DME distance in nautical miles.
+sim/cockpit2/radios/indicators/dme_dme_distance_nm	float	n	nautical_miles	standaloen dme DME distance in nautical miles.
+sim/cockpit2/radios/indicators/nav1_dme_speed_kts	float	n	knots	nav1 DME speed in knots.
+sim/cockpit2/radios/indicators/nav2_dme_speed_kts	float	n	knots	nav2 DME speed in knots.
+sim/cockpit2/radios/indicators/adf1_dme_speed_kts	float	n	knots	adf1 DME speed in knots.
+sim/cockpit2/radios/indicators/adf2_dme_speed_kts	float	n	knots	adf2 DME speed in knots.
+sim/cockpit2/radios/indicators/gps_dme_speed_kts	float	n	knots	gps DME speed in knots.
+sim/cockpit2/radios/indicators/dme_dme_speed_kts	float	n	knots	standalone dme DME speed in knots.
+sim/cockpit2/radios/indicators/nav1_dme_time_min	float	n	minutes	nav1 DME time in minutes.
+sim/cockpit2/radios/indicators/nav2_dme_time_min	float	n	minutes	nav2 DME time in minutes.
+sim/cockpit2/radios/indicators/adf1_dme_time_min	float	n	minutes	adf1 DME time in minutes.
+sim/cockpit2/radios/indicators/adf2_dme_time_min	float	n	minutes	adf2 DME time in minutes.
+sim/cockpit2/radios/indicators/gps_dme_time_min	float	n	minutes	gps DME time in minutes.
+sim/cockpit2/radios/indicators/dme_dme_time_min	float	n	minutes	standalone dme DME time in minutes.
+sim/cockpit2/radios/indicators/over_outer_marker	int	y	boolean	Over the marker, 0 or 1.  This stays on when over the marker
+sim/cockpit2/radios/indicators/over_middle_marker	int	y	boolean	Over the marker, 0 or 1.  This stays on when over the marker
+sim/cockpit2/radios/indicators/over_inner_marker	int	y	boolean	Over the marker, 0 or 1.  This stays on when over the marker
+sim/cockpit2/radios/indicators/outer_marker_lit	int	y	boolean	Marker light actually lit, 0 or 1.  This flashes as we go over.
+sim/cockpit2/radios/indicators/middle_marker_lit	int	y	boolean	Marker light actually lit, 0 or 1.	This flashes as we go over.
+sim/cockpit2/radios/indicators/inner_marker_lit	int	y	boolean	Marker light actually lit, 0 or 1.	This flashes as we go over.
+sim/cockpit2/switches/avionics_power_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/navigation_lights_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/beacon_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/strobe_lights_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/landing_lights_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/taxi_light_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/dump_fuel	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/puffers_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/prop_sync_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/jet_sync_mode	int	y	enum	Switch, 0 or 1. fan=0, off=1, turbine=2#WHAT ARE THESE?
+sim/cockpit2/switches/electric_hydraulic_pump_on	int	y	boolean	Switch, 0 or 1.		electric hydro-pressure pump
+sim/cockpit2/switches/ram_air_turbine_on	int	y	boolean	Switch, 0 or 1.		ram air turbine (the rat) when total failure
+sim/cockpit2/switches/yaw_damper_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/artificial_stability_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/HUD_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/parachute_deploy	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/jato_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/tailhook_deploy	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/canopy_open	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/water_scoop_deploy	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/dump_water	int	y	boolean	This will be set to true when water is in the process of dumping out of a water-bomber.
+sim/cockpit2/switches/no_smoking	int	y	boolean	No Smoking
+sim/cockpit2/switches/fasten_seat_belts	int	y	boolean 	Fasten Seat Belts
+sim/cockpit2/switches/total_energy_audio	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/HSI_is_arc	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/auto_brake_level	int	y	enum	Switch, 0 is RTO (Rejected Take-Off), 1 is off, 2->5 are increasing auto-brake levels.
+sim/cockpit2/switches/auto_reverse_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/prop_feather_mode	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/pre_rotate_level	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/clutch_engage	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/rotor_brake	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/clutch_ratio	float	y	ratio	Current clutch ratio, 0.0 is off, 1.0 is on.
+sim/cockpit2/switches/rocket_mode	int	y	enum	This will have an enumeration based on the direction of fire of any manuevering rockets.
+sim/cockpit2/switches/burner_level	int	y	enum	This can be 0 (half-power afterburners) or 1 (full-power burner).
+sim/cockpit2/switches/alternate_static_air_ratio	float	y	ratio	Alternate static air ratio, 0.0 is off, 1,.0 is on.
+sim/cockpit2/switches/wiper_speed	int	y	enum	0=off,1=25%speed,2=50%speed,3=100%speed.
+sim/cockpit2/switches/custom_slider_on	int[20]	y	boolean	custom sliders.  When flipped, slider moves based on timing in planemaker.
+sim/cockpit2/weapons/weapon_select_console_index	int	y	index	Weapon index selected on the weapon console.
+sim/cockpit2/weapons/fire_mode	int	y	enum	Weapon fire-mode, 0=single, 1=pair, 2=ripple, 3=salvo.
+sim/cockpit2/weapons/fire_rate	int	y	enum	Weapon fire-rate, 0, 1, 2, 3 depending on fire rate.
+sim/cockpit2/weapons/weapon_selected	int	y	enum	Switch position for each weapon-arming switch (there can be several). These are the rotaries that can be dialed up or down to select various systems.
+sim/flightmodel2/controls/pitch_ratio	float	y	ratio	This is how much the flight controls are deflected in pitch after any stability augmentation, in ratio, where -1.0 is full down, and 1.0 is full up.
+sim/flightmodel2/controls/roll_ratio	float	y	ratio	This is how much the flight controls are deflected in roll after any stability augmentation, in ratio, where -1.0 is full left, and 1.0 is full right.
+sim/flightmodel2/controls/heading_ratio	float	y	ratio	This is how much the flight controls are deflected in heading after any stability augmentation, where -1.0 is full left, and 1.0 is full right.
+sim/flightmodel2/controls/speedbrake_ratio	float	y	ratio	This is how much the speedbrakes surfaces are extended, in ratio, where 0.0 is fully retracted, and 1.0 is fully extended.
+sim/flightmodel2/controls/wingsweep_ratio	float	y	ratio	Actual sweep, in ratio. 0.0 is no sweep deployment, 1 is max sweep deployment.
+sim/flightmodel2/controls/thrust_vector_ratio	float	y	ratio	Actual thrust vector, in ratio. 0.0 is no thrust vector deployment, 1 is max thrust vector deployment.
+sim/flightmodel2/controls/dihedral_ratio	float	y	ratio	Actual dihedral, in ratio. 0.0 is no dihedral deployment, 1 is max dihedral deployment.
+sim/flightmodel2/controls/incidence_ratio	float	y	ratio	Actual incidence, in ratio. 0.0 is no incidence deployment, 1 is max incidence deployment.
+sim/flightmodel2/controls/wing_retraction_ratio	float	y	ratio	Actual wing-retraction, in ratio. 0.0 is no wing-retraction deployment, 1 is max wing-retraction deployment.
+sim/flightmodel2/controls/flap_handle_deploy_ratio	float	y	ratio	This is the ACTUAL FLAP deployment for overall flap system, in ratio, where 0.0 is flaps fully retracted, and 1.0 is flaps fully extended. You should probably use the deployment for flap set 1 or flap set 2 to deflect the surfaces though.  This takes into account that flaps deploy slowly, not instantaniously as the handle is draged.
+sim/flightmodel2/controls/slat1_deploy_ratio	float	y	ratio	Slat deployment, where 0.0 is slats fully retracted, 1.0 is slats fully extended. This variable applies to lading-edge flaps as well.
+sim/flightmodel2/controls/slat2_deploy_ratio	float	y	ratio	Slat deployment, where 0.0 is slats fully retracted, 1.0 is slats fully extended. This variable applies to lading-edge flaps as well.
+sim/flightmodel2/controls/flap1_deploy_ratio	float	y	ratio	This is the ACTUAL FLAP deployment for flap-set #1, in ratio, where 0.0 is flaps fully retracted, and 1.0 is flaps fully extended.
+sim/flightmodel2/controls/flap2_deploy_ratio	float	y	ratio	This is the ACTUAL FLAP deployment for flap-set #2, in ratio, where 0.0 is flaps fully retracted, and 1.0 is flaps fully extended.
+sim/flightmodel2/controls/stabilizer_deflection_degrees	float	y	degrees	This is the actual stabilizer deflection with trim for all-moving horizontal stabilizers. This is the deflection you can see visually on airliners. This is in degrees, positive for leading-edge nose up.
+sim/flightmodel2/controls/aileron_trim	float	y	ratio	Aileron trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the aileron trim is deflected enough to move the ailerons through 30% of their travel, then that is an aileron trim of 0.3.
+sim/flightmodel2/controls/elevator_trim	float	y	ratio	Elevator trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the elevator trim is deflected enough to move the elevators through 30% of their travel, then that is an elevator trim of 0.3.
+sim/flightmodel2/controls/rudder_trim	float	y	ratio	Rudder trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rudder trim is deflected enough to move the rudders through 30% of their travel, then that is an rudder trim of 0.3.
+sim/flightmodel2/controls/rotor_trim	float	y	ratio	Rotor trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rotor trim is deflected enough to move the rotor through 30% of its travel, then that is a rotor trim of 0.3.
+sim/flightmodel2/doors/type	int[doors]	n	enumeration	0=unused (plane does not use this door) 1=standard (opens before gear goes down) 2=attached to strut (cycles with door), 3=closed (opens before gear goes down, then closes again)
+sim/flightmodel2/doors/location_x_mtr	int[doors]	n	meters	Gear door location, in meters, x, y z.
+sim/flightmodel2/doors/location_y_mtr	int[doors]	n	meters	Gear door location, in meters, x, y z.
+sim/flightmodel2/doors/location_z_mtr	int[doors]	n	meters	Gear door location, in meters, x, y z.
+sim/flightmodel2/doors/axis_rotation_deg	float[doors]	n	degrees	Axis of roation of this gear door, degrees.
+sim/flightmodel2/doors/angle_now_deg	float[doors]	n	degrees	Current angle about the axis of rotation of this gear door, degrees.
+sim/flightmodel2/engines/location_x_mtr	float[engines]	n	meters	Engne location, meters x, y, z, with respect to the default center of gravity.
+sim/flightmodel2/engines/location_y_mtr	float[engines]	n	meters        	Engne location, meters x, y, z, with respect to the default center of gravity.
+sim/flightmodel2/engines/location_z_mtr	float[engines]	n	meters          	Engne location, meters x, y, z, with respect to the default center of gravity.
+sim/flightmodel2/engines/throttle_used_ratio	float[engines]	n	ratio             	Throttle that is actually going to the engine, which could be different than the commanded throttle due to FADEC throttle adjustments.
+sim/flightmodel2/engines/has_fuel_flow_before_mixture	int[engines]	n	boolean	Engine has fuel making to the mixture control, yes or no.
+sim/flightmodel2/engines/has_fuel_flow_after_mixture	int[engines]	n	boolean	Engine has fuel making to the combustion process, yes or no.
+sim/flightmodel2/engines/engine_is_burning_fuel	int[engines]	n	boolean	Engine is currently burning fuel, yes or no.
+sim/flightmodel2/engines/engine_burning_fuel_ratio	int[engines]	n	ratio	Engine running ratio, 0.0 for not running to 1.0 for fully running, combustion process fully started.
+sim/flightmodel2/engines/afterburner_on	int[engines]	n	boolean	Afterburner on, yes or no.
+sim/flightmodel2/engines/afterburner_ratio	int[engines]	n	ratio	Afterburner engaged ratio, 0.0 to 1.0.
+sim/flightmodel2/engines/engine_rotation_speed_rad_sec	float[engines]	n	radians/second          Rotational speed of the engine, in radians per	second.
+sim/flightmodel2/engines/engine_rotation_angle_deg	float[engines]	n	degrees	This is the angle of the engine as it turns over, running 0 to 360 over and over again in normal oepration. Engine speed cna be different than prop rotation speed in clutched designs. This is radians per second.
+sim/flightmodel2/engines/prop_rotation_speed_rad_sec	float[engines]	n	radians/second	Radians per second rotation speed of the prop.
+sim/flightmodel2/engines/prop_rotation_angle_deg	float[engines]	n	degrees             	This is the angle of the prop or engine-fan as it rotates. You will see this value circulate 0 to 360 degrees over and over as the engine runs and the prop or fan turns.
+sim/flightmodel2/engines/prop_pitch_deg	float[engines]	n	degrees	This is the ACTUAL pitch of the prop in degrees from its flat-pitch setting.
+sim/flightmodel2/engines/prop_cone_angle_rad	float[engines]	n	radians             	This is the coning angle of the disc, in radians. Typically close to 0.0.
+sim/flightmodel2/engines/rotor_vertical_vector_deg	float[engines]	n	degrees	This engine rotor-disc vertical vector, in degrees, where 0 is straight forwards, 90 is stright up.
+sim/flightmodel2/engines/rotor_vertical_cyclic_deg	float[engines]	n	degrees	This engine rotor-disc longitudinal cyclic, in degrees, where -10 is 10 degrees forwards, 10 is 10 degrees aft.
+sim/flightmodel2/engines/rotor_side_cyclic_deg	float[engines]	n	degrees	This engine rotor-disc lateral cyclic, in degrees, where -10 is 10 degrees left, 10 is 10 degrees right.
+sim/flightmodel2/engines/rotor_cyclic_elevator_tilt_deg	float[engines]	n	degrees            	Longitudinal disc tilt from cyclic deflection.
+sim/flightmodel2/engines/rotor_cyclic_aileron_tilt_deg	float[engines]	n	degrees      	Lateral disc tilt from cyclic deflection.
+sim/flightmodel2/engines/nacelle_vertical_angle_deg	float[engines]	n	degrees             	This engine nacelle vertical vector, in degrees, where 0 is straight forwards, 90 is stright up.
+sim/flightmodel2/engines/thrust_reverser_deploy_ratio	float[engines]	n	ratio	How far the reverser doors/mechanism have traveled.  0 = fully stowed, 1.0 = fully deployed.
+sim/flightmodel2/gear/gear_heading_deg	float[gear]	n	degrees	Current gear heading angle, degrees.
+sim/flightmodel2/gear/gear_pitch_deg	float[gear]	n	degrees	Current gear pitch angle, degrees.
+sim/flightmodel2/gear/gear_roll_deg	float[gear]	n	degrees	Current gear roll angle, degrees.
+sim/flightmodel2/gear/tire_steer_command_deg	float[gear]	n	degrees	Steering command being sent to this gear, degrees positive right.  This takes into account steering algorithms for big planes like 747, but does not free castoring and springiness.
+sim/flightmodel2/gear/tire_steer_actual_deg	float[gear]	n	degrees	Steering command actually enacted by the gear, degrees positive right.
+sim/flightmodel2/gear/tire_vertical_deflection_mtr	float[gear]	n	meters	Vertical deflection of this gear, meters.
+sim/flightmodel2/gear/tire_vertical_force_n_mtr	float[gear]	n	newton_meters	Vertical force on this gear, newtons.
+sim/flightmodel2/gear/tire_rotation_speed_rad_sec	float[gear]	n	radians/second	Rotational speed of this tire, radians per second.
+sim/flightmodel2/gear/tire_rotation_angle_deg	float[gear]	n	degrees	Tire rotation in degrees, running 0 to 360 over and over as it rolls.
+sim/flightmodel2/gear/deploy_ratio	float[gear]	n	ratio	This is how far down the landing gear is.  0=up, 1= down
+sim/flightmodel2/misc/canopy_open_ratio	float	n	ratio	Canopy position: 0 = closed, 1 = open
+sim/flightmodel2/misc/tailhook_deploy_ratio	float	n	ratio	Tailhook position: 0 = up, 1 = down
+sim/flightmodel2/misc/water_scoop_deploy_ratio	float	n	ratio	Water scoop position: 0 = up, 1 = down
+sim/flightmodel2/misc/water_drop_deploy_ratio	float	n	ratio	Water drop door position: 0 = up, 1=  down
+sim/flightmodel2/misc/wiper_angle_deg	float[4]	n	degrees	current angle of the wiper.  range of motion is set in PlaneMaker.
+sim/flightmodel2/misc/custom_slider_ratio	float[20]	n	ratio	Misc. traveling items for your use.  You define the meaning.
+sim/flightmodel2/wing/aileron1_deg	float[wings]	y	degrees	Deflection of the aileron from set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/aileron2_deg	float[wings]	y	degrees	Deflection of the aileron from set #2 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/spoiler1_deg	float[wings]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/spoiler2_deg	float[wings]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/yawbrake_deg	float[wings]	y	degrees	Deflection of the yaw-brake on this wing. A yaw-brake is a set of spoilers on the top and bottom of the wing thst split open symmetrically to drag that wing aft and yaw the plane. They are used on the B-2, for example.
+sim/flightmodel2/wing/elevator1_deg	float[wings]	y	degrees	Deflection of the elevator from set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/elevator2_deg	float[wings]	y	degrees	Deflection of the elevator from set #2 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/rudder1_deg	float[wings]	y	degrees	Deflection of the rudder from set #1 on this wing. Degrees, positive is trailig-edge right.
+sim/flightmodel2/wing/rudder2_deg	float[wings]	y	degrees	Deflection of the rudder from set #2 on this wing. Degrees, positive is trailig-edge right.
+sim/flightmodel2/wing/flap1_deg	float[wings]	y	degrees	Deflection of the flap from set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/flap2_deg	float[wings]	y	degrees	Deflection of the flap from set #2 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/speedbrake1_deg	float[wings]	y	degrees	Deflection of the speedbrakes from set #1 on this wing.  
+sim/flightmodel2/wing/speedbrake2_deg	float[wings]	y	degrees	Deflection of the speedbrakes from set #2 on this wing.  
+sim/flightmodel2/wing/airfoil_sweep_increase_deg	float[wings]	y	degrees	The sweep increase BEYOND DEFAULT of this wing... this would only have a non-zero value for planes like the F-14 which can sweep their wings.
+sim/flightmodel2/wing/airfoil_dihedral_increase_deg	float[wings]	y	degrees	The dihedral increase BEYOND DEFAULT of this wing... this would only have a non-zero value for planes like the Navy F-4 which can fold up the outer wing panels.
