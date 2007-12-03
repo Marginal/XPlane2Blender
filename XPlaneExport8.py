@@ -1,17 +1,17 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane v8 Object (.obj)'
+Name: 'X-Plane v8/v9 Object (.obj)'
 Blender: 243
 Group: 'Export'
-Tooltip: 'Export to X-Plane v8 format object (.obj)'
+Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 """
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.46"
+__version__ = "3.00"
 __bpydoc__ = """\
-This script exports scenery created in Blender to X-Plane v8 .obj
-format for placement with World-Maker.
+This script exports scenery created in Blender to X-Plane v8 or v9
+.obj format for placement with World-Maker.
 
 Limitations:<br>
   * Only Lamps and Mesh Faces (including "lines") are exported.<br>
@@ -140,6 +140,9 @@ Limitations:<br>
 # 2007-11-30 v2.46
 #  - Support for custom lights.
 #  - Fix for bones connected to parent with "Con" button.
+#
+# 2007-12-02 v3.00
+#  - Animations can use more than two key frames.
 #
 
 
@@ -1108,25 +1111,41 @@ class OBJexport8:
         for i in newa[len(olda):]:
             self.file.write("%sANIM_begin\n" % self.anim.ins())
             self.anim=i
+
             for (sh, d, v1, v2) in self.anim.showhide:
                 self.file.write("%sANIM_%s\t%s %s\t%s\n" % (
                     self.anim.ins(), sh, v1, v2, d))
-            if self.anim.t and not (self.anim.t[0].equals(Vertex(0,0,0)) and self.anim.t[1].equals(Vertex(0,0,0))):
-                if self.anim.t[0].equals(self.anim.t[1]):
-                    # save a potential accessor callback
-                    self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
-                        self.anim.ins(), self.anim.t[0], self.anim.t[1],
-                        0, 0, 'no_ref'))
-                else:
-                    self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
-                        self.anim.ins(), self.anim.t[0], self.anim.t[1],
-                        self.anim.v[0], self.anim.v[1], self.anim.dataref))
-            if len(self.anim.r)==1:
+
+            if len(self.anim.t)==0 or (len(self.anim.t)==1 and self.anim.t[0].equals(Vertex(0,0,0))):
+                pass
+            elif len(self.anim.t)==1:
+                # not moving - save a potential accessor callback
+                self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
+                    self.anim.ins(), self.anim.t[0], self.anim.t[0],
+                    0, 0, 'no_ref'))
+            elif len(self.anim.t)>2 or self.anim.loop!=None:
+                self.file.write("%sANIM_trans_begin\t%s\n" % (
+                    self.anim.ins(), self.anim.dataref))
+                for j in range(len(anim.t)):
+                    self.file.write("%s\tANIM_trans_key\t%s\t%s\n" % (
+                        self.anim.ins(), self.anim.v[j], self.anim.t[j]))
+                if self.anim.loop:
+                    self.file.write("%s\tANIM_keyframe_loop\t%s\n" % (
+                        self.anim.ins(), self.anim.loop))
+                self.file.write("%sANIM_trans_end\n" % self.anim.ins())
+            else:	# v8.x style
+                self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
+                    self.anim.ins(), self.anim.t[0], self.anim.t[1],
+                    self.anim.v[0], self.anim.v[1], self.anim.dataref))
+
+            if len(self.anim.r)==0:
+                pass
+            elif len(self.anim.r)==1 and len(self.anim.a)==2 and self.anim.loop==None:	# v8.x style
                 self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n"%(
                     self.anim.ins(), self.anim.r[0],
                     self.anim.a[0], self.anim.a[1],
                     self.anim.v[0], self.anim.v[1], self.anim.dataref))
-            elif len(self.anim.r)==2:
+            elif len(self.anim.r)==2 and self.anim.loop==None:	# v8.x style
                 self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n"%(
                     self.anim.ins(), self.anim.r[0],
                     self.anim.a[0], 0,
@@ -1135,6 +1154,27 @@ class OBJexport8:
                     self.anim.ins(), self.anim.r[1],
                     0, self.anim.a[1],
                     self.anim.v[0], self.anim.v[1], self.anim.dataref))
+            elif len(self.anim.r)==1:		# v9.x style, one axis
+                self.file.write("%sANIM_rotate_begin\t%s\t%s\n"%(
+                    self.anim.ins(), self.anim.r[0], self.anim.dataref))
+                for j in range(len(anim.a)):
+                    self.file.write("%s\tANIM_rotate_key\t%s\t%6.2f\n" % (
+                        self.anim.ins(), self.anim.v[j], self.anim.a[j]))
+                if self.anim.loop:
+                    self.file.write("%s\tANIM_keyframe_loop\t%s\n" % (
+                        self.anim.ins(), self.anim.loop))
+                self.file.write("%sANIM_rotate_end\n" % self.anim.ins())
+            else:				# v9.x style, multiple axes
+                for axis in [[0,0,1],[0,1,0],[1,0,0]]:
+                    self.file.write("%sANIM_rotate_begin\t%d %d %d\t%s\n"%(
+                        self.anim.ins(), axis[0], axis[1], axis[2], self.anim.dataref))
+                    for j in range(len(anim.r)):
+                        self.file.write("%s\tANIM_rotate_key\t%s\t%6.2f\n" % (
+                            self.anim.ins(), self.anim.v[j], Quaternion(self.anim.r[j].toVector(3), self.anim.a[j]).toEuler()[axis.index(1)]))
+                    if self.anim.loop:
+                        self.file.write("%s\tANIM_keyframe_loop\t%s\n" % (
+                            self.anim.ins(), self.anim.loop))
+                    self.file.write("%sANIM_rotate_end\n" % self.anim.ins())
 
         if twoside!=None:
             if self.twoside and not twoside:
@@ -1171,10 +1211,11 @@ class OBJexport8:
 class Anim:
     def __init__(self, expobj, child, bone=None):
         self.dataref=None	# None if null
-        self.r=[]	# 0, 1 or 2 rotation vectors
-        self.a=[]	# rotation angles (iff self.r)
-        self.t=[]	# translation
+        self.r=[]	# 0, 1, 2 or n-1 rotation vectors
+        self.a=[]	# rotation angles, 0 or n-1 rotation angles
+        self.t=[]	# translation, 0, 1 or n-1 translations
         self.v=[0,1]	# dataref value
+        self.loop=None	# loop value (XPlane 9)
         self.showhide=[]	# show/hide values (show/hide, name, v1, v2)
         self.anim=None	# parent Anim
 
@@ -1226,19 +1267,21 @@ class Anim:
                     if not (suffix) in propname: continue
                     digit=propname[propname.index(suffix)+7:]
                     if not digit.isdigit() or not int(digit)&1: continue
-                    (ref, v)=self.getdataref(object, propname[:propname.index(suffix)], suffix[:-2], int(digit))
-                    if v: self.showhide.append((suffix[1:5],ref,v[0],v[1]))
+                    (ref, v, loop)=self.getdataref(object, propname[:propname.index(suffix)], suffix[:-2], int(digit), 2)
+                    if not None in v:
+                        self.showhide.append((suffix[1:5],ref,v[0],v[1]))
 
         #print "ac", object, bone.name, object.getAction(), object.getAction().getAllChannelIpos()[bone.name]
-        if not (object.getAction() and
-                object.getAction().getAllChannelIpos().has_key(bone.name)):
-            print 'Warn:\tYou haven\'t created any animation keys for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
-            expobj.log.append(('Ignoring bone "%s" in armature "%s" - you haven\'t created any animation keys' % (bone.name, object.name), [object]))
+        action=object.getAction()
+        if not (action and bone.name in action.getAllChannelIpos() and
+                1 in action.getFrameNumbers() and 2 in action.getFrameNumbers()):
+            print 'Warn:\tYou haven\'t created animation keys in frames 1 and 2 for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
+            expobj.log.append(('Ignoring bone "%s" in armature "%s" - you haven\'t created animation keys in frames 1 and 2' % (bone.name, object.name), [object]))
 
             if self.showhide:
                 # Create a dummy animation to hold hide/show values
                 self.dataref='no_ref'	# mustn't eval to False
-                self.t=[Vertex(0,0,0),Vertex(0,0,0)]
+                self.t=[Vertex(0,0,0)]
             elif bone.parent:
                 foo=Anim(expobj, child, bone.parent)
                 self.dataref=foo.dataref
@@ -1246,17 +1289,38 @@ class Anim:
                 self.a=foo.a
                 self.t=foo.t
                 self.v=foo.v
+                self.loop=foo.loop
                 self.anim=foo.anim
             else:
                 self.dataref=None	# is null
             return
 
-        (self.dataref, self.v)=self.getdataref(object, bone.name, '', 1)
-        ipo=object.getAction().getAllChannelIpos()[bone.name]
+        # Warn about skipped frames
+        f=action.getFrameNumbers()
+        f.sort()
+        frames=[]
+        skipframes=[]
+        for i in range(len(f)):
+            if f[i]!=i+1:
+                skipframes.append(str(f[i]))
+            else:
+                frames.append(f[i])
+        if skipframes:
+            if len(skipframes)>1:
+                skipframes='frames %s' + (', '.join(skipframes))
+            else:
+                skipframes='frame ' + skipframes[0]
+            print 'Warn:\tIgnoring %s for bone "%s" in armature "%s" - you haven\'t created keys for previous frames.' % (skipframes, bone.name, object.name)
+            expobj.log.append(('Ignoring %s for bone "%s" in armature "%s" - you haven\'t created keys for previous frames' % (skipframes, bone.name, object.name), [object]))
+
+        (self.dataref, self.v, self.loop)=self.getdataref(object, bone.name, '', 1, len(frames))
+        if None in self.v:
+            raise ExportError('Armature "%s" is missing a %s_v%d property' % (object.name, self.dataref.split('/')[-1], 1+self.v.index(None)), [object])
 
         scene=Blender.Scene.GetCurrent()
+        ipo=action.getAllChannelIpos()[bone.name]
         if 0:	# debug
-            for frame in [1,2]:            
+            for frame in frames:
                 Blender.Set('curframe', frame)
                 #scene.update(1)
                 #scene.makeCurrent()	# see Blender bug #4696
@@ -1314,7 +1378,8 @@ class Anim:
             a.getData().restPosition=True
             a=a.parent
 
-        for frame in [1,2]:
+        moved=False
+        for frame in frames:
             Blender.Set('curframe', frame)
             #scene.update(1)
             #scene.makeCurrent()	# see Blender bug #4696
@@ -1340,6 +1405,8 @@ class Anim:
                 t=t-anim.t[0]	# mesh location is relative to first frame
                 anim=anim.anim
             self.t.append(t)
+            if not t.equals(self.t[0]):
+                moved=True
 
             if (ipo.getCurve('QuatW') and
                 ipo.getCurve('QuatX') and
@@ -1350,24 +1417,45 @@ class Anim:
                               ipo.getCurveCurval('QuatY'),
                               ipo.getCurveCurval('QuatZ')])
                 # In bone space
-                qr=Vertex(q.axis*bone.matrix['ARMATURESPACE'].rotationPart(),
-                          rm)
-                a = round(q.angle, Vertex.ROUND)
+                qr=Vertex(q.axis*bone.matrix['ARMATURESPACE'].rotationPart(), rm)	# rotation axis
+                a = round(q.angle, Vertex.ROUND)	# rotation angle
                 if a==0:
+                    self.r.append(None)	# axis doesn't matter if no rotation
                     self.a.append(0)
-                elif not self.r:
-                    self.r.append(qr)
-                    self.a.append(a)
-                elif qr.equals(self.r[0]):
-                    self.a.append(a)
-                elif qr.equals(-self.r[0]):
-                    self.a.append(-a)
-                else:
-                    # no common axis - add second axis
+                else:                    
                     self.r.append(qr)
                     self.a.append(a)
             else:
+                self.r.append(None)
                 self.a.append(0)
+
+        # Collapse translations if not moving
+        if not moved:
+            self.t=[self.t[0]]
+
+        # Collapse rotation axes if coplanar
+        coplanar=True
+        r=None	# first axis
+        for i in range(len(self.a)):
+            if self.r[i]:
+                if not r:
+                    r=self.r[i]
+                elif r.equals(-self.r[i]):
+                    self.r[i]=-self.r[i]
+                    self.a[i]=-self.a[i]
+                elif not r.equals(self.r[i]):
+                    coplanar=False
+                    break
+        if coplanar:
+            if r:
+                self.r=[r]
+            else:
+                self.r=[]
+                self.a=[]
+        else:
+            for i in range(len(self.a)):
+                if not self.r[i]:
+                    self.r[i]=Vertex(0,1,0)	# arbitrary
 
         a=object.parent
         while a:
@@ -1376,12 +1464,13 @@ class Anim:
 
 
     #------------------------------------------------------------------------
-    def getdataref(self, object, name, suffix, first):
+    def getdataref(self, object, name, suffix, first, count):
+        vals=[None for i in range(count)]
         if not suffix:
-            vals=[0,1]
+            vals[0]=0
+            vals[-1]=1
             thing='bone in armature' 
         else:
-            vals=[None,None]
             thing='property in armature'
             
         l=name.find('.')
@@ -1417,9 +1506,10 @@ class Anim:
         else:
             dataref=getcustomdataref(object, thing, seq)
 
-        # dataref values v1 & v2
+        # dataref values vn and loop
+        loop=None
         for tmpref in seq:
-            for val in [first,first+1]:
+            for val in range(first,first+count):
                 valstr="%s%s_v%d" % (tmpref, suffix, val)
                 for prop in object.getAllProperties():
                     if prop.name.strip()==valstr:
@@ -1429,8 +1519,17 @@ class Anim:
                             vals[val-first]=round(prop.data, Vertex.ROUND)
                         else:
                             raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [object])
-        if vals[0]==None or vals[1]==None: vals=None
-        return (dataref, vals)
+            valstr="%s%s_loop" % (tmpref, suffix)
+            for prop in object.getAllProperties():
+                if prop.name.strip()==valstr:
+                    if prop.type=='INT':
+                        loop=prop.data
+                    elif prop.type=='FLOAT':
+                        loop=round(prop.data, Vertex.ROUND)
+                    else:
+                        raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [object])
+            
+        return (dataref, vals, loop)
 
 
     #------------------------------------------------------------------------
@@ -1448,6 +1547,9 @@ class Anim:
             return not b.dataref
         if (self.dataref!=b.dataref or
             len(self.r)!=len(b.r) or
+            len(self.a)!=len(b.a) or
+            len(self.t)!=len(b.t) or
+            self.v!=b.v or
             not self.anim.equals(b.anim)):
             return False
         if self.showhide!=b.showhide:
@@ -1455,11 +1557,11 @@ class Anim:
         for i in range(len(self.r)):
             if not self.r[i].equals(b.r[i]):
                 return False
-        for i in [0,1]:
-            if not ((not self.r or abs(self.a[i]-b.a[i])<=Vertex.LIMIT) and
-
-                    self.t[i].equals(b.t[i]) and
-                    self.v[i]==b.v[i]):
+        for i in range(len(self.t)):
+            if not self.t[i].equals(b.t[i]):
+                return False
+        for i in range(len(self.a)):
+            if abs(self.a[i]-b.a[i])>Vertex.LIMIT:
                 return False
         return True
 
