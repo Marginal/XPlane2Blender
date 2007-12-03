@@ -1,2 +1,2 @@
-custom lights (quad w/ texture co-ords + material sliders or properties)
+importplane: skip invisible bodies
 detect misc objects? (no panel texture)

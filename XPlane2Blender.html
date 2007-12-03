@@ -31,8 +31,8 @@ h5 { font-family: Arial,Helvetica,sans-serif; }
 is an open source 3D object editor for Windows, Mac and
 UNIX.</p>
 <p>These Blender scripts export models created in Blender
-to X-Plane v7, v8 or CSL <code>.obj</code> format.</p>
-<p>The scripts also import existing X-Plane v6, v7, v8 and CSL
+to X-Plane v7, v8, v9 or CSL <code>.obj</code> format.</p>
+<p>The scripts also import existing X-Plane v6, v7, v8, v9 and CSL
 <code>.obj</code> files and X-Plane v7 and v8 <code>.acf</code>
 airplanes into Blender.</p>
 <h3>Requirements</h3>
@@ -177,7 +177,7 @@ the <code>.obj</code> file to end up. Then choose:
 <dl>
   <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;CSL&nbsp;Object</samp> or</dd>
   <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;v7&nbsp;Object</samp> or</dd>
-  <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;v8&nbsp;Object</samp></dd>
+  <dd><samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;v8/v9&nbsp;Object</samp></dd>
 </dl>
 <p>The object is exported in the same folder and with the same name
 as the current Blender file, but with a <code>.obj</code> extension. 
@@ -188,8 +188,9 @@ highlight the offending Blender object(s).</p>
 <p><samp><b>csl: </b></samp>These objects are intended for use with
 multi-user plugins such as
 <a href="http://www.xsquawkbox.net/xsb/">XSquawkBox</a> or
-<a href="http://www.ivao.aero/softdev/X-IvAp/">X-IvAp</a>.</p>
-<p><samp><b>v8: </b></samp>These objects are supported by X-Plane versions 8.20 and later.</p>
+<a href="http://www.ivao.aero/softdev/X-IvAp/">X-IvAp</a>.<br>
+<samp><b>v8: </b></samp>These objects are supported by X-Plane versions 8.20 and later.<br>
+<samp><b>v9: </b></samp>These objects are supported by X-Plane versions 9.00 and later.</p>
 
 <h3>Creating X-Plane scenery</h3>
 <ul>
@@ -286,7 +287,7 @@ versions of the plane in layers 2 and 3 which are only viewed in
 X-Plane from &gt;1000m and &gt;4000m respectively.</li>
 </ul>
 <h3>Creating 3D cockpits</h3>
-<p>X-Plane 3D cockpits are just normal v7 or v8 scenery objects except
+<p>X-Plane 3D cockpits are just normal v7, v8 or v9 scenery objects except
 that cockpits can't contain multiple <a href="#Level_Of_Detail">Levels
 of Detail</a>, so only objects in Blender layer 1 are exported.
 If you want to keep objects in your Blender scene for reference but
@@ -308,7 +309,7 @@ Choose <samp>Image&nbsp;&rarr; Replace </samp> in a
 <samp>UV Image Editor</samp> window to use a different texture file, which
 can be named anything you like (but no spaces) and which should live in
 the same folder as your plane's <code>.acf</code> file.</p>
-<p>To construct moving cockpit instruments in X-Plane v8:</p>
+<p>To construct moving cockpit instruments in X-Plane v8 or v9:</p>
 <ul>
   <li>Layout the 2D panel in PlaneMaker as normal. But bear in
 mind that only the top 768 lines of the 2D panel can be used in the 3D
@@ -344,7 +345,7 @@ exporting to X-Plane.</p>
   <li>Only Lamp objects of type "Lamp" are exported to X-Plane. Lamp objects
 of types "Area", "Spot", "Semi" and "Hemi" are ignored (and so can be
 used to illuminate your model in Blender).</li>
-  <li><samp style="font-weight: bold;">v8: </samp>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v8 object:
+  <li><samp style="font-weight: bold;">v8/v9: </samp>Lamp objects with certain words in their names have special behaviours when exported to an X-Plane v8 or v9 object:
     <dl>
       <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
       <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
@@ -375,7 +376,7 @@ that you use these special lights:
       <dd><i>other</i> - Normal light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel (<samp style="font-weight: bold;">F5</samp>).</dd>
     </dl>
   </li>
-  <li><samp style="font-weight: bold;">v8: </samp>Custom lights
+  <li><samp style="font-weight: bold;">v8/v9: </samp>Custom lights
 (supported by X-Plane 8.50 and later) are created using the vertices from a
 Mesh object:<br>
 In the <samp>Material buttons</samp> panels
@@ -455,7 +456,7 @@ helicopter landing pads.<br>
 <small>(Note: The meaning of this button was changed in v1.50.
 Use <a href="http://marginal.org.uk/x-planescenery/collide.txt">this</a>
 script to turn the Collision button back on for all faces).</small><br>
-      <samp style="font-weight: bold;">v8: </samp>You can specify
+      <samp style="font-weight: bold;">v8/v9: </samp>You can specify
 the type of hard surface. Add a <a href="#properties">property</a> named <code>surface</code> and give it the value <code>water</code>, <code>concrete</code>, <code>asphalt</code>, <code>grass</code>, <code>dirt</code>, <code>gravel</code>, <code>lakebed</code>, <code>snow</code>, <code>shoulder</code> or <code>blastpad</code>. The surface type is ignored by X-Plane versions prior to 8.50.<br>
       <samp style="font-weight: bold;">v7: </samp>Only faces with
 4 edges (ie "<code>quads</code>") are exported as "hard".<br>
@@ -478,8 +479,8 @@ See <a href="#order">drawing order</a> for more fine-grained control
 over drawing order.</li>
     </ul>
   </li>
-  <li><samp style="font-weight: bold;">v8: </samp>In
-the <samp>Material buttons</samp> panels
+  <li><samp style="font-weight: bold;">v8/v9: </samp>In the
+<samp>Material buttons</samp> panels 
 (<samp style="font-weight: bold;">F5</samp>) you can change the way that
 the mesh reacts to light by specifying a material. Changing between materials
 in X-Plane is expensive so you should ensure that you only use a few materials
@@ -530,7 +531,7 @@ in its mesh and must not have a texture assigned to it.</p>
 sliders on the <samp>Material</samp> panel to control
 the colour of the line.
 Faces not linked to a material will be exported coloured grey.</p>
-<h4><a name="animation"><font size="+1">v8: </font>Animation</a></h4>
+<h4><a name="animation"><font size="+1">v8/v9: </font>Animation</a></h4>
 <p>You can make lamps, meshes and lines animate in X-Plane
 according to the value of any of the simulator datarefs
 listed <a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">here</a>
@@ -559,15 +560,10 @@ between each bone (using the <samp>Armature Bones</samp> panel in
 <samp>Edit Mode</samp>) if you need to use multiple datarefs to describe the
 animation of lamps/meshes. Make the lamps/meshes the child of the "youngest"
 bone in the chain.</p>
-<p>Use frames 1 and 2 to represent the desired position of the lamps/meshes
-at the minimum and maximum dataref values - X-Plane will
-<a href="http://en.wikipedia.org/wiki/Linear_interpolation">interpolate</a> and
-<a href="http://en.wikipedia.org/wiki/Extrapolation">extrapolate</a>
-linearly between these two positions
-<small>(X-Plane's animation syntax is quite simple;
-so don't use IPOcurves or any other advanced Blender animation
-techniques since these will be ignored by the exporter - only the
-positions in frames 1 and 2 are significant to X-Plane)</small>:</p>
+<p>Use frames to represent the desired position of the lamps/meshes
+at various dataref values - X-Plane will
+<a href="http://en.wikipedia.org/wiki/Linear_interpolation">interpolate</a>
+linearly between the positions:</p>
 <ul>
   <li>Select animation frame 1</li>
   <li>Click on the armature</li>
@@ -578,18 +574,43 @@ positions in frames 1 and 2 are significant to X-Plane)</small>:</p>
   <li>Repeat for any other bones in the armature</li>
   <li>Select animation frame 2 and repeat</li>
 </ul>
+<p><samp><b>v8: </b></samp>X-Plane v8 only supports two frames,
+so if you want your <code>.obj</code> file to work in X-Plane v8 then you
+should create "LocRot" keys only in frames 1 and 2.
+If you create keys in frame 3 and above then your animation will
+not work at all in X-Plane v8.</p>
+<p><samp><b>v9: </b></samp>You can add "LocRot" keys in as many frames
+as you like. The only restriction is that you must use successive frames
+- <i>ie</i> you can't skip frames.</p>
+<p><small>(X-Plane's animation syntax is quite simple;
+so don't use IPOcurves, Vertex Groups, Deformations, Shape Keys or any other
+advanced Blender animation techniques since these will be ignored by the
+exporter - only the positions specified by keys in the first <i>n</i> frames
+are significant to X-Plane.)</small></p>
 <p>By default, X-Plane will display the meshes in the frame 1 position
-when the dataref has a value of 0, and in the frame 2 position
+when the dataref has a value of 0, and in the last frame position
 when the dataref has a value of 1.
 You can change these values by adding <a href="#properties">properties</a>
 to the armature; name the property after the dataref and append
-<code>_v1</code> to the name for the value corresponding to frame 1, or
-<code>_v2</code> for the value corresponding to frame 2.
+<code>_v1</code> to the name for the value corresponding to frame 1,
+<code>_v2</code> for the value corresponding to frame 2 <i>etc</i>.<br>
 <i>eg</i> the yoke pitch dataref <code>yolk_pitch_ratio</code>
 has values between -1 (forward) and +1 (back) in X-Plane; to make
 X-Plane display the position in frame 1 when the yoke is pushed fully
 forward add a property named <code>yolk_pitch_ratio<b>_v1</b></code>, and
 give it the value <code>-1</code>.</p>
+<p><samp><b>v9: </b></samp>X-Plane will
+<a href="http://en.wikipedia.org/wiki/Extrapolation">extrapolate</a>
+your animation when the dataref has a value outside of the range
+<code><i>dataref</i>_v1</code> to <code><i>dataref</i>_v<i>n</i></code>
+(or 0 to 1 if you haven't created these properties).
+You can stop this and "clamp" your animation's position by
+repeating the positions and <code><i>dataref</i>_v<i>x</i></code>
+<a href="#properties">properties</a> in the first two and/or
+the last two frames.
+Or you can cause your animation to loop back to frame 1 when the dataref
+value exceeds a certain number by adding <a href="#properties">property</a>
+to the armature named <code><i>dataref</i>_loop</code>.</p>
 <p>You can also use custom datarefs for animation (<i>ie</i> datarefs
 supplied by a plugin that calls XPLMRegisterDataAccessor); name the bone
 with the last part ("leaf") of the dataref name and add a
@@ -632,51 +653,51 @@ one or more pairs of "hide" properties and you want to override them).</small>
   </thead>
   <tbody>
     <tr>
-      <td style="vertical-align: bottom;"><code><i>dataref</i></code></td>
+      <td style="vertical-align: text-bottom;"><code><i>dataref</i></code></td>
       <td></td>
-      <td>String</td>
+      <td style="vertical-align: text-bottom;">String</td>
       <td></td>
-      <td>Full path name of custom dataref.</td>
+      <td>Full path name of custom or ambiguously named dataref.</td>
     </tr>
     <tr>
-      <td style="vertical-align: bottom;"><code><i>dataref</i>_v1</code></td>
+      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_v<i>x</i></code></td>
       <td></td>
-      <td>Int or Float</td>
+      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
       <td></td>
-      <td>Dataref value that corresponds to the pose in frame 1.</td>
+      <td>Dataref value that corresponds to the pose in frame number x.</td>
     </tr>
     <tr>
-      <td style="vertical-align: bottom;"><code><i>dataref</i>_v2</code></td>
+      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_loop</i></code></td>
       <td></td>
-      <td>Int or Float</td>
+      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
       <td></td>
-      <td>Dataref value that corresponds to the pose in frame 2.</td>
+      <td><samp><b>v9: </b></samp>This number is applied as a modulo to the dataref value.<br>In other words, the animation loops back to frame 1 when the dataref value exceeds this number.</td>
     </tr>
     <tr>
-      <td style="vertical-align: bottom;"><code><i>dataref</i>_hide_v1</code></td>
+      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_hide_v1</code></td>
       <td></td>
-      <td>Int or Float</td>
+      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
       <td></td>
       <td>Hide animated objects - lower limit.</td>
     </tr>
     <tr>
       <td style="vertical-align: bottom;"><code><i>dataref</i>_hide_v2</code></td>
       <td></td>
-      <td>Int or Float</td>
+      <td>Int&nbsp;or&nbsp;Float</td>
       <td></td>
       <td>Hide animated objects - upper limit.</td>
     </tr>
     <tr>
-      <td style="vertical-align: bottom;"><code><i>dataref</i>_show_v1</code></td>
+      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_show_v1</code></td>
       <td></td>
-      <td>Int or Float</td>
+      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
       <td></td>
       <td>Show hidden animated objects - lower limit.</td>
     </tr>
     <tr>
-      <td style="vertical-align: bottom;"><code><i>dataref</i>_show_v2</code></td>
+      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_show_v2</code></td>
       <td></td>
-      <td>Int or Float</td>
+      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
       <td></td>
       <td>Show hidden animated objects - upper limit.</td>
     </tr>
@@ -684,13 +705,13 @@ one or more pairs of "hide" properties and you want to override them).</small>
 </table>
 </div>
 <p>You can make a bone the child of a bone in a different armature,
-in which case any <code><i>dataref</i></code>, <code><i>dataref</i>_v1</code>
-and <code><i>dataref</i>_v2</code> properties only apply to bones that are
-in the same armature as the properties.
-However all children inherit any "hide" and "show" properties from parent
+in which case any <code><i>dataref</i></code>,
+<code><i>dataref</i>_v<i>x</i></code> and <code><i>dataref</i>_loop</code>
+properties only apply to bones that are in the same armature as the properties.
+However all children are affected by any "hide" and "show" properties in parent
 armatures.</p>
 
-<h4><a name="order"><font size="+1">v8: </font>Drawing order</a></h4>
+<h4><a name="order"><font size="+1">v8/v9: </font>Drawing order</a></h4>
 <p>The order in which X-Plane draws the animations, lights, lines and
 triangles in your scenery or cockpit object usually has no effect on
 the appearance.
@@ -737,7 +758,7 @@ and <code>GroupB</code> resepctively. Since <code>A</code> is before
 </ul>
 <p>Objects that belong to a group are highlighted in green instead of
 pink so that you can easily distinguish them.</p>
-<h4><a name="group"><font size="+1">v8: </font>Drawing group</a></h4>
+<h4><a name="group"><font size="+1">v8/v9: </font>Drawing group</a></h4>
 <p>You can specify when X-Plane should draw your scenery object relative to
 other scenery elements:</p>
 <ul>
@@ -752,7 +773,7 @@ to make X-Plane draw your object before this group,
 <p><i>eg</i> to make X-Plane draw your object at the same time that it
 draws runway markings add a property named <code>group_markings</code>
 to an Empty object and give it the value <code>0</code>.</p>
-<h4><font size="+1">v8: </font>Slung load weight</h4>
+<h4><font size="+1">v8/v9: </font>Slung load weight</h4>
 <p>You can specify the weight of an object for use in X-Plane's physics
 engine if the object is being carried by a plane or helicopter:</p>
 <ul>
@@ -786,16 +807,15 @@ with the tip of the tris at the centre of the texture area. Use
 <p>These compound types aren't supported directly by Blender.
 However, the export script automatically tries to spot when it can use
 them.</p>
-<p><samp style="font-weight: bold;">v8 & csl: </samp>The
-performance gains from using strips are more modest in X-Plane v8
+<p><samp style="font-weight: bold;">v8, v9 & csl: </samp>The
+performance gains from using strips are more modest in X-Plane v8 and v9,
 and for CSL objects.
-These compound types aren't supported in v8 objects (X-Plane v8 uses
-more advanced techniques) and the only saving from using strips over
+These compound types aren't supported in v8/v9 objects (X-Plane v8 and v9
+use more advanced techniques) and the only saving from using strips over
 some other UV mapping methods is in reduced "vertex count". It probably
 isn't worth going out of your way to look for opportunities of making
 strips.</p>
-<h4><a name="Level_Of_Detail"></a>Level Of
-Detail</h4>
+<h4><a name="Level_Of_Detail"></a>Level Of Detail</h4>
 <p>X-Plane has borrowed the concept of "Level Of Detail" from 3D
 games. This works on the principle that when you're viewing an object
 from a large distance it can be displayed with reduced detail without you
@@ -949,7 +969,7 @@ that you make using these tools, but you are under no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 2.46 &copy; 2004-2007
+      <td class="banner">Version 3.00 &copy; 2004-2007
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
 <img alt="Creative Commons License" style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>
