@@ -202,7 +202,9 @@ Limitations:<br>
 # 2007-09-17 v2.42
 #  - Detect mirrored flat faces, and don't remove doubles from them.
 #
-# 2007-12-01 v3.00
+# 2007-12-02 v3.00
+#  - Animations can use more than two key frames.
+#  - Support for DDS textures.
 #  - Import custom lights.
 #  - Put Armatures in correct layers.
 #
@@ -366,7 +368,7 @@ class MyMesh:
             if f.flags&Face.PANEL:
                 if not objimport.panelimage:
                     d=dirname(objimport.filename)
-                    for extension in ['.png', '.bmp']:
+                    for extension in ['.dds', '.DDS', '.png', '.PNG', '.bmp', '.BMP']:
                         cockpit=d+sep+"cockpit"+sep+"-PANELS-"+sep+"Panel"+extension
                         try:
                             objimport.panelimage = Image.Load(cockpit)
@@ -524,6 +526,7 @@ class OBJimport:
         self.pendingbone=None	# current bone
         self.off=[]		# offset from current bone
         self.bones=[]		# Latest children
+        self.currentrot=None	# current rotate_key axis, key number
         self.mat=Mat()
         self.mats=[self.mat]	# Cache of mats to prevent duplicates
 
@@ -691,7 +694,7 @@ class OBJimport:
         if l!=-1:
             dirs.append(self.filename[:l]+'custom object textures')
         for subdir in dirs:
-            for extension in ['', '.png', '.bmp']:
+            for extension in ['', '.dds', '.DDS', '.png', '.PNG', '.bmp', '.BMP']:
                 texname=normpath(subdir+sep+base+extension)
                 try:
                     file = open(texname, "rb")
@@ -883,6 +886,7 @@ class OBJimport:
                 name=dataref[-1]
                 self.off[-1]=self.off[-1]+p1
                 if not self.pendingbone:
+                    # skip translate back added by AC3D plugin
                     if len(self.bones)==1:
                         # first bone in Armature - move armature location
                         self.armob.setLocation(self.off[-1].x+self.armob.LocX, self.off[-1].y+self.armob.LocY, self.off[-1].z+self.armob.LocZ)
@@ -897,15 +901,51 @@ class OBJimport:
                         if '[' in name: name=name[:name.index('[')]
                         if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
                             # custom or ambiguous dataref
-                            self.armob.addProperty(name, '/'.join(dataref[:-1])+'/')
-                        if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
-                        if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
+                            self.addArmProperty(name, '/'.join(dataref[:-1]))
+                        if v1!=0: self.addArmProperty(dataref[-1]+'_v1', v1)
+                        if v2!=1: self.addArmProperty(dataref[-1]+'_v2', v2)
                         head=self.off[-1]
                         #tail=self.off[-1]+(p2-p1).normalize()*0.1
                         tail=self.off[-1]+Vertex(0,0.1,0)
                         m1=Matrix().identity().resize4x4()
                         m2=TranslationMatrix((p2-p1).toVector(4))
-                        self.pendingbone=(dataref[-1], head, tail, m1, m2)
+                        self.pendingbone=(dataref[-1], head, tail, [m1,m2])
+
+            elif t=='ANIM_trans_begin':
+                dataref=self.getInput().split('/')
+                name=dataref[-1]
+                self.pendingbone=(dataref[-1], None, None, [])
+                if '[' in name: name=name[:name.index('[')]
+                if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
+                    # custom or ambiguous dataref
+                    self.addArmProperty(name, '/'.join(dataref[:-1]))
+
+            elif t=='ANIM_trans_key':
+                v=self.getFloat()
+                p=self.getVertex()
+                (dataref, head, tail, m)=self.pendingbone
+                if m:
+                    m.append(TranslationMatrix(p.toVector(3)-m[0].translationPart()))
+                    self.addArmProperty('%s_v%s' % (dataref, len(m)), v)
+                else:	# first
+                    self.off[-1]=self.off[-1]+p
+                    m.append(Matrix().identity().resize4x4())
+                    if v: self.addArmProperty('%s_v1' % dataref, v)
+                
+            elif t=='ANIM_trans_end':
+                if len(self.bones)==1:
+                    # first bone in Armature - move armature location
+                    self.armob.setLocation(self.off[-1].x+self.armob.LocX, self.off[-1].y+self.armob.LocY, self.off[-1].z+self.armob.LocZ)
+                    self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
+                    self.off[-1]=Vertex(0,0,0)
+                else:
+                    # first bone at this level - adjust previous tail
+                    #self.arm.bones[self.bones[-2]].tail=self.off[-1].toVector(3)
+                    pass
+                (dataref, head, tail, m)=self.pendingbone
+                head=self.off[-1]
+                tail=self.off[-1]+Vertex(0,0.1,0)
+                self.pendingbone=(dataref[-1], head, tail, m)
 
             elif t=='ANIM_rotate':
                 p=self.getVertex()
@@ -920,24 +960,65 @@ class OBJimport:
                     v2/=2
                 name=dataref[-1]
                 if '[' in name: name=name[:name.index('[')]
-                if len(dataref)>1 and not name in datarefs:
-                    self.armob.addProperty(name,'/'.join(dataref[:-1])+'/')
-                if v1!=0 and dataref[-1]+'_v1' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v1', v1)
-                if v2!=1 and dataref[-1]+'_v2' not in self.armob.getAllProperties(): self.armob.addProperty(dataref[-1]+'_v2', v2)
-                head=self.off[-1]
-                #tail=self.off[-1]+Vertex(p.y,p.z,p.x)*0.1
-                tail=self.off[-1]+Vertex(0,0.1,0)
+                if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
+                    # custom or ambiguous dataref
+                    self.addArmProperty(name, '/'.join(dataref[:-1]))
+                if v1!=0: self.addArmProperty(dataref[-1]+'_v1', v1)
+                if v2!=1: self.addArmProperty(dataref[-1]+'_v2', v2)
                 m1=RotationMatrix(r1,4,'r',p.toVector(3))
                 m2=RotationMatrix(r2,4,'r',p.toVector(3))
+                m=[m1,m2]
                 if self.pendingbone:
-                    (name, head, tail, o1, o2)=self.pendingbone
+                    (name, head, tail, o)=self.pendingbone
                     if name!=dataref[-1]: #or m2[3]==Vector(0,0,0,1):
                         # Different dataref - new bone!
                         self.addpendingbone()
                     else:
-                        m1=m1*o1
-                        m2=m2*o2
-                self.pendingbone=(dataref[-1], head, tail, m1, m2)
+                        m=[m1*o[0],m2*o[1]]+o[2:]
+                else:
+                    head=self.off[-1]
+                    tail=self.off[-1]+Vertex(0,0.1,0)
+                self.pendingbone=(dataref[-1], head, tail, m)
+
+            elif t=='ANIM_rotate_begin':
+                self.currentrot=(self.getVertex().toVector(3), 0)
+                dataref=self.getInput().split('/')
+                name=dataref[-1]
+                if '[' in name: name=name[:name.index('[')]
+                if len(dataref)>1 and (not name in datarefs or not datarefs[name]):
+                    # custom or ambiguous dataref
+                    self.addArmProperty(name, '/'.join(dataref[:-1]))
+                m=[]
+                if self.pendingbone:
+                    (name, head, tail, m)=self.pendingbone
+                    if name!=dataref[-1]: #or m2[3]==Vector(0,0,0,1):
+                        # Different dataref - new bone!
+                        self.addpendingbone()
+                else:
+                    head=self.off[-1]
+                    tail=self.off[-1]+Vertex(0,0.1,0)
+                self.pendingbone=(dataref[-1], head, tail, m)
+
+            elif t=='ANIM_rotate_key':
+                v=self.getFloat()
+                r=self.getFloat()
+                (p,idx)=self.currentrot
+                (dataref, head, tail, m)=self.pendingbone
+                if idx or v: self.addArmProperty('%s_v%s' % (dataref,idx+1), v)
+                n=RotationMatrix(r,4,'r',p)
+                if idx<len(m):
+                    m[idx]=n*m[idx]
+                else:
+                    m.append(n)
+                self.currentrot=(p,idx+1)
+
+            elif t=='ANIM_rotate_end':
+                self.currentrot=None
+
+            elif t=='ANIM_keyframe_loop':
+                n=self.getFloat()
+                (dataref, head, tail, m)=self.pendingbone
+                self.addArmProperty(dataref+'_loop', n)
 
             elif t in ['ANIM_show', 'ANIM_hide']:
                 v1=self.getFloat()
@@ -1716,11 +1797,11 @@ class OBJimport:
             if self.bones==[None]:
                 # eek no bones! Maybe just receptacle for show/hide?
                 (origname, head, tail)=('bone', Vertex(0,0,0), Vertex(0,0.1,0))
-                m1=m2=Matrix().identity().resize4x4()
+                m=[]
             else:
                 return None
         else:
-            (origname, head, tail, m1, m2)=self.pendingbone
+            (origname, head, tail, m)=self.pendingbone
         name=origname
         i=0
         while name in self.arm.bones.keys():
@@ -1740,16 +1821,26 @@ class OBJimport:
         self.arm.update()	# to get Pose
         pose=self.armob.getPose()
         posebone=pose.bones[name]
-        posebone.localMatrix=m1
-        posebone.insertKey(self.armob, 1, [Object.Pose.ROT,Object.Pose.LOC])
-        pose.update()
-        posebone.localMatrix=m2
-        posebone.insertKey(self.armob, 2, [Object.Pose.ROT,Object.Pose.LOC])
-        pose.update()
+        for i in range(len(m)):
+            posebone.localMatrix=m[i]
+            posebone.insertKey(self.armob, i+1, [Object.Pose.ROT,Object.Pose.LOC])
+            pose.update()
         self.arm.makeEditable()
         self.pendingbone=None
         self.bones[-1]=name
 
+    #------------------------------------------------------------------------
+    def addArmProperty(self, name, value):
+        for prop in self.armob.getAllProperties():
+            if prop.name==name:
+                if prop.data==value:
+                    return False
+                else:
+                    prop.data=value
+                    return True
+        self.armob.addProperty(name, value)
+        return True
+            
 
 #------------------------------------------------------------------------
 def file_callback (filename):
