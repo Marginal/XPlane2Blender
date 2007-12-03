@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "2.46"
+__version__ = "3.00"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -140,6 +140,10 @@ Limitations:<br>
 # 2006-09-17 v2.42
 #  - Landing gear and flat wings imported as flat.
 #
+# 2007-12-02 v3.00
+#  - Support for v9.00 planes.
+#  - Support for DDS textures.
+#
 
 import sys
 import Blender
@@ -215,13 +219,13 @@ class ACFimport:
                 self.offset+=Vertex(0, -self.acf.WB_cgY, -self.acf.WB_cgZ, self.mm)
 
         texfilename=self.filename[:self.filename.rindex('.')]+'_paint'
-        for extension in ['.png', '.PNG', '.bmp', '.BMP']:	# PNG 1st in v8
+        for extension in ['.dds', '.DDS', '.png', '.PNG', '.bmp', '.BMP']:
             try:
                 file = open(texfilename+extension, "rb")
             except IOError:
                 pass
             else:
-                for extension2 in ['.png', '.bmp']:
+                for extension2 in ['.dds', '.DDS', '.png', '.PNG', '.bmp', '.BMP']:
                     try:
                         self.image2 = Image.Load(texfilename+'2'+extension2)
                     except IOError:
@@ -3171,6 +3175,8 @@ xstruct, "door[24]",	# doorstruct used for speedbrakes and doors!
 xstruct, "objs[24]",	# Misc Objects
     ])
     acf860=acf840
+    acf900=acf840
+    acf901=acf840
 
     engn8000 = [
 xint, "engn_type",
@@ -3201,6 +3207,8 @@ xflt, "bladesweep[10]",
     engn830=engn8000
     engn840=engn8000
     engn860=engn8000
+    engn900=engn8000
+    engn901=engn8000
 
     wing8000 = [
 xint, "is_left",
@@ -3299,6 +3307,8 @@ xflt, "overflow_dat[100]",
     wing830=wing810
     wing840=wing810
     wing860=wing810
+    wing900=wing810
+    wing901=wing810
 
     part8000 = [
 xint, "part_eq",
@@ -3343,6 +3353,8 @@ xchr, "locked[20][18]",
     part830=part8000
     part840=part8000
     part860=part8000
+    part900=part8000
+    part901=part8000
 
     gear8000=[
 xint, "gear_type",
@@ -3378,6 +3390,8 @@ xflt, "z_nodef",
     gear830=gear8000
     gear840=gear8000
     gear860=gear8000
+    gear900=gear8000
+    gear901=gear8000
 
     watt8000=[
 xchr, "watt_name[40]",
@@ -3395,6 +3409,8 @@ xflt, "watt_phi",
     watt830=watt8000
     watt840=watt8000
     watt860=watt8000
+    watt900=watt8000
+    watt901=watt8000
 
     door8000=[
 xint, "type",
@@ -3420,6 +3436,8 @@ xflt, "out_t2",
     door830=door8000
     door840=door8000
     door860=door8000
+    door900=door8000
+    door901=door8000
 
     objs840=[	# same as watt. variable names may not match Laminar's
 xchr, "obj_name[40]",
@@ -3433,6 +3451,8 @@ xflt, "obj_z",
 xflt, "obj_phi",
     ]
     objs860=objs840
+    objs900=objs840
+    objs901=objs840
     
 # Derived from WPN740.def by Stanislaw Pusep
 #   http://sysd.org/xplane/acftools/WPN740.def
@@ -3680,17 +3700,17 @@ class ACF:
             defs=DEFfmt.wpn740
         elif self.HEADER_version==800:
             defs=DEFfmt.wpn800
-        elif ((self.HEADER_version<700 or self.HEADER_version>=900) and
+        elif ((self.HEADER_version<700 or self.HEADER_version>=1000) and
               self.HEADER_version!=8000):
             acffile.close()
-            raise ParseError("This isn't a v7 or v8 X-Plane file!")
+            raise ParseError("This isn't a v7, v8 or v9 X-Plane file!")
         elif self.HEADER_version<800:
             if self.HEADER_version in [700, 740]:
                 defs=DEFfmt.acf740
             else:
                 acffile.close()
                 raise ParseError("This is a %4.2f format plane! Please re-save it in PlaneMaker 7.63." % (self.HEADER_version/100.0))
-        elif self.HEADER_version in [8000,810,815,830,840,860]:
+        elif self.HEADER_version in [8000,810,815,830,840,860,900,901]:
             defs=eval("DEFfmt.acf%s" % self.HEADER_version)
         else:
             acffile.close()
