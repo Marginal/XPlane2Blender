@@ -36,6 +36,12 @@
 #  - Reduced duplicate vertex limit to 0.0001 for really small objects.
 #  - Reduced duplicate UV limit to 4 pixels in 1024.
 #
+# 2007-12-02 v3.00
+#  - Support for DDS textures.
+#  - Support for v9 datarefs
+#  - Ignore muliplayer to reduce number of ambiguous datarefs.
+#  - Fix for zero-scaled objects.
+#
 
 import sys
 from math import sqrt, sin, cos
@@ -242,7 +248,7 @@ def findTex(basefile, texture, subdirs):
             # Handle empty subdir
             if subdir:
                 sd=subdir+Blender.sys.dirsep
-            for extension in ['.bmp', '.png']:
+            for extension in ['.dds', '.DDS', '.png', '.PNG', '.bmp', '.BMP']:
                 try:
                     return Image.Load(texdir+sd+texture+extension)
                 except IOError:
@@ -252,17 +258,25 @@ def findTex(basefile, texture, subdirs):
 
 # Matrix.rotationPart() scaled to be unit size for normals and axis
 def MatrixrotationOnly(mm, object):
-    sx=1/abs(object.SizeX)
-    sy=1/abs(object.SizeY)
-    sz=1/abs(object.SizeZ)
-    return Matrix([mm[0][0]*sx, mm[0][1]*sx, mm[0][2]*sx, 0],
-                  [mm[1][0]*sy, mm[1][1]*sy, mm[1][2]*sy, 0],
-                  [mm[2][0]*sz, mm[2][1]*sz, mm[2][2]*sz, 0],
-                  [0,0,0,1])
+    try:
+        sx=1/abs(object.SizeX)
+        sy=1/abs(object.SizeY)
+        sz=1/abs(object.SizeZ)
+        return Matrix([mm[0][0]*sx, mm[0][1]*sx, mm[0][2]*sx, 0],
+                      [mm[1][0]*sy, mm[1][1]*sy, mm[1][2]*sy, 0],
+                      [mm[2][0]*sz, mm[2][1]*sz, mm[2][2]*sz, 0],
+                      [0,0,0,1])
+    except:
+        # Normals are screwed by zero scale - just return anything
+        return Matrix().identity().resize4x4()
 
 
 # Read in datarefs
 def getDatarefs():
+    counts={'engines':8,
+            'wings':56,	# including props and pylons?
+            'doors':20,
+            'gear':10}
     datarefs={}
     err=IOError(0, "Corrupt DataRefs.txt file. Please re-install.")
     for sdir in ['uscriptsdir', 'scriptsdir']:
@@ -274,6 +288,8 @@ def getDatarefs():
             for line in f:
                 d=line.split()
                 if not d: continue
+                if d[0].startswith('sim/multiplayer/'):
+                    continue	# too many ambiguous datarefs
                 if len(d)<3:
                     raise err
                 l=d[0].rfind('/')
@@ -285,8 +301,12 @@ def getDatarefs():
                 n=1					# scalar by default
                 for c in ['int', 'float', 'double']:
                     if d[1].lower().startswith(c):
-                        if len(d[1])>len(c):
-                            n=int(d[1][len(c)+1:-1])	# is array
+                        if len(d[1])>len(c):		# is array
+                            n=d[1][len(c)+1:-1]
+                            if n in counts:
+                                n=counts[n]
+                            else:
+                                n=int(n)
                         break
                 else:
                     n=0					# not a usable dataref
