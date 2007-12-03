@@ -209,6 +209,9 @@
 # 2007-11-27 v2.46
 #  - Support for custom lights.
 #
+# 2007-12-02 v3.00
+#  - Support for DDS textures.
+#
 
 import sys
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
@@ -364,14 +367,10 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     if texture[l:].find(' ')!=-1:
         raise ExportError('Texture filename "%s" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file' % texture[l:])
 
-    if texture[-4:].lower() == '.bmp':
-        if fileformat==7:
-            texture = texture[:-4]
-    elif texture[-4:].lower() == '.png':
-        if fileformat==7:
-            texture = texture[:-4]
+    if texture[-4:].lower() in ['.dds', '.png', '.bmp']:
+        if fileformat==7: texture = texture[:-4]
     else:
-        raise ExportError("Texture file must be in bmp or png format.\n\tPlease convert the file. Use Image->Replace to load the new file")
+        raise ExportError("Texture file must be in DDS, PNG or BMP format.\n\tPlease convert the file. Use Image->Replace to load the new file")
     
     # try to guess correct texture path
     if expobj.iscockpit:
