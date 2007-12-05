@@ -28,6 +28,7 @@ helpXPlane.py
 uvCopyPaste.py
 uvFixupACF.py
 uvResize.py
+XPlaneAnimObject.py
 XPlaneExport.py
 XPlaneExport.pyc
 XPlaneExport7.py
@@ -60,6 +61,7 @@ FILES="helpXPlane.py
 uvCopyPaste.py
 uvFixupACF.py
 uvResize.py
+XPlaneAnimObject.py
 XPlaneExport.py
 XPlaneExport7.py
 XPlaneExport8.py

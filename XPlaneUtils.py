@@ -278,6 +278,7 @@ def getDatarefs():
             'doors':20,
             'gear':10}
     datarefs={}
+    hierarchy={}
     err=IOError(0, "Corrupt DataRefs.txt file. Please re-install.")
     for sdir in ['uscriptsdir', 'scriptsdir']:
         if (Blender.Get(sdir) and
@@ -288,16 +289,12 @@ def getDatarefs():
             for line in f:
                 d=line.split()
                 if not d: continue
-                if d[0].startswith('sim/multiplayer/'):
-                    continue	# too many ambiguous datarefs
-                if len(d)<3:
-                    raise err
-                l=d[0].rfind('/')
-                if l==-1: raise err
-                ref=d[0][l+1:]
-                if ref in datarefs:
-                    datarefs[ref]=None			# ambiguous
-                    continue
+                if len(d)<3: raise err
+                ref=d[0].split('/')
+                
+                if ref[1] in ['test', 'version']:
+                    continue			# hack: no usable datarefs
+
                 n=1					# scalar by default
                 for c in ['int', 'float', 'double']:
                     if d[1].lower().startswith(c):
@@ -310,8 +307,20 @@ def getDatarefs():
                         break
                 else:
                     n=0					# not a usable dataref
-                datarefs[ref]=(d[0][:l+1], n)
+
+                this=hierarchy
+                for i in range(len(ref)-1):
+                    if not ref[i] in this:
+                        this[ref[i]]={}
+                    this=this[ref[i]]
+                this[ref[-1]]=n
+                    
+                if ref[1]!=('multiplayer'):	# too many ambiguous datarefs
+                    if ref[-1] in datarefs:
+                        datarefs[ref[-1]]=None		# ambiguous
+                    else:
+                        datarefs[ref[-1]]=('/'.join(ref[:-1])+'/', n)
             break
     else:
         raise IOError(0, "Missing DataRefs.txt file. Please re-install.")
-    return datarefs
+    return (datarefs, hierarchy)

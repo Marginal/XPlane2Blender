@@ -84,37 +84,43 @@ ANIM_begin
 	ANIM_rotate_end
 	TRIS	66 6
 	ANIM_begin
-		ANIM_hide	1 2	sim/flightmodel/engine/ENGN_thro_use[1]
+		ANIM_show	1.0 2.0	sim/flightmodel/engine/ENGN_thro_use[1]
+		ANIM_hide	1.5 2.0	sim/operation/override/override_fms_advance
 		ANIM_trans	   0.0000    1.0000    0.0000	   0.0000    1.0000    0.0000	0 0	no_ref
-		ANIM_rotate_begin	0 0 1	sim/flightmodel/engine/ENGN_thro_use[1]
+		ANIM_rotate_begin	0 0 1	sim/network/misc/network_time_sec
 			ANIM_rotate_key	0	  0.00
 			ANIM_rotate_key	0.5	 90.00
-			ANIM_rotate_key	1	-90.00
-			ANIM_keyframe_loop	8.0
+			ANIM_rotate_key	1.0	-90.00
+			ANIM_rotate_key	7.0	-90.00
+			ANIM_keyframe_loop	7.0
 		ANIM_rotate_end
-		ANIM_rotate_begin	0 1 0	sim/flightmodel/engine/ENGN_thro_use[1]
+		ANIM_rotate_begin	0 1 0	sim/network/misc/network_time_sec
 			ANIM_rotate_key	0	  0.00
 			ANIM_rotate_key	0.5	-45.00
-			ANIM_rotate_key	1	135.00
-			ANIM_keyframe_loop	8.0
+			ANIM_rotate_key	1.0	135.00
+			ANIM_rotate_key	7.0	135.00
+			ANIM_keyframe_loop	7.0
 		ANIM_rotate_end
-		ANIM_rotate_begin	1 0 0	sim/flightmodel/engine/ENGN_thro_use[1]
+		ANIM_rotate_begin	1 0 0	sim/network/misc/network_time_sec
 			ANIM_rotate_key	0	  0.00
 			ANIM_rotate_key	0.5	 -0.00
-			ANIM_rotate_key	1	  0.00
-			ANIM_keyframe_loop	8.0
+			ANIM_rotate_key	1.0	  0.00
+			ANIM_rotate_key	7.0	  0.00
+			ANIM_keyframe_loop	7.0
 		ANIM_rotate_end
 		TRIS	72 6
 		ANIM_begin
 			ANIM_trans_begin	sim/flightmodel/engine/ENGN_thro_use[2]
 				ANIM_trans_key	0	   0.0000    2.0000    0.0000
-				ANIM_trans_key	0.5	   0.0000    2.0000    0.0000
-				ANIM_trans_key	1	   0.0000    3.0000    0.0000
+				ANIM_trans_key	0.75	   0.0000    2.0000    0.0000
+				ANIM_trans_key	1.0	   0.0000    3.0000    0.0000
+				ANIM_trans_key	1	   0.0000    5.0000    0.0000
 				ANIM_keyframe_loop	4.0
 			ANIM_trans_end
 			ANIM_rotate_begin	   0.0000    1.0000    0.0000	sim/flightmodel/engine/ENGN_thro_use[2]
 				ANIM_rotate_key	0	  0.00
-				ANIM_rotate_key	0.5	 45.00
+				ANIM_rotate_key	0.75	 45.00
+				ANIM_rotate_key	1.0	-45.00
 				ANIM_rotate_key	1	-45.00
 				ANIM_keyframe_loop	4.0
 			ANIM_rotate_end

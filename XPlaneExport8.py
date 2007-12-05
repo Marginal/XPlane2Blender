@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.00"
+__version__ = "3.01"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -1123,7 +1123,7 @@ class OBJexport8:
                 self.file.write("%sANIM_trans\t%s\t%s\t%s %s\t%s\n" % (
                     self.anim.ins(), self.anim.t[0], self.anim.t[0],
                     0, 0, 'no_ref'))
-            elif len(self.anim.t)>2 or self.anim.loop!=None:
+            elif len(self.anim.t)>2 or self.anim.loop:
                 self.file.write("%sANIM_trans_begin\t%s\n" % (
                     self.anim.ins(), self.anim.dataref))
                 for j in range(len(anim.t)):
@@ -1140,12 +1140,12 @@ class OBJexport8:
 
             if len(self.anim.r)==0:
                 pass
-            elif len(self.anim.r)==1 and len(self.anim.a)==2 and self.anim.loop==None:	# v8.x style
+            elif len(self.anim.r)==1 and len(self.anim.a)==2 and not self.anim.loop:	# v8.x style
                 self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n"%(
                     self.anim.ins(), self.anim.r[0],
                     self.anim.a[0], self.anim.a[1],
                     self.anim.v[0], self.anim.v[1], self.anim.dataref))
-            elif len(self.anim.r)==2 and self.anim.loop==None:	# v8.x style
+            elif len(self.anim.r)==2 and not self.anim.loop:	# v8.x style
                 self.file.write("%sANIM_rotate\t%s\t%6.2f %6.2f\t%s %s\t%s\n"%(
                     self.anim.ins(), self.anim.r[0],
                     self.anim.a[0], 0,
@@ -1215,7 +1215,7 @@ class Anim:
         self.a=[]	# rotation angles, 0 or n-1 rotation angles
         self.t=[]	# translation, 0, 1 or n-1 translations
         self.v=[0,1]	# dataref value
-        self.loop=None	# loop value (XPlane 9)
+        self.loop=0	# loop value (XPlane 9)
         self.showhide=[]	# show/hide values (show/hide, name, v1, v2)
         self.anim=None	# parent Anim
 
@@ -1507,7 +1507,7 @@ class Anim:
             dataref=getcustomdataref(object, thing, seq)
 
         # dataref values vn and loop
-        loop=None
+        loop=0
         for tmpref in seq:
             for val in range(first,first+count):
                 valstr="%s%s_v%d" % (tmpref, suffix, val)
@@ -1608,7 +1608,7 @@ try:
     l = baseFileName.lower().rfind('.blend')
     if l==-1: raise ExportError('Save this .blend file first')
     baseFileName=baseFileName[:l]
-    datarefs=getDatarefs()
+    (datarefs,foo)=getDatarefs()
     obj=OBJexport8(baseFileName+'.obj')
     obj.export(scene)
 except ExportError, e:

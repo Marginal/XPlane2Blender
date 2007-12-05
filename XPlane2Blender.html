@@ -33,7 +33,7 @@ UNIX.</p>
 <p>These Blender scripts export models created in Blender
 to X-Plane v7, v8, v9 or CSL <code>.obj</code> format.</p>
 <p>The scripts also import existing X-Plane v6, v7, v8, v9 and CSL
-<code>.obj</code> files and X-Plane v7 and v8 <code>.acf</code>
+<code>.obj</code> files and X-Plane v7, v8 and v9 <code>.acf</code>
 airplanes into Blender.</p>
 <h3>Requirements</h3>
 <p>Runs on Windows 98 or later, Mac OS 10.3.9 or later, and Linux.</p>
@@ -531,185 +531,155 @@ in its mesh and must not have a texture assigned to it.</p>
 sliders on the <samp>Material</samp> panel to control
 the colour of the line.
 Faces not linked to a material will be exported coloured grey.</p>
+
 <h4><a name="animation"><font size="+1">v8/v9: </font>Animation</a></h4>
 <p>You can make lamps, meshes and lines animate in X-Plane
 according to the value of any of the simulator datarefs
 listed <a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">here</a>
 that have type "int", "float" or "double".</p>
-<p>Create an "Armature" object. Click on the armature's "Bone" and in the
-<samp>Armature Bones</samp> panel (which is only displayed in
-<samp>Edit Mode</samp>) name the bone with one of the datarefs in
-<a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">this list</a>.
-For datarefs that are listed as being of type <code>int[<i>n</i>]</code> or
-<code>float[<i>n</i>]</code> append <code>[0]</code>
-to the bone name to use the first value, <code>[1]</code> to use the second
-value etc. <i>eg</i> name the bone <code>ENGN_thro[0]</code>
-to represent the throttle setting for the first engine.</p>
-<p>Make the bone the parent of the lamps and/or meshes that you want to
-animate:</p>
+
+<h5><a name="basic_animation">Basic animation</a></h5>
+<p>Create an "Armature" object. Make the lamps and/or meshes that you want
+to animate the children of the armature's "bone":</p>
 <ul>
   <li>Click on the lamps and/or meshes (the "children")</li>
   <li>Shift-click on the armature</li>
-  <li><b>Choose <samp>Pose Mode</samp> from the Mode menu</b></li>
+  <li><b>Choose <samp>Pose Mode</samp> from the Mode menu in the <samp>3D View</samp> window's toolbar</b></li>
   <li>Click on the bone (the "parent")</li>
   <li>Press <samp><b>Ctrl&nbsp;P</b></samp>
 and select <samp>Bone</samp> from the popup menu</li>
 </ul>
-<p>Add additional bones to the armature and create parent/child relationships
-between each bone (using the <samp>Armature Bones</samp> panel in
-<samp>Edit Mode</samp>) if you need to use multiple datarefs to describe the
-animation of lamps/meshes. Make the lamps/meshes the child of the "youngest"
-bone in the chain.</p>
+<p>Once you have assigned a parent bone to your lamps/meshes, you can
+specify the simulator
+<a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">dataref</a>
+that will drive the animation:</p>
+<ul>
+  <li>Choose <samp>Object Mode</samp> from the Mode menu in the <samp>3D View</samp> window's toolbar</li>
+  <li>Select the child lamp or mesh</li>
+  <li>From the <samp>3D View</samp> window's menubar choose
+<samp>Object&nbsp;&rarr; Scripts&nbsp;&rarr; X-Plane&nbsp;Animation</samp></li>
+  <li>In the <samp>Parent Bone</samp> panel, use the pop-up menu to select the
+<a href="http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html">dataref</a><br>
+<small>(or you can type in just the "leaf" name of the dataref into the text
+field, or the full name of a custom dataref)</small>
+  <li>Some datarefs require you to specify a "Part number";<br>
+<i>eg</i> the dataref <code>sim/flightmodel/engine/ENGN_thro</code>
+represents the engine throttle settings, so you need to specify which engine
+you're referring to. Specify a "Part number" of <code>0</code> for the first
+engine, <code>1</code> for the second engine etc</li>
+  <li>Press the <samp>Apply</samp> button</samp>
+</ul>
 <p>Use frames to represent the desired position of the lamps/meshes
 at various dataref values - X-Plane will
 <a href="http://en.wikipedia.org/wiki/Linear_interpolation">interpolate</a>
 linearly between the positions:</p>
 <ul>
-  <li>Select animation frame 1</li>
+  <li>In the Animation Frame field, in the <samp>Buttons</samp>
+window's menubar, select frame 1</li>
   <li>Click on the armature</li>
-  <li>Choose <samp>Pose Mode</samp> from the Mode menu</li>
+  <li>Choose <samp>Pose Mode</samp> from the Mode menu in the <samp>3D View</samp> window's toolbar</li>
   <li>Click on a bone</li>
   <li>Move and/or rotate the bone<li>
-  <li>Press <samp><b>i</b></samp> to insert a "<samp>LocRot</samp>" key</li>
+  <li>Press <samp><b>i</b></samp> and specify a <samp>LocRot</samp> key (<i>ie</i> location and rotation)</li>
   <li>Repeat for any other bones in the armature</li>
   <li>Select animation frame 2 and repeat</li>
 </ul>
+<p><small>(Note: X-Plane's animation syntax is quite simple;
+so don't use IPOcurves, Vertex Groups, Deformations, Shape Keys or any other
+advanced Blender animation techniques since these will be ignored by the
+exporter - only the positions specified by keys in the first <i>n</i> frames
+are significant to X-Plane.)</small></p>
 <p><samp><b>v8: </b></samp>X-Plane v8 only supports two frames,
 so if you want your <code>.obj</code> file to work in X-Plane v8 then you
 should create "LocRot" keys only in frames 1 and 2.
 If you create keys in frame 3 and above then your animation will
 not work at all in X-Plane v8.</p>
 <p><samp><b>v9: </b></samp>You can add "LocRot" keys in as many frames
-as you like. The only restriction is that you must use successive frames
-- <i>ie</i> you can't skip frames.</p>
-<p><small>(X-Plane's animation syntax is quite simple;
-so don't use IPOcurves, Vertex Groups, Deformations, Shape Keys or any other
-advanced Blender animation techniques since these will be ignored by the
-exporter - only the positions specified by keys in the first <i>n</i> frames
-are significant to X-Plane.)</small></p>
+as you like. The only restrictions are that you must use successive frames
+- <i>ie</i> you can't skip frames - and all bones in an armature use the
+same number of frames.</p>
+<p>To delete a key from a frame use the <samp>NLA Editor</samp> window.</p>
+<p>The X-Plane&nbsp;Animation dialog renames the parent bone to the "leaf"
+name of the dataref.
+So pressing the <samp>Draw&nbsp;Names</samp> button in the
+<samp>Armature</samp> panel can be helpful to see what's going on when you
+have lots of animations.</p>
+
+<h5>Controlling animation response to dataref values</h5>
 <p>By default, X-Plane will display the meshes in the frame 1 position
 when the dataref has a value of 0, and in the last frame position
-when the dataref has a value of 1.
-You can change these values by adding <a href="#properties">properties</a>
-to the armature; name the property after the dataref and append
-<code>_v1</code> to the name for the value corresponding to frame 1,
-<code>_v2</code> for the value corresponding to frame 2 <i>etc</i>.<br>
+when the dataref has a value of 1. You can change these values:</p>
+<ul>
+  <li>Choose <samp>Object Mode</samp> from the Mode menu in the <samp>3D View</samp> window's toolbar</li>
+  <li>Select the child lamp or mesh</li>
+  <li>From the <samp>3D View</samp> window's menubar choose
+<samp>Object&nbsp;&rarr; Scripts&nbsp;&rarr; X-Plane&nbsp;Animation</samp></li>
+  <li>Specify in the <samp>Frame #<i>n</i></samp> fields
+the dataref values that correspend to each frame;<br>
 <i>eg</i> the yoke pitch dataref <code>yolk_pitch_ratio</code>
-has values between -1 (forward) and +1 (back) in X-Plane; to make
+takes values between -1 (forward) and +1 (back) in X-Plane. So, to make
 X-Plane display the position in frame 1 when the yoke is pushed fully
-forward add a property named <code>yolk_pitch_ratio<b>_v1</b></code>, and
-give it the value <code>-1</code>.</p>
+forward specify <code>-1</code> in the <samp>Frame #0</samp> field</li>
+  <li>Press the <samp>Apply</samp> button</samp>
+</ul>
 <p><samp><b>v9: </b></samp>X-Plane will
 <a href="http://en.wikipedia.org/wiki/Extrapolation">extrapolate</a>
 your animation when the dataref has a value outside of the range
-<code><i>dataref</i>_v1</code> to <code><i>dataref</i>_v<i>n</i></code>
-(or 0 to 1 if you haven't created these properties).
-You can stop this and "clamp" your animation's position by
-repeating the positions and <code><i>dataref</i>_v<i>x</i></code>
-<a href="#properties">properties</a> in the first two and/or
-the last two frames.
+that you specified in the <samp>Frame #<i>n</i></samp> fields.
+You can stop the extrapolation and "clamp" your animation's position by
+repeating the poses and <samp>Frame #<i>n</i></samp> values in the first
+two and/or the last two frames.
 Or you can cause your animation to loop back to frame 1 when the dataref
-value exceeds a certain number by adding <a href="#properties">property</a>
-to the armature named <code><i>dataref</i>_loop</code>.</p>
-<p>You can also use custom datarefs for animation (<i>ie</i> datarefs
-supplied by a plugin that calls XPLMRegisterDataAccessor); name the bone
-with the last part ("leaf") of the dataref name and add a
-<a href="#properties">property</a> with that same "leaf" name. Set this
-property's value to the rest of the dataref name.
-<i>eg</i> the plugin registers the custom dataref
-<code>my_org/widget/volume</code>; to use this dataref name the bone
-<code>volume</code> and add a property named
-<code>volume</code> with the String value <code>my_org/widget/</code>.</p>
+value exceeds a certain number by specifying this number in the
+<samp>Loop</samp> field.</p>
+
+<h5>Using multiple datarefs</h5>
+<p>You can animate your lamps/meshes using multiple bones, each bone
+representing a different dataref:</p>
+<ul>
+  <li>In Edit Mode add additional bones to the armature</li>
+  <li>Still in Edit Mode, in the <samp>Armature Bones</samp> panel, create
+parent/child relationships between each bone.
+<small>(Note: This panel also lets you rename bones. Don't do this - use the
+X-Plane&nbsp;Animation dialog to name the bones after the datarefs that
+they represent).</small></li>
+  <li>Use the technique described <a href="#basic_animation">above</a> to make
+your lamps/meshes the children of the "youngest" bone in the chain</li>
+</ul>
+<p>The X-Plane&nbsp;Animation dialog displays the settings for
+the lamp/mesh's parent bone, gandparent bone etc.
+<small>(Note: Don't change the parent/child relationships between your
+lamps/meshes and their parent bones while the X-Plane&nbsp;Animation dialog
+is being displayed).</small></p>
+
+<h5>Hiding lamps and meshes</h5>
 <p>You can make all of the lamps and meshes in an animation disappear
-when a dataref is within a certain range by adding a pair of
-<a href="#properties">properties</a> to the armature named
-<code><i>dataref</i>_hide_v1</code> and <code><i>dataref</i>_hide_v2</code>.
-(It's OK to use datarefs that are not otherwise used in the animation).
-You can make hidden lamps/meshes re-appear when a dataref is within
-a certain range by adding a pair of properties named
-<code><i>dataref</i>_show_v1</code> and <code><i>dataref</i>_show_v2</code>. 
+when a dataref is within a certain range:</p>
+<ul>
+  <li>Choose <samp>Object Mode</samp> from the Mode menu in the <samp>3D View</samp> window's toolbar</li>
+  <li>Select a lamp or mesh that you want to hide</li>
+  <li>From the <samp>3D View</samp> window's menubar choose
+<samp>Object&nbsp;&rarr; Scripts&nbsp;&rarr; X-Plane&nbsp;Animation</samp></li>
+  <li>In the last panel, press the <samp>Add New</samp> button</li>
+  <li>Specify the dataref and the range of values
+(it's OK to use datarefs that are not otherwise used in the animation)</li>
+</ul>
+<p>You can make hidden lamps/meshes re-appear when a dataref value is within
+a certain range by adding another entry, and changing the type from Hide to
+Show.
 The dataref that you use to "show" the animation can be the same or different
-than the dataref that you used to "hide" the animation.</p>
-<p>You can add multiple "hide" and "show" pairs of properties. To use
-the same dataref in multiple "show" and "hide" properties name the
-subsequent pairs of properties <code><i>dataref</i>_hide_v3</code> and
-<code><i>dataref</i>_hide_v4</code> etc.
-The order of "hide" and "show" properties is significant; the animation
-will be hidden if any of the "hide" datarefs are in range, unless a subsequent
-"show" dataref is also in range. <small>(The animation is always shown by
-default, so you only need to use a pair of "show" properties if you have used
-one or more pairs of "hide" properties and you want to override them).</small>
-<div style="margin-left: 40px;">
-<table style="text-align: left;" border="0" cellspacing="4">
-  <caption>Summary of animation <a href="#properties">properties</a></caption>
-  <thead>
-    <tr>
-      <th style="text-decoration: underline;">Property name</th>
-      <th></th>
-      <th style="text-decoration: underline;">Type</th>
-      <th></th>
-      <th style="text-decoration: underline;">Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="vertical-align: text-bottom;"><code><i>dataref</i></code></td>
-      <td></td>
-      <td style="vertical-align: text-bottom;">String</td>
-      <td></td>
-      <td>Full path name of custom or ambiguously named dataref.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_v<i>x</i></code></td>
-      <td></td>
-      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
-      <td></td>
-      <td>Dataref value that corresponds to the pose in frame number x.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_loop</i></code></td>
-      <td></td>
-      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
-      <td></td>
-      <td><samp><b>v9: </b></samp>This number is applied as a modulo to the dataref value.<br>In other words, the animation loops back to frame 1 when the dataref value exceeds this number.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_hide_v1</code></td>
-      <td></td>
-      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
-      <td></td>
-      <td>Hide animated objects - lower limit.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: bottom;"><code><i>dataref</i>_hide_v2</code></td>
-      <td></td>
-      <td>Int&nbsp;or&nbsp;Float</td>
-      <td></td>
-      <td>Hide animated objects - upper limit.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_show_v1</code></td>
-      <td></td>
-      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
-      <td></td>
-      <td>Show hidden animated objects - lower limit.</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: text-bottom;"><code><i>dataref</i>_show_v2</code></td>
-      <td></td>
-      <td style="vertical-align: text-bottom;">Int&nbsp;or&nbsp;Float</td>
-      <td></td>
-      <td>Show hidden animated objects - upper limit.</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-<p>You can make a bone the child of a bone in a different armature,
-in which case any <code><i>dataref</i></code>,
-<code><i>dataref</i>_v<i>x</i></code> and <code><i>dataref</i>_loop</code>
-properties only apply to bones that are in the same armature as the properties.
-However all children are affected by any "hide" and "show" properties in parent
-armatures.</p>
+than the datarefs that you used to "hide" the animation.
+(The animation is always shown by default, so you only need to use
+a Show entry if you have used one or more Hide entries and you want to
+override them).</p>
+<p>The order of Hide and Show entries is significant; the animation
+will be hidden if any of the Hide dataref values are in range, unless a
+subsequent Show dataref value is also in range. You can use the Up and Down
+buttons to change the order of the entries.</p>
+<p>Note that the Hide and Show entries apply to all children of all bones
+in the armature. You can make an armature the child of a bone in a different
+armature; in which case all children are affected by any Hide and Show entries
+in parent armatures.</p>
 
 <h4><a name="order"><font size="+1">v8/v9: </font>Drawing order</a></h4>
 <p>The order in which X-Plane draws the animations, lights, lines and
@@ -969,7 +939,7 @@ that you make using these tools, but you are under no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 3.00 &copy; 2004-2007
+      <td class="banner">Version 3.01 &copy; 2004-2007
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
 <img alt="Creative Commons License" style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>

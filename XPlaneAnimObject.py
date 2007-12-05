@@ -50,6 +50,7 @@ from Blender import BGL, Draw, Object, Scene, Window
 
 from XPlaneUtils import Vertex, getDatarefs
 
+theobject=None
 
 # Globals
 lookup={}
@@ -118,26 +119,26 @@ EVENTMAX=256
 
 
 def getparents():
-    global lookup, hierarchy, firstlevel, armature, bones
+    global lookup, hierarchy, firstlevel, armature, bones, theobject
 
     if Window.EditMode():
         objects=[Scene.GetCurrent().objects.active]
     else:
         objects = Object.GetSelected()
-    for obj in objects:
-        parent=obj.parent
+    for theobject in objects:
+        parent=theobject.parent
         if not parent or parent.getType()!='Armature':
-            Draw.PupMenu('Object "%s" is not a child of a bone.' % obj.name)
+            Draw.PupMenu('Object "%s" is not a child of a bone.' % theobject.name)
             return None
-        bonename=obj.getParentBoneName()
+        bonename=theobject.getParentBoneName()
         if not bonename:
-            Draw.PupMenu('Object "%s" is the child of an armature. It should be the child of a bone.' % obj.name)
+            Draw.PupMenu('Object "%s" is the child of an armature. It should be the child of a bone.' % theobject.name)
             return None
         thisbones=parent.getData().bones
         if bonename in thisbones.keys():
             bone=thisbones[bonename]
         else:
-            Draw.PupMenu('Object "%s" has a deleted bone as its parent.' % obj.name)
+            Draw.PupMenu('Object "%s" has a deleted bone as its parent.' % theobject.name)
             return None
         if armature and (parent!=armature or bone!=bones[0]):
             Draw.PupMenu('You have selected multiple objects with different parents.')
@@ -290,9 +291,113 @@ def swaphideshow(a,b):
 
 
 # apply settings
-def apply():
+def apply(evt,val):
+    global bonecount
+
+    editmode=Window.EditMode()
+    if editmode: Window.EditMode(0)
+    armobj=armature.getData()
+    armobj.makeEditable()
+    armbones=armobj.bones
+
+    # rescan object's parents - hope that the user hasn't reparented
+    bone=armbones[theobject.getParentBoneName()]
+    editbones=[bone]
+    while bone.parent:
+        editbones.append(bone.parent)
+        bone=bone.parent
+    bonecount=min(bonecount, len(editbones))	# in case user has reparented
     
+    # Rename bones - see armature_bone_rename in editarmature.c
+    oldnames=[bone.name for bone in editbones]
+    othernames=armbones.keys()
+    for name in oldnames: othernames.remove(name)
+    newnames=[]
+
+    action=armature.getAction()
+    for boneno in range(bonecount):
+        # rename this Action's channels to prevent error on dupes
+        if oldnames[boneno] in action.getChannelNames():
+            action.renameChannel(oldnames[boneno], 'TmpChannel%d' % boneno)
+    
+    for boneno in range(bonecount-1,-1,-1):
+        # do in reverse order in case of duplicate names
+        name=datarefs[boneno].split('/')[-1]
+        if indices[boneno]!=None: name='%s[%d]' % (name, indices[boneno])
+        # Have to manually avoid duplicate names
+        i=0
+        base=name
+        while True:
+            if name in othernames:
+                i+=1
+                name='%s.%03d' % (base, i)
+            else:
+                break
+
+        editbones[boneno].name=name
+        othernames.append(name)
+        newnames.insert(0, name)
+
+        # Update this Action's channels
+        oldchannel='TmpChannel%d' % boneno
+        if oldchannel in action.getChannelNames():
+            action.renameChannel(oldchannel, name)
+        # Update any other Actions' channels?
+
+    armobj.update()	# apply new bone names
+
+    # Reparent children - have to do this after new bone names are applied
+    for obj in Scene.GetCurrent().objects:
+        if obj.parent==armature and obj.parentbonename in oldnames:
+            obj.parentbonename=newnames[oldnames.index(obj.parentbonename)]
+        
+    # Now do properties
+    props={}
+
+    # First do dataref paths
+    for dataref in datarefs+hideshow:
+        ref=dataref.split('/')
+        if ref[-1] not in lookup or not lookup[ref[-1]]:
+            # not a standard dataref
+            props[ref[-1]]='/'.join(ref[:-1])
+
+    # values
+    for boneno in range(len(datarefs)):
+        name=datarefs[boneno].split('/')[-1]
+        if indices[boneno]!=None: name='%s[%d]' % (name, indices[boneno])
+        for frameno in range(framecount):
+            if not ((frameno==0 and vals[boneno][frameno]==0) or
+                    (frameno==(framecount-1) and vals[boneno][frameno]==1)):
+                props['%s_v%d' % (name, frameno+1)]=vals[boneno][frameno]
+        if loops[boneno]:
+            props[name+'_loop']=loops[boneno]
+
+    # Apply
+    armature.removeAllProperties()
+    keys=props.keys()
+    keys.sort()
+    for key in keys:
+        armature.addProperty(key, props[key])
+
+    # Hide/Show - order is significant
+    h=1
+    s=1
+    for hs in range(len(hideshow)):
+        name=hideshow[hs].split('/')[-1]
+        if hideshowindices[hs]!=None: name='%s[%d]' % (name, hideshowindices[hs])
+        if hideorshow[hs]:
+            armature.addProperty('%s_show_v%d' % (name, s), hideshowfrom[hs])
+            armature.addProperty('%s_show_v%d' % (name, s+1), hideshowto[hs])
+            s+=2
+        else:
+            armature.addProperty('%s_hide_v%d' % (name, s), hideshowfrom[hs])
+            armature.addProperty('%s_hide_v%d' % (name, s+1), hideshowto[hs])
+            h+=2
+
     Draw.Exit()
+    if editmode: Window.EditMode(1)
+    Window.RedrawAll()	# in case bone names have changed
+    return
 
 
 # the function to handle input events
@@ -301,19 +406,23 @@ def event (evt, val):
 
     if evt == Draw.ESCKEY and not val:
         Draw.Exit()                 # exit when user releases ESC
-    #elif evt == Draw.RIGHTMOUSE and val:
-    #    r=Draw.PupMenu('Panel Alignment%t|Horizontal|Vertical')
-    #    if r==1:
-    #        vertical=False
-    #    elif r==2:
-    #        vertical=True
+    elif evt == Draw.RIGHTMOUSE and val:
+        r=Draw.PupMenu('Panel Alignment%t|Horizontal|Vertical')
+        if r==1:
+            vertical=False
+        elif r==2:
+            vertical=True
+        else:
+            return
+        Draw.Redraw()
 
 
 # the function to handle Draw Button events
 def bevent (evt):
+    global framecount
+
     boneno=evt/EVENTMAX
     event=evt-boneno*EVENTMAX
-    print 'bevent', evt, boneno, event
     if boneno>=bonecount:
         # hide/show
         hs=boneno-bonecount
@@ -337,7 +446,7 @@ def bevent (evt):
         elif event==FROM_B:
             hideshowfrom[hs]=from_b[hs].val
         elif event==TO_B:
-            hideshowfrom[hs]=to_b[hs].val
+            hideshowto[hs]=to_b[hs].val
         elif event==DELETE_B:
             hideshow.pop(hs)
             hideorshow.pop(hs)
@@ -399,7 +508,6 @@ def datarefmenucallback(event, val):
     if val==-1: return
     rows=Window.GetScreenSize()[1]/20-1		# 16 point plus space
     boneno=event/EVENTMAX
-    print 'datarefmenucallback', boneno, event, val
     ref=['sim',firstlevel[val-1]]
     this=hierarchy['sim'][firstlevel[val-1]]
     while True:
@@ -415,7 +523,6 @@ def datarefmenucallback(event, val):
         val=Draw.PupMenu('/'.join(ref)+'/%t'+'|'.join(opts), rows)
         if val==-1: return
         ref.append(keys[val])
-        print ref
         this=this[keys[val]]
         if not isinstance(this, dict):
             if boneno>=bonecount:
@@ -448,8 +555,6 @@ def gui():
     addhs_b=None
     cancel_b=None
     apply_b=None
-
-    print "gui"
 
     # Default theme
     text   =[  0,   0,   0, 255]
@@ -488,23 +593,28 @@ def gui():
 
     for boneno in range(bonecount):
         eventbase=boneno*EVENTMAX
-        xoff=PANELPAD+boneno*(PANELWIDTH+PANELPAD)+PANELINDENT
+        if vertical:
+            xoff=PANELPAD+PANELINDENT
+            yoff=y-(170+(CONTROLSIZE-1)*framecount)*boneno
+        else:
+            xoff=PANELPAD+boneno*(PANELWIDTH+PANELPAD)+PANELINDENT
+            yoff=y
         BGL.glColor4ub(*header)
-        BGL.glRectd(xoff-PANELINDENT, y-PANELTOP, xoff-PANELINDENT+PANELWIDTH, y-PANELTOP-PANELHEAD)
+        BGL.glRectd(xoff-PANELINDENT, yoff-PANELTOP, xoff-PANELINDENT+PANELWIDTH, yoff-PANELTOP-PANELHEAD)
         BGL.glColor4ub(*panel)
-        BGL.glRectd(xoff-PANELINDENT, y-PANELTOP-PANELHEAD, xoff-PANELINDENT+PANELWIDTH, y-170-(CONTROLSIZE-1)*framecount)
+        BGL.glRectd(xoff-PANELINDENT, yoff-PANELTOP-PANELHEAD, xoff-PANELINDENT+PANELWIDTH, yoff-170-(CONTROLSIZE-1)*framecount)
 
         txt='parent bone'
         if boneno: txt='grand'+txt
         txt='great-'*(boneno-1)+txt
         txt=txt[0].upper()+txt[1:]
         BGL.glColor4ub(*text_hi)
-        BGL.glRasterPos2d(xoff, y-23)
+        BGL.glRasterPos2d(xoff, yoff-23)
         Draw.Text(txt)
 
-        Draw.Label("Dataref:", xoff-4, y-54, 100, CONTROLSIZE)
+        Draw.Label("Dataref:", xoff-4, yoff-54, 100, CONTROLSIZE)
         BGL.glColor4ub(*error)	# For errors
-        (valid,mbutton,bbutton,ibutton,tbutton)=drawdataref(datarefs, indices, eventbase, boneno, xoff-4, y-80)
+        (valid,mbutton,bbutton,ibutton,tbutton)=drawdataref(datarefs, indices, eventbase, boneno, xoff-4, yoff-80)
         dataref_m.append(mbutton)
         dataref_b.append(bbutton)
         indices_b.append(ibutton)
@@ -513,67 +623,80 @@ def gui():
         vals_b.append([])
         if valid:
             # is a valid or custom dataref
-            Draw.Label("Dataref values:", xoff-4, y-132, 150, CONTROLSIZE)
+            Draw.Label("Dataref values:", xoff-4, yoff-132, 150, CONTROLSIZE)
             for i in range(framecount):
-                Draw.Label("Frame #%d:" % (i+1), xoff-4+CONTROLSIZE, y-152-(CONTROLSIZE-1)*i, 100, CONTROLSIZE)
+                Draw.Label("Frame #%d:" % (i+1), xoff-4+CONTROLSIZE, yoff-152-(CONTROLSIZE-1)*i, 100, CONTROLSIZE)
                 if i>1:
                     v9='v9: '
                 else:
                     v9=''
-                vals_b[-1].append(Draw.Number('', i+VALS_B+eventbase, xoff+104, y-152-(CONTROLSIZE-1)*i, 80, CONTROLSIZE, vals[boneno][i], -999999, 999999, v9+'The dataref value that corresponds to the pose in frame %d' % (i+1)))
+                vals_b[-1].append(Draw.Number('', i+VALS_B+eventbase, xoff+104, yoff-152-(CONTROLSIZE-1)*i, 80, CONTROLSIZE, vals[boneno][i], -999999, 999999, v9+'The dataref value that corresponds to the pose in frame %d' % (i+1)))
             # How do you delete a keyframe in Python?
             #if boneno==0 and framecount>2:
-            #    clear_b=Draw.Button('Delete', CLEAR_B+eventbase, xoff+208, y-158-26*i, 80, CONTROLSIZE, 'Clear all poses for all bones from frame %d' % framecount)
-            Draw.Label("Loop:", xoff-4+CONTROLSIZE, y-160-(CONTROLSIZE-1)*framecount, 100, CONTROLSIZE)
-            loops_b.append(Draw.Number('', LOOPS_B+eventbase, xoff+104, y-160-(CONTROLSIZE-1)*framecount, 80, CONTROLSIZE, loops[boneno], -999999, 999999, 'v9: The animation will loop back to frame 1 when the dataref value exceeds this number. Enter 0 for no loop.'))
+            #    clear_b=Draw.Button('Delete', CLEAR_B+eventbase, xoff+208, yoff-158-26*i, 80, CONTROLSIZE, 'Clear all poses for all bones from frame %d' % framecount)
+            Draw.Label("Loop:", xoff-4+CONTROLSIZE, yoff-160-(CONTROLSIZE-1)*framecount, 100, CONTROLSIZE)
+            loops_b.append(Draw.Number('', LOOPS_B+eventbase, xoff+104, yoff-160-(CONTROLSIZE-1)*framecount, 80, CONTROLSIZE, loops[boneno], -999999, 999999, 'v9: The animation will loop back to frame 1 when the dataref value exceeds this number. Enter 0 for no loop.'))
         else:
             loops_b.append(None)
 
-    xoff=PANELPAD+bonecount*(PANELWIDTH+PANELPAD)+PANELINDENT
+    if vertical:
+        xoff=PANELPAD+PANELINDENT
+        yoff=y-(170+(CONTROLSIZE-1)*framecount)*bonecount
+    else:
+        xoff=PANELPAD+bonecount*(PANELWIDTH+PANELPAD)+PANELINDENT
+        yoff=y
     BGL.glColor4ub(*header)
-    BGL.glRectd(xoff-PANELINDENT, y-PANELTOP, xoff-PANELINDENT+PANELWIDTH, y-PANELTOP-PANELHEAD)
+    BGL.glRectd(xoff-PANELINDENT, yoff-PANELTOP, xoff-PANELINDENT+PANELWIDTH, yoff-PANELTOP-PANELHEAD)
     BGL.glColor4ub(*panel)
-    BGL.glRectd(xoff-PANELINDENT, y-PANELTOP-PANELHEAD, xoff-PANELINDENT+PANELWIDTH, y-64-len(hideshow)*82)
+    BGL.glRectd(xoff-PANELINDENT, yoff-PANELTOP-PANELHEAD, xoff-PANELINDENT+PANELWIDTH, yoff-64-len(hideshow)*82)
 
     BGL.glColor4ub(*text_hi)
-    BGL.glRasterPos2d(xoff, y-23)
-    Draw.Text("Hide/Show for all children of %s:" % armature.name)
+    BGL.glRasterPos2d(xoff, yoff-23)
+    Draw.Text("Hide/Show for all children of %s" % armature.name)
 
     for hs in range(len(hideshow)):
         eventbase=(bonecount+hs)*EVENTMAX
         BGL.glColor4ub(*panel)
-        BGL.glRectd(xoff-4, y-PANELTOP-PANELHEAD-4-hs*82, xoff-13+PANELWIDTH, y-PANELTOP-101-hs*82)
+        BGL.glRectd(xoff-4, yoff-PANELTOP-PANELHEAD-4-hs*82, xoff-13+PANELWIDTH, yoff-PANELTOP-101-hs*82)
         BGL.glColor4ub(*error)	# For errors
-        (valid,mbutton,bbutton,ibutton,tbutton)=drawdataref(hideshow, hideshowindices, eventbase, hs, xoff-4, y-54-hs*82)
+        (valid,mbutton,bbutton,ibutton,tbutton)=drawdataref(hideshow, hideshowindices, eventbase, hs, xoff-4, yoff-54-hs*82)
         dataref_m.append(mbutton)
         dataref_b.append(bbutton)
         indices_b.append(ibutton)
         indices_t.append(tbutton)
         if hs:
-            up_b.append(Draw.Button('^', UP_B+eventbase, xoff+217, y-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this Hide or Show property up'))
+            up_b.append(Draw.Button('^', UP_B+eventbase, xoff+217, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this Hide or Show entry up'))
         else:
             up_b.append(None)
         if hs!=len(hideshow)-1:
-            down_b.append(Draw.Button('v', DOWN_B+eventbase, xoff+237, y-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this Hide or Show property down'))
+            down_b.append(Draw.Button('v', DOWN_B+eventbase, xoff+237, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this Hide or Show entry down'))
         else:
             down_b.append(None)
-        delete_b.append(Draw.Button('X', DELETE_B+eventbase, xoff+267, y-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Delete this Hide or Show property'))
+        delete_b.append(Draw.Button('X', DELETE_B+eventbase, xoff+267, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Delete this Hide or Show entry'))
         if valid:
             # is a valid or custom dataref
-            hideshow_m.append(Draw.Menu('Hide%x0|Show%x1', HIDEORSHOW_M+eventbase, xoff, y-106-hs*82, 62, CONTROLSIZE, hideorshow[hs], 'Choose Hide or Show'))
-            Draw.Label("when", xoff+63, y-106-hs*82, 60, CONTROLSIZE)
-            from_b.append(Draw.Number('', FROM_B+eventbase, xoff+104, y-106-hs*82, 80, CONTROLSIZE, hideshowfrom[hs], -999999, 999999, 'The dataref value above which the animation will be Shown or Hidden'))
-            Draw.Label("to", xoff+187, y-106-hs*82, 60, CONTROLSIZE)
-            to_b.append(Draw.Number('', FROM_B+eventbase, xoff+207, y-106-hs*82, 80, CONTROLSIZE, hideshowto[hs], -999999, 999999, 'The dataref value below which the animation will be Shown or Hidden'))
+            hideshow_m.append(Draw.Menu('Hide%x0|Show%x1', HIDEORSHOW_M+eventbase, xoff, yoff-106-hs*82, 62, CONTROLSIZE, hideorshow[hs], 'Choose Hide or Show'))
+            Draw.Label("when", xoff+63, yoff-106-hs*82, 60, CONTROLSIZE)
+            from_b.append(Draw.Number('', FROM_B+eventbase, xoff+104, yoff-106-hs*82, 80, CONTROLSIZE, hideshowfrom[hs], -999999, 999999, 'The dataref value above which the animation will be hidden or shown'))
+            Draw.Label("to", xoff+187, yoff-106-hs*82, 60, CONTROLSIZE)
+            to_b.append(Draw.Number('', TO_B+eventbase, xoff+207, yoff-106-hs*82, 80, CONTROLSIZE, hideshowto[hs], -999999, 999999, 'The dataref value below which the animation will be hidden or shown'))
         else:
             hideshow_m.append(None)
             from_b.append(None)
             to_b.append(None)
-    addhs_b=Draw.Button('Add New', ADD_B+bonecount*EVENTMAX, xoff+217, y-54-len(hideshow)*82, 70, CONTROLSIZE, 'Add a new Hide or Show property')
+    addhs_b=Draw.Button('Add New', ADD_B+bonecount*EVENTMAX, xoff+217, yoff-54-len(hideshow)*82, 70, CONTROLSIZE, 'Add a new Hide or Show entry')
 
-    xoff=PANELPAD+(bonecount+1)*(PANELWIDTH+PANELPAD)
-    apply_b=Draw.Button('Apply', APPLY_B+bonecount*EVENTMAX, xoff, y-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Apply these settings', apply)
-    cancel_b=Draw.Button('Cancel', CANCEL_B+bonecount*EVENTMAX, xoff, y-PANELTOP-CONTROLSIZE*4-PANELPAD, 80, CONTROLSIZE*2, 'Retain existing settings')
+    if vertical:
+        xoff=PANELPAD
+        yoff=y-(170+(CONTROLSIZE-1)*framecount)*bonecount -64-len(hideshow)*82
+    else:
+        xoff=PANELPAD+(bonecount+1)*(PANELWIDTH+PANELPAD)
+        yoff=y
+    apply_b=Draw.Button('Apply', APPLY_B+bonecount*EVENTMAX, xoff, yoff-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Apply these settings', apply)
+    if vertical:
+        cancel_b=Draw.Button('Cancel', CANCEL_B+bonecount*EVENTMAX, xoff+80+PANELPAD, yoff-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Retain existing settings')
+    else:
+        cancel_b=Draw.Button('Cancel', CANCEL_B+bonecount*EVENTMAX, xoff, yoff-PANELTOP-CONTROLSIZE*4-PANELPAD, 80, CONTROLSIZE*2, 'Retain existing settings')
 
 
 
@@ -623,8 +746,8 @@ def drawdataref(datarefs, indices, eventbase, boneno, x, y):
 
 
 if __name__=='__main__' and getparents():
+    vertical=(Window.GetAreaSize()[1]>Window.GetAreaSize()[0])
     action=armature.getAction()
-    print action
     if action:
         f=action.getFrameNumbers()
         f.sort()
@@ -664,11 +787,7 @@ if __name__=='__main__' and getparents():
 
     gethideshow()
     
-    print
-    print armature, bones, bonecount, framecount, datarefs, indices, vals, loops
-    print hideshow, hideorshow, hideshowindices, hideshowfrom, hideshowto
-
-    vertical=(Window.GetAreaSize()[1]>Window.GetAreaSize()[0])
-    print vertical
+    #print armature, bones, bonecount, framecount, datarefs, indices, vals, loops
+    #print hideshow, hideorshow, hideshowindices, hideshowfrom, hideshowto
 
     Draw.Register (gui, event, bevent)

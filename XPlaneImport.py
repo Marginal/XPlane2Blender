@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.00"
+__version__ = "3.01"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -1873,7 +1873,7 @@ def file_callback (filename):
 #------------------------------------------------------------------------
 try:
     for o in Blender.Scene.GetCurrent().objects: o.select(0)
-    datarefs=getDatarefs()
+    (datarefs,foo)=getDatarefs()
 except IOError, e:
     Window.DrawProgressBar(0, 'ERROR')
     print "ERROR:\t%s\n" % e.strerror
