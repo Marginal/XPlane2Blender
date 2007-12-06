@@ -8,7 +8,7 @@ Tooltip: 'Edit X-Plane animation'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.01"
+__version__ = "3.02"
 __bpydoc__ = """\
 Edit X-Plane animation properties.
 """
@@ -44,6 +44,14 @@ Edit X-Plane animation properties.
 # 2007-12-03 v3.01
 #  - New file
 #
+# 2007-12-05 v3.01
+#  - Fix for when no action associated with armature
+#  - Fix for setting multiple "hide" entries
+#
+# 2007-12-05 v3.02
+#  - Bones in the same armature can have different frame counts
+#  - Middle button pans
+#
 
 import Blender
 from Blender import BGL, Draw, Object, Scene, Window
@@ -59,7 +67,6 @@ firstlevel=[]
 armature=None
 bonecount=0	# number of parent bones 
 bones=[]	# all bones in armature
-framecount=2
 datarefs=[]
 indices=[]
 vals=[]
@@ -72,6 +79,11 @@ hideshowto=[]
 
 # Layout
 vertical=False
+mousex=0
+mousey=0
+anchor=None
+offset=(0,0)
+
 PANELPAD=7
 PANELINDENT=8
 PANELTOP=8
@@ -106,15 +118,17 @@ DONTCARE=0
 DATAREF_B=1
 INDICES_B=2
 INDICES_T=3
-CLEAR_B=HIDEORSHOW_M=4
-LOOPS_B=FROM_B=5
-VALS_B=TO_B=6	# VALS must be last
-UP_B=7
-DOWN_B=8
-DELETE_B=9
-ADD_B=10
-CANCEL_B=11
-APPLY_B=12
+DELETE_B=4
+LOOPS_B=5	# LOOPS must be 2nd last
+VALS_B=6	# VALS must be last
+HIDEORSHOW_M=7
+FROM_B=8
+TO_B=9
+UP_B=10
+DOWN_B=11
+ADD_B=12
+CANCEL_B=13
+APPLY_B=14
 EVENTMAX=256
 
 
@@ -166,12 +180,27 @@ def getparents():
 
 
 # populate vals array and loop value
-def getvals(dataref, index):
+def getvals(bonename, dataref, index):
     if dataref in lookup and lookup[dataref]:
         (path, n)=lookup[dataref]
         fullref=path+dataref
     else:
         fullref=dataref        
+
+    # find last frame
+    framecount=2	# zero based
+    action=armature.getAction()
+    if action and bonename in action.getChannelNames():
+        ipo=action.getChannelIpo(bonename)
+        for icu in ipo:
+            for bez in icu.bezierPoints:
+                f=bez.pt[0]
+                if f>100:
+                    pass	# silently stop
+                elif f>int(f):
+                    framecount=max(framecount,int(f)+1) # like math.ceil()
+                else:
+                    framecount=max(framecount,int(f))
     vals=[0.0]+[1.0 for i in range(framecount-1)]
     loop=0.0
 
@@ -315,10 +344,11 @@ def apply(evt,val):
     newnames=[]
 
     action=armature.getAction()
-    for boneno in range(bonecount):
-        # rename this Action's channels to prevent error on dupes
-        if oldnames[boneno] in action.getChannelNames():
-            action.renameChannel(oldnames[boneno], 'TmpChannel%d' % boneno)
+    if action:
+        for boneno in range(bonecount):
+            # rename this Action's channels to prevent error on dupes
+            if oldnames[boneno] in action.getChannelNames():
+                action.renameChannel(oldnames[boneno], 'TmpChannel%d' % boneno)
     
     for boneno in range(bonecount-1,-1,-1):
         # do in reverse order in case of duplicate names
@@ -339,9 +369,20 @@ def apply(evt,val):
         newnames.insert(0, name)
 
         # Update this Action's channels
-        oldchannel='TmpChannel%d' % boneno
-        if oldchannel in action.getChannelNames():
-            action.renameChannel(oldchannel, name)
+        if action:
+            oldchannel='TmpChannel%d' % boneno
+            if oldchannel in action.getChannelNames():
+                # Delete keys
+                ipo=action.getChannelIpo(oldchannel)
+                for icu in ipo:
+                    i=0
+                    while i<len(icu.bezierPoints):
+                        if icu.bezierPoints[i].pt[0]>len(vals[boneno]):
+                            icu.delBezier(i)
+                        else:
+                            i+=1
+                # Rename
+                action.renameChannel(oldchannel, name)
         # Update any other Actions' channels?
 
     armobj.update()	# apply new bone names
@@ -354,23 +395,26 @@ def apply(evt,val):
     # Now do properties
     props={}
 
-    # First do dataref paths
+    # First do dataref paths for datarefs and hide/show
     for dataref in datarefs+hideshow:
         ref=dataref.split('/')
-        if ref[-1] not in lookup or not lookup[ref[-1]]:
+        if len(ref)>1 and (ref[-1] not in lookup or not lookup[ref[-1]]):
             # not a standard dataref
             props[ref[-1]]='/'.join(ref[:-1])
 
-    # values
+    # datarefs values
     for boneno in range(len(datarefs)):
-        name=datarefs[boneno].split('/')[-1]
+        ref=datarefs[boneno].split('/')
+        name=ref[-1]
         if indices[boneno]!=None: name='%s[%d]' % (name, indices[boneno])
-        for frameno in range(framecount):
-            if not ((frameno==0 and vals[boneno][frameno]==0) or
-                    (frameno==(framecount-1) and vals[boneno][frameno]==1)):
-                props['%s_v%d' % (name, frameno+1)]=vals[boneno][frameno]
-        if loops[boneno]:
-            props[name+'_loop']=loops[boneno]
+        if len(ref)>1 or name in lookup:
+            # write vals for ambiguous and unusable datarefs, but not invalid
+            for frameno in range(len(vals[boneno])):
+                if not ((frameno==0 and vals[boneno][frameno]==0) or
+                        (frameno==(len(vals[boneno])-1) and vals[boneno][frameno]==1)):
+                    props['%s_v%d' % (name, frameno+1)]=vals[boneno][frameno]
+                if loops[boneno]:
+                    props[name+'_loop']=loops[boneno]
 
     # Apply
     armature.removeAllProperties()
@@ -390,8 +434,8 @@ def apply(evt,val):
             armature.addProperty('%s_show_v%d' % (name, s+1), hideshowto[hs])
             s+=2
         else:
-            armature.addProperty('%s_hide_v%d' % (name, s), hideshowfrom[hs])
-            armature.addProperty('%s_hide_v%d' % (name, s+1), hideshowto[hs])
+            armature.addProperty('%s_hide_v%d' % (name, h), hideshowfrom[hs])
+            armature.addProperty('%s_hide_v%d' % (name, h+1), hideshowto[hs])
             h+=2
 
     Draw.Exit()
@@ -402,10 +446,29 @@ def apply(evt,val):
 
 # the function to handle input events
 def event (evt, val):
-    global vertical
+    global vertical, mousex, mousey, anchor, offset
 
     if evt == Draw.ESCKEY and not val:
-        Draw.Exit()                 # exit when user releases ESC
+        if anchor:
+            anchor=None
+        else:
+            Draw.Exit()                 # exit when user releases ESC
+    elif evt==Draw.MOUSEX:
+        mousex=val
+        if anchor:
+            offset=(max(0,anchor[0]-mousex), offset[1])
+            Draw.Redraw()
+    elif evt==Draw.MOUSEY:
+        mousey=val
+        if anchor:
+            offset=(offset[0], min(0,anchor[1]-mousey))
+            Draw.Redraw()
+    elif evt == Draw.MIDDLEMOUSE and val:
+        anchor=(mousex+offset[0], mousey+offset[1])
+    elif evt == Draw.MIDDLEMOUSE and not val:
+        anchor=None
+    elif anchor:
+        pass	# suppress other activity while panning
     elif evt == Draw.RIGHTMOUSE and val:
         r=Draw.PupMenu('Panel Alignment%t|Horizontal|Vertical')
         if r==1:
@@ -419,8 +482,7 @@ def event (evt, val):
 
 # the function to handle Draw Button events
 def bevent (evt):
-    global framecount
-
+    if anchor: return	# suppress other activity while panning
     boneno=evt/EVENTMAX
     event=evt-boneno*EVENTMAX
     if boneno>=bonecount:
@@ -483,21 +545,19 @@ def bevent (evt):
                 indices[boneno]=0
             elif not indices_t[boneno].val:
                 indices[boneno]=None
-        elif event==CLEAR_B:
-            framecount-=1
-        elif event==LOOPS_B:
-            loops[boneno]=loops_b[boneno].val
+        elif event==DELETE_B:
+            vals[boneno].pop()
+        elif event>=LOOPS_B:
+            if event==LOOPS_B:
+                loops[boneno]=loops_b[boneno].val
+            else:
+                vals[boneno][event-VALS_B]=vals_b[boneno][event-VALS_B].val
+            # Update other bones with same name & index for consistency
+            framecount=len(vals[boneno])
             for i in range(len(bones)):
                 if datarefs[i]==datarefs[boneno] and indices[i]==indices[boneno]:
                     loops[i]=loops[boneno]
-                    for j in range(framecount):
-                        vals[i][j]=vals[boneno][j]
-        elif event>=VALS_B:
-            vals[boneno][event-VALS_B]=vals_b[boneno][event-VALS_B].val
-            for i in range(len(bones)):
-                if datarefs[i]==datarefs[boneno] and indices[i]==indices[boneno]:
-                    loops[i]=loops[boneno]
-                    for j in range(framecount):
+                    for j in range(min(framecount,len(vals[i]))):
                         vals[i][j]=vals[boneno][j]
         else:
             return	# eh?
@@ -591,14 +651,15 @@ def gui():
     BGL.glClearColor(float(back[0])/255, float(back[1])/255, float(back[2])/255, 1)
     BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
 
+    yoff=y-offset[1]
+    if vertical:
+        xoff=PANELPAD+PANELINDENT-offset[0]
+        
     for boneno in range(bonecount):
         eventbase=boneno*EVENTMAX
-        if vertical:
-            xoff=PANELPAD+PANELINDENT
-            yoff=y-(170+(CONTROLSIZE-1)*framecount)*boneno
-        else:
-            xoff=PANELPAD+boneno*(PANELWIDTH+PANELPAD)+PANELINDENT
-            yoff=y
+        framecount=len(vals[boneno])
+        if not vertical:
+            xoff=PANELPAD+boneno*(PANELWIDTH+PANELPAD)+PANELINDENT-offset[0]
         BGL.glColor4ub(*header)
         BGL.glRectd(xoff-PANELINDENT, yoff-PANELTOP, xoff-PANELINDENT+PANELWIDTH, yoff-PANELTOP-PANELHEAD)
         BGL.glColor4ub(*panel)
@@ -631,20 +692,18 @@ def gui():
                 else:
                     v9=''
                 vals_b[-1].append(Draw.Number('', i+VALS_B+eventbase, xoff+104, yoff-152-(CONTROLSIZE-1)*i, 80, CONTROLSIZE, vals[boneno][i], -999999, 999999, v9+'The dataref value that corresponds to the pose in frame %d' % (i+1)))
-            # How do you delete a keyframe in Python?
-            #if boneno==0 and framecount>2:
-            #    clear_b=Draw.Button('Delete', CLEAR_B+eventbase, xoff+208, yoff-158-26*i, 80, CONTROLSIZE, 'Clear all poses for all bones from frame %d' % framecount)
+            if framecount>2:
+                clear_b=Draw.Button('Delete', DELETE_B+eventbase, xoff+208, yoff-152-(CONTROLSIZE-1)*(framecount-1), 80, CONTROLSIZE, 'Clear animation keys from this frame')
             Draw.Label("Loop:", xoff-4+CONTROLSIZE, yoff-160-(CONTROLSIZE-1)*framecount, 100, CONTROLSIZE)
             loops_b.append(Draw.Number('', LOOPS_B+eventbase, xoff+104, yoff-160-(CONTROLSIZE-1)*framecount, 80, CONTROLSIZE, loops[boneno], -999999, 999999, 'v9: The animation will loop back to frame 1 when the dataref value exceeds this number. Enter 0 for no loop.'))
         else:
             loops_b.append(None)
 
-    if vertical:
-        xoff=PANELPAD+PANELINDENT
-        yoff=y-(170+(CONTROLSIZE-1)*framecount)*bonecount
-    else:
-        xoff=PANELPAD+bonecount*(PANELWIDTH+PANELPAD)+PANELINDENT
-        yoff=y
+        if vertical:
+            yoff-=(170+(CONTROLSIZE-1)*framecount)
+
+    if not vertical:
+        xoff=PANELPAD+bonecount*(PANELWIDTH+PANELPAD)+PANELINDENT-offset[0]
     BGL.glColor4ub(*header)
     BGL.glRectd(xoff-PANELINDENT, yoff-PANELTOP, xoff-PANELINDENT+PANELWIDTH, yoff-PANELTOP-PANELHEAD)
     BGL.glColor4ub(*panel)
@@ -665,14 +724,14 @@ def gui():
         indices_b.append(ibutton)
         indices_t.append(tbutton)
         if hs:
-            up_b.append(Draw.Button('^', UP_B+eventbase, xoff+217, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this Hide or Show entry up'))
+            up_b.append(Draw.Button('^', UP_B+eventbase, xoff+217, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this entry up'))
         else:
             up_b.append(None)
         if hs!=len(hideshow)-1:
-            down_b.append(Draw.Button('v', DOWN_B+eventbase, xoff+237, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this Hide or Show entry down'))
+            down_b.append(Draw.Button('v', DOWN_B+eventbase, xoff+237, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Move this entry down'))
         else:
             down_b.append(None)
-        delete_b.append(Draw.Button('X', DELETE_B+eventbase, xoff+267, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Delete this Hide or Show entry'))
+        delete_b.append(Draw.Button('X', DELETE_B+eventbase, xoff+267, yoff-80-hs*82, CONTROLSIZE, CONTROLSIZE, 'Delete this entry'))
         if valid:
             # is a valid or custom dataref
             hideshow_m.append(Draw.Menu('Hide%x0|Show%x1', HIDEORSHOW_M+eventbase, xoff, yoff-106-hs*82, 62, CONTROLSIZE, hideorshow[hs], 'Choose Hide or Show'))
@@ -687,11 +746,10 @@ def gui():
     addhs_b=Draw.Button('Add New', ADD_B+bonecount*EVENTMAX, xoff+217, yoff-54-len(hideshow)*82, 70, CONTROLSIZE, 'Add a new Hide or Show entry')
 
     if vertical:
-        xoff=PANELPAD
-        yoff=y-(170+(CONTROLSIZE-1)*framecount)*bonecount -64-len(hideshow)*82
+        xoff=PANELPAD-offset[0]
+        yoff-=(64+len(hideshow)*82)
     else:
-        xoff=PANELPAD+(bonecount+1)*(PANELWIDTH+PANELPAD)
-        yoff=y
+        xoff=PANELPAD+(bonecount+1)*(PANELWIDTH+PANELPAD)-offset[0]
     apply_b=Draw.Button('Apply', APPLY_B+bonecount*EVENTMAX, xoff, yoff-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Apply these settings', apply)
     if vertical:
         cancel_b=Draw.Button('Cancel', CANCEL_B+bonecount*EVENTMAX, xoff+80+PANELPAD, yoff-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Retain existing settings')
@@ -712,26 +770,31 @@ def drawdataref(datarefs, indices, eventbase, boneno, x, y):
     tbutton=None
     ref=dataref.split('/')
     if len(ref)<=1 or ref[0]=='sim':
-        try:
-            thing=hierarchy
-            for i in range(len(ref)):
-                thing=thing[ref[i]]
-            n=thing+0	# check is a leaf - ie numeric
-            if not n:
-                BGL.glRasterPos2d(x+4, y-21)
-                Draw.Text("This dataref can't be used for animation")
-                valid=False
-            elif n==1:
-                indices[boneno]=None
-            else:
-                if indices[boneno]==None or indices[boneno]>=n:
-                    indices[boneno]=0
-                Draw.Label("Part number:", x, y-26, 120, CONTROLSIZE)
-                ibutton=Draw.Number('', INDICES_B+eventbase, x+108, y-26, 50, CONTROLSIZE, indices[boneno], 0, n-1, 'The part number / array index')
-        except:
+        if len(ref)==1 and ref[0] in lookup and not lookup[ref[0]]:
             BGL.glRasterPos2d(x+4, y-21)
-            Draw.Text("This is not a valid dataref")
+            Draw.Text('This dataref name is ambiguous')
             valid=False
+        else:
+            try:
+                thing=hierarchy
+                for i in range(len(ref)):
+                    thing=thing[ref[i]]
+                n=thing+0	# check is a leaf - ie numeric
+                if not n:
+                    BGL.glRasterPos2d(x+4, y-21)
+                    Draw.Text("This dataref can't be used for animation")
+                    valid=False
+                elif n==1:
+                    indices[boneno]=None
+                else:
+                    if indices[boneno]==None or indices[boneno]>=n:
+                        indices[boneno]=0
+                    Draw.Label("Part number:", x, y-26, 120, CONTROLSIZE)
+                    ibutton=Draw.Number('', INDICES_B+eventbase, x+108, y-26, 50, CONTROLSIZE, indices[boneno], 0, n-1, 'The part number / array index')
+            except:
+                BGL.glRasterPos2d(x+4, y-21)
+                Draw.Text("This is not a valid dataref")
+                valid=False
     else:
         if indices[boneno]!=None:
             val=1
@@ -746,18 +809,6 @@ def drawdataref(datarefs, indices, eventbase, boneno, x, y):
 
 
 if __name__=='__main__' and getparents():
-    vertical=(Window.GetAreaSize()[1]>Window.GetAreaSize()[0])
-    action=armature.getAction()
-    if action:
-        f=action.getFrameNumbers()
-        f.sort()
-        for framecount in range(len(f)):
-            if f[framecount]!=framecount+1:
-                break
-        else:
-            framecount+=1
-        if framecount<2: framecount=2
-
     bonecount=len(bones)
     # Get values for other bones in armature too
     for bone in armature.getData().bones.values():
@@ -779,15 +830,15 @@ if __name__=='__main__' and getparents():
                     pass
             dataref=dataref[:l]
 
-        (dataref,v,l)=getvals(dataref, index)
+        (dataref,v,l)=getvals(bone.name, dataref, index)
         datarefs.append(dataref)
         indices.append(index)
         vals.append(v)
         loops.append(l)
 
     gethideshow()
-    
-    #print armature, bones, bonecount, framecount, datarefs, indices, vals, loops
+    #print armature, bones, bonecount, datarefs, indices, vals, loops
     #print hideshow, hideorshow, hideshowindices, hideshowfrom, hideshowto
 
+    vertical=(Window.GetAreaSize()[1]>Window.GetAreaSize()[0])
     Draw.Register (gui, event, bevent)
