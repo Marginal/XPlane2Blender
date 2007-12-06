@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.01"
+__version__ = "3.02"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -143,6 +143,9 @@ Limitations:<br>
 #
 # 2007-12-02 v3.00
 #  - Animations can use more than two key frames.
+#
+# 2007-12-05 v3.02
+#  - Bones in the same armature can have different frame counts.
 #
 
 
@@ -1111,7 +1114,6 @@ class OBJexport8:
         for i in newa[len(olda):]:
             self.file.write("%sANIM_begin\n" % self.anim.ins())
             self.anim=i
-
             for (sh, d, v1, v2) in self.anim.showhide:
                 self.file.write("%sANIM_%s\t%s %s\t%s\n" % (
                     self.anim.ins(), sh, v1, v2, d))
@@ -1126,7 +1128,7 @@ class OBJexport8:
             elif len(self.anim.t)>2 or self.anim.loop:
                 self.file.write("%sANIM_trans_begin\t%s\n" % (
                     self.anim.ins(), self.anim.dataref))
-                for j in range(len(anim.t)):
+                for j in range(len(self.anim.t)):
                     self.file.write("%s\tANIM_trans_key\t%s\t%s\n" % (
                         self.anim.ins(), self.anim.v[j], self.anim.t[j]))
                 if self.anim.loop:
@@ -1157,7 +1159,7 @@ class OBJexport8:
             elif len(self.anim.r)==1:		# v9.x style, one axis
                 self.file.write("%sANIM_rotate_begin\t%s\t%s\n"%(
                     self.anim.ins(), self.anim.r[0], self.anim.dataref))
-                for j in range(len(anim.a)):
+                for j in range(len(self.anim.a)):
                     self.file.write("%s\tANIM_rotate_key\t%s\t%6.2f\n" % (
                         self.anim.ins(), self.anim.v[j], self.anim.a[j]))
                 if self.anim.loop:
@@ -1168,7 +1170,7 @@ class OBJexport8:
                 for axis in [[0,0,1],[0,1,0],[1,0,0]]:
                     self.file.write("%sANIM_rotate_begin\t%d %d %d\t%s\n"%(
                         self.anim.ins(), axis[0], axis[1], axis[2], self.anim.dataref))
-                    for j in range(len(anim.r)):
+                    for j in range(len(self.anim.r)):
                         self.file.write("%s\tANIM_rotate_key\t%s\t%6.2f\n" % (
                             self.anim.ins(), self.anim.v[j], Quaternion(self.anim.r[j].toVector(3), self.anim.a[j]).toEuler()[axis.index(1)]))
                     if self.anim.loop:
@@ -1271,10 +1273,20 @@ class Anim:
                     if not None in v:
                         self.showhide.append((suffix[1:5],ref,v[0],v[1]))
 
-        #print "ac", object, bone.name, object.getAction(), object.getAction().getAllChannelIpos()[bone.name]
+        # find last frame
+        framecount=0	# zero based
         action=object.getAction()
-        if not (action and bone.name in action.getAllChannelIpos() and
-                1 in action.getFrameNumbers() and 2 in action.getFrameNumbers()):
+        if action and bone.name in action.getChannelNames():
+            ipo=action.getChannelIpo(bone.name)
+            for icu in ipo:
+                for bez in icu.bezierPoints:
+                    f=bez.pt[0]
+                    if f>int(f):
+                        framecount=max(framecount,int(f)+1) # like math.ceil()
+                    else:
+                        framecount=max(framecount,int(f))
+
+        if framecount<2:
             print 'Warn:\tYou haven\'t created animation keys in frames 1 and 2 for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
             expobj.log.append(('Ignoring bone "%s" in armature "%s" - you haven\'t created animation keys in frames 1 and 2' % (bone.name, object.name), [object]))
 
@@ -1295,32 +1307,14 @@ class Anim:
                 self.dataref=None	# is null
             return
 
-        # Warn about skipped frames
-        f=action.getFrameNumbers()
-        f.sort()
-        frames=[]
-        skipframes=[]
-        for i in range(len(f)):
-            if f[i]!=i+1:
-                skipframes.append(str(f[i]))
-            else:
-                frames.append(f[i])
-        if skipframes:
-            if len(skipframes)>1:
-                skipframes='frames %s' + (', '.join(skipframes))
-            else:
-                skipframes='frame ' + skipframes[0]
-            print 'Warn:\tIgnoring %s for bone "%s" in armature "%s" - you haven\'t created keys for previous frames.' % (skipframes, bone.name, object.name)
-            expobj.log.append(('Ignoring %s for bone "%s" in armature "%s" - you haven\'t created keys for previous frames' % (skipframes, bone.name, object.name), [object]))
-
-        (self.dataref, self.v, self.loop)=self.getdataref(object, bone.name, '', 1, len(frames))
+        (self.dataref, self.v, self.loop)=self.getdataref(object, bone.name, '', 1, framecount)
         if None in self.v:
             raise ExportError('Armature "%s" is missing a %s_v%d property' % (object.name, self.dataref.split('/')[-1], 1+self.v.index(None)), [object])
 
         scene=Blender.Scene.GetCurrent()
-        ipo=action.getAllChannelIpos()[bone.name]
+
         if 0:	# debug
-            for frame in frames:
+            for frame in range(1,framecount+1):
                 Blender.Set('curframe', frame)
                 #scene.update(1)
                 #scene.makeCurrent()	# see Blender bug #4696
@@ -1379,7 +1373,7 @@ class Anim:
             a=a.parent
 
         moved=False
-        for frame in frames:
+        for frame in range(1,framecount+1):
             Blender.Set('curframe', frame)
             #scene.update(1)
             #scene.makeCurrent()	# see Blender bug #4696
