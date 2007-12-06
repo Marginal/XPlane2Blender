@@ -198,9 +198,9 @@ multi-user plugins such as
 inside of your <code>X-Plane</code> installation.</li>
   <li>Create a subfolder with the name of the scenery package that you're making.</li>
   <li>Save your Blender file in this subfolder folder with a descriptive name, <i>eg</i>:
-    <div style="margin-left: 40px;"><code>X-Plane&nbsp;8.50\Custom&nbsp;Scenery\EGLL\house.blend</code></div>
+    <div style="margin-left: 40px;"><code>X-Plane/Custom&nbsp;Scenery/EGLL/house.blend</code></div>
 The X-Plane <code>.obj</code> file will be exported to the same place, <i>ie</i>:
-    <div style="margin-left: 40px;"><code>X-Plane&nbsp;8.50\Custom&nbsp;Scenery\EGLL\house.obj</code></div>
+    <div style="margin-left: 40px;"><code>X-Plane/Custom&nbsp;Scenery/EGLL/house.obj</code></div>
   </li>
 </ul>
 <h4><a name="Tweaking_planes"></a>Tweaking planes</h4>
@@ -591,19 +591,21 @@ exporter - only the positions specified by keys in the first <i>n</i> frames
 are significant to X-Plane.)</small></p>
 <p><samp><b>v8: </b></samp>X-Plane v8 only supports two frames,
 so if you want your <code>.obj</code> file to work in X-Plane v8 then you
-should create "LocRot" keys only in frames 1 and 2.
-If you create keys in frame 3 and above then your animation will
-not work at all in X-Plane v8.</p>
+should insert "LocRot" keys only in frames 1 and 2.
+If you insert keys in frame 3 and above then your animation will
+not work at all in X-Plane v8.
+Use the <samp>Delete</samp> button in the X-Plane Animation
+dialog to delete any keys from additional frames.</p>
 <p><samp><b>v9: </b></samp>You can add "LocRot" keys in as many frames
-as you like. The only restrictions are that you must use successive frames
-- <i>ie</i> you can't skip frames - and all bones in an armature use the
-same number of frames.</p>
-<p>To delete a key from a frame use the <samp>NLA Editor</samp> window.</p>
+as you like. If you skip a frame then Blender and X-Plane will use the
+pose from the previous frame.</p>
 <p>The X-Plane&nbsp;Animation dialog renames the parent bone to the "leaf"
 name of the dataref.
 So pressing the <samp>Draw&nbsp;Names</samp> button in the
 <samp>Armature</samp> panel can be helpful to see what's going on when you
 have lots of animations.</p>
+<p>Use the <samp>Action Editor</samp> window to get an overview of which
+bones in the selected armature have keys inserted into which frames.</p>
 
 <h5>Controlling animation response to dataref values</h5>
 <p>By default, X-Plane will display the meshes in the frame 1 position
@@ -619,7 +621,7 @@ the dataref values that correspend to each frame;<br>
 <i>eg</i> the yoke pitch dataref <code>yolk_pitch_ratio</code>
 takes values between -1 (forward) and +1 (back) in X-Plane. So, to make
 X-Plane display the position in frame 1 when the yoke is pushed fully
-forward specify <code>-1</code> in the <samp>Frame #0</samp> field</li>
+forward specify <code>-1</code> in the <samp>Frame #1</samp> field</li>
   <li>Press the <samp>Apply</samp> button</samp>
 </ul>
 <p><samp><b>v9: </b></samp>X-Plane will
@@ -637,14 +639,16 @@ value exceeds a certain number by specifying this number in the
 <p>You can animate your lamps/meshes using multiple bones, each bone
 representing a different dataref:</p>
 <ul>
-  <li>In Edit Mode add additional bones to the armature</li>
+  <li>In Edit Mode add additional bones to the armature.</li>
   <li>Still in Edit Mode, in the <samp>Armature Bones</samp> panel, create
 parent/child relationships between each bone.
 <small>(Note: This panel also lets you rename bones. Don't do this - use the
 X-Plane&nbsp;Animation dialog to name the bones after the datarefs that
 they represent).</small></li>
   <li>Use the technique described <a href="#basic_animation">above</a> to make
-your lamps/meshes the children of the "youngest" bone in the chain</li>
+your lamps/meshes the children of the "youngest" bone in the chain.</li>
+  <li>Insert <samp>LocRot</samp> keys for every bone in the chain
+(each bone can have a different number of keys).</li>
 </ul>
 <p>The X-Plane&nbsp;Animation dialog displays the settings for
 the lamp/mesh's parent bone, gandparent bone etc.
@@ -656,6 +660,11 @@ is being displayed).</small></p>
 <p>You can make all of the lamps and meshes in an animation disappear
 when a dataref is within a certain range:</p>
 <ul>
+  <li>Use the technique described <a href="#basic_animation">above</a> to make
+your lamps/meshes the children of an armature bone<br>
+<small>(If you don't want to animate your lamps/meshes then don't
+insert any animation keys for this bone, and the bone doesn't have to be
+a valid dataref)</small></li>
   <li>Choose <samp>Object Mode</samp> from the Mode menu in the <samp>3D View</samp> window's toolbar</li>
   <li>Select a lamp or mesh that you want to hide</li>
   <li>From the <samp>3D View</samp> window's menubar choose
@@ -939,7 +948,7 @@ that you make using these tools, but you are under no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 3.01 &copy; 2004-2007
+      <td class="banner">Version 3.02 &copy; 2004-2007
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
 <img alt="Creative Commons License" style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>

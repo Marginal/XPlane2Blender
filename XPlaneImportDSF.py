@@ -8,7 +8,7 @@ Tooltip: 'Import X-Plane terrain'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.01"
+__version__ = "3.02"
 __bpydoc__ = """\
 This script imports X-Plane DSF terrain into Blender.
 """
