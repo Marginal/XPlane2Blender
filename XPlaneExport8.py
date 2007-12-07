@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.02"
+__version__ = "3.03"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -1586,7 +1586,7 @@ def getcustomdataref(object, thing, names):
                 break
     if not dataref:
         if names[0] in datarefs:
-            raise ExportError('Dataref %s is ambiguous. Add a new string property named %s with the path name of the dataref that you want to use' % (names[0], names[0]), [object])
+            raise ExportError('Dataref %s is ambiguous. Specify the full name in the X-Plane Animation dialog' % names[0], [object])
         else:
             raise ExportError('Unrecognised dataref "%s" for %s "%s"' % (names[0], thing, object.name), [object])
     return dataref

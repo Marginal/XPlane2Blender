@@ -143,6 +143,9 @@ class Vertex:
     def addFace (self, v):
         self.faces.append(v)
 
+    def totuple(self):
+        return (round(self.x,Vertex.ROUND), round(self.y,Vertex.ROUND), round(self.z,Vertex.ROUND))
+
 
 class UV:
     LIMIT=0.004	# = 1/2 pixel in 128, 1 pixel in 256, 2 pixels in 512, etc
@@ -187,6 +190,7 @@ class UV:
             return 1
         else:
             return 0
+
 
 class Face:
     # Flags in v7 sort order
