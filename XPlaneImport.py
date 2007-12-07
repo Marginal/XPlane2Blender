@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.02"
+__version__ = "3.03"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -208,6 +208,10 @@ Limitations:<br>
 #  - Import custom lights.
 #  - Put Armatures in correct layers.
 #
+# 2007-12-06 v3.03
+#  - Simpified merging - each TRIS statement in v8 object results in new mesh
+#  - Detect back-to-back faces and split meshes
+#
 
 import sys
 import Blender
@@ -260,68 +264,46 @@ class MyMesh:
     # Flags
     LAYERMASK=7
 
-    def __init__(self, name, faces=[], surface=None, layers=1, anim=None, mat=None):
-        self.name=name
+    def __init__(self, faces=[], surface=None, layers=1, anim=None, mat=None):
         self.faces=[]
         self.surface=surface	# Hard surface type or None
         self.layers=layers	# LOD
         self.anim=anim		# (armob,offset,bonename)
         self.mat=mat
-        self.bmax=Vertex(-sys.maxint,-sys.maxint,-sys.maxint)
-        self.bmin=Vertex( sys.maxint, sys.maxint, sys.maxint)
-        self.addFaces(name, faces)
+        self.addFaces(faces)
 
-    def addFaces(self, name, faces):
-        if name != self.name:
-            # no longer a standard X-Plane object
-            self.name="Mesh"
+    def addFaces(self, faces):
         self.faces.extend(faces)
-        # bounding box
-        for face in faces:
-            for v in face.v:
-                # be inclusive
-                if v.x+Vertex.LIMIT > self.bmax.x: self.bmax.x=v.x+Vertex.LIMIT
-                if v.y+Vertex.LIMIT > self.bmax.y: self.bmax.y=v.y+Vertex.LIMIT
-                if v.z+Vertex.LIMIT > self.bmax.z: self.bmax.z=v.z+Vertex.LIMIT
-                if v.x-Vertex.LIMIT < self.bmin.x: self.bmin.x=v.x-Vertex.LIMIT
-                if v.y-Vertex.LIMIT < self.bmin.y: self.bmin.y=v.y-Vertex.LIMIT
-                if v.z-Vertex.LIMIT < self.bmin.z: self.bmin.z=v.z-Vertex.LIMIT
 
     #------------------------------------------------------------------------
-    # do meshes' bounding boxes intersect?
-    def intersect(self,other):
-        if (self.bmin.x <= other.bmax.x and
-            self.bmin.y <= other.bmax.y and
-            self.bmin.z <= other.bmax.z and
-            self.bmax.x >= other.bmin.x and
-            self.bmax.y >= other.bmin.y and
-            self.bmax.z >= other.bmin.z):
-            return 1
-        return 0
-        
-    #------------------------------------------------------------------------
-    # do faces have any edges in common?
-    def abut(self,faces):
-        # print "Abut",self.name, len(self.faces), len(faces),
-        for face1 in self.faces:
-            n1=len(face1.v)
-            for i1 in range(n1):
-                for face2 in faces:
-                    n2=len(face2.v)
-                    for i2 in range(n2):
-                        if ((face1.v[i1].equals(face2.v[i2]) and
-                             face1.v[(i1+1)%n1].equals(face2.v[(i2+1)%n2])) or
-                            (face1.v[i1].equals(face2.v[(i2+1)%n2]) and
-                             face1.v[(i1+1)%n1].equals(face2.v[i2]))):
-                            # print "yes"
-                            return True
-        # print "no"
+    # are faces back-to-back duplicates?
+    def isduplicate(self,faces):
+        # print "isdupe", len(self.faces), len(faces)
+        if len(faces[0].v)==3:	# assumes all new faces have same #vertices
+            for face1 in faces:
+                for face2 in self.faces:
+                    if (len(face2.v)==3 and
+                        face1.v[0].equals(face2.v[2]) and
+                        face1.v[1].equals(face2.v[1]) and
+                        face1.v[2].equals(face2.v[0])):
+                        #print "dupe", face1, face2
+                        return True
+        elif len(faces[0].v)==4:
+            for face1 in faces:
+                for face2 in self.faces:
+                    if (len(face2.v)==4 and
+                        face1.v[0].equals(face2.v[3]) and
+                        face1.v[1].equals(face2.v[2]) and
+                        face1.v[2].equals(face2.v[1]) and
+                        face1.v[3].equals(face2.v[0])):
+                        #print "dupe", face1, face2
+                        return True
         return False
 
     #------------------------------------------------------------------------
     def doimport(self,scene,image,objimport,subroutine):
         
-        mesh=Mesh.New(self.name)
+        mesh=Mesh.New('Mesh')
         mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
         mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
 
@@ -344,7 +326,6 @@ class MyMesh:
                     centre.x+=vertex.x
                     centre.y+=vertex.y
                     centre.z+=vertex.z
-            assert n, "Mesh %s has no vertices" % self.name
             centre.x=round(centre.x/n,2)
             centre.y=round(centre.y/n,2)
             centre.z=round(centre.z/n,2)
@@ -358,7 +339,8 @@ class MyMesh:
                 verts.append([v.x-centre.x, v.y-centre.y, v.z-centre.z])
             faces.append(face)
         mesh.verts.extend(verts)
-        mesh.faces.extend(faces)
+        # ignoreDups because code below assumes face order matches up
+        mesh.faces.extend(faces, ignoreDups=True)
 
         i=0
         for face in mesh.faces:
@@ -403,7 +385,7 @@ class MyMesh:
                 
             #assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
         
-        ob = Object.New("Mesh", self.name)
+        ob = Object.New('Mesh', 'Mesh')
         ob.link(mesh)
         scene.objects.link(ob)
         if self.anim:
@@ -425,26 +407,8 @@ class MyMesh:
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         
         # following must be after object linked to scene
-        
-        # do flat faces separately
-        norms=[]
-        for face in mesh.faces:
-            if not face.smooth and face.no not in norms:
-                norms.append(face.no)
-        for norm in norms:
-            mesh.sel=False
-            for face in mesh.faces:
-                if not face.smooth and face.no==norm:
-                    face.sel=True
-            mesh.remDoubles(Vertex.LIMIT)
-
-        # smooth faces
-        mesh.sel=False
-        for face in mesh.faces:
-            if face.smooth:
-                face.sel=True
+        mesh.sel=True
         mesh.remDoubles(Vertex.LIMIT)
-
         mesh.sel=True
         mesh.calcNormals()	# calculate vertex normals
         mesh.sel=False
@@ -462,16 +426,21 @@ class OBJimport:
     #------------------------------------------------------------------------
     def __init__(self, filename, subroutine=False):
         self.subroutine=subroutine
-        
-        #--- public you can change these ---
+
+        # Merging rules:
+        # self.merge=1 - v7: merge if primitives have same flags
+        #                v8: every TRIS statement is a new object
+        # self.merge=2 - merge all triangles into one object
+
+	# verbose - level of verbosity in console: 1-normal,2-chat,3-debug
+
         if subroutine:	# Object is being merged into something else
             self.verbose=0
             self.merge=2
         else:
-            self.verbose=1	# level of verbosity in console: 1-normal,2-chat,3-debug
-            self.merge=2	# merge primitives into meshes: 0-no,1-abut,2-force
+            self.verbose=1
+            self.merge=1
         
-        #--- class private don't touch ---
         if filename[0:2] in ['//', '\\\\']:
             # relative to .blend file
             self.filename=normpath(join(dirname(Blender.Get('filename')),
@@ -816,26 +785,7 @@ class OBJimport:
                 self.addpendingbone()
                 a=self.getInt()
                 b=self.getInt()
-                for i in range(a,a+b,3):
-                    v=[]
-                    uv=[]
-                    n=[]
-                    for j in range(i,i+3):
-                        (vj,uvj,nj)=self.vt[self.idx[j]]
-                        v.append(vj)
-                        uv.append(uvj)
-                        n.append(nj)
-                    # autodetect flatness if ATTR_no_shade not supplied
-                    if (not self.flat and
-                        n[0].equals(n[1]) and
-                        n[1].equals(n[2])):
-                        # Should check that vertex normals equal plane
-                        # normal, but unlikely that won't be true.
-                        self.flat=True
-                        self.addFan(scene,t,v,uv)
-                        self.flat=False
-                    else:
-                        self.addFan(scene,t,v,uv)
+                self.addTris(scene,t,a,b)
 
             elif t=='ANIM_begin':
                 if not self.arm:
@@ -1338,7 +1288,6 @@ class OBJimport:
             ob.setLocation(cur[0], cur[1], cur[2])
         
         # write meshes
-        self.mergeMeshes()
         for i in range(len(self.curmesh)):
             Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
                                    "Adding %d%% ..." % (
@@ -1600,12 +1549,8 @@ class OBJimport:
     def addFan(self, scene, token, v, uv):
         # input v: list of co-ords, uv: corresponding list of uv points
         #	v[0] and uv[0] are common to every triangle
-        if self.fileformat>=8:
-            name="Mesh"
-        else:
-            name=token
         if self.verbose>1:
-            print 'Info:\tImporting %s at line %s "%s"' % (token, self.lineno, name)
+            print 'Info:\tImporting %s at line %s' % (token, self.lineno)
         nv=len(v)
 
         flags=0
@@ -1643,14 +1588,14 @@ class OBJimport:
 
         if faces:
             if self.armob:
-                self.addToMesh(scene,name,faces,surface,
+                self.addToMesh(scene,faces,surface,
                                OBJimport.LAYER[self.layer],
                                (self.armob,self.off[-1],self.bones[-1]),
                                self.mat)
             else:
-                self.addToMesh(scene,name,faces,surface,
+                self.addToMesh(scene,faces,surface,
                                OBJimport.LAYER[self.layer],
-                               None, self.mat)
+                               None, self.mat, makenewmesh)
             self.nprim+=1
 
     #------------------------------------------------------------------------
@@ -1658,14 +1603,10 @@ class OBJimport:
         # input v: list of co-ords, uv: corresponding list of uv points
         #	vorder: order of vertices within each face
 
-        if token=='quad_cockpit':
-            name="Panel"
-        else:
-            name='Quad'
         if self.verbose>1:
-            print 'Info:\tImporting %s at line %s "%s"' % (token, self.lineno, name)
+            print 'Info:\tImporting %s at line %s' % (token, self.lineno)
         nv=len(v)
-        assert not nv%2, 'Odd %s vertices in "%s"' % (nv, name)
+        assert not nv%2, 'Odd %s vertices in %s' % (nv, token)
 
         flags=0
         if self.hard:
@@ -1718,78 +1659,117 @@ class OBJimport:
 
         if faces:
             if self.armob:
-                self.addToMesh(scene,name,faces,surface,
+                self.addToMesh(scene,faces,surface,
                                OBJimport.LAYER[self.layer],
                                (self.armob,self.off[-1],self.bones[-1]),
                                self.mat)
             else:
-                self.addToMesh(scene,name,faces,surface,
+                self.addToMesh(scene,faces,surface,
                                OBJimport.LAYER[self.layer],
                                None, self.mat)
             self.nprim+=1
 
     #------------------------------------------------------------------------
-    # add faces to existing or new mesh
-    def addToMesh (self,scene,name,faces,surface,layers,anim,mat):
-        # New faces are added to the existing mesh if:
-        #  - any of the new faces has a common edge with any existing face in
-        #    the mesh (and existing and new faces have the same flags).
-        # We assume that all the new faces have common edges with each other
-        # (and so can be safely added to the same mesh) since they all come
-        # from the same X-Plane object).
+    def addTris(self, scene, token, a, b):
+        if self.verbose>1:
+            print 'Info:\tImporting %s at line %s' % (token, self.lineno)
 
-        if (self.curmesh and
-            self.curmesh[-1].layers==layers and
-            (self.curmesh[-1].surface==surface or
-             not (self.curmesh[-1].surface and surface)) and
-            self.curmesh[-1].anim==anim and
-            self.curmesh[-1].mat==mat and
-            (self.merge>=2 or self.curmesh[-1].abut(faces))):
-            self.curmesh[-1].addFaces(name, faces)
-            if surface: self.curmesh[-1].surface=surface
+        flags=0
+        if self.hard:
+            flags |= Face.HARD
+        if self.twoside:
+            flags |= Face.TWOSIDE
+        if self.flat:
+            flags |= Face.FLAT
+        if not self.poly:
+            flags |= Face.NPOLY
+        if self.panel:
+            flags |= Face.PANEL
+        if self.alpha:
+            flags |= Face.ALPHA
+
+        if isinstance(self.hard, str):
+            surface=self.hard
         else:
-            # No common edge - new mesh required
-            self.curmesh.append(MyMesh(name, faces, surface, layers, anim, mat))
+            surface=None
+
+        facelookup={}        # detect back-to-back duplicate faces
+        faces=[]
+        for i in range(a,a+b,3):
+            face=Face()
+            # points are reversed
+            (vj,uvj,n2)=self.vt[self.idx[i+2]]
+            v=[vj.totuple()]
+            face.addVertex(vj)
+            face.addUV(uvj)
+            (vj,uvj,n1)=self.vt[self.idx[i+1]]
+            v.append(vj.totuple())
+            face.addVertex(vj)
+            face.addUV(uvj)
+            (vj,uvj,n0)=self.vt[self.idx[i]]
+            v.append(vj.totuple())
+            face.addVertex(vj)
+            face.addUV(uvj)
+
+            face.flags=flags
+            if not self.flat and n0.equals(n1) and n1.equals(n2):
+                # Should check that vertex normals equal plane
+                # normal, but unlikely that won't be true.
+                face.flags|=Face.FLAT
+            
+            if tuple(v) in facelookup:
+                # back-to-back duplicate - add existing
+                #print "dupe", face, v
+                if self.armob:
+                    self.addToMesh(scene,faces,surface,
+                                   OBJimport.LAYER[self.layer],
+                                   (self.armob,self.off[-1],self.bones[-1]),
+                                   self.mat, True)
+                else:
+                    self.addToMesh(scene,faces,surface,
+                                   OBJimport.LAYER[self.layer],
+                                   None, self.mat, True)
+                # Start new mesh
+                faces=[]
+                facelookup={}
+
+            v.reverse()
+            facelookup[tuple(v)]=True
+            faces.append(face)
+
+        if faces:
+            if self.armob:
+                self.addToMesh(scene,faces,surface,
+                               OBJimport.LAYER[self.layer],
+                               (self.armob,self.off[-1],self.bones[-1]),
+                               self.mat, True)
+            else:
+                self.addToMesh(scene,faces,surface,
+                               OBJimport.LAYER[self.layer],
+                               None, self.mat, True)
+        self.nprim+=b/3
 
     #------------------------------------------------------------------------
-    # last chance - try to merge meshes that abut each other
-    def mergeMeshes (self):
-        if not self.merge:
-            return
+    # add faces to existing or new mesh
+    def addToMesh (self,scene,faces,surface,layers,anim,mat,makenewmesh=False):
+        # New faces are added to the existing mesh if existing and new faces
+        # have the same flags.
+        if self.curmesh:
+            curmesh=self.curmesh[-1]
+            if (self.merge>=2 or
+                (not makenewmesh and
+                 curmesh.layers==layers and
+                 (curmesh.surface==surface or
+                  not (curmesh.surface and surface)) and
+                 curmesh.anim==anim and
+                 curmesh.mat==mat and
+                 not curmesh.isduplicate(faces))):
+                curmesh.addFaces(faces)
+                if surface: curmesh.surface=surface
+                return
 
-        # Brute force and ignorance algorithm is used. But search most recently
-        # added meshes first on the assumption of locality.
-        m=len(self.curmesh)-2
-        while m>=0:
-            n=(m+1.0)/len(self.curmesh)
-            if not self.subroutine:
-                Window.DrawProgressBar(0.9-0.4*n,"Merging %s%% ..." % (
-                    90-int(40*n)))
-
-            # optimisation: take a copy of m's faces to prevent comparing any
-            # newly merged faces multiple times
-            facesm=[]
-            for face in self.curmesh[m].faces:
-                facesm.append(face)
-
-            l=m+1
-            while l<len(self.curmesh):
-                if self.verbose>2: print "Merge", l, m, len(self.curmesh), self.curmesh[l].name, self.curmesh[m].name
-                if (self.curmesh[l].layers==self.curmesh[m].layers and
-                    (self.curmesh[l].surface==self.curmesh[m].surface or
-                     not (self.curmesh[l].surface and self.curmesh[m].surface)) and
-                    self.curmesh[l].anim==self.curmesh[m].anim and
-                    self.curmesh[l].mat==self.curmesh[m].mat and
-                    (self.merge>=2 or
-                     (self.curmesh[l].intersect(self.curmesh[m]) and
-                      self.curmesh[l].abut(facesm)))):
-                    self.curmesh[m].addFaces("Mesh", self.curmesh[l].faces)
-                    if self.curmesh[l].surface:
-                        self.curmesh[m].surface=self.curmesh[l].surface
-                    self.curmesh.pop(l)
-                else:
-                    l=l+1
-            m=m-1
+        # new mesh required
+        self.curmesh.append(MyMesh(faces, surface, layers, anim, mat))
 
     #------------------------------------------------------------------------
     def addpendingbone(self):
