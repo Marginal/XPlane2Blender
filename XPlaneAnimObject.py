@@ -8,7 +8,7 @@ Tooltip: 'Edit X-Plane animation'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.02"
+__version__ = "3.03"
 __bpydoc__ = """\
 Edit X-Plane animation properties.
 """
@@ -51,6 +51,9 @@ Edit X-Plane animation properties.
 # 2007-12-05 v3.02
 #  - Bones in the same armature can have different frame counts
 #  - Middle button pans
+#
+# 2007-12-06 v3.03
+#  - Fix for missing first dataref menu entries
 #
 
 import Blender
@@ -320,7 +323,7 @@ def swaphideshow(a,b):
 
 
 # apply settings
-def apply(evt,val):
+def doapply(evt,val):
     global bonecount
 
     editmode=Window.EditMode()
@@ -577,13 +580,13 @@ def datarefmenucallback(event, val):
         for i in range(len(keys)):
             key=keys[i]
             if isinstance(this[key], dict):
-                opts.append('%s/...%%x%d' % (key,i))
+                opts.append('%s/...' % key)
             elif this[key]:	# not illegal
-                opts.append('%s%%x%d' % (key,i))
-        val=Draw.PupMenu('/'.join(ref)+'/%t'+'|'.join(opts), rows)
+                opts.append('%s' % key)
+        val=Draw.PupMenu('/'.join(ref)+'/%t|'+'|'.join(opts), rows)
         if val==-1: return
-        ref.append(keys[val])
-        this=this[keys[val]]
+        ref.append(keys[val-1])
+        this=this[keys[val-1]]
         if not isinstance(this, dict):
             if boneno>=bonecount:
                 hideshow[boneno-bonecount]='/'.join(ref)                
@@ -750,7 +753,7 @@ def gui():
         yoff-=(64+len(hideshow)*82)
     else:
         xoff=PANELPAD+(bonecount+1)*(PANELWIDTH+PANELPAD)-offset[0]
-    apply_b=Draw.Button('Apply', APPLY_B+bonecount*EVENTMAX, xoff, yoff-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Apply these settings', apply)
+    apply_b=Draw.Button('Apply', APPLY_B+bonecount*EVENTMAX, xoff, yoff-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Apply these settings', doapply)
     if vertical:
         cancel_b=Draw.Button('Cancel', CANCEL_B+bonecount*EVENTMAX, xoff+80+PANELPAD, yoff-PANELTOP-CONTROLSIZE*2, 80, CONTROLSIZE*2, 'Retain existing settings')
     else:
