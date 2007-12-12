@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.03"
+__version__ = "3.04"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -146,6 +146,10 @@ Limitations:<br>
 #
 # 2007-12-05 v3.02
 #  - Bones in the same armature can have different frame counts.
+#
+# 2007-12-11 v3.04
+#  - On animation error, highlight the child object.
+#  - All dataref values default to 1 (other than first).
 #
 
 
@@ -636,7 +640,7 @@ class OBJexport8:
                         dataref=path+ref
                         if n!=9: raise ExportError('Dataref %s can\'t be used for custom lights' % dataref, [object])
                     else:
-                        dataref=getcustomdataref(object, 'custom light', [ref])
+                        dataref=getcustomdataref(object, object, 'custom light', [ref])
                         
             for v in mesh.verts:
                 light=Prim(object.Layer, self.findgroup(object), Prim.LIGHTS, False, DEFMAT, anim)
@@ -1269,7 +1273,7 @@ class Anim:
                     if not (suffix) in propname: continue
                     digit=propname[propname.index(suffix)+7:]
                     if not digit.isdigit() or not int(digit)&1: continue
-                    (ref, v, loop)=self.getdataref(object, propname[:propname.index(suffix)], suffix[:-2], int(digit), 2)
+                    (ref, v, loop)=self.getdataref(object, child, propname[:propname.index(suffix)], suffix[:-2], int(digit), 2)
                     if not None in v:
                         self.showhide.append((suffix[1:5],ref,v[0],v[1]))
 
@@ -1288,7 +1292,7 @@ class Anim:
 
         if framecount<2:
             print 'Warn:\tYou haven\'t created animation keys in frames 1 and 2 for bone "%s" in armature "%s". Skipping this bone.' % (bone.name, object.name)
-            expobj.log.append(('Ignoring bone "%s" in armature "%s" - you haven\'t created animation keys in frames 1 and 2' % (bone.name, object.name), [object]))
+            expobj.log.append(('Ignoring bone "%s" in armature "%s" - you haven\'t created animation keys in frames 1 and 2' % (bone.name, object.name), [child]))
 
             if self.showhide:
                 # Create a dummy animation to hold hide/show values
@@ -1307,9 +1311,9 @@ class Anim:
                 self.dataref=None	# is null
             return
 
-        (self.dataref, self.v, self.loop)=self.getdataref(object, bone.name, '', 1, framecount)
+        (self.dataref, self.v, self.loop)=self.getdataref(object, child, bone.name, '', 1, framecount)
         if None in self.v:
-            raise ExportError('Armature "%s" is missing a %s_v%d property' % (object.name, self.dataref.split('/')[-1], 1+self.v.index(None)), [object])
+            raise ExportError('Armature "%s" is missing a %s_v%d property' % (object.name, self.dataref.split('/')[-1], 1+self.v.index(None)), [child])
 
         scene=Blender.Scene.GetCurrent()
 
@@ -1458,14 +1462,14 @@ class Anim:
 
 
     #------------------------------------------------------------------------
-    def getdataref(self, object, name, suffix, first, count):
-        vals=[None for i in range(count)]
+    def getdataref(self, object, child, name, suffix, first, count):
         if not suffix:
-            vals[0]=0
-            vals[-1]=1
             thing='bone in armature' 
+            vals=[1 for i in range(count)]
+            vals[0]=0
         else:
             thing='property in armature'
+            vals=[None for i in range(count)]
             
         l=name.find('.')
         if l!=-1: name=name[:l]
@@ -1476,7 +1480,7 @@ class Anim:
             ref=name[:l].strip()
             idx=name[l+1:-1]
             if name[-1]!=']' or not idx or not idx.isdigit():
-                raise ExportError('Malformed dataref index "%s" in bone "%s" in armature "%s"' % (name[l:], name, object.name), [object])
+                raise ExportError('Malformed dataref index "%s" in bone "%s" in armature "%s"' % (name[l:], name, object.name), [child])
             idx=int(idx)
             seq=[ref, name]
         else:
@@ -1490,15 +1494,15 @@ class Anim:
             (path, n)=datarefs[ref]
             dataref=path+name
             if n==0:
-                raise ExportError('Dataref %s can\'t be used for animation' % path+ref, [object])
+                raise ExportError('Dataref %s can\'t be used for animation' % path+ref, [child])
             elif n==1 and idx!=None:
-                raise ExportError('Dataref %s is not an array. Rename the %s to "%s"' % (path+ref, thing, ref), [object])
+                raise ExportError('Dataref %s is not an array. Rename the %s to "%s"' % (path+ref, thing, ref), [child])
             elif n!=1 and idx==None:
-                raise ExportError('Dataref %s is an array. Rename the %s to "%s[0]" to use the first value, etc' % (path+ref, thing, ref), [object])
+                raise ExportError('Dataref %s is an array. Rename the %s to "%s[0]" to use the first value, etc' % (path+ref, thing, ref), [child])
             elif n!=1 and idx>=n:
-                raise ExportError('Dataref %s has usable values from [0] to [%d]; but you specified [%d]' % (path+ref, n-1, idx), [object])
+                raise ExportError('Dataref %s has usable values from [0] to [%d]; but you specified [%d]' % (path+ref, n-1, idx), [child])
         else:
-            dataref=getcustomdataref(object, thing, seq)
+            dataref=getcustomdataref(object, child, thing, seq)
 
         # dataref values vn and loop
         loop=0
@@ -1512,7 +1516,7 @@ class Anim:
                         elif prop.type=='FLOAT':
                             vals[val-first]=round(prop.data, Vertex.ROUND)
                         else:
-                            raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [object])
+                            raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [child])
             valstr="%s%s_loop" % (tmpref, suffix)
             for prop in object.getAllProperties():
                 if prop.name.strip()==valstr:
@@ -1521,7 +1525,7 @@ class Anim:
                     elif prop.type=='FLOAT':
                         loop=round(prop.data, Vertex.ROUND)
                     else:
-                        raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [object])
+                        raise ExportError('Unsupported data type for "%s" in armature "%s"' % (valstr, object.name), [child])
             
         return (dataref, vals, loop)
 
@@ -1570,7 +1574,7 @@ class Anim:
 
 
 #------------------------------------------------------------------------
-def getcustomdataref(object, thing, names):
+def getcustomdataref(object, child, thing, names):
     dataref=None
     props=object.getAllProperties()
     for tmpref in names:
@@ -1582,13 +1586,16 @@ def getcustomdataref(object, thing, names):
                     if path and path[-1]!='/': path=path+'/'
                     dataref=path+names[-1]
                 else:
-                    raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s"' % (names[0], object.name), [object])
+                    raise ExportError('Unsupported data type for full name of custom dataref "%s" in armature "%s"' % (names[0], object.name), [child])
                 break
     if not dataref:
         if names[0] in datarefs:
-            raise ExportError('Dataref %s is ambiguous. Specify the full name in the X-Plane Animation dialog' % names[0], [object])
+            if object==child:	# not animation
+                raise ExportError('Dataref %s is ambiguous. Add a new string property named %s with the path name of the dataref that you want to use' % (names[0], names[0]), [object])
+            else:		# animation
+                raise ExportError('Dataref %s is ambiguous. Specify the full name in the X-Plane Animation dialog' % names[0], [child])
         else:
-            raise ExportError('Unrecognised dataref "%s" for %s "%s"' % (names[0], thing, object.name), [object])
+            raise ExportError('Unrecognised dataref "%s" for %s "%s"' % (names[0], thing, object.name), [child])
     return dataref
 
 
