@@ -1,8 +1,8 @@
-2 900 Mon Nov 12 18:27:49 2007
+2 900 Tue Dec 11 19:39:02 2007
 
-sim/aircraft/acf_struct	int[10]	y	Pointers	Pointers to the individual aircraft structures.
+sim/aircraft/acf_struct	int[10]	n	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
-sim/aircraft/view/acf_author	byte[500]	y	[0]	string	Author's Name
+sim/aircraft/view/acf_author	byte[500]	y	string	Author's Name
 sim/aircraft/view/acf_descrip	byte[500]	y	string	Brief description of the plane
 sim/aircraft/view/acf_size_x	float	y
 sim/aircraft/view/acf_size_z	float	y	???	shadow size, and viewing distance size
@@ -67,10 +67,10 @@ sim/aircraft/view/acf_has_asi_bug	int	y	???	has ASI Bug
 sim/aircraft/view/acf_has_mixture	int	y	???	has Mixture
 sim/aircraft/panel/acf_ins_type	int[200]	y	???	instrument definition
 sim/aircraft/panel/acf_ins_size	float[200]	y	???	1.0 is DEFAULT.. not pixels because confusion of width vs height, which dimension we are referring to, etc.
-sim/aircraft/panel/acf_ins_x	float[200]	y	[0]	???	loc
-sim/aircraft/panel/acf_ins_y	float[200]	y	[0]	???	loc
-sim/aircraft/panel/acf_ins_delx	float[200]	y	[0]	???	size of bitmap for offset, since the location
-sim/aircraft/panel/acf_ins_dely	float[200]	y	[0]	???	is the CENTER of the instrument.
+sim/aircraft/panel/acf_ins_x	float[200]	y	???	loc
+sim/aircraft/panel/acf_ins_y	float[200]	y	???	loc
+sim/aircraft/panel/acf_ins_delx	float[200]	y	???	size of bitmap for offset, since the location
+sim/aircraft/panel/acf_ins_dely	float[200]	y	???	is the CENTER of the instrument.
 sim/aircraft/forcefeedback/acf_ff_hydraulic	int	y
 sim/aircraft/forcefeedback/acf_ff_stickshaker	int	y
 sim/aircraft/engine/acf_num_engines	int	y
@@ -130,31 +130,31 @@ sim/aircraft/parts/acf_Rafl0	byte[2920]	y	string[40]	array of airfoil names, per
 sim/aircraft/parts/acf_Rafl1	byte[2920]	y	string[40]	file, not path
 sim/aircraft/parts/acf_Tafl0	byte[2920]	y	string[40]	file, not path
 sim/aircraft/parts/acf_Tafl1	byte[2920]	y	string[40]	file, not path
-sim/aircraft/parts/acf_els	int[73]	y	???	[WING]
-sim/aircraft/parts/acf_Xarm	float[73]	y	???	[GEAR]
-sim/aircraft/parts/acf_Yarm	float[73]	y	???	[GEAR]
-sim/aircraft/parts/acf_Zarm	float[73]	y	???	[GEAR]
+sim/aircraft/parts/acf_els	int[56]	y	???	[WING]
+sim/aircraft/parts/acf_Xarm	float[10]	y	???	[GEAR]
+sim/aircraft/parts/acf_Yarm	float[10]	y	???	[GEAR]
+sim/aircraft/parts/acf_Zarm	float[10]	y	???	[GEAR]
 sim/aircraft/parts/acf_X_body_aero	float[95]	y	???	[PART] body aero center offset from it's reference
 sim/aircraft/parts/acf_Y_body_aero	float[95]	y	???	[PART] used for force build-up
 sim/aircraft/parts/acf_Z_body_aero	float[95]	y	???	[PART]
-sim/aircraft/parts/acf_Croot	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_Ctip	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_dihed1	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_sweep1	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_sweep2	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_sweepnow	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_Croot	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_Ctip	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_dihed1	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_sweep1	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_sweep2	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_sweepnow	float[56]	y	???	[WING]
 sim/aircraft/parts/acf_varsweepEQ	int	y	???	NOTE : This used to be i57 in v6 - eliminated in 832 - now per-wing
-sim/aircraft/parts/acf_semilen_SEG	float[73]	y	???	[WING] semilen this segment only
-sim/aircraft/parts/acf_semilen_JND	float[73]	y	???	[WING] semilen of the JOINED wing segments, all JOINED SEGMENTS, for AR and CDi and ground effect, etc.
-sim/aircraft/parts/acf_e	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_AR	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_al_D_al0	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_cl_D_cl0	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_cm_D_cm0	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_delta_fac	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_spec_wash	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_alpha_max	float[73]	y	???	[WING]
-sim/aircraft/parts/acf_slat_effect	float[73]	y	???	[WING]
+sim/aircraft/parts/acf_semilen_SEG	float[56]	y	???	[WING] semilen this segment only
+sim/aircraft/parts/acf_semilen_JND	float[56]	y	???	[WING] semilen of the JOINED wing segments, all JOINED SEGMENTS, for AR and CDi and ground effect, etc.
+sim/aircraft/parts/acf_e	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_AR	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_al_D_al0	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_cl_D_cl0	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_cm_D_cm0	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_delta_fac	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_spec_wash	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_alpha_max	float[56]	y	???	[WING]
+sim/aircraft/parts/acf_slat_effect	float[56]	y	???	[WING]
 sim/aircraft/parts/acf_s	float[730]	y	???	s for each element for foils, and FRONT, SIDE, TOP for BODIES.
 sim/aircraft/parts/acf_mac	float[730]	y
 sim/aircraft/parts/acf_anginc	float[730]	y
@@ -174,26 +174,26 @@ sim/aircraft/parts/acf_rudd	int[730]	y
 sim/aircraft/parts/acf_rudd2	int[560]	y
 sim/aircraft/parts/acf_in_downwash	int[53290]	y
 sim/aircraft/parts/acf_body_r	float[95]	y	meters	[PART] Radius of part I think
-sim/aircraft/parts/acf_gear_type	int[73]	y
-sim/aircraft/parts/acf_gear_latE	float[73]	y
-sim/aircraft/parts/acf_gear_lonE	float[73]	y
-sim/aircraft/parts/acf_gear_axiE	float[73]	y	???	extended
-sim/aircraft/parts/acf_gear_latR	float[73]	y
-sim/aircraft/parts/acf_gear_lonR	float[73]	y
-sim/aircraft/parts/acf_gear_axiR	float[73]	y	???	retracted
-sim/aircraft/parts/acf_gear_latN	float[73]	y
-sim/aircraft/parts/acf_gear_lonN	float[73]	y
-sim/aircraft/parts/acf_gear_axiN	float[73]	y	???	now
-sim/aircraft/parts/acf_gear_leglen	float[73]	y	???	gear param
-sim/aircraft/parts/acf_gear_tirrad	float[73]	y	???	gear param
-sim/aircraft/parts/acf_gearcon	float[73]	y	???	gear param
-sim/aircraft/parts/acf_geardmp	float[73]	y	???	gear param
-sim/aircraft/parts/acf_gearstatdef	float[73]	y	???	static deflection... the gear TIRE LOCATION IS OFFSET DOWN BY THIS MUCH IN X-PLANE since people ALWAYS enter gear location UNDER STATIC DEFLECTION!
-sim/aircraft/parts/acf_gear_def	float[73]	y	???	current deflection
-sim/aircraft/parts/acf_gear_deploy	float[73]	y	???	landing gear deployment, 0.0->1.0
-sim/aircraft/parts/acf_gear_xnodef	float[73]	y	meters	x location of the Nth gear's attach point relative to the CG, airplane coordintes.  This does not change as gear is raised.
-sim/aircraft/parts/acf_gear_ynodef	float[73]	y	meters	y location of the Nth gear's attach point relative to the CG, airplane coordintes.  This does not change as gear is raised.
-sim/aircraft/parts/acf_gear_znodef	float[73]	y	meters	z location of the Nth gear's attach point relative to the CG, airplane coordintes.  This does not change as gear is raised.
+sim/aircraft/parts/acf_gear_type	int[10]	y
+sim/aircraft/parts/acf_gear_latE	float[10]	y
+sim/aircraft/parts/acf_gear_lonE	float[10]	y
+sim/aircraft/parts/acf_gear_axiE	float[10]	y	???	extended
+sim/aircraft/parts/acf_gear_latR	float[10]	y
+sim/aircraft/parts/acf_gear_lonR	float[10]	y
+sim/aircraft/parts/acf_gear_axiR	float[10]	y	???	retracted
+sim/aircraft/parts/acf_gear_latN	float[10]	y
+sim/aircraft/parts/acf_gear_lonN	float[10]	y
+sim/aircraft/parts/acf_gear_axiN	float[10]	y	???	now
+sim/aircraft/parts/acf_gear_leglen	float[10]	y	???	gear param
+sim/aircraft/parts/acf_gear_tirrad	float[10]	y	???	gear param
+sim/aircraft/parts/acf_gearcon	float[10]	y	???	gear param
+sim/aircraft/parts/acf_geardmp	float[10]	y	???	gear param
+sim/aircraft/parts/acf_gearstatdef	float[10]	y	???	static deflection... the gear TIRE LOCATION IS OFFSET DOWN BY THIS MUCH IN X-PLANE since people ALWAYS enter gear location UNDER STATIC DEFLECTION!
+sim/aircraft/parts/acf_gear_def	float[10]	y	???	current deflection
+sim/aircraft/parts/acf_gear_deploy	float[10]	y	???	landing gear deployment, 0.0->1.0
+sim/aircraft/parts/acf_gear_xnodef	float[10]	y	meters	x location of the Nth gear's attach point relative to the CG, airplane coordintes.  This does not change as gear is raised.
+sim/aircraft/parts/acf_gear_ynodef	float[10]	y	meters	y location of the Nth gear's attach point relative to the CG, airplane coordintes.  This does not change as gear is raised.
+sim/aircraft/parts/acf_gear_znodef	float[10]	y	meters	z location of the Nth gear's attach point relative to the CG, airplane coordintes.  This does not change as gear is raised.
 sim/aircraft/bodies/acf_fuse_cd	float	y	??? cd for	fuselage
 sim/aircraft/bodies/acf_fuse_cd_array	float[95]	y	???	[PART] cd for all parts
 sim/aircraft/controls/acf_ail1_crat	float	y
@@ -354,7 +354,7 @@ sim/aircraft/artstability/acf_ASmaxr_hi	float	y
 sim/aircraft/artstability/acf_ASr_hi_rate	float	y
 sim/aircraft/artstability/acf_has_clutch	int	y
 sim/aircraft/artstability/acf_has_idlespeed	int	y
-sim/aircraft/overflow/acf_element_len	float[73]	y	???	[WING] length of each element... quicker to find once and use over and over when finding element locs.
+sim/aircraft/overflow/acf_element_len	float[56]	y	???	[WING] length of each element... quicker to find once and use over and over when finding element locs.
 sim/aircraft/overflow/acf_gear_door_size	float	y	???	size of gear-door editing region
 sim/aircraft/overflow/acf_stab_delinc_to_Vne	float	y	???	amount the stab moves in trim automatically as you go to redline.
 sim/aircraft/overflow/acf_Vmca	float	y
@@ -362,15 +362,15 @@ sim/aircraft/overflow/acf_Vyse	float	y	???	v-speeds
 sim/aircraft/overflow/acf_flap_arm	float	y	???	flapping hinge arm
 sim/aircraft/overflow/acf_cgZ_fwd	float	y
 sim/aircraft/overflow/acf_cgZ_aft	float	y	???	cg limits
-sim/aircraft/overflow/acf_gear_cyc_time	float[73]	y	???	gear cycle time... different for different gear in some cases, NOTE : This used to be f5 in v6
+sim/aircraft/overflow/acf_gear_cyc_time	float[10]	y	???	gear cycle time... different for different gear in some cases, NOTE : This used to be f5 in v6
 sim/aircraft/overflow/acf_refuel_X	float	y
 sim/aircraft/overflow/acf_refuel_Y	float	y
 sim/aircraft/overflow/acf_refuel_Z	float	y	???	refueling port location
-sim/aircraft/overflow/acf_gear_steers	int[73]	y	???	this gear turns with rudder input
+sim/aircraft/overflow/acf_gear_steers	int[10]	y	???	this gear turns with rudder input
 sim/aircraft/overflow/acf_hybrid_gear	int	y	???	this is an indication that we have skids on a plane (legit use is tailskid on a jet, etc), NOTE : This used to be b1 in v6
 sim/aircraft/overflow/acf_vardihedEQ	int	y	???	variable dihedral, NOTE : This used to be i57 in v6 - eliminated in 840 - now per wing
-sim/aircraft/overflow/acf_dihed2	float[73]	y	???	[WING] variable dihedral
-sim/aircraft/overflow/acf_dihednow	float[73]	y	???	[WING] variable dihedral
+sim/aircraft/overflow/acf_dihed2	float[56]	y	???	[WING] variable dihedral
+sim/aircraft/overflow/acf_dihednow	float[56]	y	???	[WING] variable dihedral
 sim/aircraft/overflow/jett_X	float	y
 sim/aircraft/overflow/jett_Y	float	y
 sim/aircraft/overflow/jett_Z	float	y
@@ -559,7 +559,7 @@ sim/cockpit/engine/inverter_on	int[8]	y	bool	Is the inverter providing power (on
 sim/cockpit/engine/inverter_eq	int	y	bool	Does this cockpit have inverter switches?
 sim/cockpit/engine/fuel_pump_on	int[8]	y	bool	Is the fuel pump on (one per engine)
 sim/cockpit/engine/fuel_pump_EQ	int	y	bool	Does this cockpit have fuel pumps?
-sim/cockpit/engine/fadec_on	int[8]	y	sizeof(flt[p0].engn[0])	bool		Is the fadec on (one per engine)
+sim/cockpit/engine/fadec_on	int[8]	y	bool	Is the fadec on (one per engine)
 sim/cockpit/engine/idle_speed	int[8]	y	bool	Idle speed (per engine)
 sim/cockpit/engine/fuel_tank_selector	int	y	???	Which fuel tank is open for flight
 sim/cockpit/engine/fuel_tank_transfer	int	y	???	Which fuel tank is open for transfers (destination)
@@ -853,12 +853,12 @@ sim/flightmodel/controls/ldruddef	float	y	degrees	Deflection Left Rudder
 sim/flightmodel/controls/rdruddef	float	y	degrees	Deflection Right Rudder
 sim/flightmodel/controls/lsplrdef	float	y	degrees	Deflection Left Spoiler
 sim/flightmodel/controls/rsplrdef	float	y	degrees	Deflection Right Spoiler
-sim/flightmodel/controls/ail1_def	float[73]	y	degrees	[WING] Deflection Aileron 1
-sim/flightmodel/controls/ail2_def	float[73]	y	degrees	[WING] Deflection Aileron 2
-sim/flightmodel/controls/splr_def	float[73]	y	degrees	[WING] Deflection Spoilers
+sim/flightmodel/controls/ail1_def	float[56]	y	degrees	[WING] Deflection Aileron 1
+sim/flightmodel/controls/ail2_def	float[56]	y	degrees	[WING] Deflection Aileron 2
+sim/flightmodel/controls/splr_def	float[56]	y	degrees	[WING] Deflection Spoilers
 sim/flightmodel/controls/splr2_def	float[56]	y	degrees	[WING] Deflection Spoilers 2
-sim/flightmodel/controls/yawb_def	float[73]	y	degrees	[WING]
-sim/flightmodel/controls/rudd_def	float[73]	y	degrees	[WING] Deflection Rudders
+sim/flightmodel/controls/yawb_def	float[56]	y	degrees	[WING]
+sim/flightmodel/controls/rudd_def	float[56]	y	degrees	[WING] Deflection Rudders
 sim/flightmodel/controls/rudd2_def	float[56]	y	degrees	[WING] Deflection Rudders
 sim/flightmodel/controls/elv1_def	float[56]	y	degrees	[WING] Deflection Elevators
 sim/flightmodel/controls/elv2_def	float[56]	y	degrees	[WING] Deflection Elevators
@@ -1435,17 +1435,17 @@ sim/flightmodel/parts/alpha_el	float[2920]	n	???  	73x10x4 alpha is DIFFERENT FO
 sim/flightmodel/parts/downwash_deg	float[730]	n	???	73x10
 sim/flightmodel/parts/propwash_rat	float[730]	n	???	73x10
 sim/flightmodel/parts/del_dir	float[2920]	n	???	73x10x4 corkscrew path is DIFFERENT FOR EACH BLADE!
-sim/flightmodel/parts/CL_grndeffect	float[73]	n	???	73 [WING]
-sim/flightmodel/parts/CD_grndeffect	float[73]	n	???	73 [WING]
+sim/flightmodel/parts/CL_grndeffect	float[56]	n	???	73 [WING]
+sim/flightmodel/parts/CD_grndeffect	float[56]	n	???	73 [WING]
 sim/flightmodel/parts/wash_grndeffect	float[56]	n	???	56 [WING]
 sim/flightmodel/parts/Q_centroid_loc	float[292]	n	???	73x4 centroid is TOTALLY DIFFERENT FOR EACH BLADE on helos and gyros!
 sim/flightmodel/parts/Q_centroid_MULT	float[292]	n	???	73x4 centroid is TOTALLY DIFFERENT FOR EACH BLADE on helos and gyros!
-sim/flightmodel/parts/stalled	float[73]	n	???	73 [WING]
+sim/flightmodel/parts/stalled	float[56]	n	???	73 [WING]
 sim/flightmodel/parts/tire_locked	float[73]	n	???	73
-sim/flightmodel/parts/tire_drag_dis	float[73]	n	???	73
-sim/flightmodel/parts/tire_speed_term	float[73]	n	???	73
-sim/flightmodel/parts/tire_speed_now	float[73]	n	???	73
-sim/flightmodel/parts/tire_prop_rot	float[73]	n	???	73
+sim/flightmodel/parts/tire_drag_dis	float[10]	n	???	73
+sim/flightmodel/parts/tire_speed_term	float[10]	n	???	73
+sim/flightmodel/parts/tire_speed_now	float[10]	n	???	73
+sim/flightmodel/parts/tire_prop_rot	float[10]	n	???	73
 sim/flightmodel/parts/tire_x_no_deflection	float[10]	y	meters	[GEAR] x location of the Nth gear's wheel relative to the CG, airplane coordintes.  This doesn't take into account strut compression
 sim/flightmodel/parts/tire_y_no_deflection	float[10]	y	meters	[GEAR] y location of the Nth gear's wheel relative to the CG, airplane coordintes.  This doesn't take into account strut compression
 sim/flightmodel/parts/tire_z_no_deflection	float[10]	y	meters	[GEAR] z location of the Nth gear's wheel relative to the CG, airplane coordintes.  This doesn't take into account strut compression
@@ -1453,18 +1453,18 @@ sim/flightmodel/parts/tire_vrt_def_veh	float[10]	n	meters	[GEAR] This is amount 
 sim/flightmodel/parts/tire_vrt_frc_veh	float[10]	n	???	73
 sim/flightmodel/parts/tire_steer_cmd	float[10]	n	???	73
 sim/flightmodel/parts/tire_steer_act	float[10]	n	???	73
-sim/flightmodel/parts/nrml_force	float[73]	n	???	73 [WING] for data output, for the entire flying surface
-sim/flightmodel/parts/axil_force	float[73]	n	???	73 [WING] for data output, for the entire flying surface
+sim/flightmodel/parts/nrml_force	float[56]	n	???	73 [WING] for data output, for the entire flying surface
+sim/flightmodel/parts/axil_force	float[56]	n	???	73 [WING] for data output, for the entire flying surface
 sim/flightmodel/parts/force_XYZ	float[2190]	n	???	73x10x3 for force visualization, for each element
-sim/flightmodel/parts/flap_def	float[73]	n	???	73 [WING] with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
+sim/flightmodel/parts/flap_def	float[56]	n	???	73 [WING] with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
 sim/flightmodel/parts/flap2_def	float[56]	n	???	56 [WING] with flap setting, and then variation with pitch and roll input, on a 4 wing plane, with flaps on every wing, some going up and down with pitch input, we better find the flap def on each surface!
-sim/flightmodel/parts/elev_cont_def	float[73]	n	???	73 [WING] different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
-sim/flightmodel/parts/elev_trim_def	float[73]	n	???	73 [WING] different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
-sim/flightmodel/parts/rudd_cont_def	float[73]	n	???	73 [WING] different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/elev_cont_def	float[56]	n	???	73 [WING] different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/elev_trim_def	float[56]	n	???	73 [WING] different for each part since def may be positive on a canard and negative on an aft wing... ON THE SAME PLANE AT THE SAME TIME!
+sim/flightmodel/parts/rudd_cont_def	float[56]	n	???	73 [WING] different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
 sim/flightmodel/parts/rudd2_cont_def	float[56]	n	???	56 [WING] different for each part since def may be positive on top vstab and neg on the bottom one.... ON THE SAME PLANE AT THE SAME TIME!
-sim/flightmodel/parts/foil_swe	float[73]	n	???	73 [WING]
-sim/flightmodel/parts/foil_dih	float[73]	n	???	73 [WING]
-sim/flightmodel/parts/foil_inc	float[73]	n	???	73 [WING]
+sim/flightmodel/parts/foil_swe	float[56]	n	???	73 [WING]
+sim/flightmodel/parts/foil_dih	float[56]	n	???	73 [WING]
+sim/flightmodel/parts/foil_inc	float[56]	n	???	73 [WING]
 sim/flightmodel/parts/elem_inc	float[730]	n	???	73x10
 sim/flightmodel/position/local_x	double	y	meters	The location of the plane in OpenGL coordinates
 sim/flightmodel/position/local_y	double	y	meters	The location of the plane in OpenGL coordinates
@@ -1478,12 +1478,12 @@ sim/flightmodel/position/theta	float	y	degrees	The pitch relative to the plane n
 sim/flightmodel/position/phi	float	y	degrees	The roll of the aircraft in degrees
 sim/flightmodel/position/psi	float	y	degrees	The true heading of the aircraft in degrees from the Z axis
 sim/flightmodel/position/magpsi	float	n	degrees	The magnetic heading of the aircraft.
-sim/flightmodel/position/local_vx	float	y	???	The velocity in local OGL coordinates
-sim/flightmodel/position/local_vy	float	y	???	The velocity in local OGL coordinates
-sim/flightmodel/position/local_vz	float	y	???	The velocity in local OGL coordinates
-sim/flightmodel/position/local_ax	float	y	???	The acceleration in local OGL coordinates
-sim/flightmodel/position/local_ay	float	y	???	The acceleration in local OGL coordinates
-sim/flightmodel/position/local_az	float	y	???	The acceleration in local OGL coordinates
+sim/flightmodel/position/local_vx	float	y	mtr/sec	The velocity in local OGL coordinates
+sim/flightmodel/position/local_vy	float	y	mtr/sec	The velocity in local OGL coordinates
+sim/flightmodel/position/local_vz	float	y	mtr/sec	The velocity in local OGL coordinates
+sim/flightmodel/position/local_ax	float	y	mtr/sec2	The acceleration in local OGL coordinates
+sim/flightmodel/position/local_ay	float	y	mtr/sec2	The acceleration in local OGL coordinates
+sim/flightmodel/position/local_az	float	y	mtr/sec2	The acceleration in local OGL coordinates
 sim/flightmodel/position/alpha	float	n	degrees	The pitch relative to the flown path (angle of attack)
 sim/flightmodel/position/beta	float	n	degrees	The heading relative to the flown path (yaw)
 sim/flightmodel/position/vpath	float	n	degrees	The pitch the aircraft actually flies.  (vpath+alpha=theta)
@@ -1493,19 +1493,19 @@ sim/flightmodel/position/indicated_airspeed	float	n	kias	Air speed indicated - t
 sim/flightmodel/position/indicated_airspeed2	float	n	kias	Air speed indicated - this takes into account air density and wind direction
 sim/flightmodel/position/true_airspeed	float	n	meters/sec	Air speed true - this does not take into account air density at altitude!
 sim/flightmodel/position/magnetic_variation	float	n	degrees	The local magnetic variation [PROBABLY NEEDS TO GO SOMEWHER ELSE!]
-sim/flightmodel/position/M	float	n	???	The angular momentum of the aircraft (relative to flight axis)
-sim/flightmodel/position/N	float	n	???	The angular momentum of the aircraft (relative to flight axis)
-sim/flightmodel/position/L	float	n	???	The angular momentum of the aircraft (relative to flight axis)
-sim/flightmodel/position/P	float	y	???	The rotation rates (relative to the flight)
-sim/flightmodel/position/Q	float	y	???	The rotation rates (relative to the flight)
-sim/flightmodel/position/R	float	y	???	The rotation rates (relative to the flight)
-sim/flightmodel/position/P_dot	float	n	???	The angular acceleration (relative to the flight)
-sim/flightmodel/position/Q_dot	float	n	???	The angular acceleration (relative to the flight)
-sim/flightmodel/position/R_dot	float	n	???	The angular acceleration rates (relative to the flight)
-sim/flightmodel/position/Prad	float	y	???	???
-sim/flightmodel/position/Qrad	float	y	???	???
-sim/flightmodel/position/Rrad	float	y	???	???
-sim/flightmodel/position/q	float[4]	y	???	???
+sim/flightmodel/position/M	float	n	NM	The angular momentum of the aircraft (relative to flight axis)
+sim/flightmodel/position/N	float	n	NM	The angular momentum of the aircraft (relative to flight axis)
+sim/flightmodel/position/L	float	n	NM	The angular momentum of the aircraft (relative to flight axis)
+sim/flightmodel/position/P	float	y	deg/sec	The roll rotation rates (relative to the flight)
+sim/flightmodel/position/Q	float	y	deg/sec	The pitch rotation rates (relative to the flight)
+sim/flightmodel/position/R	float	y	deg/sec	The yaw rotation rates (relative to the flight)
+sim/flightmodel/position/P_dot	float	n	deg/sec2	The roll angular acceleration (relative to the flight)
+sim/flightmodel/position/Q_dot	float	n	deg/sec2	The pitch angular acceleration (relative to the flight)
+sim/flightmodel/position/R_dot	float	n	deg/sec2	The yaw angular acceleration rates (relative to the flight)
+sim/flightmodel/position/Prad	float	y	rad/sec	The roll rotation rates (relative to the flight)
+sim/flightmodel/position/Qrad	float	y	rad/sec	The pitch rotation rates (relative to the flight)
+sim/flightmodel/position/Rrad	float	y	rad/sec	The yaw rotation rates (relative to the flight)
+sim/flightmodel/position/q	float[4]	y	quaternion	A quaternion representing the rotation from local OpenGL coordinates to the aircraft's coordinates.
 sim/flightmodel/position/vh_ind	float	n	m/s	VVI (vertical velocity in meters per second)
 sim/flightmodel/position/vh_ind_fpm	float	n	fpm	VVI (vertical velocity in meters per second)
 sim/flightmodel/position/vh_ind_fpm2	float	n	fpm	VVI (vertical velocity in meters per second)
@@ -1578,6 +1578,9 @@ sim/graphics/misc/scrolling_panel_size	int	n	pixels	Max scroll range of scrollin
 sim/graphics/misc/default_scroll_pos	float	n	pixels	Default position for a scrolling plane panel
 sim/graphics/misc/current_scroll_pos	float	y	pixels	Current position of that panel
 sim/graphics/misc/current_scroll_mode	int	y	enum	Scrolling: 0 = center, 1 = up, 2 = down, -1 = you control
+sim/graphics/misc/default_scroll_pos_x	float	n	pixels	Default position for a scrolling plane panel
+sim/graphics/misc/current_scroll_pos_x	float	y	pixels	Current position of that panel
+sim/graphics/misc/current_scroll_mode_x	int	y	enum	Scrolling: 0 = center, 1 = left, 2 = right, -1 = you control
 sim/graphics/scenery/current_planet	int	n	enum	What planet are we on?  (Earth = 0, mars = 1)
 sim/graphics/scenery/percent_lights_on	float	n	percent	what percentage of city lites are on as night hits
 sim/graphics/scenery/sun_declination	float	n	???	sun declination (due to latitude)
@@ -1636,24 +1639,24 @@ sim/graphics/view/window_height	int	y	pixels	Size of rendering window
 sim/graphics/view/visibility_effective_m	float	n	meters >= 0	The effective visibility after framerate-protecting visibility reductions.
 sim/graphics/view/visibility_terrain_m	float	n	meters >= 0	The range of ground visibility.Ê When above the clouds, only some of the ground terrain is actually drawn.
 sim/graphics/view/visibility_framerate_ratio	float	y	[0.0 - 1.0]	The ratio of the reported visibility to actually show for frame-rate protection. 1.0 means the user ses the reported visibility.
-sim/graphics/view/visibility_math_level	int	y	???	No idea what this is
-sim/graphics/view/visibility_scale	float	y	???	No idea what this is
-sim/graphics/view/panel_total_pnl_l	float	n	pixels	to be documented
-sim/graphics/view/panel_total_pnl_b	float	n	pixels	to be documented
-sim/graphics/view/panel_total_pnl_r	float	n	pixels	to be documented
-sim/graphics/view/panel_total_pnl_t	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_pnl_l	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_pnl_b	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_pnl_r	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_pnl_t	float	n	pixels	to be documented
-sim/graphics/view/panel_total_win_l	float	n	pixels	to be documented
-sim/graphics/view/panel_total_win_b	float	n	pixels	to be documented
-sim/graphics/view/panel_total_win_r	float	n	pixels	to be documented
-sim/graphics/view/panel_total_win_t	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_win_l	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_win_b	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_win_r	float	n	pixels	to be documented
-sim/graphics/view/panel_visible_win_t	float	n	pixels	to be documented
+sim/graphics/view/visibility_math_level	int	y	enum	This used to indicate what level of 3-d force visualization was shown to the user in 3-d.
+sim/graphics/view/visibility_scale	float	y	multipler	This used to be the ratio used to scale up 3-d aero-force visualization
+sim/graphics/view/panel_total_pnl_l	float	n	pixels	This is the location of the left edge of the panel, in the coordinate system used during panel drawing.
+sim/graphics/view/panel_total_pnl_b	float	n	pixels	This is the location of the bottom edge of the panel, in the coordinate system used during panel drawing.
+sim/graphics/view/panel_total_pnl_r	float	n	pixels	This is the location of the right edge of the panel, in the coordinate system used during panel drawing.
+sim/graphics/view/panel_total_pnl_t	float	n	pixels	This is the location of the top edge of the panel, in the coordinate system used during panel drawing.
+sim/graphics/view/panel_visible_pnl_l	float	n	pixels	This is the location of the left edge of the screen, in the coordinate system used during panel drawing.
+sim/graphics/view/panel_visible_pnl_b	float	n	pixels	This is the location of the bottom edge of the screen, in the coordinate system used during panel drawing.
+sim/graphics/view/panel_visible_pnl_r	float	n	pixels	This is the location of the right edge of the screen, in the coordinate system used during panel drawing.
+sim/graphics/view/panel_visible_pnl_t	float	n	pixels	This is the location of the top edge of the screen, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_total_win_l	float	n	pixels	This is the location of the left edge of the panel, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_total_win_b	float	n	pixels	This is the location of the bottom edge of the panel, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_total_win_r	float	n	pixels	This is the location of the right edge of the panel, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_total_win_t	float	n	pixels	This is the location of the top edge of the panel, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_visible_win_l	float	n	pixels	This is the location of the left edge of the screen, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_visible_win_b	float	n	pixels	This is the location of the bottom edge of the screen, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_visible_win_r	float	n	pixels	This is the location of the right edge of the screen, in the coordinate system used during plugin window drawing.
+sim/graphics/view/panel_visible_win_t	float	n	pixels	This is the location of the top edge of the screen, in the coordinate system used during plugin window drawing.
 sim/graphics/view/pilots_head_x	float	y	pos	Position of pilot's head relative to CG, X
 sim/graphics/view/pilots_head_y	float	y	pos	Position of pilot's head relative to CG, Y
 sim/graphics/view/pilots_head_z	float	y	pos	Position of pilot's head relative to CG, Z
@@ -2759,7 +2762,7 @@ sim/operation/sound/has_speech_synth	int	n	boolean	Does this machine have speech
 sim/operation/sound/sound_on	int	y	boolean	Is sound on (set by user)
 sim/operation/sound/speech_on	int	y	boolean	Is speech synth on (set by user)
 sim/operation/sound/radio_chatter_on	int	y	boolean	Turn off background radio chatter
-sim/operation/sound/master_sound_volume	float	y	0-1	Master audio level in X-Plane
+sim/operation/sound/master_sound_volume	float	y	0-1	Master audio level in X-Plane - broken in late v8, no master volume exists.
 sim/operation/windows/system_window	int	n	HWND	This is X-Plane's system native window as an int (either an HWND or WindowRef)
 sim/test/test_float	float	y	ratio	this test dataref is used internally for testing our models
 sim/time/timer_is_running_sec	int	y	boolean	Is the timer running?
@@ -2784,68 +2787,68 @@ sim/weapons/free_flyer	int[25]	y	???	Weapon can go fly free... rocket or bomb
 sim/weapons/action_mode	int[25]	n	enum	0 = In carriage/still in the gun/reloaded, 1 = firing, and 2 = destroyed 
 sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc. 
 sim/weapons/y_wpn_att	float[25]	y	???	Code to do the weapons as well as everything else.
-sim/weapons/z_wpn_att	float[25]	y
-sim/weapons/cgY	float[25]	y
-sim/weapons/cgZ	float[25]	y
-sim/weapons/las_range	float[25]	y
-sim/weapons/conv_range	float[25]	y
+sim/weapons/z_wpn_att	float[25]	y	 		
+sim/weapons/cgY	float[25]	y	 		
+sim/weapons/cgZ	float[25]	y	 		
+sim/weapons/las_range	float[25]	y	 		
+sim/weapons/conv_range	float[25]	y	 		
 sim/weapons/bul_rounds_per_sec	float[25]	y
-sim/weapons/bul_rounds	float[25]	y
-sim/weapons/bul_muzzle_speed	float[25]	y
-sim/weapons/bul_area	float[25]	y
+sim/weapons/bul_rounds	float[25]	y	 		
+sim/weapons/bul_muzzle_speed	float[25]	y	 		
+sim/weapons/bul_area	float[25]	y	 		
 sim/weapons/added_mass	float[25]	y	???	Mass in addition to ammo... like the gun itself, and bomb racks.
 sim/weapons/total_weapon_mass_max	float[25]	y	???	Warhead and casing, fuel and tank
 sim/weapons/fuel_warhead_mass_max	float[25]	y	???	Remember we can have drop tanks
 sim/weapons/warhead_type	int[25]	y	???	Conventional or nuke
 sim/weapons/mis_drag_co	float[25]	y
-sim/weapons/mis_drag_chute_S	float[25]	y
+sim/weapons/mis_drag_chute_S	float[25]	y	 		
 sim/weapons/mis_cone_width	float[25]	y	???	For heat or radar-guided, you must keep the target within this cone to track him
-sim/weapons/mis_crat_per_deg_bore	float[25]	y
+sim/weapons/mis_crat_per_deg_bore	float[25]	y	 		
 sim/weapons/mis_crat_per_degpersec_bore	float[25]	y
-sim/weapons/mis_crat_per_degpersec	float[25]	y
+sim/weapons/mis_crat_per_degpersec	float[25]	y	 	 
 sim/weapons/gun_del_psi_deg_max	float[25]	y	???	Aimable guns for c130 spectere, etc
 sim/weapons/gun_del_the_deg_max	float[25]	y	???	Aimable guns for c130 spectere, etc
 sim/weapons/gun_del_psi_deg_now	float[25]	y	???	Aimable guns for c130 spectere, etc
 sim/weapons/gun_del_the_deg_now	float[25]	y	???	Aimable guns for c130 spectere, etc
-sim/weapons/s_frn	float[25]	y
-sim/weapons/s_sid	float[25]	y
+sim/weapons/s_frn	float[25]	y	 	 
+sim/weapons/s_sid	float[25]	y	 	 
 sim/weapons/s_top	float[25]	y	???	Area
-sim/weapons/X_body_aero	float[25]	y
-sim/weapons/Y_body_aero	float[25]	y
+sim/weapons/X_body_aero	float[25]	y	 	 
+sim/weapons/Y_body_aero	float[25]	y	 	 
 sim/weapons/Z_body_aero	float[25]	y	???	Centroid
-sim/weapons/Jxx_unitmass	float[25]	y
-sim/weapons/Jyy_unitmass	float[25]	y
+sim/weapons/Jxx_unitmass	float[25]	y	 	 
+sim/weapons/Jyy_unitmass	float[25]	y	 	 
 sim/weapons/Jzz_unitmass	float[25]	y	???	MI
-sim/weapons/i	int[25]	y
+sim/weapons/i	int[25]	y	 	 
 sim/weapons/j	int[25]	y	???	Keep track for fast ground-elev-finding
 sim/weapons/target_index	int[25]	y	???	Target index
-sim/weapons/targ_lat	float[25]	y
-sim/weapons/targ_lon	float[25]	y
+sim/weapons/targ_lat	float[25]	y	 	 
+sim/weapons/targ_lon	float[25]	y	 	 
 sim/weapons/targ_h	float[25]	y	???	Bomb targets
-sim/weapons/del_psi	float[25]	y
+sim/weapons/del_psi	float[25]	y	 	 
 sim/weapons/del_the	float[25]	y	???	Delta to target, for data output
-sim/weapons/rudd_rat	float[25]	y
+sim/weapons/rudd_rat	float[25]	y	 	 
 sim/weapons/elev_rat	float[25]	y	???	Rudder and elevator steering inputs
-sim/weapons/V_msc	float[25]	y
-sim/weapons/AV_msc	float[25]	y
-sim/weapons/dist_targ	float[25]	y
-sim/weapons/dist_point	float[25]	y
+sim/weapons/V_msc	float[25]	y	 	 
+sim/weapons/AV_msc	float[25]	y	 	 
+sim/weapons/dist_targ	float[25]	y	 	 
+sim/weapons/dist_point	float[25]	y	 	 
 sim/weapons/time_point	float[25]	y	???	Speed and dist to target for data output
-sim/weapons/fx_axis	float[25]	y
-sim/weapons/fy_axis	float[25]	y
+sim/weapons/fx_axis	float[25]	y	 	 
+sim/weapons/fy_axis	float[25]	y	 	 
 sim/weapons/fz_axis	float[25]	y	???	Flight-status
-sim/weapons/vx	float[25]	y
-sim/weapons/vy	float[25]	y
-sim/weapons/vz	float[25]	y
-sim/weapons/x	float[25]	y
-sim/weapons/y	float[25]	y
+sim/weapons/vx	float[25]	y	 	 
+sim/weapons/vy	float[25]	y	 	 
+sim/weapons/vz	float[25]	y	 	 
+sim/weapons/x	float[25]	y	 	 
+sim/weapons/y	float[25]	y	 	 
 sim/weapons/z	float[25]	y	???	Flight-status
-sim/weapons/L	float[25]	y
-sim/weapons/M	float[25]	y
-sim/weapons/N	float[25]	y
-sim/weapons/Prad	float[25]	y
-sim/weapons/Qrad	float[25]	y
-sim/weapons/Rrad	float[25]	y
+sim/weapons/L	float[25]	y	 	 
+sim/weapons/M	float[25]	y	 	 
+sim/weapons/N	float[25]	y	 	 
+sim/weapons/Prad	float[25]	y	 	 
+sim/weapons/Qrad	float[25]	y	 	 
+sim/weapons/Rrad	float[25]	y	 	 
 sim/weapons/the	float[25]	n	Deg	Angle relative to the aircraft
 sim/weapons/psi	float[25]	n	Deg	Angle relative to the aircraft
 sim/weapons/phi	float[25]	n	Deg	Angle relative to the aircraft
@@ -2853,19 +2856,19 @@ sim/weapons/the_con	float[25]	y	Deg	Angle relative to the mounting flight contro
 sim/weapons/psi_con	float[25]	y	Deg	Angle relative to the mounting flight control
 sim/weapons/phi_con	float[25]	y	Deg	Angle relative to the mounting flight control
 sim/weapons/next_bull_time	float[25]	y	???	For guns, this is the next fire time
-sim/weapons/total_weapon_mass_now	float[25]	y
-sim/weapons/fuel_warhead_mass_now	float[25]	y
-sim/weapons/impact_time	float[25]	y
+sim/weapons/total_weapon_mass_now	float[25]	y	 	 
+sim/weapons/fuel_warhead_mass_now	float[25]	y	 	 
+sim/weapons/impact_time	float[25]	y	 	 
 sim/weapons/mis_thrust1	float[25]	y	???	delay
 sim/weapons/mis_thrust2	float[25]	y	???	boost
 sim/weapons/mis_thrust3	float[25]	y	???	sustain
 sim/weapons/mis_duration1	float[25]	y	???	delay
 sim/weapons/mis_duration2	float[25]	y	???	boost
 sim/weapons/mis_duration3	float[25]	y	???	sustain
-sim/weapons/q1	float[25]	y
-sim/weapons/q2	float[25]	y
-sim/weapons/q3	float[25]	y
-sim/weapons/q4	float[25]	y
+sim/weapons/q1	float[25]	y	 		
+sim/weapons/q2	float[25]	y	 		
+sim/weapons/q3	float[25]	y	 		
+sim/weapons/q4	float[25]	y	 		
 sim/weather/cloud_type[0]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Currently there are only 3 cloud layers, 0, 1 or 2. Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
 sim/weather/cloud_type[1]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Currently there are only 3 cloud layers, 0, 1 or 2. Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
 sim/weather/cloud_type[2]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Currently there are only 3 cloud layers, 0, 1 or 2. Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
@@ -2910,7 +2913,7 @@ sim/weather/turbulence[2]	float	y	[0 - 10]	A turbulence factor, 0-10, the unit i
 sim/weather/wave_amplitude	float	y	??	Amplitude of waves in the water (height of waves)
 sim/weather/wave_length	float	y	??	Length of a single wave in the water
 sim/weather/wave_speed	float	y	??	Speed of water waves
-sim/weather/wave_dir	float	y	??	Direction of waves.
+sim/weather/wave_dir	int	y	??	Direction of waves.
 sim/weather/temperature_sealevel_c	float	y	degrees C	The temperature at sea level.
 sim/weather/dewpoi_sealevel_c	float	y	degrees C	The dew point at sea level.
 sim/weather/temperature_ambient_c	float	n	degrees C	The air temperature outside the aircraft (at altitude).
@@ -3294,7 +3297,7 @@ sim/flightmodel2/engines/location_x_mtr	float[engines]	n	meters	Engne location, 
 sim/flightmodel2/engines/location_y_mtr	float[engines]	n	meters        	Engne location, meters x, y, z, with respect to the default center of gravity.
 sim/flightmodel2/engines/location_z_mtr	float[engines]	n	meters          	Engne location, meters x, y, z, with respect to the default center of gravity.
 sim/flightmodel2/engines/throttle_used_ratio	float[engines]	n	ratio             	Throttle that is actually going to the engine, which could be different than the commanded throttle due to FADEC throttle adjustments.
-sim/flightmodel2/engines/has_fuel_flow_before_mixture	int[engines]	n	boolean	Engine has fuel making to the mixture control, yes or no.
+sim/flightmodel2/engines/has_fuel_flow_before_mixture	int[engines]	n	boolean	Engine has fuel making to the mixtur control, yes or no.
 sim/flightmodel2/engines/has_fuel_flow_after_mixture	int[engines]	n	boolean	Engine has fuel making to the combustion process, yes or no.
 sim/flightmodel2/engines/engine_is_burning_fuel	int[engines]	n	boolean	Engine is currently burning fuel, yes or no.
 sim/flightmodel2/engines/engine_burning_fuel_ratio	int[engines]	n	ratio	Engine running ratio, 0.0 for not running to 1.0 for fully running, combustion process fully started.
@@ -3329,6 +3332,8 @@ sim/flightmodel2/misc/water_scoop_deploy_ratio	float	n	ratio	Water scoop positio
 sim/flightmodel2/misc/water_drop_deploy_ratio	float	n	ratio	Water drop door position: 0 = up, 1=  down
 sim/flightmodel2/misc/wiper_angle_deg	float[4]	n	degrees	current angle of the wiper.  range of motion is set in PlaneMaker.
 sim/flightmodel2/misc/custom_slider_ratio	float[20]	n	ratio	Misc. traveling items for your use.  You define the meaning.
+sim/flightmodel2/misc/pressure_outflow_ratio	float	n	ratio	How far is the pressure-outflow valve open?  0=closed, 1=open
+sim/flightmodel2/misc/AoA_angle_degrees	float	n	degrees	Angle of attack probe.  Positive means plane is climbing.
 sim/flightmodel2/wing/aileron1_deg	float[wings]	y	degrees	Deflection of the aileron from set #1 on this wing. Degrees, positive is trailing-edge down.
 sim/flightmodel2/wing/aileron2_deg	float[wings]	y	degrees	Deflection of the aileron from set #2 on this wing. Degrees, positive is trailing-edge down.
 sim/flightmodel2/wing/spoiler1_deg	float[wings]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
