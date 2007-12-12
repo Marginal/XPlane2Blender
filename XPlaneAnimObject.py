@@ -8,7 +8,7 @@ Tooltip: 'Edit X-Plane animation'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.03"
+__version__ = "3.04"
 __bpydoc__ = """\
 Edit X-Plane animation properties.
 """
@@ -54,6 +54,9 @@ Edit X-Plane animation properties.
 #
 # 2007-12-06 v3.03
 #  - Fix for missing first dataref menu entries
+#
+# 2007-12-11 v3.04
+#  - Disambiguate all similar bones/hideshow in armature when editing one
 #
 
 import Blender
@@ -592,6 +595,11 @@ def datarefmenucallback(event, val):
                 hideshow[boneno-bonecount]='/'.join(ref)                
             else:
                 datarefs[boneno]='/'.join(ref)
+            # disambiguate all similar bones/hideshow in armature
+            for i in range(len(datarefs)):
+                if datarefs[i]==ref[-1]: datarefs[i]='/'.join(ref)
+            for i in range(len(hideshow)):
+                if hideshow[i]==ref[-1]: hideshow[i]='/'.join(ref)
             Draw.Redraw()
             return
 
