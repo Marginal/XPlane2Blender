@@ -8,7 +8,7 @@ Tooltip: 'Adjust UV assignments to enlarged bitmap'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.03"
+__version__ = "3.04"
 __bpydoc__ = """\
 This script fixes up selected meshes' texture assignments after increasing
 the size of the image.
@@ -92,7 +92,7 @@ def dodialog(newname):
         Draw.PupMenu("Can't read image %s" % newname)
         return
 
-    if newsize[0]==oldsize[0] or newsize[1]==oldsize[1]:
+    if newsize[0]==oldsize[0] and newsize[1]==oldsize[1]:
         # same size, just replace
         doapply(0,0)
         return
@@ -211,10 +211,11 @@ def doapply(xoff,yoff):
 
 #---------------------------------------------------------------------------
 oldimage=Image.GetCurrent()
-try:
-    oldsize=oldimage.getSize()
-except:
-    Draw.PupMenu("Can't read image %s" % oldimage.name)
-else:
-    #Window.ImageSelector(dodialog, 'Select new image', oldimage.filename)
-    Window.FileSelector(dodialog, 'Replace image', oldimage.filename)
+if oldimage:
+    try:
+        oldsize=oldimage.getSize()
+    except:
+        Draw.PupMenu("Can't read image %s" % oldimage.name)
+    else:
+        #Window.ImageSelector(dodialog, 'Replace image', oldimage.filename)
+        Window.FileSelector(dodialog, 'Replace image', oldimage.filename)
