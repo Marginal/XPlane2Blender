@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.03"
+__version__ = "3.04"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -212,12 +212,16 @@ Limitations:<br>
 #  - Simpified merging - each TRIS statement in v8 object results in new mesh
 #  - Detect back-to-back faces and split meshes
 #
+# 2007-12-11 v3.04
+#  - Support for cockpit panel regions.
+#
 
 import sys
 import Blender
 from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Texture, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, Vector
 from XPlaneUtils import Vertex, UV, Face, getDatarefs
+from os import listdir
 from os.path import abspath, basename, curdir, dirname, join, normpath, sep, splitdrive
 #import time
 
@@ -233,7 +237,8 @@ class ParseError(Exception):
     FLOAT  = 3
     NAME   = 4
     MISC   = 5
-    TEXT   = ["Header", "Command", "Integer", "Number", "Name", "Misc"]
+    PANEL  = 6
+    TEXT   = ["Header", "Command", "Integer", "Number", "Name", "Misc", "Panel"]
 
 class Mat:
     def __init__(self, d=[1,1,1], e=[0,0,0], s=0):
@@ -346,20 +351,9 @@ class MyMesh:
         for face in mesh.faces:
             f=self.faces[i]
             i+=1
+            if not face: continue
 
             if f.flags&Face.PANEL:
-                if not objimport.panelimage:
-                    d=dirname(objimport.filename)
-                    for extension in ['.dds', '.DDS', '.png', '.PNG', '.bmp', '.BMP']:
-                        cockpit=d+sep+"cockpit"+sep+"-PANELS-"+sep+"Panel"+extension
-                        try:
-                            objimport.panelimage = Image.Load(cockpit)
-                            objimport.panelimage.getSize()	# force load
-                            break
-                        except:
-                            pass
-                    else:
-                        objimport.panelimage=Image.New('Panel.png',1024,1024,24)
                 face.image = objimport.panelimage
             else:
                 face.image = image
@@ -465,6 +459,7 @@ class OBJimport:
         self.fileformat=0	# 6, 7 or 8
         self.image=None		# texture image, iff scenery has texture
         self.panelimage=None
+        self.regions=[]		# cockpit regions
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
         self.log=[]
@@ -486,6 +481,7 @@ class OBJimport:
         self.flat=False		# >=7.30 defaults to smoothed
         self.alpha=False
         self.panel=False
+        self.curregion=None
         self.poly=False
         self.drawgroup=None
         self.slung=0
@@ -671,7 +667,7 @@ class OBJimport:
                     pass
                 else:
                     # Detect and fix up spaces in texture file name
-                    if base.find(" ") != -1:
+                    if ' ' in base:
                         newname=normpath(subdir+sep+base.replace(' ','_')+
                                          extension)
                         newfile=open(newname, "wb")
@@ -724,6 +720,9 @@ class OBJimport:
             
             # v8
             
+            elif t=='COCKPIT_REGION':
+                self.regions.append([self.getFloat() for i in range(4)])
+                
             elif t=='VT':
                 v=self.getVertex()
                 n=self.getVertex()	# normal
@@ -990,10 +989,35 @@ class OBJimport:
             elif t=='ATTR_no_hard':
                 self.hard = False
 
-            elif t=='ATTR_cockpit':
+            elif t in ['ATTR_cockpit','ATTR_cockpit_region']:
                 self.panel = True
+                if not self.panelimage:
+                    d=dirname(self.filename)
+                    for c in listdir(d):
+                        if c.lower()=='cockpit':
+                            for p in listdir(join(d,c)):
+                                if p.lower()=='-panels-':
+                                    for ext in ['.dds','.png','.bmp']:
+                                        for tex in listdir(join(d,c,p)):
+                                            if tex.lower()=='panel'+ext:
+                                                try:
+                                                    self.panelimage=Image.Load(join(d,c,p,tex))
+                                                    self.panelimage.getSize()	# force load
+                                                    break
+                                                except:
+                                                    pass
+                                    break
+                            break
+                if not self.panelimage:
+                    raise ParseError(ParseError.PANEL)
+                if t=='ATTR_cockpit_region':
+                    [x1,y1,x2,y2]=self.regions[int(self.getFloat())]
+                    self.curregion=(x1/self.panelimage.size[0], y1/self.panelimage.size[1], (x2-x1)/self.panelimage.size[0], (y2-y1)/self.panelimage.size[1])
+                else:
+                    self.curregion=None
             elif t=='ATTR_no_cockpit':
                 self.panel = False
+                self.curregion=None
 
             elif t in ['smoke_black', 'smoke_white']:
                 self.addpendingbone()
@@ -1221,6 +1245,7 @@ class OBJimport:
                 self.flat=False
                 self.alpha=False
                 self.panel=False
+                self.curregion=None
                 self.poly=False
                 self.mat=self.mats[0]
             
@@ -1230,6 +1255,7 @@ class OBJimport:
                 self.flat=False
                 self.alpha=False
                 self.panel=False
+                self.curregion=None
                 self.poly=False
                 self.mat=self.mats[0]
 
@@ -1685,6 +1711,8 @@ class OBJimport:
             flags |= Face.NPOLY
         if self.panel:
             flags |= Face.PANEL
+            if self.curregion:
+                (xoff,yoff,xscale,yscale)=self.curregion
         if self.alpha:
             flags |= Face.ALPHA
 
@@ -1701,15 +1729,24 @@ class OBJimport:
             (vj,uvj,n2)=self.vt[self.idx[i+2]]
             v=[vj.totuple()]
             face.addVertex(vj)
-            face.addUV(uvj)
+            if self.curregion:
+                face.addUV(UV(xoff+uvj.s*xscale, yoff+uvj.t*yscale))
+            else:
+                face.addUV(uvj)
             (vj,uvj,n1)=self.vt[self.idx[i+1]]
             v.append(vj.totuple())
             face.addVertex(vj)
-            face.addUV(uvj)
+            if self.curregion:
+                face.addUV(UV(xoff+uvj.s*xscale, yoff+uvj.t*yscale))
+            else:
+                face.addUV(uvj)
             (vj,uvj,n0)=self.vt[self.idx[i]]
             v.append(vj.totuple())
             face.addVertex(vj)
-            face.addUV(uvj)
+            if self.curregion:
+                face.addUV(UV(xoff+uvj.s*xscale, yoff+uvj.t*yscale))
+            else:
+                face.addUV(uvj)
 
             face.flags=flags
             if not self.flat and n0.equals(n1) and n1.equals(n2):
@@ -1832,6 +1869,8 @@ def file_callback (filename):
         Window.DrawProgressBar(0, 'ERROR')
         if e.type == ParseError.HEADER:
             msg='This is not a valid X-Plane v6, v7 or v8 OBJ file'
+        if e.type == ParseError.PANEL:
+            msg='Cannot read cockpit panel texture'
         elif e.type == ParseError.NAME:
             msg='Missing dataref or light name at line %s\n' % obj.lineno
         elif e.type == ParseError.MISC:
