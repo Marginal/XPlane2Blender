@@ -140,9 +140,10 @@ select a <code>.obj</code> file and press <samp>Import&nbsp;OBJ</samp>.</p>
 <p>You can import multiple <code>.obj</code> files and re-export them as a
 single file. But note that the X-Plane <code>.obj</code>
 file format only supports the use of one texture file, so you'll have
-to create a single larger file containg all required textures.
-You can create this single file automatically by selecting all the objects
-and, in a <samp>UV/Image Editor</samp> window, choosing
+to create a single larger file containing all required textures - see
+<a href="#resize">below</a>.
+Or you can have Blender create this single file automatically by selecting all
+the objects and, in a <samp>UV/Image Editor</samp> window, choosing
 <samp>Image&nbsp;&rarr; Consolidate&nbsp;into&nbsp;one&nbsp;image</samp>.</p>
 
 <h3>Importing planes</h3>
@@ -234,7 +235,7 @@ you can use this procedure to make the plane use textures from a single
 file:</p>
 <ul>
   <li>Save your Blender model.</li>
-  <li>In an image editor program, resize <code><i>airplane</i>_paint</code>
+  <li>In an image editor application, resize <code><i>airplane</i>_paint</code>
 and <code><i>airplane</i>_paint2</code> to 512x512. <small>(You don't need to
 save these resized versions)</small>.</li>
   <li>Create a new bitmap file 1024 pixels wide and 512 pixels high.</li>
@@ -258,7 +259,7 @@ ending with "<code>*</code>", either:</p>
 <ul>
   <li>Delete the mesh, or</li>
   <li>Copy the required textures to an unused area in
-the primary bitmap file and use the <samp>UV Image Editor</samp>
+the primary bitmap file and use the <samp>UV/Image Editor</samp>
 window to map the new copy of the textures to the mesh's faces.</li>
 </ul>
 <p>Consider performance issues when the plane is rendered in
@@ -286,6 +287,7 @@ especially goes for the lower <a href="XPlane2Blender.html#Level_Of_Detail">Leve
 versions of the plane in layers 2 and 3 which are only viewed in
 X-Plane from &gt;1000m and &gt;4000m respectively.</li>
 </ul>
+
 <h3>Creating 3D cockpits</h3>
 <p>X-Plane 3D cockpits are just normal v7, v8 or v9 scenery objects except
 that cockpits can't contain multiple <a href="#Level_Of_Detail">Levels
@@ -300,36 +302,56 @@ file with the name <code><i>airplane</i>_cockpit.blend</code>,
 <code><i>airplane</i>_cockpit_OUT.blend</code>,
 where <i>airplane</i> is the name of your plane's <code>.acf</code>
 file.</p>
-<p>Normally you will want to import your plane into Blender to
+<p>You will usually want to import your plane into Blender to
 act as a reference and/or starting point for your cockpit. Delete any
 plane parts that you don't need in creating your cockpit - you only
 need to keep the fuselage itself plus any relevant Misc Bodies. After
 import, your cockpit uses the same texture file as your plane, ie <code><i>airplane</i>_paint</code>.
-Choose <samp>Image&nbsp;&rarr; Replace </samp> in a
-<samp>UV Image Editor</samp> window to use a different texture file, which
+Choose <samp>Image&nbsp;&rarr; Replace</samp> in a
+<samp>UV/Image Editor</samp> window to use a different texture file, which
 can be named anything you like (but no spaces) and which should live in
 the same folder as your plane's <code>.acf</code> file.</p>
-<p>To construct moving cockpit instruments in X-Plane v8 or v9:</p>
+<p>To construct moving cockpit instruments in X-Plane v8 or v9,
+paint the <code>&#8230;/cockpit/-PANELS-/Panel.png</code> texture in
+an image editor application and place instuments in PlaneMaker as as you
+would for a 2D panel
+<small>(but bear in mind that only the top 768 lines of the 2D panel can
+be used in the 3D cockpit in X-Plane versions prior to 8.20)</small>.
+The panel texture can by 1024&times;<i>any size</i> in X-Plane v8, and
+any size up to 2048&times;2048 in X-Plane v9.
+Normally you can only use a single file to texture your X-Plane
+objects. But when constructing a 3D cockpit you can additionally use
+this <code>&#8230;/cockpit/-PANELS-/Panel.png</code> file - the instruments
+that X-Plane draws on the 2D panel will also appear in your 3D model.</p>
+<p>The <code>&#8230;/cockpit/-PANELS-/Panel.png</code> texture doesn't
+show any instruments (unless you've painted them on yourself) when you load
+it into Blender, so it's hard to tell in Blender where X-Plane will draw the
+instruments. It's easier if you use a screenshot of the panel with the
+instruments drawn on it, instead of the real panel texture.
+If your display is larger than your panel texture, then this is simple:</p>
 <ul>
-  <li>Layout the 2D panel in PlaneMaker as normal. But bear in
-mind that only the top 768 lines of the 2D panel can be used in the 3D
-cockpit in X-Plane versions prior to 8.20.</li>
-  <li>Run X-Plane and load your aircraft. Press the <samp style="font-weight: bold;">Up</samp> arrow to ensure
-that you're looking at the top of the 2D panel. Take a screenshot (on a
-PC press <samp style="font-weight: bold;">Alt&nbsp;PrtSc</samp>).</li>
-  <li>Load the screenshot into an image editor and change its
-size so that it's the same size as your 2D panel (typically 1024x1024)
-- don't resize the screenshot, just add blank space. Save the
-screenshot as <code>ScreenshotPanel.png</code> (or any
-filename ending in <code>*panel.*</code>) in the same
-folder as your plane's <code>.acf</code> file.</li>
-  <li>Use the <code>ScreenshotPanel.png</code>
-texture on those faces that you want to display moving cockpit
-instruments in X-Plane. (It's easier to use this screenshot texture
-instead of the real panel texture while editing in Blender, since the
-screenshot has instruments drawn on it). The screenshot file does not
-need to be distributed with your finished plane.</li>
+  <li>Run PlaneMaker.</li>
+  <li>Choose <samp>Background&nbsp;&rarr; Rendering Options</samp> and set the size to be equal to the size of your panel texture.
+  <li>Restart PlaneMaker</li>
+  <li>Choose <samp>Standard&nbsp;&rarr; Panel</samp></li>
+  <li>Take a screenshot: Press <samp>Alt  PrintScreen</samp> (PC) or <samp>Command Shift 3</samp> (Mac).</li>
+  <li>Paste (PC) or load (Mac) the screenshot into an image editor application.</li>
+  <li>Crop the window borders etc from the screenshot so that the image is
+exactly the same size as your panel texture.</li>
+  <li>Save the screenshot as <code>ScreenshotPanel.png</code> (or any
+filename ending in <code>*panel.*</code>) in the same folder as your
+plane's <code>.acf</code> file.</li>
+  <li>Use the <code>ScreenshotPanel.png</code> texture on those faces
+that you want to display moving cockpit instruments in X-Plane.</li>
+  <li>The screenshot file does not need to be distributed with your
+finished plane.</li>
 </ul>
+<p>If your panel texture is larger than your display then you cannot take
+a screenshot of the whole panel. In this case you'll need to take multiple
+screenshots of the panel in PlaneMaker and stich them together in 
+an image editing application.</p>
+<p>If you later want to resize your panel texture then use the procedure
+described <a href="#resize">below</a>.</p>
 <p>Note that X-Plane versions prior to 8.20 only display the 3D
 cockpit when running at the default 1024x768 resolution. You may want
 to mention this in the Readme with your plane if your plane is
@@ -431,13 +453,13 @@ in X-Plane.</li>
 In an image editor application create one texture file that is like a
 "<a href="http://en.wikipedia.org/wiki/Collage" target="_blank">collage</a>"
 of all of the textures that you need in your model. 
-The height and width of the texture file must be powers of two
-(<i>eg</i> 128, 256, 512, 1024) but it doesn't have to be square.
+The height and width of the texture file must be powers of two - <i>eg</i>
+128, 256, 512, 1024 or 2048 (X-Plane v9 only) but it doesn't have to be square.
 (See <code>&#8230;/Custom&nbsp;Scenery/KSBD&nbsp;Demo&nbsp;Area/KSBD_example.png</code> for an example).<br>
 Save the texture file in 32bit or 24bit PNG format (<i>ie</i> with or
 without an "Alpha" channel) in the aircraft or scenery folder where you
 want the X-Plane <code>.obj</code> file to end up.<br>
-Use the <samp>UV Image Editor</samp> window to control mapping of the textures
+Use the <samp>UV/Image Editor</samp> window to control mapping of the textures
 to the face.</li>
       <li><samp>Tiles</samp> button controls whether
 the face is rendered with "polygon offsetting" (<code>ATTR_poly_os</code>)
@@ -842,6 +864,37 @@ visible in X-Plane at the following distances:</p>
   </tbody>
 </table>
 </div>
+
+<h3><a name="resize">Changing the texture size</a></h3>
+<p>If you run out of space in your texture file then you can increase the size.
+The panel texture can by 1024&times;<i>any size</i> in X-Plane v8, and
+any size up to 2048&times;2048 in X-Plane v9.
+The height and width of a non-panel texture file must be powers of two -
+<i>eg</i> 128, 256, 512, 1024 or 2048 (X-Plane v9 only) but it doesn't have
+to be square.</p>
+<p>You should use the following procedure to ensure that your UV mappings
+and/or PlaneMaker instrument layouts are preserved:</p>
+<p>
+<ul>
+  <li>Create a new, larger, texture in an image editor application.</li>
+  <li>Panel texture: Paste the original texture into the lower left
+corner of the new texture.</li>
+  <li>Non-panel texture: Paste the original texture into one of the corners
+of the new texture, or aligned on a multiple of the original texture's
+width and height.</li>
+  <li>In Blender, in the <samp>UV/Image Editor</samp> window, select the
+original texture from the pop-up menu.</li>
+  <li>Choose <samp>Image&nbsp;&rarr; Replace&nbsp;and&nbsp;fixup&nbsp;UV&nbsp;mapping&#8230;</samp></li>
+  <li>Select the new image and press <samp>Replace image</samp>.
+  <li>In the <samp>Fixup UV mapping</samp> dialog, press the button in the
+cluster of buttons that represents where you placed the original texture
+in the new texture.</li>
+</ul>
+<p>You can also use this technique if you want to combine 3D models that use
+different texture files; paste all of the textures used by the 3D models into
+a single new texture file, then use
+<samp>Image&nbsp;&rarr; Replace&nbsp;and&nbsp;fixup&nbsp;UV&nbsp;mapping&#8230;</samp> on each of the original textures.</p>
+
 <h3>Blender tips</h3>
 <p>Blender has a quirky user interface:</p>
 <ul>
@@ -885,6 +938,7 @@ a new property.</p>
 property has three fields; Type, Name and Value. If you want to supply a
 non-numeric value, <i>eg</i> the name of a "named" light, you'll first need
 to change the Type from <samp>Float</samp> to <samp>String</samp>.</p>
+
 <h3>Limitations</h3>
 <h4>Import object</h4>
 <ul>
@@ -958,7 +1012,7 @@ that you make using these tools, but you are under no obligation.</p>
 <table style="width: 100%;" border="0" cellpadding="2">
   <tbody>
     <tr>
-      <td class="banner">Version 3.03 &copy; 2004-2007
+      <td class="banner">Version 3.04 &copy; 2004-2007
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
 <img alt="Creative Commons License" style="border: 0px solid ; width: 88px; height: 31px; vertical-align: text-bottom;" src="http://creativecommons.org/images/public/somerights20.png"></a></td>
     </tr>

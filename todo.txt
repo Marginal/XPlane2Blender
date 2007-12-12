@@ -1,2 +1,2 @@
-importplane: skip invisible bodies
+importplane: skip v9 invisible bodies
 detect misc objects? (no panel texture)

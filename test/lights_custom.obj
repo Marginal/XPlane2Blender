@@ -98,16 +98,12 @@ TRIS	0 72
 LIGHTS	0 3
 LIGHT_NAMED	airplane_nav_left	   2.0000    1.5000    0.0000
 ANIM_begin
-	ANIM_trans_begin	sim/flightmodel/engine/ENGN_thro[0]
-		ANIM_trans_key	0	   5.0000    1.5000    0.0000
-		ANIM_trans_key	2.0	   5.0000    1.5000    0.0000
-		ANIM_trans_key	1	   5.0000    1.5000   -0.5000
-	ANIM_trans_end
-	ANIM_rotate	   1.0000    0.0000    0.0000	  0.00 180.00	0 2.0	sim/flightmodel/engine/ENGN_thro[0]
+	ANIM_trans	   5.0000    1.5000    0.0000	   5.0000    1.5000    0.0000	0 0	no_ref
+	ANIM_rotate	   1.0000    0.0000    0.0000	  0.00 180.00	0 1	sim/flightmodel/engine/ENGN_thro[0]
 	LIGHT_NAMED	carrier_foul_line_red	  -1.0000    0.0000    0.0000
 	LIGHT_CUSTOM	   2.0000    1.0000    0.0000	 0.218  0.867  0.205  1.000    2.0000	0.25   0.0    0.375  0.125 	sim/graphics/animation/lights/airport_beacon
 	LIGHT_CUSTOM	   2.0000   -1.0000    0.0000	 0.218  0.867  0.205  1.000    2.0000	0.25   0.0    0.375  0.125 	sim/graphics/animation/lights/airport_beacon
 	LIGHT_CUSTOM	   0.0000   -1.0000    0.0000	 0.218  0.867  0.205  1.000    2.0000	0.25   0.0    0.375  0.125 	sim/graphics/animation/lights/airport_beacon
 ANIM_end
 
-# Built with Blender 2.45. Exported with XPlane2Blender 3.00.
+# Built with Blender 2.45. Exported with XPlane2Blender 3.04.
