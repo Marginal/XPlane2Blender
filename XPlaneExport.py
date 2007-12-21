@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------
 # X-Plane exporter helper classes for blender 2.43 or above
 #
-# Copyright (c) 2004,2005,2006 Jonathan Harris
+# Copyright (c) 2004,2005,2006,2007 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -9,22 +9,26 @@
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.5:
+#   Attribution-Noncommercial-Share Alike 3.0:
 #
 #   You are free:
-#     * to copy, distribute, display, and perform the work
-#     * to make derivative works
-#     * to make commercial use of the work
+#    * to Share - to copy, distribute and transmit the work
+#    * to Remix - to adapt the work
+#
 #   Under the following conditions:
-#     * Attribution: You must give the original author credit.
-#     * Share Alike: If you alter, transform, or build upon this work, you
-#       may distribute the resulting work only under a license identical to
-#       this one.
-#   For any reuse or distribution, you must make clear to others the license
-#   terms of this work.
+#    * Attribution. You must attribute the work in the manner specified
+#      by the author or licensor (but not in any way that suggests that
+#      they endorse you or your use of the work).
+#    * Noncommercial. You may not use this work for commercial purposes.
+#    * Share Alike. If you alter, transform, or build upon this work,
+#      you may distribute the resulting work only under the same or
+#      similar license to this one.
+#
+#   For any reuse or distribution, you must make clear to others the
+#   license terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
+#   http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 #
 # 2004-02-01 v1.00
@@ -212,12 +216,16 @@
 # 2007-12-02 v3.00
 #  - Support for DDS textures.
 #
+# 2007-12-21 v3.04
+#  - Support for cockpit panel regions.
+#
 
 import sys
+from math import log
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
 import Blender
 from Blender import Material, Mesh, Lamp, Image, Draw, Window
-from XPlaneUtils import Vertex, UV, Face
+from XPlaneUtils import Vertex, UV, Face, PanelRegionHandler
 #import time
 
 
@@ -263,6 +271,7 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     multierr=[]
     panelerr=(fileformat==7 and expobj.iscockpit)
     havepanel=False
+    panelobjs=[]
     nobj=len(theObjects)
     texlist=[]
     layers=0
@@ -271,9 +280,11 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     else:
         expobj.lod=[0,1000,4000,10000]		# list of lod limits
     thisdir=normpath(dirname(Blender.Get('filename')))
+    h=PanelRegionHandler()
 
     for o in range (nobj-1,-1,-1):
         object=theObjects[o]
+        if h.isHandlerObj(object): continue
         objType=object.getType()
 
         if expobj.layermask==1 and not expobj.iscockpit:
@@ -316,24 +327,41 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
                 #print object.getName()
                 for face in mesh.faces:
                     if (face.mode&Mesh.FaceModes.TEX) and face.image:
-                        if expobj.iscockpit and 'panel.' in face.image.name.lower():
-                            havepanel=True
-                            if len(face.v)==3 and fileformat==7:
-                                raise ExportError('Only quads can use the instrument panel texture,\n\tbut I found a tri using the panel texture in "%s"' % object.name, (object, mesh, [face]))
-                            if panelerr:
-                                # Check that at least one panel texture is OK
-                                try:
-                                    height=face.image.getSize()[1]
-                                except RuntimeError:
-                                    raise ExportError("Can't load instrument panel texture file")
-                                for uv in face.uv:
-                                    if (uv[0]<0.0  or uv[0]>1.0 or
-                                        (1-uv[1])*height>768 or uv[1]>1.0):
-                                        break
-                                else:
-                                    panelerr=0
+                        if expobj.iscockpit:
+                            isregion=h.isRegion(face.image)
+                            if isregion: expobj.regions[face.image]=isregion
+                            if fileformat>7 and isregion:
+                                pass
+                            elif 'panel.' in face.image.name.lower() or isregion:
+                                if fileformat>7 and expobj.regions:
+                                    raise ExportError('You can\'t use the panel texture since you\'ve used panel regions.\n\tI found a face using the panel texture in "%s"' % object.name, (object, mesh, [face]))
+                                if fileformat==7 and len(face.v)==3:
+                                    raise ExportError('Only quads can use the instrument panel texture,\n\tbut I found a tri using the panel texture in "%s"' % object.name, (object, mesh, [face]))
+                                    
+                                havepanel=True
+                                if not object in panelobjs:
+                                    panelobjs.append(object)
+                                if panelerr:
+                                    # Check that at least one panel texture is OK
+                                    if isregion:
+                                        #(n,xoff,yoff,width,height)=isregion
+                                        panelerr=0	# Should check
+                                    else:
+                                        xoff=yoff=0
+                                        try:
+                                            (width,height)=face.image.getSize()
+                                        except RuntimeError:
+                                            raise ExportError("Can't load instrument panel texture file")
+                                        for uv in face.uv:
+                                            if uv[0]<0.0 or uv[0]>1.0 or (1-uv[1])*height>768 or uv[1]>1.0:
+                                                break
+                                        else:
+                                            panelerr=0
+                            else:
+                                texture=checkdup(face.image.filename, thisdir, texture, texlist, multierr, object)
                         else:
                             texture=checkdup(face.image.filename, thisdir, texture, texlist, multierr, object)
+
         elif (expobj.iscockpit and objType == "Lamp"
               and object.getType() == Lamp.Types.Lamp):
             raise ExportError("Cockpit objects can't contain lights",[object])
@@ -341,6 +369,9 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     if multierr:
         raise ExportError("The OBJ format supports one texture file, but you've used multiple texture files; see the Console for a list of the files", multierr)
                                 
+    if fileformat>7 and havepanel and expobj.regions:
+        raise ExportError("You can't use the panel texture since you've used panel regions.\n\tUse the panel texture, or panel regions, but not both", panelobjs)
+
     if havepanel and panelerr:
         raise ExportError("At least one face that uses the instrument panel texture must be within the top 768 lines of the panel texture")
 
@@ -348,16 +379,12 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
         return None
 
     try:
-        tex=Image.Load(texture)
-        dim=tex.getSize()
-    except (RuntimeError, IOError):
+        img=Image.Load(texture)
+        (width,height)=img.getSize()
+    except:
     	raise ExportError("Can't load texture file \"%s\"" % texture)
-    else:
-        for l in dim:
-            while l:
-                l=l/2
-                if l&1 and l>1:
-                    raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace to load the new file")
+    if 2**int(log(width,2))!=width or 2**int(log(height,2))!=height:
+        raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace and fixup UV mapping\n\tto load the new file")
 
     l=texture.rfind(sep)
     if l!=-1:
@@ -368,7 +395,7 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
         raise ExportError('Texture filename "%s" contains spaces.\n\tPlease rename the file. Use Image->Replace to load the renamed file' % texture[l:])
 
     if texture[-4:].lower() in ['.dds', '.png', '.bmp']:
-        if fileformat==7: texture = texture[:-4]
+        if fileformat==7: texture=texture[:-4]
     else:
         raise ExportError("Texture file must be in DDS, PNG or BMP format.\n\tPlease convert the file. Use Image->Replace to load the new file")
     
@@ -526,6 +553,7 @@ class OBJexport7:
             filename.lower().endswith("_cockpit_out.obj")))
         self.layermask=1
         self.texture=None
+        self.regions={}		# (xoff,yoff,xscale,yscale) by image
         self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
         self.log=[]
@@ -540,6 +568,9 @@ class OBJexport7:
         self.panel=False
         self.layer=0
 
+        if self.iscockpit and self.iscsl:
+            raise ExportError("Can't export a cockpit object as a CSL")
+
     #------------------------------------------------------------------------
     def export(self, scene):
         theObjects = scene.objects
@@ -551,9 +582,10 @@ class OBJexport7:
         Blender.Window.WaitCursor(1)
         Window.DrawProgressBar(0, "Examining textures")
         self.texture=getTexture(self, theObjects, self.iscsl, 7)
-
-        if self.iscockpit and self.iscsl:
-            raise ExportError("Can't export a cockpit object as a CSL")
+        if self.regions:
+            (pwidth,pheight)=PanelRegionHandler().panelimage().size
+            for img,(n,x1,y1,width,height) in self.regions.iteritems():
+                self.regions[img]=(float(x1)/pwidth,float(y1)/pheight,float(width)/pwidth,float(height)/pheight)
 
         #clock=time.clock()	# Processor time
 
@@ -595,6 +627,8 @@ class OBJexport7:
         else:
             lseq=[1,2,4]
 
+        h=PanelRegionHandler()
+
         # Count the objects
         nobj=0
         objlen=1
@@ -617,7 +651,7 @@ class OBJexport7:
             # 1st pass: Build meshes
             for o in range (len(theObjects)-1,-1,-1):
                 object=theObjects[o]
-                if not object.Layer&layer:
+                if not object.Layer&layer or h.isHandlerObj(object):
                     continue
                 
                 Window.DrawProgressBar(float(nobj)/objlen,
@@ -875,12 +909,9 @@ class OBJexport7:
                 if not f.smooth and not self.iscsl:
                     face.flags|=Face.FLAT
 
-                if self.iscockpit and mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
+                if self.iscockpit and mode&Mesh.FaceModes.TEX and f.image and (f.image in self.regions or 'panel.' in f.image.name.lower()):
                     face.flags|=Face.PANEL
-                    try:
-                        height=f.image.getSize()[1]
-                    except RuntimeError:
-                        raise ExportError("Can't load instrument panel texture file")
+                    height=f.image.getSize()[1]
                     for uv in f.uv:
                         if (uv[0]<0.0 or uv[0]>1.0 or
                             (1-uv[1])*height>768 or uv[1]>1.0):
@@ -910,7 +941,12 @@ class OBJexport7:
                         face.addVertex(vertex)
 
                     if mode & Mesh.FaceModes.TEX:
-                        face.addUV(UV(f.uv[i][0],f.uv[i][1]))
+                        if f.image in self.regions:
+                            (xoff,yoff,xscale,yscale)=self.regions[f.image]
+                            face.addUV(UV(xoff+f.uv[i][0]*xscale,
+                                          yoff+f.uv[i][1]*yscale))
+                        else:
+                            face.addUV(UV(f.uv[i][0],f.uv[i][1]))
                     else:	# File format requires something - using (0,0)
                         face.addUV(UV(0,0))
 

@@ -1,30 +1,34 @@
 #------------------------------------------------------------------------
-# X-Plane import/output utility classes for blender 2.34 or above
+# X-Plane import/output utility classes for blender 2.43 or above
 #
-# Copyright (c) 2004, 2005 Jonathan Harris
-# 
+# Copyright (c) 2005,2006,2007 Jonathan Harris
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.5:
+#   Attribution-Noncommercial-Share Alike 3.0:
 #
 #   You are free:
-#     * to copy, distribute, display, and perform the work
-#     * to make derivative works
-#     * to make commercial use of the work
+#    * to Share - to copy, distribute and transmit the work
+#    * to Remix - to adapt the work
+#
 #   Under the following conditions:
-#     * Attribution: You must give the original author credit.
-#     * Share Alike: If you alter, transform, or build upon this work, you
-#       may distribute the resulting work only under a license identical to
-#       this one.
-#   For any reuse or distribution, you must make clear to others the license
-#   terms of this work.
+#    * Attribution. You must attribute the work in the manner specified
+#      by the author or licensor (but not in any way that suggests that
+#      they endorse you or your use of the work).
+#    * Noncommercial. You may not use this work for commercial purposes.
+#    * Share Alike. If you alter, transform, or build upon this work,
+#      you may distribute the resulting work only under the same or
+#      similar license to this one.
+#
+#   For any reuse or distribution, you must make clear to others the
+#   license terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
+#   http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 #
 # 2005-03-01 v2.00
@@ -42,12 +46,16 @@
 #  - Ignore muliplayer to reduce number of ambiguous datarefs.
 #  - Fix for zero-scaled objects.
 #
+# 2007-12-21 v3.05
+#  - Support for cockpit panel regions.
+#  - Reduced duplicate UV limit to 0.0004 = 1 pixel in 2048.
+#
 
 import sys
 from math import sqrt, sin, cos
 from os.path import exists, join
 import Blender
-from Blender import Types, Image
+from Blender import Registry, Types, Image, Mesh, Object, Scene, Text, Window
 from Blender.Mathutils import Matrix, Vector, Euler
 
 class Vertex:
@@ -148,7 +156,7 @@ class Vertex:
 
 
 class UV:
-    LIMIT=0.004	# = 1/2 pixel in 128, 1 pixel in 256, 2 pixels in 512, etc
+    LIMIT=0.0004	# <= 1 pixel in 2048
     ROUND=4
 
     def __init__(self, s, t=None):
@@ -207,6 +215,7 @@ class Face:
         self.uv=[]
         self.flags=0
         self.kosher=0		# Hack! True iff panel and within 1024x768
+        self.region=None	# for import
 
     # for debug only
     def __str__ (self):
@@ -240,9 +249,200 @@ class Face:
         return len(self.v)
 
 
+class PanelRegionHandler:
+    NAME='PanelRegionHandler'
+    REGIONCOUNT=4	# X-Plane 9.00 allows up to 4 panel regions
+
+    def __init__(self):
+        try:
+            self.obj=Object.Get(PanelRegionHandler.NAME)
+        except:
+            self.obj=None
+
+    def New(self, panelimage):
+        if self.obj:
+            mesh=self.obj.getData(mesh=True)
+            for n in range(1,len(mesh.faces)):
+                if mesh.faces[n].image!=mesh.faces[0].image:
+                    self.delRegion(mesh.faces[n].image)
+            self.obj.removeAllProperties()
+        else:
+            mesh=Mesh.New(PanelRegionHandler.NAME)
+            self.obj=Mesh.New(PanelRegionHandler.NAME)
+            self.obj=Object.New('Mesh', PanelRegionHandler.NAME)
+            self.obj.link(mesh)
+            Scene.GetCurrent().link(self.obj)
+            self.obj.layers=[]	# invisible
+
+        # (re)build faces and assign panel texture
+        for n in range(len(mesh.faces),PanelRegionHandler.REGIONCOUNT+1):
+            v=len(mesh.verts)
+            mesh.verts.extend([[0,0,-n],[1,0,-n],[0,1,-n]])
+            mesh.faces.extend([[v,v+1,v+2]])
+        for n in range(PanelRegionHandler.REGIONCOUNT+1):
+            mesh.faces[n].image=panelimage
+
+        # Suppress regeneration of panels on Undo
+        Registry.SetKey(PanelRegionHandler.NAME, {"skipregen":True})
+        # Set up regeneration of panels on reload
+        try:
+            txt=Text.Get(PanelRegionHandler.NAME)
+        except:
+            txt=Text.New(PanelRegionHandler.NAME)
+            Scene.GetCurrent().addScriptLink(PanelRegionHandler.NAME, 'OnLoad')
+        txt.clear()
+        txt.write('from Blender import Registry\nfrom XPlaneUtils import PanelRegionHandler\n\nif not Registry.GetKey("%s"):\n\tRegistry.SetKey("%s", {"skipregen":True})\n\tPanelRegionHandler().regenerate()\n' % (PanelRegionHandler.NAME, PanelRegionHandler.NAME))
+
+        return self
+
+
+    def addRegion(self, xoff, yoff, width, height):
+        mesh=self.obj.getData(mesh=True)
+        panelimage=mesh.faces[0].image
+        name='PanelRegion'
+        for img in Image.get():
+            # try to re-use existing deleted panel region
+            if img.size==[width,height] and img.source==Image.Sources.GENERATED and img.filename==name and not self.isRegion(img):
+                break
+        else:
+            img=Image.New(name, width, height, 24)
+        for y in range(height):
+            for x in range(width):
+                rgba=panelimage.getPixelI(xoff+x,yoff+y)
+                if not rgba[3]:
+                    img.setPixelI(x,y, (102,102,255,255))	# hilite transparent
+                else:
+                    img.setPixelI(x,y, rgba[:3]+[255])
+
+        for n in range(1,PanelRegionHandler.REGIONCOUNT+1):
+            if mesh.faces[n].image==panelimage:
+                mesh.faces[n].image=img
+                self.obj.addProperty('x%d' % n, xoff)
+                self.obj.addProperty('y%d' % n, yoff)
+                (width,height)=img.size
+                (pwidth,pheight)=panelimage.size
+                xoff=float(xoff)/pwidth
+                yoff=float(yoff)/pheight
+                xscale=float(pwidth)/width
+                yscale=float(pheight)/height
+                # Assign UV mappings from panel image
+                for obj in Scene.GetCurrent().objects:
+                    if obj!=self.obj and obj.getType()=="Mesh":
+                        mesh2 = obj.getData(mesh=True)
+                        if mesh2.faceUV:
+                            for face in mesh2.faces:
+                                if face.image==panelimage:
+                                    uv=[]
+                                    for v in face.uv:
+                                        x=(v.x-xoff)*xscale
+                                        y=(v.y-yoff)*yscale
+                                        if not -UV.LIMIT<=x<=1+UV.LIMIT or not -UV.LIMIT<=y<=1+UV.LIMIT:
+                                            break
+                                        uv.append(Vector(min(max(x,0),1), min(max(y,0),1)))
+                                    else:
+                                        face.uv=uv
+                                        face.image=img
+                            mesh2.update()
+                break
+        return img
+
+    def panelimage(self):
+        if not self.obj: return None
+        mesh=self.obj.getData(mesh=True)
+        return mesh.faces[0].image
+
+    def isHandlerObj(self, obj):
+        return self.obj==obj
+
+    def isPanel(self, img):
+        return (self.panelimage()==img)
+
+    def isRegion(self, img):
+        if not self.obj: return False
+        mesh=self.obj.getData(mesh=True)
+        if mesh.faces[0].image==img: return False	# is panel
+        for n in range(1,PanelRegionHandler.REGIONCOUNT+1):
+            if mesh.faces[n].image==img:
+                try:
+                    x=self.obj.getProperty('x%d' % n).data
+                    y=self.obj.getProperty('y%d' % n).data
+                    return (n,x,y,img.size[0],img.size[1])
+                except:
+                    return False
+        else:
+            return False
+
+    def countRegions(self):
+        if not self.obj: return 0
+        mesh=self.obj.getData(mesh=True)
+        count=0
+        for n in range(1,PanelRegionHandler.REGIONCOUNT+1):
+            if mesh.faces[n].image!=mesh.faces[0].image:
+                count+=1
+        return count
+
+    def delRegion(self, img):
+        r=self.isRegion(img)
+        if not r: return False
+        (n,x1,y1,width,height)=r
+        mesh=self.obj.getData(mesh=True)
+        panelimage=mesh.faces[0].image
+        try:
+            (pwidth,pheight)=panelimage.size
+            xoff=float(x1)/pwidth
+            yoff=float(y1)/pheight
+            xscale=float(width)/pwidth
+            yscale=float(height)/pheight
+        except:
+            xoff=yoff=0
+            xscale=yscale=1
+        # Reassign UV mappings back to panel image
+        for obj in Scene.GetCurrent().objects:
+            if obj!=self.obj and obj.getType()=="Mesh":
+                mesh2 = obj.getData(mesh=True)
+                if mesh2.faceUV:
+                    for face in mesh2.faces:
+                        if face.image==img:
+                            face.image=panelimage
+                            face.uv=[Vector([xoff+v.x*xscale, yoff+v.y*yscale]) for v in face.uv]
+                mesh2.update()
+        mesh.faces[n].image=panelimage
+        img.reload()	# blank old region
+        self.obj.removeProperty('x%d' % n)
+        self.obj.removeProperty('y%d' % n)
+        return True
+
+    def regenerate(self):
+        if not self.obj: return
+        mesh=self.obj.getData(mesh=True)
+        panelimage=mesh.faces[0].image
+        panelimage.getSize()	# force load
+        Window.WaitCursor(1)
+        Window.DrawProgressBar(0, 'Panel regions')
+        for n in range(1,PanelRegionHandler.REGIONCOUNT+1):
+            Window.DrawProgressBar(n/6.0, 'Panel regions')
+            img=mesh.faces[n].image
+            if img!=panelimage:
+                (width,height)=img.size
+                xoff=self.obj.getProperty('x%d' % n).data
+                yoff=self.obj.getProperty('y%d' % n).data
+                for y in range(height):
+                    for x in range(width):
+                        rgba=panelimage.getPixelI(xoff+x,yoff+y)
+                        if not rgba[3]:
+                            img.setPixelI(x,y, (102,102,255,255))	# hilite transparent
+                        else:
+                            img.setPixelI(x,y, rgba[:3]+[255])
+                img.glFree()	# force reload
+        mesh.update()
+        Window.RedrawAll(0)
+        Window.DrawProgressBar(1, 'Finished')
+        Window.WaitCursor(0)
+
+        
 def findTex(basefile, texture, subdirs):
     texdir=basefile
-    for l in range(5):
+    for l in range(PanelRegionHandler.REGIONCOUNT+1):
         q=texdir[:-1].rfind(Blender.sys.dirsep)
         if q==-1:
             return

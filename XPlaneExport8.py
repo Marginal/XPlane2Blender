@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.04"
+__version__ = "3.05"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -25,7 +25,7 @@ Limitations:<br>
 #------------------------------------------------------------------------
 # X-Plane exporter for blender 2.43 or above
 #
-# Copyright (c) 2004-2007 Jonathan Harris
+# Copyright (c) 2005-2007 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -33,22 +33,26 @@ Limitations:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.5:
+#   Attribution-Noncommercial-Share Alike 3.0:
 #
 #   You are free:
-#     * to copy, distribute, display, and perform the work
-#     * to make derivative works
-#     * to make commercial use of the work
+#    * to Share - to copy, distribute and transmit the work
+#    * to Remix - to adapt the work
+#
 #   Under the following conditions:
-#     * Attribution: You must give the original author credit.
-#     * Share Alike: If you alter, transform, or build upon this work, you
-#       may distribute the resulting work only under a license identical to
-#       this one.
-#   For any reuse or distribution, you must make clear to others the license
-#   terms of this work.
+#    * Attribution. You must attribute the work in the manner specified
+#      by the author or licensor (but not in any way that suggests that
+#      they endorse you or your use of the work).
+#    * Noncommercial. You may not use this work for commercial purposes.
+#    * Share Alike. If you alter, transform, or build upon this work,
+#      you may distribute the resulting work only under the same or
+#      similar license to this one.
+#
+#   For any reuse or distribution, you must make clear to others the
+#   license terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
+#   http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 #
 # 2005-11-10 v2.10
@@ -150,6 +154,9 @@ Limitations:<br>
 # 2007-12-11 v3.04
 #  - On animation error, highlight the child object.
 #  - All dataref values default to 1 (other than first).
+
+# 2007-12-21 v3.05
+#  - Support for cockpit panel regions.
 #
 
 
@@ -177,7 +184,7 @@ import sys
 import Blender
 from Blender import Armature, Mesh, Lamp, Image, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, MatMultVec, Vector, Quaternion, Euler
-from XPlaneUtils import Vertex, UV, MatrixrotationOnly, getDatarefs
+from XPlaneUtils import Vertex, UV, MatrixrotationOnly, getDatarefs, PanelRegionHandler
 from XPlaneExport import *
 #import time
 
@@ -291,6 +298,7 @@ class Prim:
         self.i=[]	# indices for lines & tris, VLIGHT/NLIGHT for lights
         self.anim=anim
         self.flags=flags	# bitmask
+        self.region=None	# image
         self.surface=surface	# tris: one of Prim.SURFACES
         self.mat=mat		# tris: (diffuse, emission, shiny)
         self.group=group
@@ -324,6 +332,7 @@ class OBJexport8:
                         filename.lower().endswith("_cockpit_out.obj"))
         self.layermask=1
         self.texture=None
+        self.regions={}		# (x,y,width,height) by image
         self.drawgroup=None
         self.slung=0
         self.linewidth=0.101
@@ -336,6 +345,7 @@ class OBJexport8:
         self.twoside=False
         self.npoly=True
         self.panel=False
+        self.region=None
         self.alpha=False	# implicit - doesn't appear in output file
         self.layer=0
         self.group=None
@@ -410,6 +420,9 @@ class OBJexport8:
                                                             self.texture[-4:]))
         else:	# X-Plane barfs if no texture specified
             self.file.write("TEXTURE\t\n")
+        for img in self.regions.keys():
+            (n,x,y,width,height)=self.regions[img]
+            self.file.write("COCKPIT_REGION\t%4d %4d %4d %4d\n" % (x,y,x+width,y+height))
 
     #------------------------------------------------------------------------
     def writeObjects (self, theObjects):
@@ -424,12 +437,14 @@ class OBJexport8:
             surfaces=[False]
         else:
             surfaces=Prim.SURFACES
+        regionimages=[None]+self.regions.keys()
+        h=PanelRegionHandler()
             
         # Build global vertex lists
         nobj=len(theObjects)
         for o in range (nobj-1,-1,-1):
             object=theObjects[o]
-            if not object.Layer&self.layermask:
+            if not object.Layer&self.layermask or h.isHandlerObj(object):
                 continue
             Window.DrawProgressBar(float(nobj-o)*0.4/nobj,
                                    "Exporting %d%% ..." % ((nobj-o)*40/nobj))
@@ -483,20 +498,22 @@ class OBJexport8:
                             tris4=[tri for tri in tris3 if tri.mat==mat]
                             for passno in range(passhi,passhi+Prim.BUCKET1+1):
                                 tris5=[tri for tri in tris4 if tri.flags==passno]
-                                for surface in surfaces:
-                                    index=[]
-                                    offsets.append(len(indices))
-                                    for tri in tris5:
-                                        if tri.surface==surface:
-                                            index.append(tri.i[0])
-                                            index.append(tri.i[1])
-                                            index.append(tri.i[2])
-                                            if len(tri.i)==4:	# quad
+                                for region in regionimages:
+                                    tris6=[tri for tri in tris5 if tri.region==region]
+                                    for surface in surfaces:
+                                        index=[]
+                                        offsets.append(len(indices))
+                                        for tri in tris6:
+                                            if tri.surface==surface:
                                                 index.append(tri.i[0])
+                                                index.append(tri.i[1])
                                                 index.append(tri.i[2])
-                                                index.append(tri.i[3])
-                                    counts.append(len(index))
-                                    indices.extend(index)
+                                                if len(tri.i)==4:	# quad
+                                                    index.append(tri.i[0])
+                                                    index.append(tri.i[2])
+                                                    index.append(tri.i[3])
+                                        counts.append(len(index))
+                                        indices.extend(index)
 
                         # Lines
                         index=[]
@@ -561,16 +578,17 @@ class OBJexport8:
                         for mat in self.mats:
                             for passno in range(passhi,passhi+Prim.BUCKET1+1):
                                 for surface in surfaces:
-                                    if counts[n]:
-                                        self.updateAttr(layer, group, anim,
-                                                        surface, mat,
-                                                        passno&Prim.TWOSIDE,
-                                                        passno&Prim.NPOLY,
-                                                        passno&Prim.PANEL,
-                                                        passno&Prim.ALPHA)
-                                        self.file.write("%sTRIS\t%d %d\n" %
-                                                        (anim.ins(), offsets[n],counts[n]))
-                                    n=n+1
+                                    for region in regionimages:
+                                        if counts[n]:
+                                            self.updateAttr(layer, group, anim,
+                                                            region, surface, mat,
+                                                            passno&Prim.TWOSIDE,
+                                                            passno&Prim.NPOLY,
+                                                            passno&Prim.PANEL,
+                                                            passno&Prim.ALPHA)
+                                            self.file.write("%sTRIS\t%d %d\n" %
+                                                            (anim.ins(), offsets[n],counts[n]))
+                                        n=n+1
                         # Lines
                         if counts[n]:
                             self.updateAttr(layer, group, anim)
@@ -861,9 +879,14 @@ class OBJexport8:
                         if not mode&Mesh.FaceModes.TILES or self.iscockpit:
                             face.flags|=Prim.NPOLY
                             
-                        if self.iscockpit and mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
-                            face.flags|=Prim.PANEL
-                        elif object.Layer&1 and not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
+                        if self.iscockpit and mode&Mesh.FaceModes.TEX:
+                            if f.image in self.regions:
+                                face.flags=(face.flags|Prim.PANEL)&~Prim.ALPHA
+                                face.region=f.image
+                            elif f.image and 'panel.' in f.image.name.lower():
+                                face.flags|=Prim.PANEL
+
+                        if not self.iscockpit and object.Layer&1 and not mode&Mesh.FaceModes.DYNAMIC:
                             face.surface=surface
                             harderr.append(f)
 
@@ -920,9 +943,14 @@ class OBJexport8:
                 if not mode&Mesh.FaceModes.TILES or self.iscockpit:
                     face.flags|=Prim.NPOLY
                     
-                if self.iscockpit and mode&Mesh.FaceModes.TEX and f.image and 'panel.' in f.image.name.lower():
-                    face.flags|=Prim.PANEL
-                elif object.Layer&1 and not (mode&Mesh.FaceModes.DYNAMIC or self.iscockpit):
+                if self.iscockpit and mode&Mesh.FaceModes.TEX:
+                    if f.image in self.regions:
+                        face.flags=(face.flags|Prim.PANEL)&~Prim.ALPHA
+                        face.region=f.image
+                    elif f.image and 'panel.' in f.image.name.lower():
+                        face.flags|=Prim.PANEL
+
+                if not self.iscockpit and object.Layer&1 and not mode&Mesh.FaceModes.DYNAMIC:
                     face.surface=surface
                     harderr.append(f)
 
@@ -1046,7 +1074,7 @@ class OBJexport8:
 
 
     #------------------------------------------------------------------------
-    def updateAttr(self, layer, group, anim, surface=None, mat=None, twoside=None, npoly=None, panel=None, alpha=None):
+    def updateAttr(self, layer, group, anim, region=None, surface=None, mat=None, twoside=None, npoly=None, panel=None, alpha=None):
         # Write in sort order for readability
 
         if layer!=self.layer:
@@ -1060,6 +1088,7 @@ class OBJexport8:
             self.twoside=False
             self.npoly=True
             self.panel=False
+            self.region=None
             self.alpha=False
             self.group=None
                 
@@ -1111,9 +1140,12 @@ class OBJexport8:
         if panel!=None:
             if self.panel and not panel:
                 self.file.write("%sATTR_no_cockpit\n" % self.anim.ins())
+            elif region!=self.region:
+                self.file.write("%sATTR_cockpit_region\t%d\n" % (self.anim.ins(), self.regions.keys().index(region)))
             elif panel and not self.panel:
                 self.file.write("%sATTR_cockpit\n" % self.anim.ins())
             self.panel=panel
+            self.region=region
 
         for i in newa[len(olda):]:
             self.file.write("%sANIM_begin\n" % self.anim.ins())

@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.04"
+__version__ = "3.05"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -29,22 +29,26 @@ Limitations:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.0:
+#   Attribution-Noncommercial-Share Alike 3.0:
 #
 #   You are free:
-#     * to copy, distribute, display, and perform the work
-#     * to make derivative works
-#     * to make commercial use of the work
+#    * to Share - to copy, distribute and transmit the work
+#    * to Remix - to adapt the work
+#
 #   Under the following conditions:
-#     * Attribution: You must give the original author credit.
-#     * Share Alike: If you alter, transform, or build upon this work, you
-#       may distribute the resulting work only under a license identical to
-#       this one.
-#   For any reuse or distribution, you must make clear to others the license
-#   terms of this work.
+#    * Attribution. You must attribute the work in the manner specified
+#      by the author or licensor (but not in any way that suggests that
+#      they endorse you or your use of the work).
+#    * Noncommercial. You may not use this work for commercial purposes.
+#    * Share Alike. If you alter, transform, or build upon this work,
+#      you may distribute the resulting work only under the same or
+#      similar license to this one.
+#
+#   For any reuse or distribution, you must make clear to others the
+#   license terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.0/legalcode
+#   http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 #
 # 2004-02-01 v1.00
@@ -215,12 +219,15 @@ Limitations:<br>
 # 2007-12-11 v3.04
 #  - Support for cockpit panel regions.
 #
+# 2007-12-21 v3.05
+#  - Actually creates cockpit panel regions.
+#
 
 import sys
 import Blender
 from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Texture, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, Vector
-from XPlaneUtils import Vertex, UV, Face, getDatarefs
+from XPlaneUtils import Vertex, UV, Face, PanelRegionHandler, getDatarefs
 from os import listdir
 from os.path import abspath, basename, curdir, dirname, join, normpath, sep, splitdrive
 #import time
@@ -354,7 +361,10 @@ class MyMesh:
             if not face: continue
 
             if f.flags&Face.PANEL:
-                face.image = objimport.panelimage
+                if f.region==None:
+                    face.image = objimport.panelimage
+                else:
+                    face.image = objimport.regions[f.region]
             else:
                 face.image = image
                             
@@ -721,7 +731,17 @@ class OBJimport:
             # v8
             
             elif t=='COCKPIT_REGION':
-                self.regions.append([self.getFloat() for i in range(4)])
+                if not self.panelimage:
+                    # first region
+                    self.getpanel()
+                    h=PanelRegionHandler().New(self.panelimage)
+                else:
+                    h=PanelRegionHandler()
+                xoff=self.getInt()
+                yoff=self.getInt()
+                width=self.getInt()-xoff
+                height=self.getInt()-xoff
+                self.regions.append(h.addRegion(xoff, yoff, width, height))
                 
             elif t=='VT':
                 v=self.getVertex()
@@ -989,32 +1009,19 @@ class OBJimport:
             elif t=='ATTR_no_hard':
                 self.hard = False
 
-            elif t in ['ATTR_cockpit','ATTR_cockpit_region']:
+            elif t =='ATTR_cockpit':
+                if not self.panelimage:
+                    # first region
+                    self.getpanel()
+                    h=PanelRegionHandler()
+                    if h: h.New(self.panelimage)	# zap exisiting regions
                 self.panel = True
-                if not self.panelimage:
-                    d=dirname(self.filename)
-                    for c in listdir(d):
-                        if c.lower()=='cockpit':
-                            for p in listdir(join(d,c)):
-                                if p.lower()=='-panels-':
-                                    for ext in ['.dds','.png','.bmp']:
-                                        for tex in listdir(join(d,c,p)):
-                                            if tex.lower()=='panel'+ext:
-                                                try:
-                                                    self.panelimage=Image.Load(join(d,c,p,tex))
-                                                    self.panelimage.getSize()	# force load
-                                                    break
-                                                except:
-                                                    pass
-                                    break
-                            break
-                if not self.panelimage:
-                    raise ParseError(ParseError.PANEL)
-                if t=='ATTR_cockpit_region':
-                    [x1,y1,x2,y2]=self.regions[int(self.getFloat())]
-                    self.curregion=(x1/self.panelimage.size[0], y1/self.panelimage.size[1], (x2-x1)/self.panelimage.size[0], (y2-y1)/self.panelimage.size[1])
-                else:
-                    self.curregion=None
+                self.getpanel()
+                self.curregion=None
+            elif t =='ATTR_cockpit_region':
+                self.panel = True
+                self.getpanel()
+                self.curregion=int(self.getFloat())
             elif t=='ATTR_no_cockpit':
                 self.panel = False
                 self.curregion=None
@@ -1711,8 +1718,9 @@ class OBJimport:
             flags |= Face.NPOLY
         if self.panel:
             flags |= Face.PANEL
-            if self.curregion:
-                (xoff,yoff,xscale,yscale)=self.curregion
+            region=self.curregion
+        else:
+            region=None
         if self.alpha:
             flags |= Face.ALPHA
 
@@ -1729,26 +1737,18 @@ class OBJimport:
             (vj,uvj,n2)=self.vt[self.idx[i+2]]
             v=[vj.totuple()]
             face.addVertex(vj)
-            if self.curregion:
-                face.addUV(UV(xoff+uvj.s*xscale, yoff+uvj.t*yscale))
-            else:
-                face.addUV(uvj)
+            face.addUV(uvj)
             (vj,uvj,n1)=self.vt[self.idx[i+1]]
             v.append(vj.totuple())
             face.addVertex(vj)
-            if self.curregion:
-                face.addUV(UV(xoff+uvj.s*xscale, yoff+uvj.t*yscale))
-            else:
-                face.addUV(uvj)
+            face.addUV(uvj)
             (vj,uvj,n0)=self.vt[self.idx[i]]
             v.append(vj.totuple())
             face.addVertex(vj)
-            if self.curregion:
-                face.addUV(UV(xoff+uvj.s*xscale, yoff+uvj.t*yscale))
-            else:
-                face.addUV(uvj)
+            face.addUV(uvj)
 
             face.flags=flags
+            face.region=region
             if not self.flat and n0.equals(n1) and n1.equals(n2):
                 # Should check that vertex normals equal plane
                 # normal, but unlikely that won't be true.
@@ -1857,6 +1857,28 @@ class OBJimport:
                     return True
         self.armob.addProperty(name, value)
         return True
+
+    #------------------------------------------------------------------------
+    def getpanel(self):
+        if self.panelimage: return
+        d=dirname(self.filename)
+        for c in listdir(d):
+            if c.lower()=='cockpit':
+                for p in listdir(join(d,c)):
+                    if p.lower()=='-panels-':
+                        for ext in ['.dds','.png','.bmp']:
+                            for tex in listdir(join(d,c,p)):
+                                if tex.lower()=='panel'+ext:
+                                    try:
+                                        self.panelimage=Image.Load(join(d,c,p,tex))
+                                        self.panelimage.getSize()	# force load
+                                        break
+                                    except:
+                                        pass
+                        break
+                break
+        if not self.panelimage:
+            raise ParseError(ParseError.PANEL)
             
 
 #------------------------------------------------------------------------

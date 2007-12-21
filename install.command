@@ -39,6 +39,7 @@ XPlaneImport.py
 XPlaneImport.pyc
 XPlaneImportPlane.py
 XPlaneImportBodies.py
+XPlanePanelRegions.py
 XPlaneUtils.py
 XPlaneUtils.pyc
 XPlaneACF.py
@@ -68,6 +69,7 @@ XPlaneExport8.py
 XPlaneExportCSL.py
 XPlaneImport.py
 XPlaneImportPlane.py
+XPlanePanelRegions.py
 XPlaneUtils.py
 XPlane2Blender.html
 DataRefs.txt"
