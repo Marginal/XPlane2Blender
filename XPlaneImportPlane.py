@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.04"
+__version__ = "3.05"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -28,9 +28,9 @@ Limitations:<br>
 """
 
 #------------------------------------------------------------------------
-# X-Plane importer for blender 2.34 or above
+# X-Plane importer for blender 2.43 or above
 #
-# Copyright (c) 2004,2005,2006 Jonathan Harris
+# Copyright (c) 2004,2005,2006,2007 Jonathan Harris
 # 
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
@@ -38,22 +38,26 @@ Limitations:<br>
 # See XPlane2Blender.html for usage.
 #
 # This software is licensed under a Creative Commons License
-#   Attribution-ShareAlike 2.5:
+#   Attribution-Noncommercial-Share Alike 3.0:
 #
 #   You are free:
-#     * to copy, distribute, display, and perform the work
-#     * to make derivative works
-#     * to make commercial use of the work
+#    * to Share - to copy, distribute and transmit the work
+#    * to Remix - to adapt the work
+#
 #   Under the following conditions:
-#     * Attribution: You must give the original author credit.
-#     * Share Alike: If you alter, transform, or build upon this work, you
-#       may distribute the resulting work only under a license identical to
-#       this one.
-#   For any reuse or distribution, you must make clear to others the license
-#   terms of this work.
+#    * Attribution. You must attribute the work in the manner specified
+#      by the author or licensor (but not in any way that suggests that
+#      they endorse you or your use of the work).
+#    * Noncommercial. You may not use this work for commercial purposes.
+#    * Share Alike. If you alter, transform, or build upon this work,
+#      you may distribute the resulting work only under the same or
+#      similar license to this one.
+#
+#   For any reuse or distribution, you must make clear to others the
+#   license terms of this work.
 #
 # This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-sa/2.5/legalcode
+#   http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 #
 # 2004-02-01 v1.00
