@@ -1016,10 +1016,12 @@ class OBJimport:
                 self.hard = True
                 self.deck = False
                 self.surface = self.getInput(True)
+                if self.surface=='object': self.surface=None
             elif t=='ATTR_hard_deck':
                 self.hard = True
                 self.deck = True
                 self.surface = self.getInput(True)
+                if self.surface=='object': self.surface=None
             elif t=='ATTR_no_hard':
                 self.hard = False
                 self.deck = None

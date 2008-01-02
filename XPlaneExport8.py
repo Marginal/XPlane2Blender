@@ -474,7 +474,7 @@ class OBJexport8:
                         self.drawgroup=(prop.name.strip()[6:], int(prop.data))
                         if not self.drawgroup[0] in ['terrain', 'beaches', 'shoulders', 'taxiways', 'runways', 'markings', 'airports', 'roads', 'objects', 'light_objects', 'cars']:
                             raise ExportError('Invalid drawing group "%s" in "%s"' % (self.drawgroup[0], object.name), [object])
-                    elif prop.type in ['INT', 'FLOAT', 'STRING'] and prop.name.strip()=='slung_load_weight':
+                    elif prop.type in ['INT', 'FLOAT'] and prop.name.strip()=='slung_load_weight':
                         self.slung=prop.data
             #elif objType not in ['Camera','Lattice']:
             #    print 'Warn:\tIgnoring %s "%s"' % (objType.lower(),object.name)
@@ -1256,12 +1256,12 @@ class OBJexport8:
                     thing='\t'+surface
                 else:
                     thing=''
-                if hardness==Prim.HARD:
+                if hardness:
                     if surface:
                         self.file.write("%sATTR_hard\t%s\n" % (self.anim.ins(), surface))
                     else:
                         self.file.write("%sATTR_hard\n" % self.anim.ins())
-                elif hardness==Prim.DECK:
+                if hardness==Prim.DECK:
                     if surface:
                         self.file.write("%sATTR_hard_deck\t%s\n" % (self.anim.ins(), surface))
                     else:
