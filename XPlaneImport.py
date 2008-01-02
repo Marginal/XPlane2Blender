@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.05"
+__version__ = "3.06"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -222,6 +222,9 @@ Limitations:<br>
 # 2007-12-21 v3.05
 #  - Actually creates cockpit panel regions.
 #
+# 2000-01-02 v3.06
+#  - Support for ATTR_hard_deck.
+#
 
 import sys
 import Blender
@@ -276,9 +279,10 @@ class MyMesh:
     # Flags
     LAYERMASK=7
 
-    def __init__(self, faces=[], surface=None, layers=1, anim=None, mat=None):
+    def __init__(self, faces=[], surface=None, deck=None, layers=1, anim=None, mat=None):
         self.faces=[]
         self.surface=surface	# Hard surface type or None
+        self.deck=deck		# Hard surface deck type or None
         self.layers=layers	# LOD
         self.anim=anim		# (armob,offset,bonename)
         self.mat=mat
@@ -406,6 +410,8 @@ class MyMesh:
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
         if self.surface:
             ob.addProperty('surface', self.surface)
+        if self.deck:
+            ob.addProperty('deck', True, 'BOOL')
         if self.layers&MyMesh.LAYERMASK:
             ob.Layer=(self.layers&MyMesh.LAYERMASK)
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
@@ -487,6 +493,8 @@ class OBJimport:
         
         # attributes
         self.hard=False
+        self.deck=None
+        self.surface=None
         self.twoside=False
         self.flat=False		# >=7.30 defaults to smoothed
         self.alpha=False
@@ -1005,9 +1013,17 @@ class OBJimport:
                     self.armob.addProperty(dataref[-1]+'_hide_v2', v2)
 
             elif t=='ATTR_hard':
-                self.hard = self.getInput(True) or True
+                self.hard = True
+                self.deck = False
+                self.surface = self.getInput(True)
+            elif t=='ATTR_hard_deck':
+                self.hard = True
+                self.deck = True
+                self.surface = self.getInput(True)
             elif t=='ATTR_no_hard':
                 self.hard = False
+                self.deck = None
+                self.surface = None
 
             elif t =='ATTR_cockpit':
                 if not self.panelimage:
@@ -1600,11 +1616,6 @@ class OBJimport:
         if self.alpha:
             flags |= Face.ALPHA
 
-        if isinstance(self.hard, str):
-            surface=self.hard
-        else:
-            surface=None
-
         faces=[]
         for f in range(1,nv-1):
             face=Face()
@@ -1621,12 +1632,12 @@ class OBJimport:
 
         if faces:
             if self.armob:
-                self.addToMesh(scene,faces,surface,
+                self.addToMesh(scene,faces,self.surface,self.deck,
                                OBJimport.LAYER[self.layer],
                                (self.armob,self.off[-1],self.bones[-1]),
                                self.mat)
             else:
-                self.addToMesh(scene,faces,surface,
+                self.addToMesh(scene,faces,self.surface,self.deck,
                                OBJimport.LAYER[self.layer],
                                None, self.mat, makenewmesh)
             self.nprim+=1
@@ -1654,11 +1665,6 @@ class OBJimport:
             flags |= Face.PANEL
         if self.alpha:
             flags |= Face.ALPHA
-
-        if isinstance(self.hard, str):
-            surface=self.hard
-        else:
-            surface=None
 
         n=len(vorder)	# 3 or 4 vertices
         faces=[]
@@ -1692,12 +1698,12 @@ class OBJimport:
 
         if faces:
             if self.armob:
-                self.addToMesh(scene,faces,surface,
+                self.addToMesh(scene,faces,self.surface,self.deck,
                                OBJimport.LAYER[self.layer],
                                (self.armob,self.off[-1],self.bones[-1]),
                                self.mat)
             else:
-                self.addToMesh(scene,faces,surface,
+                self.addToMesh(scene,faces,self.surface,self.deck,
                                OBJimport.LAYER[self.layer],
                                None, self.mat)
             self.nprim+=1
@@ -1723,11 +1729,6 @@ class OBJimport:
             region=None
         if self.alpha:
             flags |= Face.ALPHA
-
-        if isinstance(self.hard, str):
-            surface=self.hard
-        else:
-            surface=None
 
         facelookup={}        # detect back-to-back duplicate faces
         faces=[]
@@ -1758,12 +1759,12 @@ class OBJimport:
                 # back-to-back duplicate - add existing
                 #print "dupe", face, v
                 if self.armob:
-                    self.addToMesh(scene,faces,surface,
+                    self.addToMesh(scene,faces,self.surface,self.deck,
                                    OBJimport.LAYER[self.layer],
                                    (self.armob,self.off[-1],self.bones[-1]),
                                    self.mat, True)
                 else:
-                    self.addToMesh(scene,faces,surface,
+                    self.addToMesh(scene,faces,self.surface,self.deck,
                                    OBJimport.LAYER[self.layer],
                                    None, self.mat, True)
                 # Start new mesh
@@ -1776,19 +1777,19 @@ class OBJimport:
 
         if faces:
             if self.armob:
-                self.addToMesh(scene,faces,surface,
+                self.addToMesh(scene,faces,self.surface,self.deck,
                                OBJimport.LAYER[self.layer],
                                (self.armob,self.off[-1],self.bones[-1]),
                                self.mat, True)
             else:
-                self.addToMesh(scene,faces,surface,
+                self.addToMesh(scene,faces,self.surface,self.deck,
                                OBJimport.LAYER[self.layer],
                                None, self.mat, True)
         self.nprim+=b/3
 
     #------------------------------------------------------------------------
     # add faces to existing or new mesh
-    def addToMesh (self,scene,faces,surface,layers,anim,mat,makenewmesh=False):
+    def addToMesh (self,scene,faces,surface,deck,layers,anim,mat,makenewmesh=False):
         # New faces are added to the existing mesh if existing and new faces
         # have the same flags.
         if self.curmesh:
@@ -1796,17 +1797,18 @@ class OBJimport:
             if (self.merge>=2 or
                 (not makenewmesh and
                  curmesh.layers==layers and
-                 (curmesh.surface==surface or
-                  not (curmesh.surface and surface)) and
+                 (curmesh.surface==surface or curmesh.surface==None or surface==None) and
+                 (curmesh.deck==deck or curmesh.deck==None or deck==None) and
                  curmesh.anim==anim and
                  curmesh.mat==mat and
                  not curmesh.isduplicate(faces))):
                 curmesh.addFaces(faces)
                 if surface: curmesh.surface=surface
+                if deck!=None: curmesh.deck=deck
                 return
 
         # new mesh required
-        self.curmesh.append(MyMesh(faces, surface, layers, anim, mat))
+        self.curmesh.append(MyMesh(faces, surface, deck, layers, anim, mat))
 
     #------------------------------------------------------------------------
     def addpendingbone(self):

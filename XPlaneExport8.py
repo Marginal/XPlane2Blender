@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.05"
+__version__ = "3.06"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -154,9 +154,12 @@ Limitations:<br>
 # 2007-12-11 v3.04
 #  - On animation error, highlight the child object.
 #  - All dataref values default to 1 (other than first).
-
+#
 # 2007-12-21 v3.05
 #  - Support for cockpit panel regions.
+#
+# 2000-01-02 v3.06
+#  - Support for ATTR_hard_deck.
 #
 
 
@@ -276,15 +279,17 @@ class SMOKE:
 
 class Prim:
     # Flags in sort order
-    TWOSIDE=1
-    PANEL=2	# Should be 2nd last
-    ALPHA=4	# Must be last
-    NPOLY=8
+    HARD=1
+    DECK=2
+    TWOSIDE=4
+    PANEL=8	# Should be 2nd last
+    ALPHA=16	# Must be last
+    NPOLY=32
 
-    SURFACES=[False, True, 'water', 'concrete', 'asphalt', 'grass', 'dirt', 'gravel', 'lakebed', 'snow', 'shoulder', 'blastpad']	# default is first
+    SURFACES=[None, 'water', 'concrete', 'asphalt', 'grass', 'dirt', 'gravel', 'lakebed', 'snow', 'shoulder', 'blastpad']
 
     # surface comes here
-    BUCKET1=TWOSIDE
+    BUCKET1=HARD|DECK|TWOSIDE
     # material comes here
     # anim comes here
     BUCKET2=PANEL|ALPHA|NPOLY
@@ -340,7 +345,8 @@ class OBJexport8:
         self.log=[]
 
         # attributes controlling export
-        self.surface=False
+        self.hardness=0
+        self.surface=None
         self.mat=DEFMAT
         self.twoside=False
         self.npoly=True
@@ -434,7 +440,7 @@ class OBJexport8:
 
         # Speed optimisation
         if self.iscockpit:
-            surfaces=[False]
+            surfaces=[None]
         else:
             surfaces=Prim.SURFACES
         regionimages=[None]+self.regions.keys()
@@ -480,9 +486,11 @@ class OBJexport8:
         counts=[]
         progress=0.0
         for layer in lseq:
-            # Hack!: Can't have hard tris outside layer 1
             if layer==2:
-                for tri in self.tris: tri.surface=False
+                # Hack!: Can't have hard tris outside layer 1
+                for tri in self.tris:
+                    tri.flags&=(~(Prim.HARD|Prim.DECK))
+                    tri.surface=None
             tris1=[tri for tri in self.tris if tri.layer&layer]
             for group in [None]+self.groups:
                 tris2=[tri for tri in tris1 if tri.group==group]
@@ -498,12 +506,14 @@ class OBJexport8:
                             tris4=[tri for tri in tris3 if tri.mat==mat]
                             for passno in range(passhi,passhi+Prim.BUCKET1+1):
                                 tris5=[tri for tri in tris4 if tri.flags==passno]
+                                print passno, tris5
                                 for region in regionimages:
                                     tris6=[tri for tri in tris5 if tri.region==region]
                                     for surface in surfaces:
                                         index=[]
                                         offsets.append(len(indices))
                                         for tri in tris6:
+                                            print tri, tri.surface
                                             if tri.surface==surface:
                                                 index.append(tri.i[0])
                                                 index.append(tri.i[1])
@@ -582,6 +592,7 @@ class OBJexport8:
                                         if counts[n]:
                                             self.updateAttr(layer, group, anim,
                                                             region, surface, mat,
+                                                            passno&(Prim.HARD|Prim.DECK),
                                                             passno&Prim.TWOSIDE,
                                                             passno&Prim.NPOLY,
                                                             passno&Prim.PANEL,
@@ -793,18 +804,18 @@ class OBJexport8:
             print 'Mesh "%s" %s faces' % (object.name, len(mesh.faces))
 
         group=self.findgroup(object)
-        if self.iscockpit:
-            surface=False
-        else:
+        hardness=Prim.HARD
+        surface=None
+        if not self.iscockpit:
             for prop in object.getAllProperties():
-                if prop.name.strip()=='surface':
+                if prop.name.strip().lower()=='surface':
                     if str(prop.data).strip() in Prim.SURFACES:
                         surface=prop.data.strip()
-                        break
                     else:
                         raise ExportError('Invalid surface "%s" for face in mesh "%s"' % (prop.data, object.name), [object])
-            else:
-                surface=True
+                elif prop.name.strip().lower()=='deck' and prop.data:
+                    print prop, prop.name, prop.data
+                    hardness=Prim.DECK
 
         # Optimisation: Children of animations might be dupes. This test only
         # looks for exact duplicates, but this can reduce vertex count by ~10%.
@@ -864,7 +875,7 @@ class OBJexport8:
                             if not mat in self.mats: self.mats.append(mat)
                         else:
                             mat=DEFMAT
-                        face=Prim(object.Layer, group, 0, False, mat, anim)
+                        face=Prim(object.Layer, group, 0, None, mat, anim)
            
                         if mode & Mesh.FaceModes.TEX:
                             if len(f.uv)!=n:
@@ -887,6 +898,7 @@ class OBJexport8:
                                 face.flags|=Prim.PANEL
 
                         if not self.iscockpit and object.Layer&1 and not mode&Mesh.FaceModes.DYNAMIC:
+                            face.flags|=hardness
                             face.surface=surface
                             harderr.append(f)
 
@@ -928,7 +940,7 @@ class OBJexport8:
                     if not mat in self.mats: self.mats.append(mat)
                 else:
                     mat=DEFMAT
-                face=Prim(object.Layer, group, 0, False, mat, anim)
+                face=Prim(object.Layer, group, 0, None, mat, anim)
    
                 if mode & Mesh.FaceModes.TEX:
                     if len(f.uv)!=n:
@@ -951,6 +963,7 @@ class OBJexport8:
                         face.flags|=Prim.PANEL
 
                 if not self.iscockpit and object.Layer&1 and not mode&Mesh.FaceModes.DYNAMIC:
+                    face.flags|=hardness
                     face.surface=surface
                     harderr.append(f)
 
@@ -1074,7 +1087,7 @@ class OBJexport8:
 
 
     #------------------------------------------------------------------------
-    def updateAttr(self, layer, group, anim, region=None, surface=None, mat=None, twoside=None, npoly=None, panel=None, alpha=None):
+    def updateAttr(self, layer, group, anim, region=None, surface=None, mat=None, hardness=None, twoside=None, npoly=None, panel=None, alpha=None):
         # Write in sort order for readability
 
         if layer!=self.layer:
@@ -1083,7 +1096,7 @@ class OBJexport8:
                 self.anim=self.anim.anim
                 self.file.write("%sANIM_end\n" % self.anim.ins())
 
-            self.surface=False
+            self.surface=None
             self.mat=DEFMAT
             self.twoside=False
             self.npoly=True
@@ -1214,13 +1227,6 @@ class OBJexport8:
                             self.anim.ins(), self.anim.loop))
                     self.file.write("%sANIM_rotate_end\n" % self.anim.ins())
 
-        if twoside!=None:
-            if self.twoside and not twoside:
-                self.file.write("%sATTR_cull\n" % self.anim.ins())
-            elif twoside and not self.twoside:
-                self.file.write("%sATTR_no_cull\n" % self.anim.ins())
-            self.twoside=twoside
-
         if mat!=None:
             if self.mat!=mat and mat==DEFMAT:
                 self.file.write("%sATTR_reset\n" % self.anim.ins())
@@ -1234,15 +1240,34 @@ class OBJexport8:
                     self.file.write("%sATTR_shiny_rat\t%6.3f\n" % (self.anim.ins(), mat[2]))
             self.mat=mat
 
-        if surface!=None:
-            if self.surface and not surface:
+        if twoside!=None:
+            if self.twoside and not twoside:
+                self.file.write("%sATTR_cull\n" % self.anim.ins())
+            elif twoside and not self.twoside:
+                self.file.write("%sATTR_no_cull\n" % self.anim.ins())
+            self.twoside=twoside
+
+        if hardness!=None:
+            if self.hardness and not hardness:
                 self.file.write("%sATTR_no_hard\n" % self.anim.ins())
-            elif surface and self.surface!=surface:
-                if surface==True:
-                    self.file.write("%sATTR_hard\n" % self.anim.ins())
+                self.surface=None
+            elif self.hardness!=hardness or self.surface!=surface:
+                if surface:
+                    thing='\t'+surface
                 else:
-                    self.file.write("%sATTR_hard\t%s\n" % (self.anim.ins(), surface))
-            self.surface=surface
+                    thing=''
+                if hardness==Prim.HARD:
+                    if surface:
+                        self.file.write("%sATTR_hard\t%s\n" % (self.anim.ins(), surface))
+                    else:
+                        self.file.write("%sATTR_hard\n" % self.anim.ins())
+                elif hardness==Prim.DECK:
+                    if surface:
+                        self.file.write("%sATTR_hard_deck\t%s\n" % (self.anim.ins(), surface))
+                    else:
+                        self.file.write("%sATTR_hard_deck\n" % self.anim.ins())
+                self.surface=surface
+            self.hardness=hardness
 
 
 #------------------------------------------------------------------------
