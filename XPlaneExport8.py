@@ -506,14 +506,12 @@ class OBJexport8:
                             tris4=[tri for tri in tris3 if tri.mat==mat]
                             for passno in range(passhi,passhi+Prim.BUCKET1+1):
                                 tris5=[tri for tri in tris4 if tri.flags==passno]
-                                print passno, tris5
                                 for region in regionimages:
                                     tris6=[tri for tri in tris5 if tri.region==region]
                                     for surface in surfaces:
                                         index=[]
                                         offsets.append(len(indices))
                                         for tri in tris6:
-                                            print tri, tri.surface
                                             if tri.surface==surface:
                                                 index.append(tri.i[0])
                                                 index.append(tri.i[1])
