@@ -1,14 +1,14 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane Animation'
-Blender: 243
+Blender: 245
 Group: 'Object'
 Tooltip: 'Edit X-Plane animation'
 """
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.05"
+__version__ = "3.06"
 __bpydoc__ = """\
 Edit X-Plane animation properties.
 """

@@ -1,7 +1,7 @@
 #!BPY
 """ Registration info for Blender menus:
 Name: 'X-Plane v8/v9 Object (.obj)'
-Blender: 243
+Blender: 245
 Group: 'Export'
 Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 """
