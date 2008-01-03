@@ -1,2 +1,5 @@
+ATTR_hard_deck [surface]
+fixes for Blender 2.43
+
 importplane: skip v9 invisible bodies
 detect misc objects? (no panel texture)

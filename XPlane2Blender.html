@@ -38,7 +38,7 @@ airplanes into Blender.</p>
 
 <h3>Requirements</h3>
 <p>Runs on Windows 98 or later, Mac OS 10.3.9 or later, and Linux.</p>
-<p>Requires Blender 2.43 or later:</p>
+<p>Requires Blender 2.45 or later:</p>
 <table style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
@@ -513,7 +513,7 @@ the light that you want to use.</li>
       <li>On the <samp>Map Image</samp> panel press the <samp>UseAlpha</samp> button.<br>
 Use the <samp>MinX</samp>, <samp>MinX</samp>, <samp>MaxX</samp>, <samp>MaxY</samp> settings to select a subset of the texture.</li>
     </ul>
-To drive the custom light using a dataref add a <a href="#properties">property</a> named <code>name</code>, and give it a String value.
+To drive the custom light using a dataref add a String <a href="#properties">property</a> named <code>name</code>.
   </li>
 </ul>
 <h4><a name="Meshes"></a>Meshes</h4>
@@ -558,16 +558,22 @@ objects that use polygon offsetting are listed first in your <code>.env</code>
 or <code>.dsf</code> scenery file.<br>
       <samp style="font-weight: bold;">v7: </samp>"polygon offsetting" does not produce reliable results in X-Plane versions prior to 8.20.<br>
       <samp style="font-weight: bold;">csl: </samp>This button has no effect when exporting CSL objects.</li>
-      <li><samp>Collision</samp> button indicates
-that the face is <u>not</u> "hard" (ie not "landable on")
-in X-Plane. Making faces hard is very expensive, so this button should
-normally be pressed. Unpress this button only for things like
-helicopter landing pads.<br>
+      <li><samp>Collision</samp> button indicates that the face is <u>not</u>
+"hard" (ie not "landable on") in X-Plane.
+Making faces hard is very expensive, so this button should normally be pressed.
+Unpress this button only for things like helicopter landing pads.<br>
 <small>(Note: The meaning of this button was changed in v1.50.
 Use <a href="http://marginal.org.uk/x-planescenery/collide.txt">this</a>
 script to turn the Collision button back on for all faces).</small><br>
+      <samp style="font-weight: bold;">v9: </samp>You can control whether it is
+possible to fly under this hard face; add a Bool
+<a href="#properties">property</a> named <code>deck</code> and give it the
+value <code>True</code>.
+You can't fly under hard faces in X-Plane v8.<br>
       <samp style="font-weight: bold;">v8/v9: </samp>You can specify
-the type of hard surface. Add a <a href="#properties">property</a> named <code>surface</code> and give it the value <code>water</code>, <code>concrete</code>, <code>asphalt</code>, <code>grass</code>, <code>dirt</code>, <code>gravel</code>, <code>lakebed</code>, <code>snow</code>, <code>shoulder</code> or <code>blastpad</code>. The surface type is ignored by X-Plane versions prior to 8.50.<br>
+the surface type; add a String <a href="#properties">property</a>
+named <code>surface</code> and give it the value<code> water</code>, <code>concrete</code>, <code>asphalt</code>, <code>grass</code>, <code>dirt</code>, <code>gravel</code>, <code>lakebed</code>, <code>snow</code>, <code>shoulder</code> or <code>blastpad</code>.
+The surface type is ignored by X-Plane versions prior to 8.50.<br>
       <samp style="font-weight: bold;">v7: </samp>Only faces with
 4 edges (ie "<code>quads</code>") are exported as "hard".<br>
       <samp style="font-weight: bold;">v7: </samp>X-Plane
