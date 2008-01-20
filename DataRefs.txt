@@ -1,4 +1,4 @@
-2 900 Tue Dec 11 19:39:02 2007
+2 900 Mon Jan  7 19:15:08 2008
 
 sim/aircraft/acf_struct	int[10]	n	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
@@ -221,8 +221,8 @@ sim/aircraft/controls/acf_sbrk_crat	float	y
 sim/aircraft/controls/acf_sbrk_up	float	y
 sim/aircraft/controls/acf_flap_crat	float	y
 sim/aircraft/controls/acf_flap2_crat	float	y
-sim/aircraft/controls/acf_flap_dn	float[8]	y
-sim/aircraft/controls/acf_flap2_dn	float[8]	y
+sim/aircraft/controls/acf_flap_dn	float[10]	y
+sim/aircraft/controls/acf_flap2_dn	float[10]	y
 sim/aircraft/controls/acf_hstb_trim_up	float	y
 sim/aircraft/controls/acf_hstb_trim_dn	float	y
 sim/aircraft/controls/acf_flap_type	float	y
@@ -1609,6 +1609,8 @@ sim/graphics/settings/transparent_panel	int	y	boolean	Is the panel transparent?
 sim/graphics/settings/draw_planes_on_ground	int	y	boolean	draw extra planes on the ground at airports?
 sim/graphics/settings/allow_sloped_runways	int	n	boolean	allow sloped runways?
 sim/graphics/view/view_type	int	n	enum	The current camera view
+sim/graphics/view/panel_render_type	int	n	enum	How to draw the panel?  0=2-d panel, 1=3-d, non-lit, 2=3-d, lit
+sim/graphics/view/world_render_type	int	n	enum	What kind of 3-d rendering pass are we on? 0=normal,1=reflections in water
 sim/graphics/view/view_is_external	int	n	boolean	Is the view in the cockpit or outside?  Affects sound!
 sim/graphics/view/view_x	float	n	OGLcoords	The location of the camera, X coordinate (OpenGL)
 sim/graphics/view/view_y	float	n	OGLcoords	The location of the camera, Y coordinate (OpenGL)
@@ -2784,71 +2786,71 @@ sim/weapons/weapon_count	int	n	int	This is the number of weapons available via d
 sim/weapons/wpn_struct	int[25]	n	Pointers	Pointers to the raw weapon structs.
 sim/weapons/type	int[25]	y	???	For the geometry we scan right into the acf structure unused array-spaces.
 sim/weapons/free_flyer	int[25]	y	???	Weapon can go fly free... rocket or bomb
-sim/weapons/action_mode	int[25]	n	enum	0 = In carriage/still in the gun/reloaded, 1 = firing, and 2 = destroyed 
-sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc. 
+sim/weapons/action_mode	int[25]	n	enum	0 = In carriage/still in the gun/reloaded, 1 = firing, and 2 = destroyed
+sim/weapons/x_wpn_att	float[25]	y	???	This allows us to use our drawing, smoothing, editing, s-t, normal-vector, plotting, etc.
 sim/weapons/y_wpn_att	float[25]	y	???	Code to do the weapons as well as everything else.
-sim/weapons/z_wpn_att	float[25]	y	 		
-sim/weapons/cgY	float[25]	y	 		
-sim/weapons/cgZ	float[25]	y	 		
-sim/weapons/las_range	float[25]	y	 		
-sim/weapons/conv_range	float[25]	y	 		
+sim/weapons/z_wpn_att	float[25]	y
+sim/weapons/cgY	float[25]	y
+sim/weapons/cgZ	float[25]	y
+sim/weapons/las_range	float[25]	y
+sim/weapons/conv_range	float[25]	y
 sim/weapons/bul_rounds_per_sec	float[25]	y
-sim/weapons/bul_rounds	float[25]	y	 		
-sim/weapons/bul_muzzle_speed	float[25]	y	 		
-sim/weapons/bul_area	float[25]	y	 		
+sim/weapons/bul_rounds	float[25]	y
+sim/weapons/bul_muzzle_speed	float[25]	y
+sim/weapons/bul_area	float[25]	y
 sim/weapons/added_mass	float[25]	y	???	Mass in addition to ammo... like the gun itself, and bomb racks.
 sim/weapons/total_weapon_mass_max	float[25]	y	???	Warhead and casing, fuel and tank
 sim/weapons/fuel_warhead_mass_max	float[25]	y	???	Remember we can have drop tanks
 sim/weapons/warhead_type	int[25]	y	???	Conventional or nuke
 sim/weapons/mis_drag_co	float[25]	y
-sim/weapons/mis_drag_chute_S	float[25]	y	 		
+sim/weapons/mis_drag_chute_S	float[25]	y
 sim/weapons/mis_cone_width	float[25]	y	???	For heat or radar-guided, you must keep the target within this cone to track him
-sim/weapons/mis_crat_per_deg_bore	float[25]	y	 		
+sim/weapons/mis_crat_per_deg_bore	float[25]	y
 sim/weapons/mis_crat_per_degpersec_bore	float[25]	y
-sim/weapons/mis_crat_per_degpersec	float[25]	y	 	 
+sim/weapons/mis_crat_per_degpersec	float[25]	y
 sim/weapons/gun_del_psi_deg_max	float[25]	y	???	Aimable guns for c130 spectere, etc
 sim/weapons/gun_del_the_deg_max	float[25]	y	???	Aimable guns for c130 spectere, etc
 sim/weapons/gun_del_psi_deg_now	float[25]	y	???	Aimable guns for c130 spectere, etc
 sim/weapons/gun_del_the_deg_now	float[25]	y	???	Aimable guns for c130 spectere, etc
-sim/weapons/s_frn	float[25]	y	 	 
-sim/weapons/s_sid	float[25]	y	 	 
+sim/weapons/s_frn	float[25]	y
+sim/weapons/s_sid	float[25]	y
 sim/weapons/s_top	float[25]	y	???	Area
-sim/weapons/X_body_aero	float[25]	y	 	 
-sim/weapons/Y_body_aero	float[25]	y	 	 
+sim/weapons/X_body_aero	float[25]	y
+sim/weapons/Y_body_aero	float[25]	y
 sim/weapons/Z_body_aero	float[25]	y	???	Centroid
-sim/weapons/Jxx_unitmass	float[25]	y	 	 
-sim/weapons/Jyy_unitmass	float[25]	y	 	 
+sim/weapons/Jxx_unitmass	float[25]	y
+sim/weapons/Jyy_unitmass	float[25]	y
 sim/weapons/Jzz_unitmass	float[25]	y	???	MI
-sim/weapons/i	int[25]	y	 	 
+sim/weapons/i	int[25]	y
 sim/weapons/j	int[25]	y	???	Keep track for fast ground-elev-finding
 sim/weapons/target_index	int[25]	y	???	Target index
-sim/weapons/targ_lat	float[25]	y	 	 
-sim/weapons/targ_lon	float[25]	y	 	 
+sim/weapons/targ_lat	float[25]	y
+sim/weapons/targ_lon	float[25]	y
 sim/weapons/targ_h	float[25]	y	???	Bomb targets
-sim/weapons/del_psi	float[25]	y	 	 
+sim/weapons/del_psi	float[25]	y
 sim/weapons/del_the	float[25]	y	???	Delta to target, for data output
-sim/weapons/rudd_rat	float[25]	y	 	 
+sim/weapons/rudd_rat	float[25]	y
 sim/weapons/elev_rat	float[25]	y	???	Rudder and elevator steering inputs
-sim/weapons/V_msc	float[25]	y	 	 
-sim/weapons/AV_msc	float[25]	y	 	 
-sim/weapons/dist_targ	float[25]	y	 	 
-sim/weapons/dist_point	float[25]	y	 	 
+sim/weapons/V_msc	float[25]	y
+sim/weapons/AV_msc	float[25]	y
+sim/weapons/dist_targ	float[25]	y
+sim/weapons/dist_point	float[25]	y
 sim/weapons/time_point	float[25]	y	???	Speed and dist to target for data output
-sim/weapons/fx_axis	float[25]	y	 	 
-sim/weapons/fy_axis	float[25]	y	 	 
+sim/weapons/fx_axis	float[25]	y
+sim/weapons/fy_axis	float[25]	y
 sim/weapons/fz_axis	float[25]	y	???	Flight-status
-sim/weapons/vx	float[25]	y	 	 
-sim/weapons/vy	float[25]	y	 	 
-sim/weapons/vz	float[25]	y	 	 
-sim/weapons/x	float[25]	y	 	 
-sim/weapons/y	float[25]	y	 	 
+sim/weapons/vx	float[25]	y
+sim/weapons/vy	float[25]	y
+sim/weapons/vz	float[25]	y
+sim/weapons/x	float[25]	y
+sim/weapons/y	float[25]	y
 sim/weapons/z	float[25]	y	???	Flight-status
-sim/weapons/L	float[25]	y	 	 
-sim/weapons/M	float[25]	y	 	 
-sim/weapons/N	float[25]	y	 	 
-sim/weapons/Prad	float[25]	y	 	 
-sim/weapons/Qrad	float[25]	y	 	 
-sim/weapons/Rrad	float[25]	y	 	 
+sim/weapons/L	float[25]	y
+sim/weapons/M	float[25]	y
+sim/weapons/N	float[25]	y
+sim/weapons/Prad	float[25]	y
+sim/weapons/Qrad	float[25]	y
+sim/weapons/Rrad	float[25]	y
 sim/weapons/the	float[25]	n	Deg	Angle relative to the aircraft
 sim/weapons/psi	float[25]	n	Deg	Angle relative to the aircraft
 sim/weapons/phi	float[25]	n	Deg	Angle relative to the aircraft
@@ -2856,19 +2858,19 @@ sim/weapons/the_con	float[25]	y	Deg	Angle relative to the mounting flight contro
 sim/weapons/psi_con	float[25]	y	Deg	Angle relative to the mounting flight control
 sim/weapons/phi_con	float[25]	y	Deg	Angle relative to the mounting flight control
 sim/weapons/next_bull_time	float[25]	y	???	For guns, this is the next fire time
-sim/weapons/total_weapon_mass_now	float[25]	y	 	 
-sim/weapons/fuel_warhead_mass_now	float[25]	y	 	 
-sim/weapons/impact_time	float[25]	y	 	 
+sim/weapons/total_weapon_mass_now	float[25]	y
+sim/weapons/fuel_warhead_mass_now	float[25]	y
+sim/weapons/impact_time	float[25]	y
 sim/weapons/mis_thrust1	float[25]	y	???	delay
 sim/weapons/mis_thrust2	float[25]	y	???	boost
 sim/weapons/mis_thrust3	float[25]	y	???	sustain
 sim/weapons/mis_duration1	float[25]	y	???	delay
 sim/weapons/mis_duration2	float[25]	y	???	boost
 sim/weapons/mis_duration3	float[25]	y	???	sustain
-sim/weapons/q1	float[25]	y	 		
-sim/weapons/q2	float[25]	y	 		
-sim/weapons/q3	float[25]	y	 		
-sim/weapons/q4	float[25]	y	 		
+sim/weapons/q1	float[25]	y
+sim/weapons/q2	float[25]	y
+sim/weapons/q3	float[25]	y
+sim/weapons/q4	float[25]	y
 sim/weather/cloud_type[0]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Currently there are only 3 cloud layers, 0, 1 or 2. Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
 sim/weather/cloud_type[1]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Currently there are only 3 cloud layers, 0, 1 or 2. Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
 sim/weather/cloud_type[2]	int	y	Cloud enumeration	The type of clouds for this cloud layer.Currently there are only 3 cloud layers, 0, 1 or 2. Cloud types:<p>Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4
@@ -3023,43 +3025,43 @@ sim/cockpit2/electrical/battery_voltage_actual_volts	float[8]	n	volts	Actual bat
 sim/cockpit2/electrical/battery_voltage_indicated_volts	float[8]	n	volts	Indicated battery voltage in, umm, volts? ...The indication may be different than the actual voltage!
 sim/cockpit2/electrical/generator_on	int[8]	y	boolean	Generator turned on, 0 or 1.
 sim/cockpit2/electrical/generator_amps	float[8]	n	amps	Generator amperage.
-sim/cockpit2/electrical/APU_generator_on	int	y	boolean	APU generator is turned on, 0 or 1. 
+sim/cockpit2/electrical/APU_generator_on	int	y	boolean	APU generator is turned on, 0 or 1.
 sim/cockpit2/electrical/APU_generator_amps	float	y	amps	APU generator amperage.
 sim/cockpit2/electrical/APU_starter_switch	int	y	boolean	APU power switch, 0 is off, 1 is on, 2 is start-er-up!
 sim/cockpit2/electrical/APU_N1_percent	float	n	percent	N1 of the APU
 sim/cockpit2/electrical/APU_running	int	n	boolean	APU actually running, 0 or 1.
-sim/cockpit2/engine/actuators/cyclic_elevator_deg	float[engines]	y	degrees          	This is the longitudnal cyclic COMMAND, in degrees. Positive forwards cyclic.
-sim/cockpit2/engine/actuators/cyclic_aileron_deg	float[engines]	y	degrees	This is the lateral cyclic COMMAND, in degrees. Positive right cyclic.
-sim/cockpit2/engine/actuators/throttle_ratio	float[engines]	y	ratio             	Throttle position of the handle itself, from 0.0 (idle) to 1.0 (max normal).
-sim/cockpit2/engine/actuators/prop_rotation_speed_rad_sec	float[engines]	y	radians/second          Prop handle position, in radians per second of requested prop	rpm.
-sim/cockpit2/engine/actuators/mixture_ratio	float[engines]	y	ratio             	Mixture handle position, 0.0 (cutoff) to 1.0 (full rich).
-sim/cockpit2/engine/actuators/carb_heat_ratio	float[engines]	y	ratio             	Carb-heat handle position, 0.0 (none) to 1.0 (full).
-sim/cockpit2/engine/actuators/cowl_flap_ratio	float[engines]	y	ratio             	Cowl-flap handle position, 0.0 (none) to 1.0 (full open).
-sim/cockpit2/engine/actuators/alternate_air_ratio	float[engines]	y	ratio             	Alternate air handle position, 0.0 (off) to 1.0 (on).
-sim/cockpit2/engine/actuators/primer_ratio	float[engines]	y	ratio             	Primer handle position, 0.0 (none) to 1.0 (on).
-sim/cockpit2/engine/actuators/afterburner_enabled	int[engines]	y	boolean             	Afterburner enabled, on or off.
-sim/cockpit2/engine/actuators/igniter_on	int[engines]	y	boolean         	Igniter, on or off.
-sim/cockpit2/engine/actuators/ignition_on	int[engines]	y	boolean             	Ignition, on or off.
-sim/cockpit2/engine/actuators/fadec_on	int[engines]	y	boolean             	Fadec, ok or off.
-sim/cockpit2/engine/actuators/primer_on	int[engines]	y	boolean             	Primer button, on or off.
-sim/cockpit2/engine/actuators/fuel_pump_on	int[engines]	y	boolean             	Fuel pump, on or off.
-sim/cockpit2/engine/actuators/idle_speed	int[engines]	y	boolean             	Idle speed, hi=1 or lo=0.
-sim/cockpit2/engine/actuators/prop_mode	int[engines]	y	enum             	This is the propeller and engine operation mode. It is used for props and jets. Mode 0 is feathered, 1 is normal, 2 is in beta, and reverse (prop or jet) is mode 3.
-sim/cockpit2/engine/actuators/prop_pitch_deg	float[engines]	y	degrees             	This is the REQUESTED pitch of the prop in degrees from its flat-pitch setting.
-sim/cockpit2/engine/indicators/N1_percent	float[engines]	n	percent	N1, %.			
-sim/cockpit2/engine/indicators/N2_percent	float[engines]	n	percent	N2, %.			
-sim/cockpit2/engine/indicators/MPR_in_hg	float[engines]	n	inches_hg	Manifold pressure, inches HG.			
-sim/cockpit2/engine/indicators/EPR_ratio	float[engines]	n	ratio	EPR, ratio.			
-sim/cockpit2/engine/indicators/torque_n_mtr	float[engines]	n	newton_meters	Torque, NM.		
-sim/cockpit2/engine/indicators/fuel_flow_kg_sec	float[engines]	n	kilograms/second	FF, kilograms per second.		
-sim/cockpit2/engine/indicators/ITT_deg_C	float[engines]	n	degrees_C	ITT, deg.			
-sim/cockpit2/engine/indicators/EGT_deg_C	float[engines]	n	degrees_C	EGT, deg.			
-sim/cockpit2/engine/indicators/CHT_deg_C	float[engines]	n	degrees_C	CHT, deg.			
-sim/cockpit2/engine/indicators/fuel_pressure_psi	float[engines]	n	pounds/square_inch	Fuel pressure, psi.			
-sim/cockpit2/engine/indicators/oil_pressure_psi	float[engines]	n	pounds/square_inch	Oil pressure, psi.			
-sim/cockpit2/engine/indicators/oil_temperature_deg_C	float[engines]	n	degrees_C	Oil temp, deg.			
-sim/cockpit2/engine/indicators/oil_quantity_ratio	float[engines]	n	ratio	Oil quantity, 0.0 to 1.0.			
-sim/cockpit2/engine/indicators/power_watts	float[engines]	n	watts	Actual engine power output.
+sim/cockpit2/engine/actuators/cyclic_elevator_deg	float[8]	y	degrees          	This is the longitudnal cyclic COMMAND, in degrees. Positive forwards cyclic.
+sim/cockpit2/engine/actuators/cyclic_aileron_deg	float[8]	y	degrees	This is the lateral cyclic COMMAND, in degrees. Positive right cyclic.
+sim/cockpit2/engine/actuators/throttle_ratio	float[8]	y	ratio             	Throttle position of the handle itself, from 0.0 (idle) to 1.0 (max normal).
+sim/cockpit2/engine/actuators/prop_rotation_speed_rad_sec	float[8]	y	radians/second          Prop handle position, in radians per second of requested prop	rpm.
+sim/cockpit2/engine/actuators/mixture_ratio	float[8]	y	ratio             	Mixture handle position, 0.0 (cutoff) to 1.0 (full rich).
+sim/cockpit2/engine/actuators/carb_heat_ratio	float[8]	y	ratio             	Carb-heat handle position, 0.0 (none) to 1.0 (full).
+sim/cockpit2/engine/actuators/cowl_flap_ratio	float[8]	y	ratio             	Cowl-flap handle position, 0.0 (none) to 1.0 (full open).
+sim/cockpit2/engine/actuators/alternate_air_ratio	float[8]	y	ratio             	Alternate air handle position, 0.0 (off) to 1.0 (on).
+sim/cockpit2/engine/actuators/primer_ratio	float[8]	y	ratio             	Primer handle position, 0.0 (none) to 1.0 (on).
+sim/cockpit2/engine/actuators/afterburner_enabled	int[8]	y	boolean             	Afterburner enabled, on or off.
+sim/cockpit2/engine/actuators/igniter_on	int[8]	y	boolean         	Igniter, on or off.
+sim/cockpit2/engine/actuators/ignition_on	int[8]	y	boolean             	Ignition, on or off.
+sim/cockpit2/engine/actuators/fadec_on	int[8]	y	boolean             	Fadec, ok or off.
+sim/cockpit2/engine/actuators/primer_on	int[8]	y	boolean             	Primer button, on or off.
+sim/cockpit2/engine/actuators/fuel_pump_on	int[8]	y	boolean             	Fuel pump, on or off.
+sim/cockpit2/engine/actuators/idle_speed	int[8]	y	boolean             	Idle speed, hi=1 or lo=0.
+sim/cockpit2/engine/actuators/prop_mode	int[8]	y	enum             	This is the propeller and engine operation mode. It is used for props and jets. Mode 0 is feathered, 1 is normal, 2 is in beta, and reverse (prop or jet) is mode 3.
+sim/cockpit2/engine/actuators/prop_pitch_deg	float[8]	y	degrees             	This is the REQUESTED pitch of the prop in degrees from its flat-pitch setting.
+sim/cockpit2/engine/indicators/N1_percent	float[8]	n	percent	N1, %.
+sim/cockpit2/engine/indicators/N2_percent	float[8]	n	percent	N2, %.
+sim/cockpit2/engine/indicators/MPR_in_hg	float[8]	n	inches_hg	Manifold pressure, inches HG.
+sim/cockpit2/engine/indicators/EPR_ratio	float[8]	n	ratio	EPR, ratio.
+sim/cockpit2/engine/indicators/torque_n_mtr	float[8]	n	newton_meters	Torque, NM.
+sim/cockpit2/engine/indicators/fuel_flow_kg_sec	float[8]	n	kilograms/second	FF, kilograms per second.
+sim/cockpit2/engine/indicators/ITT_deg_C	float[8]	n	degrees_C	ITT, deg.
+sim/cockpit2/engine/indicators/EGT_deg_C	float[8]	n	degrees_C	EGT, deg.
+sim/cockpit2/engine/indicators/CHT_deg_C	float[8]	n	degrees_C	CHT, deg.
+sim/cockpit2/engine/indicators/fuel_pressure_psi	float[8]	n	pounds/square_inch	Fuel pressure, psi.
+sim/cockpit2/engine/indicators/oil_pressure_psi	float[8]	n	pounds/square_inch	Oil pressure, psi.
+sim/cockpit2/engine/indicators/oil_temperature_deg_C	float[8]	n	degrees_C	Oil temp, deg.
+sim/cockpit2/engine/indicators/oil_quantity_ratio	float[8]	n	ratio	Oil quantity, 0.0 to 1.0.
+sim/cockpit2/engine/indicators/power_watts	float[8]	n	watts	Actual engine power output.
 sim/cockpit2/fuel/fuel_tank_selector	int	y	enum	0=none,1=left,2=center,3=right,4=all
 sim/cockpit2/fuel/fuel_tank_transfer_to	int	y	enum	0=none,1=left,2=center,3=right
 sim/cockpit2/fuel/fuel_tank_transfer_from	int	y	enum	0=none,1=left,2=center,3=right
@@ -3287,45 +3289,45 @@ sim/flightmodel2/controls/aileron_trim	float	y	ratio	Aileron trim, in part of MA
 sim/flightmodel2/controls/elevator_trim	float	y	ratio	Elevator trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the elevator trim is deflected enough to move the elevators through 30% of their travel, then that is an elevator trim of 0.3.
 sim/flightmodel2/controls/rudder_trim	float	y	ratio	Rudder trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rudder trim is deflected enough to move the rudders through 30% of their travel, then that is an rudder trim of 0.3.
 sim/flightmodel2/controls/rotor_trim	float	y	ratio	Rotor trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rotor trim is deflected enough to move the rotor through 30% of its travel, then that is a rotor trim of 0.3.
-sim/flightmodel2/doors/type	int[doors]	n	enumeration	0=unused (plane does not use this door) 1=standard (opens before gear goes down) 2=attached to strut (cycles with door), 3=closed (opens before gear goes down, then closes again)
-sim/flightmodel2/doors/location_x_mtr	int[doors]	n	meters	Gear door location, in meters, x, y z.
-sim/flightmodel2/doors/location_y_mtr	int[doors]	n	meters	Gear door location, in meters, x, y z.
-sim/flightmodel2/doors/location_z_mtr	int[doors]	n	meters	Gear door location, in meters, x, y z.
-sim/flightmodel2/doors/axis_rotation_deg	float[doors]	n	degrees	Axis of roation of this gear door, degrees.
-sim/flightmodel2/doors/angle_now_deg	float[doors]	n	degrees	Current angle about the axis of rotation of this gear door, degrees.
-sim/flightmodel2/engines/location_x_mtr	float[engines]	n	meters	Engne location, meters x, y, z, with respect to the default center of gravity.
-sim/flightmodel2/engines/location_y_mtr	float[engines]	n	meters        	Engne location, meters x, y, z, with respect to the default center of gravity.
-sim/flightmodel2/engines/location_z_mtr	float[engines]	n	meters          	Engne location, meters x, y, z, with respect to the default center of gravity.
-sim/flightmodel2/engines/throttle_used_ratio	float[engines]	n	ratio             	Throttle that is actually going to the engine, which could be different than the commanded throttle due to FADEC throttle adjustments.
-sim/flightmodel2/engines/has_fuel_flow_before_mixture	int[engines]	n	boolean	Engine has fuel making to the mixtur control, yes or no.
-sim/flightmodel2/engines/has_fuel_flow_after_mixture	int[engines]	n	boolean	Engine has fuel making to the combustion process, yes or no.
-sim/flightmodel2/engines/engine_is_burning_fuel	int[engines]	n	boolean	Engine is currently burning fuel, yes or no.
-sim/flightmodel2/engines/engine_burning_fuel_ratio	int[engines]	n	ratio	Engine running ratio, 0.0 for not running to 1.0 for fully running, combustion process fully started.
-sim/flightmodel2/engines/afterburner_on	int[engines]	n	boolean	Afterburner on, yes or no.
-sim/flightmodel2/engines/afterburner_ratio	int[engines]	n	ratio	Afterburner engaged ratio, 0.0 to 1.0.
-sim/flightmodel2/engines/engine_rotation_speed_rad_sec	float[engines]	n	radians/second          Rotational speed of the engine, in radians per	second.
-sim/flightmodel2/engines/engine_rotation_angle_deg	float[engines]	n	degrees	This is the angle of the engine as it turns over, running 0 to 360 over and over again in normal oepration. Engine speed cna be different than prop rotation speed in clutched designs. This is radians per second.
-sim/flightmodel2/engines/prop_rotation_speed_rad_sec	float[engines]	n	radians/second	Radians per second rotation speed of the prop.
-sim/flightmodel2/engines/prop_rotation_angle_deg	float[engines]	n	degrees             	This is the angle of the prop or engine-fan as it rotates. You will see this value circulate 0 to 360 degrees over and over as the engine runs and the prop or fan turns.
-sim/flightmodel2/engines/prop_pitch_deg	float[engines]	n	degrees	This is the ACTUAL pitch of the prop in degrees from its flat-pitch setting.
-sim/flightmodel2/engines/prop_cone_angle_rad	float[engines]	n	radians             	This is the coning angle of the disc, in radians. Typically close to 0.0.
-sim/flightmodel2/engines/rotor_vertical_vector_deg	float[engines]	n	degrees	This engine rotor-disc vertical vector, in degrees, where 0 is straight forwards, 90 is stright up.
-sim/flightmodel2/engines/rotor_vertical_cyclic_deg	float[engines]	n	degrees	This engine rotor-disc longitudinal cyclic, in degrees, where -10 is 10 degrees forwards, 10 is 10 degrees aft.
-sim/flightmodel2/engines/rotor_side_cyclic_deg	float[engines]	n	degrees	This engine rotor-disc lateral cyclic, in degrees, where -10 is 10 degrees left, 10 is 10 degrees right.
-sim/flightmodel2/engines/rotor_cyclic_elevator_tilt_deg	float[engines]	n	degrees            	Longitudinal disc tilt from cyclic deflection.
-sim/flightmodel2/engines/rotor_cyclic_aileron_tilt_deg	float[engines]	n	degrees      	Lateral disc tilt from cyclic deflection.
-sim/flightmodel2/engines/nacelle_vertical_angle_deg	float[engines]	n	degrees             	This engine nacelle vertical vector, in degrees, where 0 is straight forwards, 90 is stright up.
-sim/flightmodel2/engines/thrust_reverser_deploy_ratio	float[engines]	n	ratio	How far the reverser doors/mechanism have traveled.  0 = fully stowed, 1.0 = fully deployed.
-sim/flightmodel2/gear/gear_heading_deg	float[gear]	n	degrees	Current gear heading angle, degrees.
-sim/flightmodel2/gear/gear_pitch_deg	float[gear]	n	degrees	Current gear pitch angle, degrees.
-sim/flightmodel2/gear/gear_roll_deg	float[gear]	n	degrees	Current gear roll angle, degrees.
-sim/flightmodel2/gear/tire_steer_command_deg	float[gear]	n	degrees	Steering command being sent to this gear, degrees positive right.  This takes into account steering algorithms for big planes like 747, but does not free castoring and springiness.
-sim/flightmodel2/gear/tire_steer_actual_deg	float[gear]	n	degrees	Steering command actually enacted by the gear, degrees positive right.
-sim/flightmodel2/gear/tire_vertical_deflection_mtr	float[gear]	n	meters	Vertical deflection of this gear, meters.
-sim/flightmodel2/gear/tire_vertical_force_n_mtr	float[gear]	n	newton_meters	Vertical force on this gear, newtons.
-sim/flightmodel2/gear/tire_rotation_speed_rad_sec	float[gear]	n	radians/second	Rotational speed of this tire, radians per second.
-sim/flightmodel2/gear/tire_rotation_angle_deg	float[gear]	n	degrees	Tire rotation in degrees, running 0 to 360 over and over as it rolls.
-sim/flightmodel2/gear/deploy_ratio	float[gear]	n	ratio	This is how far down the landing gear is.  0=up, 1= down
+sim/flightmodel2/doors/type	int[20]	n	enumeration	0=unused (plane does not use this door) 1=standard (opens before gear goes down) 2=attached to strut (cycles with door), 3=closed (opens before gear goes down, then closes again)
+sim/flightmodel2/doors/location_x_mtr	int[20]	n	meters	Gear door location, in meters, x, y z.
+sim/flightmodel2/doors/location_y_mtr	int[20]	n	meters	Gear door location, in meters, x, y z.
+sim/flightmodel2/doors/location_z_mtr	int[20]	n	meters	Gear door location, in meters, x, y z.
+sim/flightmodel2/doors/axis_rotation_deg	float[20]	n	degrees	Axis of roation of this gear door, degrees.
+sim/flightmodel2/doors/angle_now_deg	float[20]	n	degrees	Current angle about the axis of rotation of this gear door, degrees.
+sim/flightmodel2/engines/location_x_mtr	float[8]	n	meters	Engne location, meters x, y, z, with respect to the default center of gravity.
+sim/flightmodel2/engines/location_y_mtr	float[8]	n	meters        	Engne location, meters x, y, z, with respect to the default center of gravity.
+sim/flightmodel2/engines/location_z_mtr	float[8]	n	meters          	Engne location, meters x, y, z, with respect to the default center of gravity.
+sim/flightmodel2/engines/throttle_used_ratio	float[8]	n	ratio             	Throttle that is actually going to the engine, which could be different than the commanded throttle due to FADEC throttle adjustments.
+sim/flightmodel2/engines/has_fuel_flow_before_mixture	int[8]	n	boolean	Engine has fuel making to the mixtur control, yes or no.
+sim/flightmodel2/engines/has_fuel_flow_after_mixture	int[8]	n	boolean	Engine has fuel making to the combustion process, yes or no.
+sim/flightmodel2/engines/engine_is_burning_fuel	int[8]	n	boolean	Engine is currently burning fuel, yes or no.
+sim/flightmodel2/engines/engine_burning_fuel_ratio	int[8]	n	ratio	Engine running ratio, 0.0 for not running to 1.0 for fully running, combustion process fully started.
+sim/flightmodel2/engines/afterburner_on	int[8]	n	boolean	Afterburner on, yes or no.
+sim/flightmodel2/engines/afterburner_ratio	float[8]	n	ratio	Afterburner engaged ratio, 0.0 to 1.0.
+sim/flightmodel2/engines/engine_rotation_speed_rad_sec	float[8]	n	radians/second          Rotational speed of the engine, in radians per	second.
+sim/flightmodel2/engines/engine_rotation_angle_deg	float[8]	n	degrees	This is the angle of the engine as it turns over, running 0 to 360 over and over again in normal oepration. Engine speed cna be different than prop rotation speed in clutched designs. This is radians per second.
+sim/flightmodel2/engines/prop_rotation_speed_rad_sec	float[8]	n	radians/second	Radians per second rotation speed of the prop.
+sim/flightmodel2/engines/prop_rotation_angle_deg	float[8]	n	degrees             	This is the angle of the prop or engine-fan as it rotates. You will see this value circulate 0 to 360 degrees over and over as the engine runs and the prop or fan turns.
+sim/flightmodel2/engines/prop_pitch_deg	float[8]	n	degrees	This is the ACTUAL pitch of the prop in degrees from its flat-pitch setting.
+sim/flightmodel2/engines/prop_cone_angle_rad	float[8]	n	radians             	This is the coning angle of the disc, in radians. Typically close to 0.0.
+sim/flightmodel2/engines/rotor_vertical_vector_deg	float[8]	n	degrees	This engine rotor-disc vertical vector, in degrees, where 0 is straight forwards, 90 is stright up.
+sim/flightmodel2/engines/rotor_vertical_cyclic_deg	float[8]	n	degrees	This engine rotor-disc longitudinal cyclic, in degrees, where -10 is 10 degrees forwards, 10 is 10 degrees aft.
+sim/flightmodel2/engines/rotor_side_cyclic_deg	float[8]	n	degrees	This engine rotor-disc lateral cyclic, in degrees, where -10 is 10 degrees left, 10 is 10 degrees right.
+sim/flightmodel2/engines/rotor_cyclic_elevator_tilt_deg	float[8]	n	degrees            	Longitudinal disc tilt from cyclic deflection.
+sim/flightmodel2/engines/rotor_cyclic_aileron_tilt_deg	float[8]	n	degrees      	Lateral disc tilt from cyclic deflection.
+sim/flightmodel2/engines/nacelle_vertical_angle_deg	float[8]	n	degrees             	This engine nacelle vertical vector, in degrees, where 0 is straight forwards, 90 is stright up.
+sim/flightmodel2/engines/thrust_reverser_deploy_ratio	float[8]	n	ratio	How far the reverser doors/mechanism have traveled.  0 = fully stowed, 1.0 = fully deployed.
+sim/flightmodel2/gear/gear_heading_deg	float[10]	n	degrees	Current gear heading angle, degrees.
+sim/flightmodel2/gear/gear_pitch_deg	float[10]	n	degrees	Current gear pitch angle, degrees.
+sim/flightmodel2/gear/gear_roll_deg	float[10]	n	degrees	Current gear roll angle, degrees.
+sim/flightmodel2/gear/tire_steer_command_deg	float[10]	n	degrees	Steering command being sent to this gear, degrees positive right.  This takes into account steering algorithms for big planes like 747, but does not free castoring and springiness.
+sim/flightmodel2/gear/tire_steer_actual_deg	float[10]	n	degrees	Steering command actually enacted by the gear, degrees positive right.
+sim/flightmodel2/gear/tire_vertical_deflection_mtr	float[10]	n	meters	Vertical deflection of this gear, meters.
+sim/flightmodel2/gear/tire_vertical_force_n_mtr	float[10]	n	newton_meters	Vertical force on this gear, newtons.
+sim/flightmodel2/gear/tire_rotation_speed_rad_sec	float[10]	n	radians/second	Rotational speed of this tire, radians per second.
+sim/flightmodel2/gear/tire_rotation_angle_deg	float[10]	n	degrees	Tire rotation in degrees, running 0 to 360 over and over as it rolls.
+sim/flightmodel2/gear/deploy_ratio	float[10]	n	ratio	This is how far down the landing gear is.  0=up, 1= down
 sim/flightmodel2/misc/canopy_open_ratio	float	n	ratio	Canopy position: 0 = closed, 1 = open
 sim/flightmodel2/misc/tailhook_deploy_ratio	float	n	ratio	Tailhook position: 0 = up, 1 = down
 sim/flightmodel2/misc/water_scoop_deploy_ratio	float	n	ratio	Water scoop position: 0 = up, 1 = down
@@ -3334,18 +3336,18 @@ sim/flightmodel2/misc/wiper_angle_deg	float[4]	n	degrees	current angle of the wi
 sim/flightmodel2/misc/custom_slider_ratio	float[20]	n	ratio	Misc. traveling items for your use.  You define the meaning.
 sim/flightmodel2/misc/pressure_outflow_ratio	float	n	ratio	How far is the pressure-outflow valve open?  0=closed, 1=open
 sim/flightmodel2/misc/AoA_angle_degrees	float	n	degrees	Angle of attack probe.  Positive means plane is climbing.
-sim/flightmodel2/wing/aileron1_deg	float[wings]	y	degrees	Deflection of the aileron from set #1 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/aileron2_deg	float[wings]	y	degrees	Deflection of the aileron from set #2 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/spoiler1_deg	float[wings]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/spoiler2_deg	float[wings]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/yawbrake_deg	float[wings]	y	degrees	Deflection of the yaw-brake on this wing. A yaw-brake is a set of spoilers on the top and bottom of the wing thst split open symmetrically to drag that wing aft and yaw the plane. They are used on the B-2, for example.
-sim/flightmodel2/wing/elevator1_deg	float[wings]	y	degrees	Deflection of the elevator from set #1 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/elevator2_deg	float[wings]	y	degrees	Deflection of the elevator from set #2 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/rudder1_deg	float[wings]	y	degrees	Deflection of the rudder from set #1 on this wing. Degrees, positive is trailig-edge right.
-sim/flightmodel2/wing/rudder2_deg	float[wings]	y	degrees	Deflection of the rudder from set #2 on this wing. Degrees, positive is trailig-edge right.
-sim/flightmodel2/wing/flap1_deg	float[wings]	y	degrees	Deflection of the flap from set #1 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/flap2_deg	float[wings]	y	degrees	Deflection of the flap from set #2 on this wing. Degrees, positive is trailing-edge down.
-sim/flightmodel2/wing/speedbrake1_deg	float[wings]	y	degrees	Deflection of the speedbrakes from set #1 on this wing.  
-sim/flightmodel2/wing/speedbrake2_deg	float[wings]	y	degrees	Deflection of the speedbrakes from set #2 on this wing.  
-sim/flightmodel2/wing/airfoil_sweep_increase_deg	float[wings]	y	degrees	The sweep increase BEYOND DEFAULT of this wing... this would only have a non-zero value for planes like the F-14 which can sweep their wings.
-sim/flightmodel2/wing/airfoil_dihedral_increase_deg	float[wings]	y	degrees	The dihedral increase BEYOND DEFAULT of this wing... this would only have a non-zero value for planes like the Navy F-4 which can fold up the outer wing panels.
+sim/flightmodel2/wing/aileron1_deg	float[32]	y	degrees	Deflection of the aileron from set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/aileron2_deg	float[32]	y	degrees	Deflection of the aileron from set #2 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/spoiler1_deg	float[32]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/spoiler2_deg	float[32]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/yawbrake_deg	float[32]	y	degrees	Deflection of the yaw-brake on this wing. A yaw-brake is a set of spoilers on the top and bottom of the wing thst split open symmetrically to drag that wing aft and yaw the plane. They are used on the B-2, for example.
+sim/flightmodel2/wing/elevator1_deg	float[32]	y	degrees	Deflection of the elevator from set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/elevator2_deg	float[32]	y	degrees	Deflection of the elevator from set #2 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/rudder1_deg	float[32]	y	degrees	Deflection of the rudder from set #1 on this wing. Degrees, positive is trailig-edge right.
+sim/flightmodel2/wing/rudder2_deg	float[32]	y	degrees	Deflection of the rudder from set #2 on this wing. Degrees, positive is trailig-edge right.
+sim/flightmodel2/wing/flap1_deg	float[32]	y	degrees	Deflection of the flap from set #1 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/flap2_deg	float[32]	y	degrees	Deflection of the flap from set #2 on this wing. Degrees, positive is trailing-edge down.
+sim/flightmodel2/wing/speedbrake1_deg	float[32]	y	degrees	Deflection of the speedbrakes from set #1 on this wing.
+sim/flightmodel2/wing/speedbrake2_deg	float[32]	y	degrees	Deflection of the speedbrakes from set #2 on this wing.
+sim/flightmodel2/wing/airfoil_sweep_increase_deg	float[32]	y	degrees	The sweep increase BEYOND DEFAULT of this wing... this would only have a non-zero value for planes like the F-14 which can sweep their wings.
+sim/flightmodel2/wing/airfoil_dihedral_increase_deg	float[32]	y	degrees	The dihedral increase BEYOND DEFAULT of this wing... this would only have a non-zero value for planes like the Navy F-4 which can fold up the outer wing panels.
