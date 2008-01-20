@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.06"
+__version__ = "3.07"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -225,14 +225,20 @@ Limitations:<br>
 # 2000-01-02 v3.06
 #  - Support for ATTR_hard_deck.
 #
+# 2008-01-20 v3.07
+#  - Detect rotated back-to-back faces as well.
+#  - Don't merge when importing misc object.
+#
 
 import sys
 import Blender
 from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Texture, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, Vector
 from XPlaneUtils import Vertex, UV, Face, PanelRegionHandler, getDatarefs
+
+from math import radians
 from os import listdir
-from os.path import abspath, basename, curdir, dirname, join, normpath, sep, splitdrive
+from os.path import abspath, basename, curdir, dirname, join, normpath, sep, splitdrive, splitext
 #import time
 
 datarefs={}
@@ -317,9 +323,9 @@ class MyMesh:
         return False
 
     #------------------------------------------------------------------------
-    def doimport(self,scene,image,objimport,subroutine):
+    def doimport(self,objimport,scene):
         
-        mesh=Mesh.New('Mesh')
+        mesh=Mesh.New(objimport.meshname)
         mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
         mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
 
@@ -334,7 +340,7 @@ class MyMesh:
             else:	# Bone can be None if no_ref
                 boneloc=Vertex(0,0,0)
             centre=boneloc-self.anim[1]
-        elif False: #not subroutine:
+        elif objimport.subroutine:
             n=0
             for f in self.faces:
                 for vertex in f.v:
@@ -370,7 +376,7 @@ class MyMesh:
                 else:
                     face.image = objimport.regions[f.region]
             else:
-                face.image = image
+                face.image = objimport.image
                             
             face.uv=[Vector(uv.s, uv.t) for uv in f.uv]
             face.mat=0
@@ -393,7 +399,7 @@ class MyMesh:
                 
             #assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
         
-        ob = Object.New('Mesh', 'Mesh')
+        ob = Object.New('Mesh', objimport.meshname)
         ob.link(mesh)
         scene.objects.link(ob)
         if self.anim:
@@ -406,8 +412,11 @@ class MyMesh:
                 #print self.anim[0], ob, self.anim[2]
                 self.anim[0].makeParentBone([ob],self.anim[2])
         else:
-            cur=Window.GetCursorPos()
+            cur=objimport.globalmatrix.translationPart()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
+            r=objimport.globalmatrix.toEuler()
+            ob.rot=((radians(r.x), radians(r.y), radians(r.z)))	# for 2.43
+
         if self.surface:
             ob.addProperty('surface', self.surface)
         if self.deck:
@@ -423,7 +432,7 @@ class MyMesh:
         mesh.calcNormals()	# calculate vertex normals
         mesh.sel=False
 
-        if not subroutine: ob.select(1)
+        if not objimport.subroutine: ob.select(1)
         return ob
 
 
@@ -434,8 +443,7 @@ class OBJimport:
     LAYER=[0,1,2,4]
 
     #------------------------------------------------------------------------
-    def __init__(self, filename, subroutine=False):
-        self.subroutine=subroutine
+    def __init__(self, filename, subroutine=None):
 
         # Merging rules:
         # self.merge=1 - v7: merge if primitives have same flags
@@ -444,12 +452,16 @@ class OBJimport:
 
 	# verbose - level of verbosity in console: 1-normal,2-chat,3-debug
 
+        self.merge=1
+        self.subroutine=subroutine	# object matrix
         if subroutine:	# Object is being merged into something else
             self.verbose=0
-            self.merge=2
+            (self.meshname,foo)=splitext(basename(filename))
+            self.globalmatrix=subroutine
         else:
             self.verbose=1
-            self.merge=1
+            self.meshname='Mesh'
+            self.globalmatrix=TranslationMatrix(Vector(Window.GetCursorPos())).resize4x4()
         
         if filename[0:2] in ['//', '\\\\']:
             # relative to .blend file
@@ -824,8 +836,10 @@ class OBJimport:
                     self.arm.drawType=Armature.STICK
                     self.arm.restPosition=True	# for easier parenting
                     self.armob.link(self.arm)
-                    cur=Window.GetCursorPos()
+                    cur=self.globalmatrix.translationPart()
                     self.armob.setLocation(cur[0], cur[1], cur[2])
+                    v=self.globalmatrix.toEuler()
+                    self.armob.rot=((radians(v.x), radians(v.y), radians(v.z)))	# for 2.43
                     self.armob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
                     self.action = Armature.NLA.NewAction()
                     self.action.setActive(self.armob)
@@ -1340,11 +1354,11 @@ class OBJimport:
         
         # write meshes
         for i in range(len(self.curmesh)):
-            Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
-                                   "Adding %d%% ..." % (
-                90+(i*10.0)/len(self.curmesh)))
-            last=self.curmesh[i].doimport(scene,self.image,self,self.subroutine)
-        return last
+            if not self.subroutine:
+                Window.DrawProgressBar(0.9+(i/10.0)/len(self.curmesh),
+                                       "Adding %d%% ..." % (
+                    90+(i*10.0)/len(self.curmesh)))
+            self.curmesh[i].doimport(self,scene)
 
     #------------------------------------------------------------------------
     def addLamp(self, scene, v, c, name=None):
@@ -1424,8 +1438,11 @@ class OBJimport:
             if 'makeParentBone' in dir(self.armob):	# new in 2.43
                 self.armob.makeParentBone([ob],self.bones[-1])
         else:
-            cur=Window.GetCursorPos()
+            cur=self.globalmatrix.translationPart()
             ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
+            r=self.globalmatrix.toEuler()
+            ob.rot=((radians(r.x), radians(r.y), radians(r.z)))	# for 2.43
+        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         self.nprim+=1
         
     #------------------------------------------------------------------------
@@ -1501,8 +1518,11 @@ class OBJimport:
             if 'makeParentBone' in dir(self.armob):	# new in 2.43
                 self.armob.makeParentBone([ob],self.bones[-1])
         else:
-            cur=Window.GetCursorPos()
+            cur=self.globalmatrix.translationPart()
             ob.setLocation(v.x+cur[0], v.y+cur[1], v.z+cur[2])
+            r=self.globalmatrix.toEuler()
+            ob.rot=((radians(r.x), radians(r.y), radians(r.z)))	# for 2.43
+
         if self.layer:
             ob.Layer=OBJimport.LAYER[self.layer]
 
@@ -1589,8 +1609,11 @@ class OBJimport:
             if 'makeParentBone' in dir(self.armob):	# new in 2.43
                 self.armob.makeParentBone([ob],self.bones[-1])
         else:
-            cur=Window.GetCursorPos()
+            cur=self.globalmatrix.translationPart()
             ob.setLocation(centre.x+cur[0], centre.y+cur[1], centre.z+cur[2])
+            r=self.globalmatrix.toEuler()
+            ob.rot=((radians(r.x), radians(r.y), radians(r.z)))	# for 2.43
+
         mesh.update(1)
         scene.objects.link(ob)
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
@@ -1756,9 +1779,10 @@ class OBJimport:
                 # Should check that vertex normals equal plane
                 # normal, but unlikely that won't be true.
                 face.flags|=Face.FLAT
-            
-            if tuple(v) in facelookup:
-                # back-to-back duplicate - add existing
+
+            # Duplicate may be rotated
+            if tuple(v) in facelookup or (v[1],v[2],v[0]) in facelookup or (v[2],v[0],v[1]) in facelookup:
+                # back-to-back duplicate - add existing.
                 #print "dupe", face, v
                 if self.armob:
                     self.addToMesh(scene,faces,self.surface,self.deck,
@@ -1817,8 +1841,9 @@ class OBJimport:
         if not self.pendingbone:
             if self.bones==[None]:
                 # eek no bones! Maybe just receptacle for show/hide?
-                (origname, head, tail)=('bone', Vertex(0,0,0), Vertex(0,0.1,0))
-                m=[]
+                (origname, head, tail)=('Bone', Vertex(0,0,0), Vertex(0,0.1,0))
+                m1=m2=Matrix().identity().resize4x4()
+                m=[m1,m2]
             else:
                 return None
         else:
