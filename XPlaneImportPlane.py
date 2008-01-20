@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.06"
+__version__ = "3.07"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -147,6 +147,9 @@ Limitations:<br>
 # 2007-12-02 v3.00
 #  - Support for v9.00 planes.
 #  - Support for DDS textures.
+#
+# 2008-01-20 v3.07
+#  - Support for 9b18 planes.
 #
 
 import sys
@@ -1571,29 +1574,12 @@ class ACFimport:
         mm=self.rotate(obj.obj_con, False,
                        obj.obj_psi, obj.obj_the, obj.obj_phi)*mm
 
-        # Re-use existing meshes
-        if obj.obj_name in self.meshcache:
-            meshes=self.meshcache[obj.obj_name]
-            for i in range(len(meshes)):
-                self.addMesh(obname, meshes[i], ACFimport.LAYERS[i], mm)
-            return
-
-        object=OBJimport(join(dirname(self.filename), 'objects', obj.obj_name),
-                         True)
         try:
-            ob=object.doimport()
+            OBJimport(join(dirname(self.filename), 'objects', obj.obj_name), mm).doimport()
         except:
             print "Warn:\tCouldn't read object \"%s\"" % obj.obj_name
             return
-        mesh=ob.getData()
-        mesh.name=name
-        self.meshcache[obj.obj_name]=[mesh]
-        ob.setName(obname)
-        ob.setMatrix(mm)	# no longer sets rot/scale in 2.43
-        ob.setLocation(*mm.translationPart())
-        v=mm.toEuler()
-        ob.rot=((radians(v.x), radians(v.y), radians(v.z)))	# for 2.43
-        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
+        # Should create armature when linked to a control surface?
 
 
     #------------------------------------------------------------------------
@@ -1799,7 +1785,7 @@ class ACFimport:
                                     file.close()
                                     continue
                                 thing=file.readline(1024).split()
-                                if not thing or thing[0]!='700':
+                                if not thing or thing[0] not in ['700','900']:
                                     file.close()
                                     continue
                                 thing=file.readline(1024)	# device type
@@ -3180,7 +3166,8 @@ xstruct, "objs[24]",	# Misc Objects
     ])
     acf860=acf840
     acf900=acf840
-    acf901=acf840
+    acf901=acf840	# v9b5?
+    acf902=acf840	# v9b18
 
     engn8000 = [
 xint, "engn_type",
@@ -3213,6 +3200,7 @@ xflt, "bladesweep[10]",
     engn860=engn8000
     engn900=engn8000
     engn901=engn8000
+    engn902=engn8000
 
     wing8000 = [
 xint, "is_left",
@@ -3313,6 +3301,7 @@ xflt, "overflow_dat[100]",
     wing860=wing810
     wing900=wing810
     wing901=wing810
+    wing902=wing810
 
     part8000 = [
 xint, "part_eq",
@@ -3359,6 +3348,7 @@ xchr, "locked[20][18]",
     part860=part8000
     part900=part8000
     part901=part8000
+    part902=part8000
 
     gear8000=[
 xint, "gear_type",
@@ -3396,6 +3386,7 @@ xflt, "z_nodef",
     gear860=gear8000
     gear900=gear8000
     gear901=gear8000
+    gear902=gear8000
 
     watt8000=[
 xchr, "watt_name[40]",
@@ -3415,6 +3406,7 @@ xflt, "watt_phi",
     watt860=watt8000
     watt900=watt8000
     watt901=watt8000
+    watt902=watt8000
 
     door8000=[
 xint, "type",
@@ -3442,6 +3434,7 @@ xflt, "out_t2",
     door860=door8000
     door900=door8000
     door901=door8000
+    door902=door8000
 
     objs840=[	# same as watt. variable names may not match Laminar's
 xchr, "obj_name[40]",
@@ -3457,6 +3450,7 @@ xflt, "obj_phi",
     objs860=objs840
     objs900=objs840
     objs901=objs840
+    objs902=objs840
     
 # Derived from WPN740.def by Stanislaw Pusep
 #   http://sysd.org/xplane/acftools/WPN740.def
@@ -3714,7 +3708,7 @@ class ACF:
             else:
                 acffile.close()
                 raise ParseError("This is a %4.2f format plane! Please re-save it in PlaneMaker 7.63." % (self.HEADER_version/100.0))
-        elif self.HEADER_version in [8000,810,815,830,840,860,900,901]:
+        elif self.HEADER_version in [8000,810,815,830,840,860,900,901,902]:
             defs=eval("DEFfmt.acf%s" % self.HEADER_version)
         else:
             acffile.close()
