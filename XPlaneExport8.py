@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.06"
+__version__ = "3.07"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -161,7 +161,9 @@ Limitations:<br>
 # 2000-01-02 v3.06
 #  - Support for ATTR_hard_deck.
 #
-
+# 2008-01-20 v3.07
+#  - Warn on using v9 features.
+#
 
 #
 # X-Plane renders polygons in scenery files mostly in the order that it finds
@@ -343,6 +345,7 @@ class OBJexport8:
         self.linewidth=0.101
         self.nprim=0		# Number of X-Plane primitives exported
         self.log=[]
+        self.v9=False		# Used v9 features
 
         # attributes controlling export
         self.hardness=0
@@ -397,6 +400,10 @@ class OBJexport8:
         self.writeHeader ()
         self.writeObjects (theObjects)
         checkLayers (self, theObjects)
+        if self.regions or self.v9:
+            print 'Warn:\tThis object requires X-Plane v9'
+            self.log.append(('This object requires X-Plane v9', None))
+            
         
         Blender.Set('curframe', frame)
         #scene.update(1)
@@ -1365,6 +1372,8 @@ class Anim:
             else:
                 self.dataref=None	# is null
             return
+        elif framecount>2:
+            expobj.v9=True
 
         (self.dataref, self.v, self.loop)=self.getdataref(object, child, bone.name, '', 1, framecount)
         if None in self.v:

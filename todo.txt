@@ -1,2 +1,8 @@
+Save multiple .objs
+b16 .acf format
+
+Blender: Allow float/int properties to be larger than 10000
+Blender: Allow Draw.Number to specify precision.
+
 importplane: skip v9 invisible bodies
 detect misc objects? (no panel texture)

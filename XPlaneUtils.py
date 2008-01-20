@@ -503,11 +503,7 @@ def getDatarefs():
                 for c in ['int', 'float', 'double']:
                     if d[1].lower().startswith(c):
                         if len(d[1])>len(c):		# is array
-                            n=d[1][len(c)+1:-1]
-                            if n in counts:
-                                n=counts[n]
-                            else:
-                                n=int(n)
+                            n=int(d[1][len(c)+1:-1])
                         break
                 else:
                     n=0					# not a usable dataref

@@ -42,6 +42,7 @@ XPlaneImportBodies.py
 XPlanePanelRegions.py
 XPlaneUtils.py
 XPlaneUtils.pyc
+XPlaneHelp.py
 XPlaneACF.py
 XPlaneACF.pyc
 XPlane2Blender.html
@@ -58,8 +59,7 @@ for I in "$HOME/.blender/scripts" $DIRS; do
 done
 
 # Files to install
-FILES="helpXPlane.py
-uvCopyPaste.py
+FILES="uvCopyPaste.py
 uvFixupACF.py
 uvResize.py
 XPlaneAnimObject.py
@@ -71,6 +71,7 @@ XPlaneImport.py
 XPlaneImportPlane.py
 XPlanePanelRegions.py
 XPlaneUtils.py
+XPlaneHelp.py
 XPlane2Blender.html
 DataRefs.txt"
 if [ -d "$HOME/.blender/scripts" ]; then
