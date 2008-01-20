@@ -8,7 +8,7 @@ Tooltip: 'Edit X-Plane animation'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.06"
+__version__ = "3.07"
 __bpydoc__ = """\
 Edit X-Plane animation properties.
 """
@@ -62,6 +62,9 @@ Edit X-Plane animation properties.
 # 2007-12-11 v3.04
 #  - Disambiguate all similar bones/hideshow in armature when editing one
 #
+# 2008-01-20 v3.07
+#  - Limit data input to +/-10000 - this is the limit in the properties panel.
+#
 
 import Blender
 from Blender import BGL, Draw, Object, Scene, Window
@@ -100,6 +103,11 @@ PANELTOP=8
 PANELHEAD=20
 PANELWIDTH=304
 CONTROLSIZE=19
+
+# max value for dataref value fields
+# >=1000 -> 1 decimal place precision (Method_Number in python\api2_2x\Draw.c)
+# 10000 is largest number supported by properties UI
+NUMBERMAX=10000
 
 # Shared buttons. Indices<bonecount are for bones, >=bonecount are for hideshow
 dataref_m=[]
@@ -706,11 +714,11 @@ def gui():
                     v9='v9: '
                 else:
                     v9=''
-                vals_b[-1].append(Draw.Number('', i+VALS_B+eventbase, xoff+104, yoff-152-(CONTROLSIZE-1)*i, 80, CONTROLSIZE, vals[boneno][i], -999999, 999999, v9+'The dataref value that corresponds to the pose in frame %d' % (i+1)))
+                vals_b[-1].append(Draw.Number('', i+VALS_B+eventbase, xoff+104, yoff-152-(CONTROLSIZE-1)*i, 80, CONTROLSIZE, vals[boneno][i], -NUMBERMAX, NUMBERMAX, v9+'The dataref value that corresponds to the pose in frame %d' % (i+1)))
             if framecount>2:
                 clear_b=Draw.Button('Delete', DELETE_B+eventbase, xoff+208, yoff-152-(CONTROLSIZE-1)*(framecount-1), 80, CONTROLSIZE, 'Clear animation keys from this frame')
             Draw.Label("Loop:", xoff-4+CONTROLSIZE, yoff-160-(CONTROLSIZE-1)*framecount, 100, CONTROLSIZE)
-            loops_b.append(Draw.Number('', LOOPS_B+eventbase, xoff+104, yoff-160-(CONTROLSIZE-1)*framecount, 80, CONTROLSIZE, loops[boneno], -999999, 999999, 'v9: The animation will loop back to frame 1 when the dataref value exceeds this number. Enter 0 for no loop.'))
+            loops_b.append(Draw.Number('', LOOPS_B+eventbase, xoff+104, yoff-160-(CONTROLSIZE-1)*framecount, 80, CONTROLSIZE, loops[boneno], -NUMBERMAX, NUMBERMAX, 'v9: The animation will loop back to frame 1 when the dataref value exceeds this number. Enter 0 for no loop.'))
         else:
             loops_b.append(None)
 
@@ -751,9 +759,9 @@ def gui():
             # is a valid or custom dataref
             hideshow_m.append(Draw.Menu('Hide%x0|Show%x1', HIDEORSHOW_M+eventbase, xoff, yoff-106-hs*82, 62, CONTROLSIZE, hideorshow[hs], 'Choose Hide or Show'))
             Draw.Label("when", xoff+63, yoff-106-hs*82, 60, CONTROLSIZE)
-            from_b.append(Draw.Number('', FROM_B+eventbase, xoff+104, yoff-106-hs*82, 80, CONTROLSIZE, hideshowfrom[hs], -999999, 999999, 'The dataref value above which the animation will be hidden or shown'))
+            from_b.append(Draw.Number('', FROM_B+eventbase, xoff+104, yoff-106-hs*82, 80, CONTROLSIZE, hideshowfrom[hs], -NUMBERMAX, NUMBERMAX, 'The dataref value above which the animation will be hidden or shown'))
             Draw.Label("to", xoff+187, yoff-106-hs*82, 60, CONTROLSIZE)
-            to_b.append(Draw.Number('', TO_B+eventbase, xoff+207, yoff-106-hs*82, 80, CONTROLSIZE, hideshowto[hs], -999999, 999999, 'The dataref value below which the animation will be hidden or shown'))
+            to_b.append(Draw.Number('', TO_B+eventbase, xoff+207, yoff-106-hs*82, 80, CONTROLSIZE, hideshowto[hs], -NUMBERMAX, NUMBERMAX, 'The dataref value below which the animation will be hidden or shown'))
         else:
             hideshow_m.append(None)
             from_b.append(None)
