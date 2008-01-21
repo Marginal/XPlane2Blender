@@ -231,6 +231,7 @@ Limitations:<br>
 #
 # 2008-01-21 v3.08
 #  - Fix for importing v7 tris/tri_fans.
+#  - Fix for importing redundant animations.
 #
 
 import sys
