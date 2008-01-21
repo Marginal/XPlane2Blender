@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.07"
+__version__ = "3.08"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -228,6 +228,9 @@ Limitations:<br>
 # 2008-01-20 v3.07
 #  - Detect rotated back-to-back faces as well.
 #  - Don't merge when importing misc object.
+#
+# 2008-01-21 v3.08
+#  - Fix for importing v7 tris/tri_fans.
 #
 
 import sys
@@ -1664,7 +1667,7 @@ class OBJimport:
             else:
                 self.addToMesh(scene,faces,self.surface,self.deck,
                                OBJimport.LAYER[self.layer],
-                               None, self.mat, makenewmesh)
+                               None, self.mat)
             self.nprim+=1
 
     #------------------------------------------------------------------------
@@ -1842,8 +1845,7 @@ class OBJimport:
             if self.bones==[None]:
                 # eek no bones! Maybe just receptacle for show/hide?
                 (origname, head, tail)=('Bone', Vertex(0,0,0), Vertex(0,0.1,0))
-                m1=m2=Matrix().identity().resize4x4()
-                m=[m1,m2]
+                m=[Matrix().identity().resize4x4()]
             else:
                 return None
         else:
