@@ -8,7 +8,7 @@ Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.07"
+__version__ = "3.08"
 __bpydoc__ = """\
 This script exports scenery created in Blender to X-Plane v8 or v9
 .obj format for placement with World-Maker.
@@ -163,6 +163,9 @@ Limitations:<br>
 #
 # 2008-01-20 v3.07
 #  - Warn on using v9 features.
+#
+# 2008-01-21 v3.08
+#  - Fix for custom light vertices with no corresponding faces.
 #
 
 #
@@ -646,17 +649,15 @@ class OBJexport8:
             # This is actually a custom light - material has HALO set
             mesh=object.getData(mesh=True)
             mats=mesh.materials
-            for f in mesh.faces:
-                material=mats[f.mat]
-                rgba=[material.R, material.G, material.B, material.alpha]
-                mtex=material.getTextures()[0]
-                if mtex:
-                    uv1=UV(mtex.tex.crop[0], mtex.tex.crop[1])
-                    uv2=UV(mtex.tex.crop[2], mtex.tex.crop[3])
-                else:
-                    uv1=UV(0,0)
-                    uv2=UV(1,1)
-                break
+            material=mats[0]	# may not have any faces - assume 1st material
+            rgba=[material.R, material.G, material.B, material.alpha]
+            mtex=material.getTextures()[0]
+            if mtex:
+                uv1=UV(mtex.tex.crop[0], mtex.tex.crop[1])
+                uv2=UV(mtex.tex.crop[2], mtex.tex.crop[3])
+            else:
+                uv1=UV(0,0)
+                uv2=UV(1,1)
 
             # get RGBA and name properties
             dataref='NULL'
