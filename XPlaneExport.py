@@ -219,6 +219,9 @@
 # 2007-12-21 v3.04
 #  - Support for cockpit panel regions.
 #
+# 2008-04-08 v3.09
+#  - Don't try to remove duplicate vertices if too many.
+#
 
 import sys
 from math import log
@@ -255,7 +258,7 @@ def checkLayers (expobj, theObjects):
         mask=7
     layererr=[]
     for obj in theObjects:
-        if not obj.Layer&mask: layererr.append(obj)
+        if obj.Layer and not obj.Layer&mask: layererr.append(obj)
     if layererr:
         if expobj.iscockpit:
             print "Warn:\tObjects were found outside layer 1 and were not exported."
@@ -266,6 +269,8 @@ def checkLayers (expobj, theObjects):
 
 
 #------------------------------------------------------------------------
+# Returns main texture
+# Also sets LODs, layermask, regions
 def getTexture (expobj, theObjects, iscsl, fileformat):
     texture=None
     multierr=[]
@@ -555,6 +560,7 @@ class OBJexport7:
         self.texture=None
         self.regions={}		# (xoff,yoff,xscale,yscale) by image
         self.linewidth=0.101
+        self.remdupelimit=1000	# Don't try to remove duplicate vertices
         self.nprim=0		# Number of X-Plane primitives exported
         self.log=[]
 
@@ -884,6 +890,7 @@ class OBJexport7:
         harderr=[]
         degenerr=[]
         mode=Mesh.FaceModes.DYNAMIC
+        remdupes=(len(mesh.verts) < self.remdupelimit)
         mymesh=MyMesh(object.name)
         for f in mesh.faces:
             if mesh.faceUV: mode=f.mode
@@ -929,13 +936,17 @@ class OBJexport7:
                 v=[]
                 for i in seq[n]:
                     vertex=Vertex(f.v[i].co[0],f.v[i].co[1],f.v[i].co[2], mm)
-                    for q in mymesh.verts:
-                        if vertex.equals(q):
-                            q.x = (q.x + vertex.x) / 2
-                            q.y = (q.y + vertex.y) / 2
-                            q.z = (q.z + vertex.z) / 2
-                            face.addVertex(q)
-                            break
+                    if remdupes:
+                        for q in mymesh.verts:
+                            if vertex.equals(q):
+                                q.x = (q.x + vertex.x) / 2
+                                q.y = (q.y + vertex.y) / 2
+                                q.z = (q.z + vertex.z) / 2
+                                face.addVertex(q)
+                                break
+                        else:
+                            mymesh.verts.append(vertex)
+                            face.addVertex(vertex)
                     else:
                         mymesh.verts.append(vertex)
                         face.addVertex(vertex)
@@ -954,7 +965,7 @@ class OBJexport7:
                 i=0
                 while i < len(face.v):
                     for j in range (len(face.v)):
-                        if i!=j and face.v[i]==face.v[j]:
+                        if i!=j and face.v[i].equals(face.v[j]):
                             face.v.pop(j)
                             face.uv[i].s = (face.uv[i].s + face.uv[j].s) / 2
                             face.uv[i].t = (face.uv[i].t + face.uv[j].t) / 2
