@@ -50,6 +50,9 @@
 #  - Support for cockpit panel regions.
 #  - Reduced duplicate UV limit to 0.0004 = 1 pixel in 2048.
 #
+# 2008-04-08 v3.09
+#  - Don't regenerate panel region images on load, pack them instead.
+#
 
 import sys
 from math import sqrt, sin, cos
@@ -254,10 +257,13 @@ class PanelRegionHandler:
     REGIONCOUNT=4	# X-Plane 9.00 allows up to 4 panel regions
 
     def __init__(self):
+        self.obj=None
         try:
             self.obj=Object.Get(PanelRegionHandler.NAME)
+            # Suppress regeneration of panels in v3.0x
+            Scene.GetCurrent().clearScriptLinks(PanelRegionHandler.NAME)
         except:
-            self.obj=None
+            pass
 
     def New(self, panelimage):
         if self.obj:
@@ -282,17 +288,6 @@ class PanelRegionHandler:
         for n in range(PanelRegionHandler.REGIONCOUNT+1):
             mesh.faces[n].image=panelimage
 
-        # Suppress regeneration of panels on Undo
-        Registry.SetKey(PanelRegionHandler.NAME, {"skipregen":True})
-        # Set up regeneration of panels on reload
-        try:
-            txt=Text.Get(PanelRegionHandler.NAME)
-        except:
-            txt=Text.New(PanelRegionHandler.NAME)
-            Scene.GetCurrent().addScriptLink(PanelRegionHandler.NAME, 'OnLoad')
-        txt.clear()
-        txt.write('from Blender import Registry\nfrom XPlaneUtils import PanelRegionHandler\n\nif not Registry.GetKey("%s"):\n\tRegistry.SetKey("%s", {"skipregen":True})\n\tPanelRegionHandler().regenerate()\n' % (PanelRegionHandler.NAME, PanelRegionHandler.NAME))
-
         return self
 
 
@@ -313,6 +308,7 @@ class PanelRegionHandler:
                     img.setPixelI(x,y, (102,102,255,255))	# hilite transparent
                 else:
                     img.setPixelI(x,y, rgba[:3]+[255])
+        img.pack()
 
         for n in range(1,PanelRegionHandler.REGIONCOUNT+1):
             if mesh.faces[n].image==panelimage:
@@ -434,6 +430,7 @@ class PanelRegionHandler:
                         else:
                             img.setPixelI(x,y, rgba[:3]+[255])
                 img.glFree()	# force reload
+                img.pack()	# repack
         mesh.update()
         Window.RedrawAll(0)
         Window.DrawProgressBar(1, 'Finished')
