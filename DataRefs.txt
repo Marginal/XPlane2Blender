@@ -1,4 +1,4 @@
-2 900 Mon Jan  7 19:15:08 2008
+2 900 Sat Mar 29 00:53:34 2008
 
 sim/aircraft/acf_struct	int[10]	n	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
@@ -105,6 +105,106 @@ sim/aircraft/engine/acf_max_CHT	float	y	???	MAx cylinder head temperature the pl
 sim/aircraft/engine/acf_max_OILP	float	y	???	Max Oil Pressure the plane can have before engine failure.
 sim/aircraft/engine/acf_max_OILT	float	y	???	Max Oil Temperature the plane can have before engine failure.
 sim/aircraft/engine/acf_max_FUELP	float	y	???	Max Fuel Pressure the plane can have before engine failure.
+sim/aircraft/limits/green_lo_MP	float	n	inhg	Low value of the green arc for the manifold pressure instrument
+sim/aircraft/limits/green_hi_MP	float	n	inhg	High value of the green arc for the manifold pressure instrument
+sim/aircraft/limits/yellow_lo_MP	float	n	inhg	Low value of the yellow arc for the manifold pressure instrument
+sim/aircraft/limits/yellow_hi_MP	float	n	inhg	High value of the yellow arc for the manifold pressure instrument
+sim/aircraft/limits/red_lo_MP	float	n	inhg	Low value of the red arc for the manifold pressure instrument
+sim/aircraft/limits/red_hi_MP	float	n	inhg	High value of the red arc for the manifold pressure instrument
+sim/aircraft/limits/green_lo_EPR	float	n	ratio	Low value of the green arc for the engine pressure ratio instrument
+sim/aircraft/limits/green_hi_EPR	float	n	ratio	High value of the green arc for the engine pressure ratio instrument
+sim/aircraft/limits/yellow_lo_EPR	float	n	ratio	Low value of the yellow arc for the engine pressure ratio instrument
+sim/aircraft/limits/yellow_hi_EPR	float	n	ratio	High value of the yellow arc for the engine pressure ratio instrument
+sim/aircraft/limits/red_lo_EPR	float	n	ratio	Low value of the red arc for the engine pressure ratio instrument
+sim/aircraft/limits/red_hi_EPR	float	n	ratio	High value of the red arc for the engine pressure ratio instrument
+sim/aircraft/limits/green_lo_TRQ	float	n	ft-lbs	Low value of the green arc for the torque instrument
+sim/aircraft/limits/green_hi_TRQ	float	n	ft-lbs	High value of the green arc for the torque instrument
+sim/aircraft/limits/yellow_lo_TRQ	float	n	ft-lbs	Low value of the yellow arc for the torque instrument
+sim/aircraft/limits/yellow_hi_TRQ	float	n	ft-lbs	High value of the yellow arc for the torque instrument
+sim/aircraft/limits/red_lo_TRQ	float	n	ft-lbs	Low value of the red arc for the torque instrument
+sim/aircraft/limits/red_hi_TRQ	float	n	ft-lbs	High value of the red arc for the torque instrument
+sim/aircraft/limits/green_lo_FF	float	n	gal/hr lb/hr	Low value of the green arc for the fuel flow instrument
+sim/aircraft/limits/green_hi_FF	float	n	gal/hr lb/hr	High value of the green arc for the fuel flow instrument
+sim/aircraft/limits/yellow_lo_FF	float	n	gal/hr lb/hr	Low value of the yellow arc for the fuel flow instrument
+sim/aircraft/limits/yellow_hi_FF	float	n	gal/hr lb/hr	High value of the yellow arc for the fuel flow instrument
+sim/aircraft/limits/red_lo_FF	float	n	gal/hr lb/hr	Low value of the red arc for the fuel flow instrument
+sim/aircraft/limits/red_hi_FF	float	n	gal/hr lb/hr	High value of the red arc for the fuel flow instrument
+sim/aircraft/limits/green_lo_ITT	float	n	degC	Low value of the green arc for the interturbine temperature instrument
+sim/aircraft/limits/green_hi_ITT	float	n	degC	High value of the green arc for the interturbine temperature instrument
+sim/aircraft/limits/yellow_lo_ITT	float	n	degC	Low value of the yellow arc for the interturbine temperature instrument
+sim/aircraft/limits/yellow_hi_ITT	float	n	degC	High value of the yellow arc for the interturbine temperature instrument
+sim/aircraft/limits/red_lo_ITT	float	n	degC	Low value of the red arc for the interturbine temperature instrument
+sim/aircraft/limits/red_hi_ITT	float	n	degC	High value of the red arc for the interturbine temperature instrument
+sim/aircraft/limits/green_lo_EGT	float	n	degC	Low value of the green arc for the exhaust gas temperature instrument
+sim/aircraft/limits/green_hi_EGT	float	n	degC	High value of the green arc for the exhaust gas temperature instrument
+sim/aircraft/limits/yellow_lo_EGT	float	n	degC	Low value of the yellow arc for the exhaust gas temperature instrument
+sim/aircraft/limits/yellow_hi_EGT	float	n	degC	High value of the yellow arc for the exhaust gas temperature instrument
+sim/aircraft/limits/red_lo_EGT	float	n	degC	Low value of the red arc for the exhaust gas temperature instrument
+sim/aircraft/limits/red_hi_EGT	float	n	degC	High value of the red arc for the exhaust gas temperature instrument
+sim/aircraft/limits/green_lo_CHT	float	n	degC	Low value of the green arc for the cylinder-head temperature instrument
+sim/aircraft/limits/green_hi_CHT	float	n	degC	High value of the green arc for the cylinder-head temperature instrument
+sim/aircraft/limits/yellow_lo_CHT	float	n	degC	Low value of the yellow arc for the cylinder-head temperature instrument
+sim/aircraft/limits/yellow_hi_CHT	float	n	degC	High value of the yellow arc for the cylinder-head temperature instrument
+sim/aircraft/limits/red_lo_CHT	float	n	degC	Low value of the red arc for the cylinder-head temperature instrument
+sim/aircraft/limits/red_hi_CHT	float	n	degC	High value of the red arc for the cylinder-head temperature instrument
+sim/aircraft/limits/green_lo_oilT	float	n	degC	Low value of the green arc for the oil temperature instrument
+sim/aircraft/limits/green_hi_oilT	float	n	degC	High value of the green arc for the oil temperature instrument
+sim/aircraft/limits/yellow_lo_oilT	float	n	degC	Low value of the yellow arc for the oil temperature instrument
+sim/aircraft/limits/yellow_hi_oilT	float	n	degC	High value of the yellow arc for the oil temperature instrument
+sim/aircraft/limits/red_lo_oilT	float	n	degC	Low value of the red arc for the oil temperature instrument
+sim/aircraft/limits/red_hi_oilT	float	n	degC	High value of the red arc for the oil temperature instrument
+sim/aircraft/limits/green_lo_oilP	float	n	PSI	Low value of the green arc for the oil pressure instrument
+sim/aircraft/limits/green_hi_oilP	float	n	PSI	High value of the green arc for the oil pressure instrument
+sim/aircraft/limits/yellow_lo_oilP	float	n	PSI	Low value of the yellow arc for the oil pressure instrument
+sim/aircraft/limits/yellow_hi_oilP	float	n	PSI	High value of the yellow arc for the oil pressure instrument
+sim/aircraft/limits/red_lo_oilP	float	n	PSI	Low value of the red arc for the oil pressure instrument
+sim/aircraft/limits/red_hi_oilP	float	n	PSI	High value of the red arc for the oil pressure instrument
+sim/aircraft/limits/green_lo_fuelP	float	n	PSI	Low value of the green arc for the fuel pressure instrument
+sim/aircraft/limits/green_hi_fuelP	float	n	PSI	High value of the green arc for the fuel pressure instrument
+sim/aircraft/limits/yellow_lo_fuelP	float	n	PSI	Low value of the yellow arc for the fuel pressure instrument
+sim/aircraft/limits/yellow_hi_fuelP	float	n	PSI	High value of the yellow arc for the fuel pressure instrument
+sim/aircraft/limits/red_lo_fuelP	float	n	PSI	Low value of the red arc for the fuel pressure instrument
+sim/aircraft/limits/red_hi_fuelP	float	n	PSI	High value of the red arc for the fuel pressure instrument
+sim/aircraft/limits/green_lo_gen_amp	float	n	amps	Low value of the green arc for the generator amperage instrument
+sim/aircraft/limits/green_hi_gen_amp	float	n	amps	High value of the green arc for the generator amperage instrument
+sim/aircraft/limits/yellow_lo_gen_amp	float	n	amps	Low value of the yellow arc for the generator amperage instrument
+sim/aircraft/limits/yellow_hi_gen_amp	float	n	amps	High value of the yellow arc for the generator amperage instrument
+sim/aircraft/limits/red_lo_gen_amp	float	n	amps	Low value of the red arc for the generator amperage instrument
+sim/aircraft/limits/red_hi_gen_amp	float	n	amps	High value of the red arc for the generator amperage instrument
+sim/aircraft/limits/max_gen_amp	float	n	amps	Max amps the generators can put out (with engines all cranked up)
+sim/aircraft/limits/green_lo_bat_amp	float	n	amps	Low value of the green arc for the battery amperage instrument
+sim/aircraft/limits/green_hi_bat_amp	float	n	amps	High value of the green arc for the battery amperage instrument
+sim/aircraft/limits/yellow_lo_bat_amp	float	n	amps	Low value of the yellow arc for the battery amperage instrument
+sim/aircraft/limits/yellow_hi_bat_amp	float	n	amps	High value of the yellow arc for the battery amperage instrument
+sim/aircraft/limits/red_lo_bat_amp	float	n	amps	Low value of the red arc for the battery amperage instrument
+sim/aircraft/limits/red_hi_bat_amp	float	n	amps	High value of the red arc for the battery amperage instrument
+sim/aircraft/limits/max_bat_amp	float	n	amps	Battery amp when the non-standby batteries are fully charged.
+sim/aircraft/limits/green_lo_bat_volt	float	n	volts	Low value of the green arc for the battery voltage instrument
+sim/aircraft/limits/green_hi_bat_volt	float	n	volts	High value of the green arc for the battery voltage instrument
+sim/aircraft/limits/yellow_lo_bat_volt	float	n	volts	Low value of the yellow arc for the battery voltage instrument
+sim/aircraft/limits/yellow_hi_bat_volt	float	n	volts	High value of the yellow arc for the battery voltage instrument
+sim/aircraft/limits/red_lo_bat_volt	float	n	volts	Low value of the red arc for the battery voltage instrument
+sim/aircraft/limits/red_hi_bat_volt	float	n	volts	High value of the red arc for the battery voltage instrument
+sim/aircraft/limits/max_bat_volt_standard	float	n	volts	This is the voltage when the standard (non-standby) batteries are fully charged.
+sim/aircraft/limits/green_lo_vac	float	n	psi	Low value of the green arc for the vaccuum pressure instrument
+sim/aircraft/limits/green_hi_vac	float	n	psi	High value of the green arc for the vaccuum pressure instrument
+sim/aircraft/limits/yellow_lo_vac	float	n	psi	Low value of the yellow arc for the vaccuum pressure instrument
+sim/aircraft/limits/yellow_hi_vac	float	n	psi	High value of the yellow arc for the vaccuum pressure instrument
+sim/aircraft/limits/red_lo_vac	float	n	psi	Low value of the red arc for the vaccuum pressure instrument
+sim/aircraft/limits/red_hi_vac	float	n	psi	High value of the red arc for the vaccuum pressure instrument
+sim/aircraft/limits/max_vac	float	n	psi	Vaccuum presure put out when the engine is running at the bottom of red line (max vaccuum).
+sim/aircraft/limits/green_lo_N1	float	n	percent	Low value of the green arc for the N1 instrument
+sim/aircraft/limits/green_hi_N1	float	n	percent	High value of the green arc for the N1 instrument
+sim/aircraft/limits/yellow_lo_N1	float	n	percent	Low value of the yellow arc for the N1 instrument
+sim/aircraft/limits/yellow_hi_N1	float	n	percent	High value of the yellow arc for the N1 instrument
+sim/aircraft/limits/red_lo_N1	float	n	percent	Low value of the red arc for the N1 instrument
+sim/aircraft/limits/red_hi_N1	float	n	percent	High value of the red arc for the N1 instrument
+sim/aircraft/limits/green_lo_N2	float	n	percent	Low value of the green arc for the N2 instrument
+sim/aircraft/limits/green_hi_N2	float	n	percent	High value of the green arc for the N2 instrument
+sim/aircraft/limits/yellow_lo_N2	float	n	percent	Low value of the yellow arc for the N2 instrument
+sim/aircraft/limits/yellow_hi_N2	float	n	percent	High value of the yellow arc for the N2 instrument
+sim/aircraft/limits/red_lo_N2	float	n	percent	Low value of the red arc for the N2 instrument
+sim/aircraft/limits/red_hi_N2	float	n	percent	High value of the red arc for the N2 instrument
 sim/aircraft/prop/acf_en_type	int[8]	y	???	engine type... diff types allowed for B-36, NASP concepts, Mars liquid rocket take-off assist, etc. etc. etc.
 sim/aircraft/prop/acf_revthrust_eq	int	y	???	better organization to do it this way, NOTE : Used to be i8 in version 6
 sim/aircraft/prop/acf_prop_type	int[8]	y	???	prop type
@@ -382,10 +482,10 @@ sim/aircraft/overflow/acf_ASp_hi_rate	float	y
 sim/aircraft/overflow/acf_ASh_hi_rate	float	y	???	astab stuff i should have had in there the first time!
 sim/aircraft/overflow/acf_spooltime_prop	float	y	???	turboprops have some spool time as well!
 sim/aircraft/overflow/acf_elevflaps	float	y	???	elevator align with flaps
-sim/aircraft/overflow/acf_tank_X	float[3]	y	???	fuel tank locations
-sim/aircraft/overflow/acf_tank_Y	float[3]	y	???	fuel tank locations
-sim/aircraft/overflow/acf_tank_Z	float[3]	y	???	fuel tank locations
-sim/aircraft/overflow/acf_tank_rat	float[3]	y	???	fuel tank ratio per tank
+sim/aircraft/overflow/acf_tank_X	float[9]	y	???	fuel tank locations - was dim 3 in XP8 and earlier
+sim/aircraft/overflow/acf_tank_Y	float[9]	y	???	fuel tank locations - was dim 3 in XP8 and earlier
+sim/aircraft/overflow/acf_tank_Z	float[9]	y	???	fuel tank locations - was dim 3 in XP8 and earlier
+sim/aircraft/overflow/acf_tank_rat	float[9]	y	???	fuel tank ratio per tank -- was dim 3 in xp 8 and earlier
 sim/aircraft/overflow/acf_stall_warn_alpha	float	y	???	alpha of stall warning... user must specify since warning different for different planes.
 sim/aircraft/overflow/acf_mass_shift	float	y	???	hang-gliders and wright gliders
 sim/aircraft/overflow/acf_mass_shift_dx	float	y	???	hang-gliders and wright gliders
@@ -518,7 +618,7 @@ sim/cockpit/autopilot/airspeed	float	y	knots_mach	Airspeed to hold, this changes
 sim/cockpit/autopilot/heading	float	y	degt	The heading to fly (true, legacy)
 sim/cockpit/autopilot/heading_mag	float	y	degm	The heading to fly (magnetic, preferred) pilot
 sim/cockpit/autopilot/heading_mag2	float	y	degm	The heading to fly (magnetic, preferred) copilot
-sim/cockpit/autopilot/airspeed_is_mach	int	n	boolean	Is our airspeed a mach number (this is writable if the panel has the button, otherwise sim controls)
+sim/cockpit/autopilot/airspeed_is_mach	int	y	boolean	Is our airspeed a mach number (this is writable if the panel has the button, otherwise sim controls)
 sim/cockpit/autopilot/flight_director_pitch	float	y	degrees	The recommended pitch from the Flight Director.  Use override_flightdir
 sim/cockpit/autopilot/flight_director_roll	float	y	degrees	The recommended roll from the Flight Director.  Use override_flightdir
 sim/cockpit/autopilot/autopilot_state	int	y	flags	Various autopilot engage modes, etc.  See docs for flags
@@ -590,8 +690,10 @@ sim/cockpit/gyros/phi_ind_deg3	float	y	degrees	The indicated roll on the panel f
 sim/cockpit/gyros/the_ind_deg4	float	y	degrees	The indicated pitch on the panel for the second elect instrument
 sim/cockpit/gyros/psi_ind_degm4	float	y	degrees	The indicated heading on the panel for the second elect instrument
 sim/cockpit/gyros/phi_ind_deg4	float	y	degrees	The indicated roll on the panel for the second elect instrument
-sim/cockpit/gyros/dg_drift_vac_deg	float	y	degrees A delta between the plane's heading and the DG for vacuum powered	DGs
-sim/cockpit/gyros/dg_drift_ele_deg	float	y	degrees A delta between the plane's heading and the DG for electric powered	DGs
+sim/cockpit/gyros/dg_drift_vac_deg	float	y	degrees A delta between the plane's heading and the DG for vacuum 1 powered	DGs
+sim/cockpit/gyros/dg_drift_ele_deg	float	y	degrees A delta between the plane's heading and the DG for electric 1 powered	DGs
+sim/cockpit/gyros/dg_drift_vac2_deg	float	y	degrees A delta between the plane's heading and the DG for vacuum 2 powered	DGs
+sim/cockpit/gyros/dg_drift_ele2_deg	float	y	degrees A delta between the plane's heading and the DG for electric 2 powered	DGs
 sim/cockpit/gyros/gyr_force	float[4]	y	???	???
 sim/cockpit/gyros/gyr_spin	float[4]	y	???	???
 sim/cockpit/misc/has_radar	float	n	???	Does this aircraft have weather radar?
@@ -749,17 +851,18 @@ sim/cockpit/switches/EFIS_dme_1_selector	int	y	???	Is the first EFIS DME showing
 sim/cockpit/switches/EFIS_dme_2_selector	int	y	???	Is the second EFIS DME showing nothing, dist to VOR, or dist to ADF
 sim/cockpit/switches/marker_panel_out	int	y	???	Settings for the marker beacon audio panel
 sim/cockpit/switches/audio_panel_out	int	y	???	Settings for the com radio audio panel
-sim/cockpit/switches/pitot_heat_on	int	y	bool	Is the pitot heat on
-sim/cockpit/switches/pitot_heat_on2	int	y	bool	Is the backup pitot heat on
 sim/cockpit/switches/anti_ice_on	int	y	bool	Is the anti-icing system on.  This turns on EVERY anti-ice system.
-sim/cockpit/switches/anti_ice_auto_ignite	int	y	bool	Not sure what this anti-ice system is
-sim/cockpit/switches/anti_ice_inert_sep	int	y	bool	Or this one either
 sim/cockpit/switches/anti_ice_inlet_heat	int	y	bool	Turns on inlet heating.
 sim/cockpit/switches/anti_ice_prop_heat	int	y	bool	Turns on prop heat
+sim/cockpit/switches/anti_ice_window_heat	int	y	bool	Turns on anti-icing fr the windshield
+sim/cockpit/switches/pitot_heat_on	int	y	bool	Is the pitot heat on
+sim/cockpit/switches/pitot_heat_on2	int	y	bool	Is the backup pitot heat on
+sim/cockpit/switches/anti_ice_AOA_heat	int	y	bool	Turns on anti-icing for alpha vane heater
 sim/cockpit/switches/anti_ice_surf_heat	int	y	bool	Turns on surface heat on the wings
 sim/cockpit/switches/anti_ice_surf_boot	int	y	bool	Turns on the wing-surface anti-ice boot (knocks ice off I think).
-sim/cockpit/switches/anti_ice_window_heat	int	y	bool	Turns on anti-icing fr the windshield
-sim/cockpit/switches/anti_ice_AOA_heat	int	y	bool	Turns on anti-icing for alpha vane heater
+sim/cockpit/switches/anti_ice_engine_air	float[8]	y	ratio	????
+sim/cockpit/switches/anti_ice_auto_ignite	int	y	bool	ignition source is turned on automatically on low N1 to prevent flameout
+sim/cockpit/switches/anti_ice_inert_sep	int	y	bool	Inertial separator
 sim/cockpit/switches/ice_detect	int	y	bool	Turns on ice detect
 sim/cockpit/switches/auto_brake_settings	int	y	???	Settings for the autobrake control
 sim/cockpit/switches/auto_feather_mode	int	y	???	Settings for auto-feathering mode
@@ -806,20 +909,27 @@ sim/cockpit/warnings/annunciators/low_vacuum	int	y	boolean	low vaccum pressure
 sim/cockpit/warnings/annunciators/low_voltage	int	y	boolean	low battery voltage
 sim/cockpit/warnings/annunciators/fuel_quantity	int	y	boolean	running out of fuel
 sim/cockpit/warnings/annunciators/hydraulic_pressure	int	y	boolean	hydraulic pressure low
-sim/cockpit/warnings/annunciators/fuel_pressure	int	y	boolean	fuel pressure low
-sim/cockpit/warnings/annunciators/oil_pressure	int	y	boolean	oil pressure low
-sim/cockpit/warnings/annunciators/oil_temperature	int	y	boolean	oil temperature too high
-sim/cockpit/warnings/annunciators/inverter	int	y	boolean	inverters are off or broken
-sim/cockpit/warnings/annunciators/generator	int	y	boolean	generators are off or broken
-sim/cockpit/warnings/annunciators/chip_detect	int	y	boolean	a chip has been detected in, um, a prop or turbine?
-sim/cockpit/warnings/annunciators/engine_fire	int	y	boolean	yer engines are on fire, fer cryin out loud
-sim/cockpit/warnings/annunciators/auto_ignition	int	y	boolean	auto iginition ???
-sim/cockpit/warnings/annunciators/speedbrake	int	y	boolean	???
-sim/cockpit/warnings/annunciators/GPWS	int	y	boolean	???
-sim/cockpit/warnings/annunciators/ice	int	y	boolean	???
-sim/cockpit/warnings/annunciators/lo_rotor	int	y	boolean	???
-sim/cockpit/warnings/annunciators/hi_rotor	int	y	boolean	???
-sim/cockpit/warnings/annunciators/reverse	int	y	boolean	???
+sim/cockpit/warnings/annunciators/speedbrake	int	y	boolean	speedbrakes deployed
+sim/cockpit/warnings/annunciators/GPWS	int	y	boolean	GPWS failed
+sim/cockpit/warnings/annunciators/ice	int	y	boolean	ice detected
+sim/cockpit/warnings/annunciators/lo_rotor	int	y	boolean	low rotor speed
+sim/cockpit/warnings/annunciators/hi_rotor	int	y	boolean	high rotor speed
+sim/cockpit/warnings/annunciators/pitot_heat_off	int	y	boolean	pitot heat off
+sim/cockpit/warnings/annunciators/transonic	int	y	boolean	transonic
+sim/cockpit/warnings/annunciators/slats	int	y	boolean	slats deployed
+sim/cockpit/warnings/annunciators/flight_director	int	y	boolean	flight director failure
+sim/cockpit/warnings/annunciators/autopilot	int	y	boolean	autopilot failure
+sim/cockpit/warnings/annunciators/yaw_damper	int	y	boolean	yaw damper failure
+sim/cockpit/warnings/annunciators/fuel_pressure	int	y	bitfield	fuel pressure low
+sim/cockpit/warnings/annunciators/oil_pressure	int	y	bitfield	oil pressure low
+sim/cockpit/warnings/annunciators/oil_temperature	int	y	bitfield	oil temperature too high
+sim/cockpit/warnings/annunciators/generator	int	y	bitfield	generators are off or broken
+sim/cockpit/warnings/annunciators/chip_detect	int	y	bitfield	a chip has been detected in, um, a prop or turbine?
+sim/cockpit/warnings/annunciators/engine_fire	int	y	bitfield	yer engines are on fire, fer cryin out loud
+sim/cockpit/warnings/annunciators/auto_ignition	int	y	bitfield	auto iginition ???
+sim/cockpit/warnings/annunciators/reverse	int	y	bitfield	reversers deployed
+sim/cockpit/warnings/annunciators/afterburners_on	int	y	bitfield	afterburners on
+sim/cockpit/warnings/annunciators/inverter	int	y	bitfield	inverters are off or broken
 sim/cockpit/weapons/guns_armed	int	y	???	Are guns armed
 sim/cockpit/weapons/rockets_armed	int	y	???	Are rockets armed
 sim/cockpit/weapons/missiles_armed	int	y	???	Are missiles armed
@@ -1514,6 +1624,7 @@ sim/flightmodel/transmissions/xmsn_press	float	n	???	transmission pressure
 sim/flightmodel/transmissions/xmsn_temp	float	n	???	transmission temperature
 sim/flightmodel/weight/m_fixed	float	y	kgs	Payload Weight
 sim/flightmodel/weight/m_total	float	n	kgs	Total Weight
+sim/flightmodel/weight/m_fuel	float[9]	y	kgs	Fuel Tank Weight - for 9 tanks
 sim/flightmodel/weight/m_fuel1	float	y	kgs	Fuel Tank 1 Weight
 sim/flightmodel/weight/m_fuel2	float	y	kgs	Fuel Tank 2 Weight
 sim/flightmodel/weight/m_fuel3	float	y	kgs	Fuel Tank 3 Weight
@@ -1570,6 +1681,7 @@ sim/graphics/colors/glass_text_rgb	float[3]	n	RGB	Text color for on a 'glass' sc
 sim/graphics/colors/plane_path1_3d_rgb	float[3]	y	RGB	Color for 3-d plane path
 sim/graphics/colors/plane_path2_3d_rgb	float[3]	y	RGB	Striping color for 3-d plane path
 sim/graphics/misc/show_panel_click_spots	int	y	boolean	Show the clickable parts of the panel?
+sim/graphics/misc/show_instrument_descriptions	int	y	boolean	Show instrument descriptions on the panel?
 sim/graphics/misc/cockpit_light_level_r	float	n	ratio	The red level for the cockpit 'night' tinting, from 0 to 1
 sim/graphics/misc/cockpit_light_level_g	float	n	ratio	The red level for the cockpit 'night' tinting, from 0 to 1
 sim/graphics/misc/cockpit_light_level_b	float	n	ratio	The red level for the cockpit 'night' tinting, from 0 to 1
@@ -1608,6 +1720,11 @@ sim/graphics/settings/draw_cars	int	y	boolean	draw cars on roads
 sim/graphics/settings/transparent_panel	int	y	boolean	Is the panel transparent?
 sim/graphics/settings/draw_planes_on_ground	int	y	boolean	draw extra planes on the ground at airports?
 sim/graphics/settings/allow_sloped_runways	int	n	boolean	allow sloped runways?
+sim/graphics/settings/non_proportional_vertical_FOV	int	y	boolean	FOV is non proportional
+sim/graphics/settings/dome_projection	int	y	boolean	Project onto a dome
+sim/graphics/settings/lock_view_to_forward_cockpit	int	y	boolean	Forward view lock
+sim/graphics/settings/local_map/show_profile	int	y	boolean	corresponds to setting to show profile view in local map screen
+sim/graphics/settings/local_map/profile_view_is_time	int	y	boolean	corresponds to setting to convert profile view to time-mode (normally it is in distance mode)
 sim/graphics/view/view_type	int	n	enum	The current camera view
 sim/graphics/view/panel_render_type	int	n	enum	How to draw the panel?  0=2-d panel, 1=3-d, non-lit, 2=3-d, lit
 sim/graphics/view/world_render_type	int	n	enum	What kind of 3-d rendering pass are we on? 0=normal,1=reflections in water
@@ -1666,6 +1783,16 @@ sim/graphics/view/pilots_head_psi	float	y	pos	Position of pilot's head heading
 sim/graphics/view/pilots_head_the	float	y	pos	Position of pilot's head pitch
 sim/graphics/view/click_3d_x	float	n	0-1	coordinates of the panel click in 3-d
 sim/graphics/view/click_3d_y	float	n	0-1	as texture coords (E.g. 0-1)
+sim/graphics/view/local_map_l	float	n	pixels	Bounds of the local map window during callbacks - left
+sim/graphics/view/local_map_b	float	n	pixels	Bounds of the local map window during callbacks - bottom
+sim/graphics/view/local_map_r	float	n	pixels	Bounds of the local map window during callbacks - right
+sim/graphics/view/local_map_t	float	n	pixels	Bounds of the local map window during callbacks - top
+sim/graphics/view/local_profile_scale_x	float	n	pix/mtr	Scale (pixels per meter) for drawing in the profile view horizontally when in distance mode
+sim/graphics/view/local_profile_scale_y	float	n	pix/mtr	Scale (pixels per meter) for drawing in the profile view vertically
+sim/graphics/view/local_profile_scale_t	float	n	pix/sec	Scale (pixels per second) for drawing in the profile view horizontally when in time mode
+sim/graphics/view/local_profile_ref_x	float	n	meters	Location (in world coordinates) of the "reference" point (lower left corner) of the profile view
+sim/graphics/view/local_profile_ref_y	float	n	meters	Location (in world coordinates) of the "reference" point (lower left corner) of the profile view
+sim/graphics/view/local_profile_ref_z	float	n	meters	Location (in world coordinates) of the "reference" point (lower left corner) of the profile view
 sim/joystick/has_joystick	int	n	boolean	Do we have a joystick?
 sim/joystick/mouse_is_joystick	int	n	boolean	Is the mouse acting as a joystick?
 sim/joystick/yoke_pitch_ratio	float	y	[-1..1]	The deflection of the joystick axis controlling pitch.  Use override_joystick
@@ -1686,13 +1813,13 @@ sim/joystick/joystick_heading_nullzone	float	y	ratio	The nullzone size for the h
 sim/joystick/joystick_pitch_sensitivity	float	y	ratio	The sensitivity for the pitch axis
 sim/joystick/joystick_roll_sensitivity	float	y	ratio	The sensitivity for the roll axis
 sim/joystick/joystick_heading_sensitivity	float	y	ratio	The sensitivity for the heading axis
-sim/joystick/joystick_axis_assignments	int[32]	y	enums	Assignments for the joystick axes - what does X-Plane think each one is? [Was 15 before 850][Was 24 before 860]
-sim/joystick/joystick_button_assignments	int[160]	y	enums	Assignments for the joystick buttons - what does each one do? [Was 64 before 850]
-sim/joystick/joystick_axis_reverse	int[32]	y	boolean	Reverse this axis? [Was 15 before 850][Was 24 before 860]
-sim/joystick/joystick_axis_values	float[32]	n	ratio	The deflection of this joystick [Was 15 before 850][Was 24 before 860]
-sim/joystick/joystick_axis_minimum	float[32]	y	ratio	Min raw value ever seen [Was 15 before 850][Was 24 before 860]
-sim/joystick/joystick_axis_maximum	float[32]	y	ratio	Max raw value ever seen [Was 15 before 850][Was 24 before 860]
-sim/joystick/joystick_button_values	int[160]	n	boolean	Is this button pressed? [Was 64 before 850]
+sim/joystick/joystick_axis_assignments	int[100]	y	enums	Assignments for the joystick axes - what does X-Plane think each one is? [Was 15 before 850][Was 24 before 860][was 32 before 900]
+sim/joystick/joystick_button_assignments	int[1520]	y	enums	Assignments for the joystick buttons - what does each one do? [Was 64 before 850][was 160 before 900]
+sim/joystick/joystick_axis_reverse	int[100]	y	boolean	Reverse this axis? [Was 15 before 850][Was 24 before 860][was 32 before 900]
+sim/joystick/joystick_axis_values	float[100]	n	ratio	The deflection of this joystick [Was 15 before 850][Was 24 before 860][was 32 before 900]
+sim/joystick/joystick_axis_minimum	float[100]	y	ratio	Min raw value ever seen [Was 15 before 850][Was 24 before 860][was 32 before 900]
+sim/joystick/joystick_axis_maximum	float[100]	y	ratio	Max raw value ever seen [Was 15 before 850][Was 24 before 860][was 32 before 900]
+sim/joystick/joystick_button_values	int[1520]	n	boolean	Is this button pressed? [Was 64 before 850][was 160 before 900]
 sim/joystick/eq_ped_nobrk	int	n	???	Pedal nobrk
 sim/joystick/eq_ped_wibrk	int	n	???	Pedal wlbrk
 sim/joystick/eq_cirrusII_fun	int	n	???	PFC fun
@@ -2313,33 +2440,51 @@ sim/operation/failures/mean_time_between_failure_hrs	float	y	hours	Mean time bet
 sim/operation/failures/ram_air_turbine_on	int	y	boolean	Ram air turbine is on?
 sim/operation/failures/failures	int[564]	y	enum	564 separate failure codes [was 137]
 sim/operation/failures/comp_fail_stat	int[8]	y	bitarray	This was the fail stats bit packed - do not use it!
-sim/operation/failures/rel_vasi	int	y	failure_enum	VASIs
-sim/operation/failures/rel_app_lites	int	y	failure_enum	Approach lites - in 850 rwy lights fail ALL airport lights
-sim/operation/failures/rel_rwy_lites	int	y	failure_enum	Runway lites
+sim/operation/failures/rel_vasi	int	y	failure_enum	VASIs Inoperative
+sim/operation/failures/rel_app_lites	int	y	failure_enum	Approach lites inop - in 850 rwy lights fail ALL airport lights
+sim/operation/failures/rel_rwy_lites	int	y	failure_enum	Runway lites Inoperative
 sim/operation/failures/rel_conlock	int	y	failure_enum	Controls locked
-sim/operation/failures/rel_fuelcap	int	y	failure_enum	Fuel Cap
-sim/operation/failures/rel_vacuum	int	y	failure_enum	Vaccum System 1
-sim/operation/failures/rel_vacuum2	int	y	failure_enum	Vaccum System 2
-sim/operation/failures/rel_pitot	int	y	failure_enum	Pitot 1
-sim/operation/failures/rel_pitot2	int	y	failure_enum	Pitot 2
-sim/operation/failures/rel_static	int	y	failure_enum	Static 1
-sim/operation/failures/rel_static2	int	y	failure_enum	Static 2
-sim/operation/failures/rel_static1_err	int	y	failure_enum	Static system 1
-sim/operation/failures/rel_static2_err	int	y	failure_enum	Static system 2
+sim/operation/failures/rel_fuelcap	int	y	failure_enum	Fuel Cap left off
+sim/operation/failures/rel_fuel_water	int	y	failure_enum	Water in fuel
+sim/operation/failures/rel_fuel_type	int	y	failure_enum	Wrong fuel type - JetA for props or Avgas for jets!
+sim/operation/failures/rel_fuel_block0	int	y	failure_enum	Fuel tank filter is blocked - tank 1
+sim/operation/failures/rel_fuel_block1	int	y	failure_enum	Fuel tank filter is blocked - tank 2
+sim/operation/failures/rel_fuel_block2	int	y	failure_enum	Fuel tank filter is blocked - tank 3
+sim/operation/failures/rel_fuel_block3	int	y	failure_enum	Fuel tank filter is blocked - tank 4
+sim/operation/failures/rel_fuel_block4	int	y	failure_enum	Fuel tank filter is blocked - tank 5
+sim/operation/failures/rel_fuel_block5	int	y	failure_enum	Fuel tank filter is blocked - tank 6
+sim/operation/failures/rel_fuel_block6	int	y	failure_enum	Fuel tank filter is blocked - tank 7
+sim/operation/failures/rel_fuel_block7	int	y	failure_enum	Fuel tank filter is blocked - tank 8
+sim/operation/failures/rel_fuel_block8	int	y	failure_enum	Fuel tank filter is blocked - tank 9
+sim/operation/failures/rel_vacuum	int	y	failure_enum	Vaccum System 1 - Pump Failure
+sim/operation/failures/rel_vacuum2	int	y	failure_enum	Vaccum System 2 - Pump Failure
+sim/operation/failures/rel_pitot	int	y	failure_enum	Pitot 1 - Blockage
+sim/operation/failures/rel_pitot2	int	y	failure_enum	Pitot 2 - Blockage
+sim/operation/failures/rel_static	int	y	failure_enum	Static 1 - Blockage
+sim/operation/failures/rel_static2	int	y	failure_enum	Static 2 - Blockage
+sim/operation/failures/rel_static1_err	int	y	failure_enum	Static system 1 - Error
+sim/operation/failures/rel_static2_err	int	y	failure_enum	Static system 2 - Error
 sim/operation/failures/rel_esys	int	y	failure_enum	Electrical System (Bus 1)
 sim/operation/failures/rel_esys2	int	y	failure_enum	Electrical System (Bus 2)
 sim/operation/failures/rel_invert0	int	y	failure_enum	Inverter 1
 sim/operation/failures/rel_invert1	int	y	failure_enum	Inverter 2 (also in 740)
-sim/operation/failures/rel_ss_asi	int	y	failure_enum	Airspeed Indicator
-sim/operation/failures/rel_ss_ahz	int	y	failure_enum	Artificial Horizon
-sim/operation/failures/rel_ss_alt	int	y	failure_enum	Altimeter
-sim/operation/failures/rel_ss_tsi	int	y	failure_enum	Turn indicator
-sim/operation/failures/rel_ss_dgy	int	y	failure_enum	Directional Gyro
-sim/operation/failures/rel_ss_vvi	int	y	failure_enum	Vertical Velocity Indicator
+sim/operation/failures/rel_smoke_cpit	int	y	failure_enum	Smoke in cockpit
+sim/operation/failures/rel_ss_asi	int	y	failure_enum	Airspeed Indicator (Pilot)
+sim/operation/failures/rel_ss_ahz	int	y	failure_enum	Artificial Horizon (Pilot)
+sim/operation/failures/rel_ss_alt	int	y	failure_enum	Altimeter (Pilot)
+sim/operation/failures/rel_ss_tsi	int	y	failure_enum	Turn indicator (Pilot)
+sim/operation/failures/rel_ss_dgy	int	y	failure_enum	Directional Gyro (Pilot)
+sim/operation/failures/rel_ss_vvi	int	y	failure_enum	Vertical Velocity Indicator (Pilot)
+sim/operation/failures/rel_cop_asi	int	y	failure_enum	Airspeed Indicator (Copilot)
+sim/operation/failures/rel_cop_ahz	int	y	failure_enum	Artificial Horizon (Copilot)
+sim/operation/failures/rel_cop_alt	int	y	failure_enum	Altimeter (Copilot)
+sim/operation/failures/rel_cop_tsi	int	y	failure_enum	Turn indicator (Copilot)
+sim/operation/failures/rel_cop_dgy	int	y	failure_enum	Directional Gyro (Copilot)
+sim/operation/failures/rel_cop_vvi	int	y	failure_enum	Vertical Velocity Indicator (Copilot)
 sim/operation/failures/rel_efis_1	int	y	failure_enum	Primary EFIS
 sim/operation/failures/rel_efis_2	int	y	failure_enum	Secondary EFIS
 sim/operation/failures/rel_AOA	int	y	failure_enum	AOA
-sim/operation/failures/rel_fdir	int	y	failure_enum	flight director
+sim/operation/failures/rel_stall_warn	int	y	failure_enum	Stall warning has failed
 sim/operation/failures/rel_nav1	int	y	failure_enum	Nav-1 radio
 sim/operation/failures/rel_nav2	int	y	failure_enum	Nav-2 radio
 sim/operation/failures/rel_adf1	int	y	failure_enum	ADF 1 (only one ADF failure in 830!)
@@ -2349,8 +2494,9 @@ sim/operation/failures/rel_dme	int	y	failure_enum	DME
 sim/operation/failures/rel_loc	int	y	failure_enum	Localizer
 sim/operation/failures/rel_gls	int	y	failure_enum	Glide Slope
 sim/operation/failures/rel_xpndr	int	y	failure_enum	Transponder failure
-sim/operation/failures/rel_hydsys0	int	y	failure_enum	Hydraulic System 1 (general?)
-sim/operation/failures/rel_hydsys2	int	y	failure_enum	Hydraulic System 2 (general?)
+sim/operation/failures/rel_marker	int	y	failure_enum	Marker Beacons
+sim/operation/failures/rel_hydsys0	int	y	failure_enum	Hydraulic System 1 (general)
+sim/operation/failures/rel_hydsys2	int	y	failure_enum	Hydraulic System 2 (general)
 sim/operation/failures/rel_hydpmp	int	y	failure_enum	Hydraulic System 1 (pump fail)
 sim/operation/failures/rel_hydpmp2	int	y	failure_enum	Hydraulic System 2 (pump fail)
 sim/operation/failures/rel_hydleak	int	y	failure_enum	Hydraulic System 1 (leak)
@@ -2366,134 +2512,69 @@ sim/operation/failures/rel_fc_rud_R	int	y	failure_enum	Yaw Right control
 sim/operation/failures/rel_trim_ail	int	y	failure_enum	roll trim
 sim/operation/failures/rel_trim_elv	int	y	failure_enum	Pitch Trim
 sim/operation/failures/rel_trim_rud	int	y	failure_enum	Yaw Trim
+sim/operation/failures/rel_fc_slt	int	y	failure_enum	Slats
+sim/operation/failures/rel_flap_act	int	y	failure_enum	Flap Actuator
 sim/operation/failures/rel_fc_L_flp	int	y	failure_enum	Left flap activate
 sim/operation/failures/rel_fc_R_flp	int	y	failure_enum	Right Flap activate
 sim/operation/failures/rel_L_flp_off	int	y	failure_enum	Left flap remove
 sim/operation/failures/rel_R_flp_off	int	y	failure_enum	Right flap remove
 sim/operation/failures/rel_gear_act	int	y	failure_enum	Landing Gear actuator
-sim/operation/failures/rel_flap_act	int	y	failure_enum	Flap Actuator
 sim/operation/failures/rel_lagear1	int	y	failure_enum	Landing Gear 1 retract
 sim/operation/failures/rel_lagear2	int	y	failure_enum	Landing Gear 2 retract
 sim/operation/failures/rel_lagear3	int	y	failure_enum	Landing Gear 3 retract
 sim/operation/failures/rel_lagear4	int	y	failure_enum	Landing Gear 4 retract
 sim/operation/failures/rel_lagear5	int	y	failure_enum	Landing Gear 5 retract
+sim/operation/failures/rel_lagear_6	int	y	failure_enum	Landing Gear 6 retract
+sim/operation/failures/rel_lagear_7	int	y	failure_enum	Landing Gear 7 retract
+sim/operation/failures/rel_lagear_8	int	y	failure_enum	Landing Gear 8 retract
+sim/operation/failures/rel_lagear_9	int	y	failure_enum	Landing Gear 9 retract
+sim/operation/failures/rel_lagear_10	int	y	failure_enum	Landing Gear 10 retract
 sim/operation/failures/rel_tire1	int	y	failure_enum	Landing gear 1 tire blowout
 sim/operation/failures/rel_tire2	int	y	failure_enum	Landing gear 2 tire blowout
 sim/operation/failures/rel_tire3	int	y	failure_enum	Landing gear 3 tire blowout
 sim/operation/failures/rel_tire4	int	y	failure_enum	Landing gear 4 tire blowout
 sim/operation/failures/rel_tire5	int	y	failure_enum	Landing gear 5 tire blowout
+sim/operation/failures/rel_tire6	int	y	failure_enum	Landing gear 6 tire blowout
+sim/operation/failures/rel_tire7	int	y	failure_enum	Landing gear 7 tire blowout
+sim/operation/failures/rel_tire8	int	y	failure_enum	Landing gear 8 tire blowout
+sim/operation/failures/rel_tire9	int	y	failure_enum	Landing gear 9 tire blowout
+sim/operation/failures/rel_tire10	int	y	failure_enum	Landing gear 10 tire blowout
 sim/operation/failures/rel_lbrakes	int	y	failure_enum	Left Brakes
 sim/operation/failures/rel_rbrakes	int	y	failure_enum	Right Brakes
-sim/operation/failures/rel_fc_slt	int	y	failure_enum	Slats
-sim/operation/failures/rel_antice	int	y	failure_enum	Anti-ice
-sim/operation/failures/rel_clights	int	y	failure_enum	Cockpit Lights
+sim/operation/failures/rel_fdir	int	y	failure_enum	flight director
+sim/operation/failures/rel_auto_runaway	int	y	failure_enum	AutoPilot (Runaway!!!)
+sim/operation/failures/rel_otto	int	y	failure_enum	AutoPilot (Computer)
+sim/operation/failures/rel_auto_servos	int	y	failure_enum	AutoPilot (Servos)
 sim/operation/failures/rel_stbaug	int	y	failure_enum	Stability Augmentation
-sim/operation/failures/rel_otto	int	y	failure_enum	AutoPilot
-sim/operation/failures/rel_trotor	int	y	failure_enum	tail rotor transmission
+sim/operation/failures/rel_trotor	int	y	failure_enum	Tail rotor transmission
 sim/operation/failures/rel_feather	int	y	failure_enum	Autofeather system inop
+sim/operation/failures/rel_prop_sync	int	y	failure_enum	Prop sync
 sim/operation/failures/rel_throt_lo	int	y	failure_enum	Throttle inop giving min thrust
-sim/operation/failures/rel_throt_now	int	y	failure_enum	Throttle inop stuck at current thrust
 sim/operation/failures/rel_fc_thr	int	y	failure_enum	Throttle failure - LEGACY - now mapped to rel_throt_now.
 sim/operation/failures/rel_throt_hi	int	y	failure_enum	Throttle inop giving max thrust
 sim/operation/failures/rel_APU_press	int	y	failure_enum	APU is not providing bleed air for engine start or pressurization
 sim/operation/failures/rel_depres_slow	int	y	failure_enum	Slow cabin leak - descend or black out
 sim/operation/failures/rel_depres_fast	int	y	failure_enum	catastrophic decompression - yer dead
-sim/operation/failures/rel_engfai0	int	y	failure_enum	Engine Failure - engine 1 loss of power without smoke
-sim/operation/failures/rel_engfai1	int	y	failure_enum	Engine Failure - engine 2
-sim/operation/failures/rel_engfai2	int	y	failure_enum	Engine Failure - engine 3
-sim/operation/failures/rel_engfai3	int	y	failure_enum	Engine Failure - engine 4
-sim/operation/failures/rel_engfai4	int	y	failure_enum	Engine Failure - engine 5
-sim/operation/failures/rel_engfai5	int	y	failure_enum	Engine Failure - engine 6
-sim/operation/failures/rel_engfai6	int	y	failure_enum	Engine Failure - engine 7
-sim/operation/failures/rel_engfai7	int	y	failure_enum	Engine Failure - engine 8
-sim/operation/failures/rel_engsep0	int	y	failure_enum	Engine Separation - engine 1
-sim/operation/failures/rel_engsep1	int	y	failure_enum	Engine Separation - engine 2
-sim/operation/failures/rel_engsep2	int	y	failure_enum	Engine Separation - engine 3
-sim/operation/failures/rel_engsep3	int	y	failure_enum	Engine Separation - engine 4
-sim/operation/failures/rel_engsep4	int	y	failure_enum	Engine Separation - engine 5
-sim/operation/failures/rel_engsep5	int	y	failure_enum	Engine Separation - engine 6
-sim/operation/failures/rel_engsep6	int	y	failure_enum	Engine Separation - engine 7
-sim/operation/failures/rel_engsep7	int	y	failure_enum	Engine Separation - engine 8
-sim/operation/failures/rel_pshaft0	int	y	failure_enum	Drive Shaft - engine 1
-sim/operation/failures/rel_pshaft1	int	y	failure_enum	Drive Shaft - engine 2
-sim/operation/failures/rel_pshaft2	int	y	failure_enum	Drive Shaft - engine 3
-sim/operation/failures/rel_pshaft3	int	y	failure_enum	Drive Shaft - engine 4
-sim/operation/failures/rel_pshaft4	int	y	failure_enum	Drive Shaft - engine 5
-sim/operation/failures/rel_pshaft5	int	y	failure_enum	Drive Shaft - engine 6
-sim/operation/failures/rel_pshaft6	int	y	failure_enum	Drive Shaft - engine 7
-sim/operation/failures/rel_pshaft7	int	y	failure_enum	Drive Shaft - engine 8
-sim/operation/failures/rel_seize_0	int	y	failure_enum	Engine Seize - engine 1
-sim/operation/failures/rel_seize_1	int	y	failure_enum	Engine Seize - engine 2
-sim/operation/failures/rel_seize_2	int	y	failure_enum	Engine Seize - engine 3
-sim/operation/failures/rel_seize_3	int	y	failure_enum	Engine Seize - engine 4
-sim/operation/failures/rel_seize_4	int	y	failure_enum	Engine Seize - engine 5
-sim/operation/failures/rel_seize_5	int	y	failure_enum	Engine Seize - engine 6
-sim/operation/failures/rel_seize_6	int	y	failure_enum	Engine Seize - engine 7
-sim/operation/failures/rel_seize_7	int	y	failure_enum	Engine Seize - engine 8
-sim/operation/failures/rel_engfir0	int	y	failure_enum	Engine Failure - engine 1 Fire
-sim/operation/failures/rel_engfir1	int	y	failure_enum	Engine Failure - engine 2 Fire
-sim/operation/failures/rel_engfir2	int	y	failure_enum	Engine Failure - engine 3 Fire
-sim/operation/failures/rel_engfir3	int	y	failure_enum	Engine Failure - engine 4 Fire
-sim/operation/failures/rel_engfir4	int	y	failure_enum	Engine Failure - engine 5 Fire
-sim/operation/failures/rel_engfir5	int	y	failure_enum	Engine Failure - engine 6 Fire
-sim/operation/failures/rel_engfir6	int	y	failure_enum	Engine Failure - engine 7 Fire
-sim/operation/failures/rel_engfir7	int	y	failure_enum	Engine Failure - engine 8 Fire
-sim/operation/failures/rel_comsta0	int	y	failure_enum	Engine Compressor Stall - engine 1
-sim/operation/failures/rel_comsta1	int	y	failure_enum	Engine Compressor Stall - engine 2
-sim/operation/failures/rel_comsta2	int	y	failure_enum	Engine Compressor Stall - engine 3
-sim/operation/failures/rel_comsta3	int	y	failure_enum	Engine Compressor Stall - engine 4
-sim/operation/failures/rel_comsta4	int	y	failure_enum	Engine Compressor Stall - engine 5
-sim/operation/failures/rel_comsta5	int	y	failure_enum	Engine Compressor Stall - engine 6
-sim/operation/failures/rel_comsta6	int	y	failure_enum	Engine Compressor Stall - engine 7
-sim/operation/failures/rel_comsta7	int	y	failure_enum	Engine Compressor Stall - engine 8
-sim/operation/failures/rel_oilpmp0	int	y	failure_enum	Oil Pump - engine 1
-sim/operation/failures/rel_oilpmp1	int	y	failure_enum	Oil Pump - engine 2
-sim/operation/failures/rel_oilpmp2	int	y	failure_enum	Oil Pump - engine 3
-sim/operation/failures/rel_oilpmp3	int	y	failure_enum	Oil Pump - engine 4
-sim/operation/failures/rel_oilpmp4	int	y	failure_enum	Oil Pump - engine 5
-sim/operation/failures/rel_oilpmp5	int	y	failure_enum	Oil Pump - engine 6
-sim/operation/failures/rel_oilpmp6	int	y	failure_enum	Oil Pump - engine 7
-sim/operation/failures/rel_oilpmp7	int	y	failure_enum	Oil Pump - engine 8
-sim/operation/failures/rel_fuepmp0	int	y	failure_enum	Fuel Pump - engine 1
-sim/operation/failures/rel_fuepmp1	int	y	failure_enum	Fuel Pump - engine 2
-sim/operation/failures/rel_fuepmp2	int	y	failure_enum	Fuel Pump - engine 3
-sim/operation/failures/rel_fuepmp3	int	y	failure_enum	Fuel Pump - engine 4
-sim/operation/failures/rel_fuepmp4	int	y	failure_enum	Fuel Pump - engine 5
-sim/operation/failures/rel_fuepmp5	int	y	failure_enum	Fuel Pump - engine 6
-sim/operation/failures/rel_fuepmp6	int	y	failure_enum	Fuel Pump - engine 7
-sim/operation/failures/rel_fuepmp7	int	y	failure_enum	Fuel Pump - engine 8
-sim/operation/failures/rel_genera0	int	y	failure_enum	Generator - engine 1
-sim/operation/failures/rel_genera1	int	y	failure_enum	Generator - engine 2
-sim/operation/failures/rel_genera2	int	y	failure_enum	Generator - engine 3
-sim/operation/failures/rel_genera3	int	y	failure_enum	Generator - engine 4
-sim/operation/failures/rel_genera4	int	y	failure_enum	Generator - engine 5
-sim/operation/failures/rel_genera5	int	y	failure_enum	Generator - engine 6
-sim/operation/failures/rel_genera6	int	y	failure_enum	Generator - engine 7
-sim/operation/failures/rel_genera7	int	y	failure_enum	Generator - engine 8
-sim/operation/failures/rel_fadec_0	int	y	failure_enum	Fadec - engine 1
-sim/operation/failures/rel_fadec_1	int	y	failure_enum	Fadec - engine 2
-sim/operation/failures/rel_fadec_2	int	y	failure_enum	Fadec - engine 3
-sim/operation/failures/rel_fadec_3	int	y	failure_enum	Fadec - engine 4
-sim/operation/failures/rel_fadec_4	int	y	failure_enum	Fadec - engine 5
-sim/operation/failures/rel_fadec_5	int	y	failure_enum	Fadec - engine 6
-sim/operation/failures/rel_fadec_6	int	y	failure_enum	Fadec - engine 7
-sim/operation/failures/rel_fadec_7	int	y	failure_enum	Fadec - engine 8
-sim/operation/failures/rel_runITT0	int	y	failure_enum	Runway Hot ITT - engine 1
-sim/operation/failures/rel_runITT1	int	y	failure_enum	Runway Hot ITT - engine 2
-sim/operation/failures/rel_runITT2	int	y	failure_enum	Runway Hot ITT - engine 3
-sim/operation/failures/rel_runITT3	int	y	failure_enum	Runway Hot ITT - engine 4
-sim/operation/failures/rel_runITT4	int	y	failure_enum	Runway Hot ITT - engine 5
-sim/operation/failures/rel_runITT5	int	y	failure_enum	Runway Hot ITT - engine 6
-sim/operation/failures/rel_runITT6	int	y	failure_enum	Runway Hot ITT - engine 7
-sim/operation/failures/rel_runITT7	int	y	failure_enum	Runway Hot ITT - engine 8
-sim/operation/failures/rel_fuelfl0	int	y	failure_enum	Fuel Flow Fluctuation - engine 1
-sim/operation/failures/rel_fuelfl1	int	y	failure_enum	Fuel Flow Fluctuation - engine 2
-sim/operation/failures/rel_fuelfl2	int	y	failure_enum	Fuel Flow Fluctuation - engine 3
-sim/operation/failures/rel_fuelfl3	int	y	failure_enum	Fuel Flow Fluctuation - engine 4
-sim/operation/failures/rel_fuelfl4	int	y	failure_enum	Fuel Flow Fluctuation - engine 5
-sim/operation/failures/rel_fuelfl5	int	y	failure_enum	Fuel Flow Fluctuation - engine 6
-sim/operation/failures/rel_fuelfl6	int	y	failure_enum	Fuel Flow Fluctuation - engine 7
-sim/operation/failures/rel_fuelfl7	int	y	failure_enum	Fuel Flow Fluctuation - engine 8
+sim/operation/failures/rel_lites_nav	int	y	failure_enum	Nav lights
+sim/operation/failures/rel_lites_strobe	int	y	failure_enum	Strobe lights
+sim/operation/failures/rel_lites_beac	int	y	failure_enum	Beacon lights
+sim/operation/failures/rel_lites_taxi	int	y	failure_enum	Taxi lights
+sim/operation/failures/rel_lites_land	int	y	failure_enum	Landing Lights
+sim/operation/failures/rel_lites_ins	int	y	failure_enum	Instrument Lighting
+sim/operation/failures/rel_clights	int	y	failure_enum	Cockpit Lights
+sim/operation/failures/rel_lites_hud	int	y	failure_enum	HUD lights
+sim/operation/failures/rel_antice	int	y	failure_enum	Anti-ice
+sim/operation/failures/rel_ice_inlet_heat	int	y	failure_enum	Inlet heat
+sim/operation/failures/rel_ice_prop_heat	int	y	failure_enum	Prop Heat
+sim/operation/failures/rel_ice_window_heat	int	y	failure_enum	Window Heat
+sim/operation/failures/rel_ice_pitot_heat1	int	y	failure_enum	Pitot heat 1
+sim/operation/failures/rel_ice_pitot_heat2	int	y	failure_enum	Pitot heat 2
+sim/operation/failures/rel_ice_AOA_heat	int	y	failure_enum	AOA indicator heat
+sim/operation/failures/rel_ice_surf_heat	int	y	failure_enum	Surface Heat
+sim/operation/failures/rel_ice_surf_boot	int	y	failure_enum	Surface Boot
+sim/operation/failures/rel_ice_alt_air1	int	y	failure_enum	Alternate Air
+sim/operation/failures/rel_ice_alt_air2	int	y	failure_enum	Alternate Air
+sim/operation/failures/rel_ice_detect	int	y	failure_enum	Ice detector
 sim/operation/failures/rel_magLFT0	int	y	failure_enum	Left Magento Fail - engine 1
 sim/operation/failures/rel_magLFT1	int	y	failure_enum	Left Magento Fail - engine 2
 sim/operation/failures/rel_magLFT2	int	y	failure_enum	Left Magento Fail - engine 3
@@ -2510,6 +2591,70 @@ sim/operation/failures/rel_magRGT4	int	y	failure_enum	Right Magento Fail - engin
 sim/operation/failures/rel_magRGT5	int	y	failure_enum	Right Magento Fail - engine 6
 sim/operation/failures/rel_magRGT6	int	y	failure_enum	Right Magento Fail - engine 7
 sim/operation/failures/rel_magRGT7	int	y	failure_enum	Right Magento Fail - engine 8
+sim/operation/failures/rel_fuepmp0	int	y	failure_enum	Fuel Pump - engine 1
+sim/operation/failures/rel_fuepmp1	int	y	failure_enum	Fuel Pump - engine 2
+sim/operation/failures/rel_fuepmp2	int	y	failure_enum	Fuel Pump - engine 3
+sim/operation/failures/rel_fuepmp3	int	y	failure_enum	Fuel Pump - engine 4
+sim/operation/failures/rel_fuepmp4	int	y	failure_enum	Fuel Pump - engine 5
+sim/operation/failures/rel_fuepmp5	int	y	failure_enum	Fuel Pump - engine 6
+sim/operation/failures/rel_fuepmp6	int	y	failure_enum	Fuel Pump - engine 7
+sim/operation/failures/rel_fuepmp7	int	y	failure_enum	Fuel Pump - engine 8
+sim/operation/failures/rel_oilpmp0	int	y	failure_enum	Oil Pump - engine 1
+sim/operation/failures/rel_oilpmp1	int	y	failure_enum	Oil Pump - engine 2
+sim/operation/failures/rel_oilpmp2	int	y	failure_enum	Oil Pump - engine 3
+sim/operation/failures/rel_oilpmp3	int	y	failure_enum	Oil Pump - engine 4
+sim/operation/failures/rel_oilpmp4	int	y	failure_enum	Oil Pump - engine 5
+sim/operation/failures/rel_oilpmp5	int	y	failure_enum	Oil Pump - engine 6
+sim/operation/failures/rel_oilpmp6	int	y	failure_enum	Oil Pump - engine 7
+sim/operation/failures/rel_oilpmp7	int	y	failure_enum	Oil Pump - engine 8
+sim/operation/failures/rel_engfai0	int	y	failure_enum	Engine Failure - engine 1 loss of power without smoke
+sim/operation/failures/rel_engfai1	int	y	failure_enum	Engine Failure - engine 2
+sim/operation/failures/rel_engfai2	int	y	failure_enum	Engine Failure - engine 3
+sim/operation/failures/rel_engfai3	int	y	failure_enum	Engine Failure - engine 4
+sim/operation/failures/rel_engfai4	int	y	failure_enum	Engine Failure - engine 5
+sim/operation/failures/rel_engfai5	int	y	failure_enum	Engine Failure - engine 6
+sim/operation/failures/rel_engfai6	int	y	failure_enum	Engine Failure - engine 7
+sim/operation/failures/rel_engfai7	int	y	failure_enum	Engine Failure - engine 8
+sim/operation/failures/rel_engsep0	int	y	failure_enum	Engine Separation - engine 1
+sim/operation/failures/rel_engsep1	int	y	failure_enum	Engine Separation - engine 2
+sim/operation/failures/rel_engsep2	int	y	failure_enum	Engine Separation - engine 3
+sim/operation/failures/rel_engsep3	int	y	failure_enum	Engine Separation - engine 4
+sim/operation/failures/rel_engsep4	int	y	failure_enum	Engine Separation - engine 5
+sim/operation/failures/rel_engsep5	int	y	failure_enum	Engine Separation - engine 6
+sim/operation/failures/rel_engsep6	int	y	failure_enum	Engine Separation - engine 7
+sim/operation/failures/rel_engsep7	int	y	failure_enum	Engine Separation - engine 8
+sim/operation/failures/rel_prpfin0	int	y	failure_enum	Prop governer fail to fine - engine 1
+sim/operation/failures/rel_prpfin1	int	y	failure_enum	Prop governer fail to fine - engine 2
+sim/operation/failures/rel_prpfin2	int	y	failure_enum	Prop governer fail to fine - engine 3
+sim/operation/failures/rel_prpfin3	int	y	failure_enum	Prop governer fail to fine - engine 4
+sim/operation/failures/rel_prpfin4	int	y	failure_enum	Prop governer fail to fine - engine 5
+sim/operation/failures/rel_prpfin5	int	y	failure_enum	Prop governer fail to fine - engine 6
+sim/operation/failures/rel_prpfin6	int	y	failure_enum	Prop governer fail to fine - engine 7
+sim/operation/failures/rel_prpfin7	int	y	failure_enum	Prop governer fail to fine - engine 8
+sim/operation/failures/rel_prpcrs0	int	y	failure_enum	Prop governer fail to course - engine 1
+sim/operation/failures/rel_prpcrs1	int	y	failure_enum	Prop governer fail to course - engine 2
+sim/operation/failures/rel_prpcrs2	int	y	failure_enum	Prop governer fail to course - engine 3
+sim/operation/failures/rel_prpcrs3	int	y	failure_enum	Prop governer fail to course - engine 4
+sim/operation/failures/rel_prpcrs4	int	y	failure_enum	Prop governer fail to course - engine 5
+sim/operation/failures/rel_prpcrs5	int	y	failure_enum	Prop governer fail to course - engine 6
+sim/operation/failures/rel_prpcrs6	int	y	failure_enum	Prop governer fail to course - engine 7
+sim/operation/failures/rel_prpcrs7	int	y	failure_enum	Prop governer fail to course - engine 8
+sim/operation/failures/rel_pshaft0	int	y	failure_enum	Drive Shaft - engine 1
+sim/operation/failures/rel_pshaft1	int	y	failure_enum	Drive Shaft - engine 2
+sim/operation/failures/rel_pshaft2	int	y	failure_enum	Drive Shaft - engine 3
+sim/operation/failures/rel_pshaft3	int	y	failure_enum	Drive Shaft - engine 4
+sim/operation/failures/rel_pshaft4	int	y	failure_enum	Drive Shaft - engine 5
+sim/operation/failures/rel_pshaft5	int	y	failure_enum	Drive Shaft - engine 6
+sim/operation/failures/rel_pshaft6	int	y	failure_enum	Drive Shaft - engine 7
+sim/operation/failures/rel_pshaft7	int	y	failure_enum	Drive Shaft - engine 8
+sim/operation/failures/rel_seize_0	int	y	failure_enum	Engine Seize - engine 1
+sim/operation/failures/rel_seize_1	int	y	failure_enum	Engine Seize - engine 2
+sim/operation/failures/rel_seize_2	int	y	failure_enum	Engine Seize - engine 3
+sim/operation/failures/rel_seize_3	int	y	failure_enum	Engine Seize - engine 4
+sim/operation/failures/rel_seize_4	int	y	failure_enum	Engine Seize - engine 5
+sim/operation/failures/rel_seize_5	int	y	failure_enum	Engine Seize - engine 6
+sim/operation/failures/rel_seize_6	int	y	failure_enum	Engine Seize - engine 7
+sim/operation/failures/rel_seize_7	int	y	failure_enum	Engine Seize - engine 8	
 sim/operation/failures/rel_aftbur0	int	y	failure_enum	Afterburners - engine 1
 sim/operation/failures/rel_aftbur1	int	y	failure_enum	Afterburners - engine 2
 sim/operation/failures/rel_aftbur2	int	y	failure_enum	Afterburners - engine 3
@@ -2542,6 +2687,137 @@ sim/operation/failures/rel_hotsta4	int	y	failure_enum	Hot Start - engine 4
 sim/operation/failures/rel_hotsta5	int	y	failure_enum	Hot Start - engine 5
 sim/operation/failures/rel_hotsta6	int	y	failure_enum	Hot Start - engine 6
 sim/operation/failures/rel_hotsta7	int	y	failure_enum	Hot Start - engine 7
+sim/operation/failures/rel_comsta0	int	y	failure_enum	Engine Compressor Stall - engine 1
+sim/operation/failures/rel_comsta1	int	y	failure_enum	Engine Compressor Stall - engine 2
+sim/operation/failures/rel_comsta2	int	y	failure_enum	Engine Compressor Stall - engine 3
+sim/operation/failures/rel_comsta3	int	y	failure_enum	Engine Compressor Stall - engine 4
+sim/operation/failures/rel_comsta4	int	y	failure_enum	Engine Compressor Stall - engine 5
+sim/operation/failures/rel_comsta5	int	y	failure_enum	Engine Compressor Stall - engine 6
+sim/operation/failures/rel_comsta6	int	y	failure_enum	Engine Compressor Stall - engine 7
+sim/operation/failures/rel_comsta7	int	y	failure_enum	Engine Compressor Stall - engine 8
+sim/operation/failures/rel_engfir0	int	y	failure_enum	Engine Failure - engine 1 Fire
+sim/operation/failures/rel_engfir1	int	y	failure_enum	Engine Failure - engine 2 Fire
+sim/operation/failures/rel_engfir2	int	y	failure_enum	Engine Failure - engine 3 Fire
+sim/operation/failures/rel_engfir3	int	y	failure_enum	Engine Failure - engine 4 Fire
+sim/operation/failures/rel_engfir4	int	y	failure_enum	Engine Failure - engine 5 Fire
+sim/operation/failures/rel_engfir5	int	y	failure_enum	Engine Failure - engine 6 Fire
+sim/operation/failures/rel_engfir6	int	y	failure_enum	Engine Failure - engine 7 Fire
+sim/operation/failures/rel_engfir7	int	y	failure_enum	Engine Failure - engine 8 Fire
+sim/operation/failures/rel_fuelfl0	int	y	failure_enum	Fuel Flow Fluctuation - engine 1
+sim/operation/failures/rel_fuelfl1	int	y	failure_enum	Fuel Flow Fluctuation - engine 2
+sim/operation/failures/rel_fuelfl2	int	y	failure_enum	Fuel Flow Fluctuation - engine 3
+sim/operation/failures/rel_fuelfl3	int	y	failure_enum	Fuel Flow Fluctuation - engine 4
+sim/operation/failures/rel_fuelfl4	int	y	failure_enum	Fuel Flow Fluctuation - engine 5
+sim/operation/failures/rel_fuelfl5	int	y	failure_enum	Fuel Flow Fluctuation - engine 6
+sim/operation/failures/rel_fuelfl6	int	y	failure_enum	Fuel Flow Fluctuation - engine 7
+sim/operation/failures/rel_fuelfl7	int	y	failure_enum	Fuel Flow Fluctuation - engine 8
+sim/operation/failures/rel_runITT0	int	y	failure_enum	Runway Hot ITT - engine 1
+sim/operation/failures/rel_runITT1	int	y	failure_enum	Runway Hot ITT - engine 2
+sim/operation/failures/rel_runITT2	int	y	failure_enum	Runway Hot ITT - engine 3
+sim/operation/failures/rel_runITT3	int	y	failure_enum	Runway Hot ITT - engine 4
+sim/operation/failures/rel_runITT4	int	y	failure_enum	Runway Hot ITT - engine 5
+sim/operation/failures/rel_runITT5	int	y	failure_enum	Runway Hot ITT - engine 6
+sim/operation/failures/rel_runITT6	int	y	failure_enum	Runway Hot ITT - engine 7
+sim/operation/failures/rel_runITT7	int	y	failure_enum	Runway Hot ITT - engine 8
+sim/operation/failures/rel_govnr_0	int	y	failure_enum	Governor throttle fail - engine 1
+sim/operation/failures/rel_govnr_1	int	y	failure_enum	Governor throttle fail - engine 2
+sim/operation/failures/rel_govnr_2	int	y	failure_enum	Governor throttle fail - engine 3
+sim/operation/failures/rel_govnr_3	int	y	failure_enum	Governor throttle fail - engine 4
+sim/operation/failures/rel_govnr_4	int	y	failure_enum	Governor throttle fail - engine 5
+sim/operation/failures/rel_govnr_5	int	y	failure_enum	Governor throttle fail - engine 6
+sim/operation/failures/rel_govnr_6	int	y	failure_enum	Governor throttle fail - engine 7
+sim/operation/failures/rel_govnr_7	int	y	failure_enum	Governor throttle fail - engine 8
+sim/operation/failures/rel_fadec_0	int	y	failure_enum	Fadec - engine 1
+sim/operation/failures/rel_fadec_1	int	y	failure_enum	Fadec - engine 2
+sim/operation/failures/rel_fadec_2	int	y	failure_enum	Fadec - engine 3
+sim/operation/failures/rel_fadec_3	int	y	failure_enum	Fadec - engine 4
+sim/operation/failures/rel_fadec_4	int	y	failure_enum	Fadec - engine 5
+sim/operation/failures/rel_fadec_5	int	y	failure_enum	Fadec - engine 6
+sim/operation/failures/rel_fadec_6	int	y	failure_enum	Fadec - engine 7
+sim/operation/failures/rel_fadec_7	int	y	failure_enum	Fadec - engine 8
+sim/operation/failures/rel_genera0	int	y	failure_enum	Generator - engine 1
+sim/operation/failures/rel_genera1	int	y	failure_enum	Generator - engine 2
+sim/operation/failures/rel_genera2	int	y	failure_enum	Generator - engine 3
+sim/operation/failures/rel_genera3	int	y	failure_enum	Generator - engine 4
+sim/operation/failures/rel_genera4	int	y	failure_enum	Generator - engine 5
+sim/operation/failures/rel_genera5	int	y	failure_enum	Generator - engine 6
+sim/operation/failures/rel_genera6	int	y	failure_enum	Generator - engine 7
+sim/operation/failures/rel_genera7	int	y	failure_enum	Generator - engine 8
+sim/operation/failures/rel_ignitr0	int	y	failure_enum	Ignitor - engine 1
+sim/operation/failures/rel_ignitr1	int	y	failure_enum	Ignitor - engine 2
+sim/operation/failures/rel_ignitr2	int	y	failure_enum	Ignitor - engine 3
+sim/operation/failures/rel_ignitr3	int	y	failure_enum	Ignitor - engine 4
+sim/operation/failures/rel_ignitr4	int	y	failure_enum	Ignitor - engine 5
+sim/operation/failures/rel_ignitr5	int	y	failure_enum	Ignitor - engine 6
+sim/operation/failures/rel_ignitr6	int	y	failure_enum	Ignitor - engine 7
+sim/operation/failures/rel_ignitr7	int	y	failure_enum	Ignitor - engine 8
+sim/operation/failures/rel_startr0	int	y	failure_enum	Starter - engine 1
+sim/operation/failures/rel_startr1	int	y	failure_enum	Starter - engine 2
+sim/operation/failures/rel_startr2	int	y	failure_enum	Starter - engine 3
+sim/operation/failures/rel_startr3	int	y	failure_enum	Starter - engine 4
+sim/operation/failures/rel_startr4	int	y	failure_enum	Starter - engine 5
+sim/operation/failures/rel_startr5	int	y	failure_enum	Starter - engine 6
+sim/operation/failures/rel_startr6	int	y	failure_enum	Starter - engine 7
+sim/operation/failures/rel_startr7	int	y	failure_enum	Starter - engine 8
+sim/operation/failures/rel_g_gia1	int	y	failure_enum	GIA 1
+sim/operation/failures/rel_g_gia2	int	y	failure_enum	GIA 2
+sim/operation/failures/rel_g_arthorz	int	y	failure_enum	AHRS
+sim/operation/failures/rel_adc_comp	int	y	failure_enum	air data computer
+sim/operation/failures/rel_g_gea	int	y	failure_enum	gea
+sim/operation/failures/rel_g_asi	int	y	failure_enum	airspeed
+sim/operation/failures/rel_g_alt	int	y	failure_enum	altimeter
+sim/operation/failures/rel_g_magmtr	int	y	failure_enum	magnometer
+sim/operation/failures/rel_g_vvi	int	y	failure_enum	vvi
+sim/operation/failures/rel_g_otto	int	y	failure_enum	autopilot interface
+sim/operation/failures/rel_bad_mpr	int	y	failure_enum	sensor error - mpr
+sim/operation/failures/rel_bad_ff	int	y	failure_enum	sensor error - ff
+sim/operation/failures/rel_bad_egt	int	y	failure_enum	sensor error - egt
+sim/operation/failures/rel_bad_itt	int	y	failure_enum	sensor error - itt
+sim/operation/failures/rel_bad_cht	int	y	failure_enum	sensor error - cht
+sim/operation/failures/rel_bad_rpm	int	y	failure_enum	sensor error - rpm
+sim/operation/failures/rel_bad_oilp	int	y	failure_enum	sensor error - oilp
+sim/operation/failures/rel_bad_oilt	int	y	failure_enum	sensor error - oilt
+sim/operation/failures/rel_g_navrad1	int	y	failure_enum	nav radio 1
+sim/operation/failures/rel_g_navrad2	int	y	failure_enum	nav radio 2
+sim/operation/failures/rel_g_comrad1	int	y	failure_enum	com radio 1
+sim/operation/failures/rel_g_comrad2	int	y	failure_enum	com radio 2
+sim/operation/failures/rel_g_gs1	int	y	failure_enum	glideslope 1
+sim/operation/failures/rel_g_gs2	int	y	failure_enum	glideslope 2
+sim/operation/failures/rel_g_gps1	int	y	failure_enum	GPS 1
+sim/operation/failures/rel_g_gps2	int	y	failure_enum	GPS 2
+sim/operation/failures/rel_g_xpndr	int	y	failure_enum	transponder
+sim/operation/failures/rel_g_mpr1	int	y	failure_enum	MPR 1
+sim/operation/failures/rel_g_mpr2	int	y	failure_enum	MPR 2
+sim/operation/failures/rel_g_ff1	int	y	failure_enum	fuel flow 1
+sim/operation/failures/rel_g_ff2	int	y	failure_enum	fuel flow 2
+sim/operation/failures/rel_g_egt1	int	y	failure_enum	EGT 1
+sim/operation/failures/rel_g_egt2	int	y	failure_enum	EGT 2
+sim/operation/failures/rel_g_itt1	int	y	failure_enum	ITT 1
+sim/operation/failures/rel_g_itt2	int	y	failure_enum	ITT 1
+sim/operation/failures/rel_g_cht1	int	y	failure_enum	CHT 1
+sim/operation/failures/rel_g_cht2	int	y	failure_enum	CHT 2
+sim/operation/failures/rel_g_rpm1	int	y	failure_enum	RPM 1
+sim/operation/failures/rel_g_rpm2	int	y	failure_enum	RPM 2
+sim/operation/failures/rel_g_oilt1	int	y	failure_enum	oil T 1
+sim/operation/failures/rel_g_oilt2	int	y	failure_enum	oil T 2
+sim/operation/failures/rel_g_oilp1	int	y	failure_enum	oil P 1
+sim/operation/failures/rel_g_oilp2	int	y	failure_enum	oil P 2
+sim/operation/failures/rel_g_fp1	int	y	failure_enum	fuel pressure 1
+sim/operation/failures/rel_g_fp2	int	y	failure_enum	fuel pressure 2
+sim/operation/failures/rel_g_gen1	int	y	failure_enum	generator amperage 1
+sim/operation/failures/rel_g_gen2	int	y	failure_enum	generator amperage 2
+sim/operation/failures/rel_g_bat1	int	y	failure_enum	battery voltage 1
+sim/operation/failures/rel_g_bat2	int	y	failure_enum	battery voltage 2
+sim/operation/failures/rel_g_bus1	int	y	failure_enum	bus voltage 1
+sim/operation/failures/rel_g_bus2	int	y	failure_enum	bus voltage 2
+sim/operation/failures/rel_g_fuel	int	y	failure_enum	fuel quantity
+sim/operation/failures/rel_g_oat	int	y	failure_enum	OAT
+sim/operation/failures/rel_e_bus0_lo	int	y	failure_enum	bus 1 lo
+sim/operation/failures/rel_e_bus0_hi	int	y	failure_enum	bus 1 hi
+sim/operation/failures/rel_e_bus1_lo	int	y	failure_enum	bus 2 lo
+sim/operation/failures/rel_e_bus1_hi	int	y	failure_enum	bus 2 hi
+sim/operation/failures/rel_ice_air0	int	y	failure_enum	de-ice_air 1
+sim/operation/failures/rel_ice_air1	int	y	failure_enum	de-ice_air 2
 sim/operation/failures/rel_lobatt0	int	y	failure_enum	Low Battery - engine 1
 sim/operation/failures/rel_lobatt1	int	y	failure_enum	Low Battery - engine 2
 sim/operation/failures/rel_lobatt2	int	y	failure_enum	Low Battery - engine 3
@@ -2586,54 +2862,7 @@ sim/operation/failures/rel_pyl5b	int	y	failure_enum	Engine Pylon 5b Separate
 sim/operation/failures/rel_pyl6b	int	y	failure_enum	Engine Pylon 6b Separate
 sim/operation/failures/rel_pyl7b	int	y	failure_enum	Engine Pylon 7b Separate
 sim/operation/failures/rel_pyl8b	int	y	failure_enum	Engine Pylon 8b Separate
-sim/operation/failures/rel_instrument	int[300]	y	enum	Failures for every panel instrument.  Based on instrument index number.  (WARNING: this is a risky thing to use.)
-sim/operation/failures/rel_g_gia1	int	y	failure_enum	GIA 1
-sim/operation/failures/rel_g_gia2	int	y	failure_enum	GIA 2
-sim/operation/failures/rel_adc_comp	int	y	failure_enum	air data computer
-sim/operation/failures/rel_g_asi	int	y	failure_enum	airspeed
-sim/operation/failures/rel_g_alt	int	y	failure_enum	altimeter
-sim/operation/failures/rel_g_vvi	int	y	failure_enum	vvi
-sim/operation/failures/rel_g_arthorz	int	y	failure_enum	AHRS
-sim/operation/failures/rel_g_otto	int	y	failure_enum	autopilot interface
-sim/operation/failures/rel_g_navrad1	int	y	failure_enum	nav radio 1
-sim/operation/failures/rel_g_navrad2	int	y	failure_enum	nav radio 2
-sim/operation/failures/rel_g_comrad1	int	y	failure_enum	com radio 1
-sim/operation/failures/rel_g_comrad2	int	y	failure_enum	com radio 2
-sim/operation/failures/rel_g_gs1	int	y	failure_enum	glideslope 1
-sim/operation/failures/rel_g_gs2	int	y	failure_enum	glideslope 2
-sim/operation/failures/rel_g_gps1	int	y	failure_enum	GPS 1
-sim/operation/failures/rel_g_gps2	int	y	failure_enum	GPS 2
-sim/operation/failures/rel_g_egt1	int	y	failure_enum	EGT 1
-sim/operation/failures/rel_g_egt2	int	y	failure_enum	EGT 2
-sim/operation/failures/rel_g_mpr1	int	y	failure_enum	MPR 1
-sim/operation/failures/rel_g_mpr2	int	y	failure_enum	MPR 2
-sim/operation/failures/rel_g_rpm1	int	y	failure_enum	RPM 1
-sim/operation/failures/rel_g_rpm2	int	y	failure_enum	RPM 2
-sim/operation/failures/rel_g_ff1	int	y	failure_enum	fuel flow 1
-sim/operation/failures/rel_g_ff2	int	y	failure_enum	fuel flow 2
-sim/operation/failures/rel_g_fp1	int	y	failure_enum	fuel pressure 1
-sim/operation/failures/rel_g_fp2	int	y	failure_enum	fuel pressure 2
-sim/operation/failures/rel_g_cht1	int	y	failure_enum	CHT 1
-sim/operation/failures/rel_g_cht2	int	y	failure_enum	CHT 2
-sim/operation/failures/rel_g_oilt1	int	y	failure_enum	oil T 1
-sim/operation/failures/rel_g_oilt2	int	y	failure_enum	oil T 2
-sim/operation/failures/rel_g_oilp1	int	y	failure_enum	oil P 1
-sim/operation/failures/rel_g_oilp2	int	y	failure_enum	oil P 2
-sim/operation/failures/rel_g_gen1	int	y	failure_enum	generator amperage 1
-sim/operation/failures/rel_g_gen2	int	y	failure_enum	generator amperage 2
-sim/operation/failures/rel_g_bat1	int	y	failure_enum	battery voltage 1
-sim/operation/failures/rel_g_bat2	int	y	failure_enum	battery voltage 2
-sim/operation/failures/rel_g_bus1	int	y	failure_enum	bus voltage 1
-sim/operation/failures/rel_g_bus2	int	y	failure_enum	bus voltage 2
-sim/operation/failures/rel_g_fuel	int	y	failure_enum	fuel quantity
-sim/operation/failures/rel_g_oat	int	y	failure_enum	OAT
-sim/operation/failures/rel_g_xpndr	int	y	failure_enum	transponder
-sim/operation/failures/rel_e_bus0_lo	int	y	failure_enum	bus 1 lo
-sim/operation/failures/rel_e_bus0_hi	int	y	failure_enum	bus 1 hi
-sim/operation/failures/rel_e_bus1_lo	int	y	failure_enum	bus 2 lo
-sim/operation/failures/rel_e_bus1_hi	int	y	failure_enum	bus 2 hi
-sim/operation/failures/rel_ice_air0	int	y	failure_enum	de-ice_air 1
-sim/operation/failures/rel_ice_air1	int	y	failure_enum	de-ice_air 2
+sim/operation/failures/rel_instrument	int[800]	y	enum	Failures for every panel instrument.  Based on instrument index number.  (WARNING: this is a risky thing to use.  Was dim 300 in v864)
 sim/operation/failures/rel_invert2	int	y	enum	Inverter - engine 3
 sim/operation/failures/rel_invert3	int	y	enum	Inverter - engine 4
 sim/operation/failures/rel_invert4	int	y	enum	Inverter - engine 5
@@ -2751,7 +2980,7 @@ sim/operation/prefs/warn_nonobvious_stuff	int	y	boolean	Show text warning for ot
 sim/operation/prefs/warn_framerate_low	int	y	boolean	Show text warning if framerate gets too low
 sim/operation/prefs/has_headset_on	int	y	boolean	Muffle sound as if a headset is on
 sim/operation/prefs/text_out	int	y	boolean	show text ATC messages?
-sim/operation/prefs/replay_mode	int	y	boolean	Are we in replay mode?
+sim/operation/prefs/replay_mode	int	y	enum	Are we in replay mode?
 sim/operation/prefs/warn_bb	int	y	boolean	Bitchin Betty (should have been in /sound/
 sim/operation/prefs/aircraft_damping	int	y	boolean	This used to be an option under equipment settings for auto damping or something.
 sim/operation/prefs/auto_coordinate_helos	int	y	boolean	Automatically coordinate tale rotor for helos
@@ -2942,16 +3171,16 @@ sim/cockpit2/annunciators/low_rotor	int	n	boolean	Rotor rpm on the helo has drop
 sim/cockpit2/annunciators/high_rotor	int	n	boolean	Rotor rpm on the helo has exceeded normal operating: power availability will be reduced, and god knows if the blades will stay ON!
 sim/cockpit2/annunciators/pitot_heat	int	n	boolean	Pitot heat is OFF (YUP! OFF!) turn it on to heat up the pitot tube, which measures air pressure to give you air speed.
 sim/cockpit2/annunciators/transonic	int	n	boolean	You are about to break the speed of sound when accelerating, or drop below the speed of sound if decelerating! the handling of the plane will change!
-sim/cockpit2/annunciators/fuel_pressure	int	n	boolean	Fuel pressure is lo, or maybe hi, for this engine    // x8
-sim/cockpit2/annunciators/oil_pressure	int	n	boolean	Oil pressure is lo, or maybe hi, for this engine    // x8
-sim/cockpit2/annunciators/oil_temperature	int	n	boolean	Oil temperature hi for this engine    // x8
-sim/cockpit2/annunciators/inverter	int	n	boolean	The inverter has failed! the plane cannot convert ac from the generators to dc for the instruments.     // x8
-sim/cockpit2/annunciators/generator	int	n	boolean	The generator has failed! the plane cannot charge up. this may happen at lo rpm and go away as the engine revs. happens with my plane    // x8
-sim/cockpit2/annunciators/chip_detect	int	n	boolean	We detected chips of metal in the engine somewhere. most people agree this is not good.    // x8
-sim/cockpit2/annunciators/engine_fire	int	n	boolean	The engine is on FIRE! this adds to excitement    // x8
-sim/cockpit2/annunciators/auto_ignition	int	n	boolean	The jet or turbine engine has the igniter CONSTANTLY ON, being sure to keep the fire burning even if rain gets in there or something.    // x8
-sim/cockpit2/annunciators/reverser_deployed	int	n	boolean	Thrust-reverse deployed!    // x8
-sim/cockpit2/annunciators/afterburner	int	n	boolean	Afterburners on!    // x8
+sim/cockpit2/annunciators/fuel_pressure	int	n	bitfield	Fuel pressure is lo, or maybe hi, for this engine    // x8
+sim/cockpit2/annunciators/oil_pressure	int	n	bitfield	Oil pressure is lo, or maybe hi, for this engine    // x8
+sim/cockpit2/annunciators/oil_temperature	int	n	bitfield	Oil temperature hi for this engine    // x8
+sim/cockpit2/annunciators/generator	int	n	bitfield	The generator has failed! the plane cannot charge up. this may happen at lo rpm and go away as the engine revs. happens with my plane    // x8
+sim/cockpit2/annunciators/chip_detect	int	n	bitfield	We detected chips of metal in the engine somewhere. most people agree this is not good.    // x8
+sim/cockpit2/annunciators/engine_fire	int	n	bitfield	The engine is on FIRE! this adds to excitement    // x8
+sim/cockpit2/annunciators/auto_ignition	int	n	bitfield	The jet or turbine engine has the igniter CONSTANTLY ON, being sure to keep the fire burning even if rain gets in there or something.    // x8
+sim/cockpit2/annunciators/reverser_deployed	int	n	bitfield	Thrust-reverse deployed!    // x8
+sim/cockpit2/annunciators/afterburner	int	n	bitfield	Afterburners on!    // x8
+sim/cockpit2/annunciators/inverter	int	n	bitfield	The inverter has failed! the plane cannot convert ac from the generators to dc for the instruments.     // x8
 sim/cockpit2/annunciators/stall_warning	int	n	boolean	Stall warning going off, yes or no.
 sim/cockpit2/annunciators/gear_warning	int	n	boolean	Gear warning going off, yes or no.
 sim/cockpit2/annunciators/no_smoking	int	n	boolean	No smoking alert on, yes or no.
@@ -2982,9 +3211,6 @@ sim/cockpit2/autopilot/flight_director_roll_deg	float	n	degrees	Flight director 
 sim/cockpit2/controls/yoke_pitch_ratio	float	y	ratio	This is how much the yoke is deflected in the cockpit, in ratio, where -1.0 is full down, and 1.0 is full up.
 sim/cockpit2/controls/yoke_roll_ratio	float	y	ratio	This is how much the yoke is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right.
 sim/cockpit2/controls/yoke_heading_ratio	float	y	ratio	This is how much the rudder is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right.
-sim/cockpit2/controls/yoke_pitch2_ratio	float	y	ratio	This is how much the SECONDARY yoke is deflected in the cockpit, in ratio, where -1.0 is full down, and 1.0 is full up. Secondary yokes can control secondary flight controls.
-sim/cockpit2/controls/yoke_roll2_ratio	float	y	ratio	This is how much the SECONDARY yoke is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right. Secondary yokes can control secondary flight controls.
-sim/cockpit2/controls/yoke_heading2_ratio	float	y	ratio	This is how much the SECONDARY rudder is deflected in the cockpit, in ratio, where -1.0 is full left, and 1.0 is full right. Secondary yokes can control secondary flight controls.
 sim/cockpit2/controls/speedbrake_ratio	float	y	ratio	This is how much the speebrake HANDLE is deflected, in ratio, where 0.0 is fully retracted, 0.5 is halfway down, and 1.0 is fully down, and -0.5 is speedbrakes ARMED.
 sim/cockpit2/controls/wingsweep_ratio	float	y	ratio	Requested sweep, in ratio. 0.0 is no sweep requested, 1 is max sweep requested.
 sim/cockpit2/controls/thrust_vector_ratio	float	y	ratio	Requested thrust vector, in ratio. 0.0 is no thrust vector requested, 1 is max thrust vector requested.
@@ -3030,6 +3256,7 @@ sim/cockpit2/electrical/APU_generator_amps	float	y	amps	APU generator amperage.
 sim/cockpit2/electrical/APU_starter_switch	int	y	boolean	APU power switch, 0 is off, 1 is on, 2 is start-er-up!
 sim/cockpit2/electrical/APU_N1_percent	float	n	percent	N1 of the APU
 sim/cockpit2/electrical/APU_running	int	n	boolean	APU actually running, 0 or 1.
+sim/cockpit2/electrical/dc_voltmeter	float	y	1-6	Volt-Meter
 sim/cockpit2/engine/actuators/cyclic_elevator_deg	float[8]	y	degrees          	This is the longitudnal cyclic COMMAND, in degrees. Positive forwards cyclic.
 sim/cockpit2/engine/actuators/cyclic_aileron_deg	float[8]	y	degrees	This is the lateral cyclic COMMAND, in degrees. Positive right cyclic.
 sim/cockpit2/engine/actuators/throttle_ratio	float[8]	y	ratio             	Throttle position of the handle itself, from 0.0 (idle) to 1.0 (max normal).
@@ -3037,7 +3264,6 @@ sim/cockpit2/engine/actuators/prop_rotation_speed_rad_sec	float[8]	y	radians/sec
 sim/cockpit2/engine/actuators/mixture_ratio	float[8]	y	ratio             	Mixture handle position, 0.0 (cutoff) to 1.0 (full rich).
 sim/cockpit2/engine/actuators/carb_heat_ratio	float[8]	y	ratio             	Carb-heat handle position, 0.0 (none) to 1.0 (full).
 sim/cockpit2/engine/actuators/cowl_flap_ratio	float[8]	y	ratio             	Cowl-flap handle position, 0.0 (none) to 1.0 (full open).
-sim/cockpit2/engine/actuators/alternate_air_ratio	float[8]	y	ratio             	Alternate air handle position, 0.0 (off) to 1.0 (on).
 sim/cockpit2/engine/actuators/primer_ratio	float[8]	y	ratio             	Primer handle position, 0.0 (none) to 1.0 (on).
 sim/cockpit2/engine/actuators/afterburner_enabled	int[8]	y	boolean             	Afterburner enabled, on or off.
 sim/cockpit2/engine/actuators/igniter_on	int[8]	y	boolean         	Igniter, on or off.
@@ -3067,11 +3293,11 @@ sim/cockpit2/fuel/fuel_tank_transfer_to	int	y	enum	0=none,1=left,2=center,3=righ
 sim/cockpit2/fuel/fuel_tank_transfer_from	int	y	enum	0=none,1=left,2=center,3=right
 sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot	float	y	inches_hg	Barometric pressure setting, inches HG.  Pilot side.
 sim/cockpit2/gauges/actuators/barometer_setting_in_hg_copilot	float	y	inches_hg	Barometric pressure setting, inches HG.  Copilot side.
-sim/cockpit2/gauges/actuators/radio_altemeter_bug_ft_pilot	float	y	feet	Radio altitude bug entered into the radio altimeter. Pilot side.
+sim/cockpit2/gauges/actuators/radio_altimeter_bug_ft_pilot	float	y	feet	Radio altitude bug entered into the radio altimeter. Pilot side.
 sim/cockpit2/gauges/actuators/radio_altimeter_bug_ft_copilot	float	y	feet	Radio altitude bug entered into the radio altimeter. Copilot side.
 sim/cockpit2/gauges/actuators/artificial_horizon_adjust_deg_pilot	float	y	degrees	Artifical horizon pitch-reference adjustement. Pilot side.
 sim/cockpit2/gauges/actuators/artificial_horizon_adjust_deg_copilot	float	y	degrees	Artifical horizon pitch-reference adjustement. Copilot side.
-sim/cockpit2/gauges/actuators/arispeed_bug_deg	float	y	degrees	ASI bug location on the dial, in degrees, 0 straight up, positive clockwise.
+sim/cockpit2/gauges/actuators/airspeed_bug_deg	float	y	degrees	ASI bug location on the dial, in degrees, 0 straight up, positive clockwise.
 sim/cockpit2/gauges/indicators/slip_deg	float	n	degrees	Slip indication, in degrees of ball deflection from centered.
 sim/cockpit2/gauges/indicators/compass_heading_deg_mag	float	n	degrees_magnetic	Indicated heading of the wet compass, in degrees.
 sim/cockpit2/gauges/indicators/airspeed_kts_pilot	float	n	knots	Indicated airspeed in knots, pilot.
@@ -3096,6 +3322,10 @@ sim/cockpit2/gauges/indicators/pitch_electric_deg_pilot	float	n	degrees	Indicate
 sim/cockpit2/gauges/indicators/pitch_electric_deg_copilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: electric gyro.  Side: Copilot
 sim/cockpit2/gauges/indicators/pitch_vacuum_deg_pilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: vacuum gyro.  Side: Pilot
 sim/cockpit2/gauges/indicators/pitch_vacuum_deg_copilot	float	n	degrees	Indicated pitch, in degrees, psoitive up.  Source: vacuum gyro.  Side: Copilot
+sim/cockpit2/gauges/indicators/radio_altimeter_height_ft_pilot	float	n	feet	Radio-altimeter indicated height in feet, pilot-side
+sim/cockpit2/gauges/indicators/radio_altimeter_height_ft_copilot	float	n	feet	Radio-altimeter indicated height in feet, pilot-side
+sim/cockpit2/gauges/indicators/radio_altimeter_dh_lit_pilot	int	n	boolean	Radio-altimeter indicated height in feet, pilot-side
+sim/cockpit2/gauges/indicators/radio_altimeter_dh_lit_copilot	int	n	boolean	Radio-altimeter indicated height in feet, pilot-side
 sim/cockpit2/gauges/indicators/roll_AHARS_deg_pilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: AHARS.  Side: Pilot
 sim/cockpit2/gauges/indicators/roll_AHARS_deg_copilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: AHARS.  Side: Copilot
 sim/cockpit2/gauges/indicators/roll_electric_deg_pilot	float	n	degrees	Indicated roll, in degrees, positive right.  Source: electric gyro.  Side: Pilot
@@ -3113,9 +3343,9 @@ sim/cockpit2/ice/ice_pitot_heat_on_copilot	int	y	boolean	De-ice switch, 0 or 1. 
 sim/cockpit2/ice/ice_AOA_heat_on	int	y	boolean	De-ice switch, 0 or 1.  AOA sensor heat. This switch turns on de-icing heat for the AOA sensor. If it freezes up your AOA indicator stops working. AOA sensor failure will also affect the aircraft's artificial stability system if it has one.
 sim/cockpit2/ice/ice_surfce_heat_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - bleed air. This switch directs warm air from the engines into the wing leading edges to keep them free of ice.
 sim/cockpit2/ice/ice_surface_boot_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - peneumatic. This switch inflates flexible bladders on the wing leading edges to pop off accumulated ice.
-sim/cockpit2/ice/ice_inertial_separator_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - inertial separator. This switch causes the engine intake air to follow a crooked path, allowing ice, sleet, etc., to be separated from the intake air.
+sim/cockpit2/ice/anti_ice_engine_air	float[8]	y	ratio	De-Ice ratio.  (Description needed)
 sim/cockpit2/ice/ice_auto_ignite_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - auto-ignition. This switch turns on a continuous ignition source in the engine to automatically relight it if there is a flameout.
-sim/cockpit2/ice/ice_detect_on	int	y	boolean	De-ice switch, 0 or 1.  Ice-detection: Turn this switch on to enable ide-detection... if the system detects ice, it will light up the ICE annunciator.
+sim/cockpit2/ice/ice_detect_on	int	y	boolean	De-ice switch, 0 or 1.  Ice-detection: Turn this switch on to enable ice-detection... if the system detects ice, it will light up the ICE annunciator.
 sim/cockpit2/pressurization/actuators/bleed_air_mode	int	y	enum	Bleed air mode, 0=of, 1=left,2=both,3=right,4=apu,5=auto
 sim/cockpit2/pressurization/actuators/dump_all_on	int	y	boolean	Dump all pressurization, 0 or 1.
 sim/cockpit2/pressurization/actuators/dump_to_altitude_on	int	y	feet	Dump pressurization to the current altitude, 0 or 1.
@@ -3233,7 +3463,8 @@ sim/cockpit2/switches/avionics_power_on	int	y	boolean	Switch, 0 or 1.
 sim/cockpit2/switches/navigation_lights_on	int	y	boolean	Switch, 0 or 1.
 sim/cockpit2/switches/beacon_on	int	y	boolean	Switch, 0 or 1.
 sim/cockpit2/switches/strobe_lights_on	int	y	boolean	Switch, 0 or 1.
-sim/cockpit2/switches/landing_lights_on	int	y	boolean	Switch, 0 or 1.
+sim/cockpit2/switches/landing_lights_on	int	y	boolean	Switch, 0 or 1.  This affects the first landing light.
+sim/cockpit2/switches/landing_lights_switch	float[16]	y	ratio	Switch, 0 is off, 0.5 is half-intensity, etc. for any of the landing lights.
 sim/cockpit2/switches/taxi_light_on	int	y	boolean	Switch, 0 or 1.
 sim/cockpit2/switches/dump_fuel	int	y	boolean	Switch, 0 or 1.
 sim/cockpit2/switches/puffers_on	int	y	boolean	Switch, 0 or 1.
@@ -3265,7 +3496,7 @@ sim/cockpit2/switches/rocket_mode	int	y	enum	This will have an enumeration based
 sim/cockpit2/switches/burner_level	int	y	enum	This can be 0 (half-power afterburners) or 1 (full-power burner).
 sim/cockpit2/switches/alternate_static_air_ratio	float	y	ratio	Alternate static air ratio, 0.0 is off, 1,.0 is on.
 sim/cockpit2/switches/wiper_speed	int	y	enum	0=off,1=25%speed,2=50%speed,3=100%speed.
-sim/cockpit2/switches/custom_slider_on	int[20]	y	boolean	custom sliders.  When flipped, slider moves based on timing in planemaker.
+sim/cockpit2/switches/custom_slider_on	int[24]	y	boolean	custom sliders.  When flipped, slider moves based on timing in planemaker.
 sim/cockpit2/weapons/weapon_select_console_index	int	y	index	Weapon index selected on the weapon console.
 sim/cockpit2/weapons/fire_mode	int	y	enum	Weapon fire-mode, 0=single, 1=pair, 2=ripple, 3=salvo.
 sim/cockpit2/weapons/fire_rate	int	y	enum	Weapon fire-rate, 0, 1, 2, 3 depending on fire rate.
@@ -3333,9 +3564,14 @@ sim/flightmodel2/misc/tailhook_deploy_ratio	float	n	ratio	Tailhook position: 0 =
 sim/flightmodel2/misc/water_scoop_deploy_ratio	float	n	ratio	Water scoop position: 0 = up, 1 = down
 sim/flightmodel2/misc/water_drop_deploy_ratio	float	n	ratio	Water drop door position: 0 = up, 1=  down
 sim/flightmodel2/misc/wiper_angle_deg	float[4]	n	degrees	current angle of the wiper.  range of motion is set in PlaneMaker.
-sim/flightmodel2/misc/custom_slider_ratio	float[20]	n	ratio	Misc. traveling items for your use.  You define the meaning.
+sim/flightmodel2/misc/custom_slider_ratio	float[24]	n	ratio	Misc. traveling items for your use.  You define the meaning.
 sim/flightmodel2/misc/pressure_outflow_ratio	float	n	ratio	How far is the pressure-outflow valve open?  0=closed, 1=open
 sim/flightmodel2/misc/AoA_angle_degrees	float	n	degrees	Angle of attack probe.  Positive means plane is climbing.
+sim/flightmodel2/misc/yaw_string_angle	float	n	degrees	desc
+sim/flightmodel2/misc/yaw_string_airspeed	float	n	kias	desc
+sim/flightmodel2/misc/gforce_normal	float	n	todo	desc
+sim/flightmodel2/misc/gforce_axil	float	n	todo	desc
+sim/flightmodel2/misc/gforce_side	float	n	todo	desc
 sim/flightmodel2/wing/aileron1_deg	float[32]	y	degrees	Deflection of the aileron from set #1 on this wing. Degrees, positive is trailing-edge down.
 sim/flightmodel2/wing/aileron2_deg	float[32]	y	degrees	Deflection of the aileron from set #2 on this wing. Degrees, positive is trailing-edge down.
 sim/flightmodel2/wing/spoiler1_deg	float[32]	y	degrees	Deflection of the roll-spoilerfrom set #1 on this wing. Degrees, positive is trailing-edge down.
