@@ -61,7 +61,7 @@ Usage:<br>
 # 2007-10-16 v2.45
 #  - Fix for Blender 2.45
 #
-# 2008-03-30 v3.09
+# 2008-04-08 v3.09
 #  - Fix for break in version 3.03
 #
 
