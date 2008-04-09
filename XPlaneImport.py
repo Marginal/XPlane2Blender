@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.08"
+__version__ = "3.09"
 __bpydoc__ = """\
 This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
 
@@ -1923,7 +1923,7 @@ def file_callback (filename):
         Window.DrawProgressBar(0, 'ERROR')
         if e.type == ParseError.HEADER:
             msg='This is not a valid X-Plane v6, v7 or v8 OBJ file'
-        if e.type == ParseError.PANEL:
+        elif e.type == ParseError.PANEL:
             msg='Cannot read cockpit panel texture'
         elif e.type == ParseError.NAME:
             msg='Missing dataref or light name at line %s\n' % obj.lineno

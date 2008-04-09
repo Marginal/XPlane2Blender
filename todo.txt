@@ -1,5 +1,9 @@
+Per-bone animation properties
+Gaps in bone poses?
+Look for panel in cockpit_3d on import
+Dialog for global properties
+
 Save multiple .objs
-b16 .acf format
 
 Blender: Allow float/int properties to be larger than 10000
 Blender: Allow Draw.Number to specify precision.
