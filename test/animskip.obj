@@ -1,0 +1,56 @@
+I
+800
+OBJ
+
+TEXTURE	
+POINT_COUNTS	8 0 0 24
+
+VT	   1.0000    0.0000    1.0000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.0000    0.0000    1.0000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.0000    0.0000   -1.0000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.0000    0.0000   -1.0000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.0000    0.0000    0.0000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.0000    0.0000    0.0000	 0.000  1.000  0.000	0.0    0.0   
+VT	  -1.0000    0.0000   -2.0000	 0.000  1.000  0.000	0.0    0.0   
+VT	   1.0000    0.0000   -2.0000	 0.000  1.000  0.000	0.0    0.0   
+
+IDX10	0 1 2 0 2 3 4 5 6 4
+IDX10	6 7 4 5 6 4 6 7 4 5
+IDX	6
+IDX	4
+IDX	6
+IDX	7
+
+ATTR_no_cull
+TRIS	0 6
+ANIM_begin
+	ANIM_trans_begin	sim/flightmodel/engine/ENGN_thro[0]
+		ANIM_trans_key	0	   0.0000    0.0000   -1.0000
+		ANIM_trans_key	0.3333	   0.0000    0.0000   -1.3333
+		ANIM_trans_key	0.6667	   0.0000    0.0000   -1.6667
+		ANIM_trans_key	1	   0.0000    0.0000   -2.0000
+	ANIM_trans_end
+	ANIM_rotate_begin	   1.0000    0.0000    0.0000	sim/flightmodel/engine/ENGN_thro[0]
+		ANIM_rotate_key	0	  0.00
+		ANIM_rotate_key	0.3333	 43.42
+		ANIM_rotate_key	0.6667	 77.84
+		ANIM_rotate_key	1	 90.00
+	ANIM_rotate_end
+	TRIS	6 6
+	ANIM_begin
+		ANIM_trans	   0.0000    0.0000   -2.0000	   0.0000    0.0000   -2.0000	0 0	no_ref
+		ANIM_rotate	   1.0000    0.0000    0.0000	  0.00  45.00	0 0.3333	sim/flightmodel/engine/ENGN_thro[0]
+		TRIS	12 6
+		ANIM_begin
+			ANIM_trans	   0.0000    0.0000   -2.0000	   0.0000    0.0000   -2.0000	0 0	no_ref
+			ANIM_rotate_begin	   1.0000    0.0000    0.0000	sim/flightmodel/engine/ENGN_thro[0]
+				ANIM_rotate_key	0	 45.00
+				ANIM_rotate_key	0.3333	 45.00
+				ANIM_rotate_key	0.6667	 90.00
+			ANIM_rotate_end
+			TRIS	18 6
+		ANIM_end
+	ANIM_end
+ANIM_end
+
+# Built with Blender 2.45. Exported with XPlane2Blender 3.10.

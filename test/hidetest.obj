@@ -29,30 +29,30 @@ IDX	8
 IDX	10
 IDX	11
 
-ATTR_no_cull
 ANIM_begin
 	ANIM_hide	2 3	sim/flightmodel/engine/ENGN_thro[2]
 	ANIM_trans	   0.0000    1.0000    0.0000	   0.0000    1.0000    0.0000	0 0	no_ref
 	ANIM_rotate	  -1.0000    0.0000    0.0000	 45.00 -45.00	-2 1	sim/flightmodel/engine/ENGN_thro[1]
+	ATTR_no_cull
 	TRIS	0 6
 ANIM_end
 ####_group	first group
 TRIS	6 6
-ATTR_diffuse_rgb	 0.800  0.800  0.800
-ATTR_shiny_rat	 0.526
 ANIM_begin
 	ANIM_hide	0.1 0.2	sim/flightmodel/engine/ENGN_thro[0]
 	ANIM_hide	0.3 0.4	sim/flightmodel/engine/ENGN_thro[0]
 	ANIM_show	1.0 2.0	sim/flightmodel/engine/ENGN_thro[0]
+	ATTR_diffuse_rgb	 0.800  0.800  0.800
+	ATTR_shiny_rat	 0.526
 	TRIS	12 6
 ANIM_end
 ####_group	second group
-ATTR_reset
 ANIM_begin
 	ANIM_hide	0.75 0.85	custom/path2/other_dataref[1]
 	ANIM_trans	   0.0000    1.0000   -1.0000	   0.0000    1.0000   -1.0000	0 0	no_ref
 	ANIM_rotate	  -1.0000    0.0000    0.0000	 45.00 -45.00	-1 1	custom/path/my_dataref
+	ATTR_reset
 	TRIS	18 6
 ANIM_end
 
-# Built with Blender 2.42. Exported with XPlane2Blender 2.34.
+# Built with Blender 2.45. Exported with XPlane2Blender 3.10.
