@@ -1,4 +1,4 @@
-2 900 Sat Mar 29 00:53:34 2008
+2 920 Wed Aug 13 23:12:17 2008
 
 sim/aircraft/acf_struct	int[10]	n	Pointers	Pointers to the individual aircraft structures.
 sim/aircraft/view/acf_tailnum	byte[40]	y	string	Tail number
@@ -309,8 +309,8 @@ sim/aircraft/controls/acf_RSC_maxgreen_prp	float	y
 sim/aircraft/controls/acf_elev_crat	float	y
 sim/aircraft/controls/acf_elev_up	float	y
 sim/aircraft/controls/acf_elev_dn	float	y
-sim/aircraft/controls/acf_trq_max_eng	float	y
-sim/aircraft/controls/acf_trq_max_prp	float	y	???	NOTE : This is now the same as acf_trq_max_en in v7
+sim/aircraft/controls/acf_trq_max_eng	float	y	newtonmeters 	????
+sim/aircraft/controls/acf_trq_max_prp	float	y	newtonmeters	NOTE : This is now the same as acf_trq_max_en in v7
 sim/aircraft/controls/acf_rudd_crat	float	y
 sim/aircraft/controls/acf_rudd_lr	float	y
 sim/aircraft/controls/acf_rud2_crat	float	y
@@ -556,8 +556,8 @@ sim/aircraft/overflow/acf_has_APU_switch	int	y	???	Aircraft has APU
 sim/aircraft/overflow/acf_has_full_bleed_air	int	y	???	Aircraft has Full Bleed Air
 sim/aircraft/overflow/acf_has_ignition	int	y	???	Aircraft has Ignition
 sim/aircraft/overflow/acf_has_cowl_handle	int	y	???	Aircraft has Cowl Handle
-sim/aircraft/overflow/acf_has_fuel_all	int	y	???	Aircraft has Fuel All
-sim/aircraft/overflow/acf_has_fuel_any	int	y	???	Aircraft has Fuel Any
+sim/aircraft/overflow/acf_has_fuel_all	int	y	???	Aircraft has option to draw from any tank
+sim/aircraft/overflow/acf_has_fuel_any	int	y	boolean	Aircraft has Fuel selector
 sim/aircraft/overflow/acf_has_radios	int	y	???	Aircraft has Radios
 sim/aircraft/overflow/has_tail_beac	int	y	???	???
 sim/aircraft/overflow/has_hsi	int	y	???	???
@@ -694,8 +694,8 @@ sim/cockpit/gyros/dg_drift_vac_deg	float	y	degrees A delta between the plane's h
 sim/cockpit/gyros/dg_drift_ele_deg	float	y	degrees A delta between the plane's heading and the DG for electric 1 powered	DGs
 sim/cockpit/gyros/dg_drift_vac2_deg	float	y	degrees A delta between the plane's heading and the DG for vacuum 2 powered	DGs
 sim/cockpit/gyros/dg_drift_ele2_deg	float	y	degrees A delta between the plane's heading and the DG for electric 2 powered	DGs
-sim/cockpit/gyros/gyr_force	float[4]	y	???	???
-sim/cockpit/gyros/gyr_spin	float[4]	y	???	???
+sim/cockpit/gyros/gyr_force	float[6]	y	???	was dim 4 until 920 enums are ahrs1,ahrs2,elec1,elec2,vac1,vac2
+sim/cockpit/gyros/gyr_spin	float[6]	y	???	was dim 4 until 920 enums are ahrs1,ahrs2,elec1,elec2,vac1,vac2
 sim/cockpit/misc/has_radar	float	n	???	Does this aircraft have weather radar?
 sim/cockpit/misc/outer_marker_lit	int	n	???	Is the outer marker beacon lit right now
 sim/cockpit/misc/middle_marker_lit	int	n	???	Is the middle marker beacon lit right now
@@ -711,7 +711,11 @@ sim/cockpit/misc/vacuum	float	y	???	Vacuum Ratio
 sim/cockpit/misc/vacuum2	float	y	???	Vacuum 2 Ratio
 sim/cockpit/misc/ah_adjust	float	y	pixels	Adjustment to the artificial horizon bars (pilot)
 sim/cockpit/misc/ah_adjust2	float	y	pixels	Adjustment to the artificial horizon bars (copilot)
-sim/cockpit/misc/compass_indicated	float	n	degm	Indicated cockpit heading in magnetic degrees
+sim/cockpit/misc/compass_indicated	float	y	degm	Indicated cockpit heading in magnetic degrees
+sim/cockpit/misc/hydraulic_quantity	float	y	???	Hydraulic Quantity 1
+sim/cockpit/misc/hydraulic_quantity2	float	y	???	Hydraulic Quantity 2
+sim/cockpit/misc/fan_fore	float	y	ratio	Speed of forward fan (0 = off, 1 = max) - controlled by EFIS-app
+sim/cockpit/misc/fan_aft	float	y	ratio	Speed of rear fan (0 = off, 1 = max) - controlled by EFIS-app
 sim/cockpit/pressure/bleed_air_on	int	y	bool	Bleeding air is on (legacy)
 sim/cockpit/pressure/bleed_air_mode	int	y	enum	0=off,1=L,2=B,3=R,4=APU
 sim/cockpit/pressure/cabin_altitude_set_m_msl	float	y	???	The desired cabin altitude (BEFORE 730 this was incorrectly int type)
@@ -834,7 +838,7 @@ sim/cockpit/radios/dme5_has_dme	int	y	bool	Does this adf aid have DME?  Use over
 sim/cockpit/radios/obs_mag	float	y	???	OBS	  (was true, mag in 710)
 sim/cockpit/radios/gear_audio_working	int	y	???	Suppresses Gear Audio
 sim/cockpit/radios/marker_audio_working	int	y	???	Suppresses Marker Audio
-sim/cockpit/radios/nav_type	int[6]	y	????	Type of NAVAID that is tuned in
+sim/cockpit/radios/nav_type	int[6]	n	????	Type of NAVAID that is tuned in
 sim/cockpit/radios/ap_src	int	y	int	autopilot source 0 is pilot, 1 is copilot
 sim/cockpit/radios/nav_com_adf_mode	int	y	int	for a multifunction receiver...0-5 for nav1,nav2,com1,com2,adf1,adf2.
 sim/cockpit/switches/DME_radio_selector	int	y	???	Which nav radio is the slaved DME connected to
@@ -949,7 +953,7 @@ sim/flightmodel/controls/flaprqst	float	y	???	Requested flap deployment
 sim/flightmodel/controls/slatrqst	float	y	???	Requested Slat deplyoment - note that in XP8 you cannot independently control slats.
 sim/flightmodel/controls/tail_lock_rat	float	y	ratio	This is how locked the tail-wheel is ... 0 is free castoring, 1 is locked.
 sim/flightmodel/controls/ail_trim	float	y	???	Aileron Trim
-sim/flightmodel/controls/dist	float	y	meters	Distance Travelled
+sim/flightmodel/controls/dist	float	y	meters	Distance Traveled
 sim/flightmodel/controls/elv_trim	float	y	???	Elevation Trim
 sim/flightmodel/controls/flaprat	float	y	???	Actual flap 1 deplyoment
 sim/flightmodel/controls/flap2rat	float	y	???	Actual flap 2 deplyoment
@@ -1499,17 +1503,17 @@ sim/flightmodel/misc/wing_tilt_roll	float	y	???	???
 sim/flightmodel/misc/ai_app_mode	int	y	???	???
 sim/flightmodel/misc/jato_left	float	y	???	???
 sim/flightmodel/misc/displace_rat	float	y	???	???
-sim/flightmodel/misc/h_ind	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
-sim/flightmodel/misc/h_ind2	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
-sim/flightmodel/misc/h_ind_copilot	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
-sim/flightmodel/misc/h_ind_copilot2	float	n	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/h_ind	float	y	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/h_ind2	float	y	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/h_ind_copilot	float	y	meters	Indicated barometric altitude, quite probably in feet actually.
+sim/flightmodel/misc/h_ind_copilot2	float	y	meters	Indicated barometric altitude, quite probably in feet actually.
 sim/flightmodel/misc/machno	float	n	???	???
 sim/flightmodel/misc/Qstatic	float	n	psf	Ambient Q
-sim/flightmodel/misc/turnrate_roll	float	n	???	???
-sim/flightmodel/misc/turnrate_roll2	float	n	???	???
-sim/flightmodel/misc/turnrate_noroll	float	n	???	???
-sim/flightmodel/misc/turnrate_noroll2	float	n	???	???
-sim/flightmodel/misc/slip	float	n	???	???
+sim/flightmodel/misc/turnrate_roll	float	y	???	???
+sim/flightmodel/misc/turnrate_roll2	float	y	???	???
+sim/flightmodel/misc/turnrate_noroll	float	y	???	???
+sim/flightmodel/misc/turnrate_noroll2	float	y	???	???
+sim/flightmodel/misc/slip	float	y	???	???
 sim/flightmodel/misc/time_jett_over	float	y	???	???
 sim/flightmodel/misc/rocket_mode	int	y	???	???
 sim/flightmodel/misc/rocket_timeout	float	y	???	???
@@ -1527,6 +1531,11 @@ sim/flightmodel/misc/C_n	float	y	???	???
 sim/flightmodel/misc/cl_overall	float	y	???	???
 sim/flightmodel/misc/cd_overall	float	y	???	???
 sim/flightmodel/misc/l_o_d	float	y	???	???
+sim/flightmodel/misc/act_frc_ptch_lb	float	y	lbs Force feedback: total pounds on yoke by ACF due to	pitch
+sim/flightmodel/misc/act_frc_roll_lb	float	y	lbs Force feedback: total pounds on yoke by ACF due to	roll
+sim/flightmodel/misc/act_frc_hdng_lb	float	y	lbs Force feedback: total pounds on pedals by ACF due to	heading
+sim/flightmodel/misc/act_frc_lbrk_lb	float	y	lbs Force feedback: total pounds on pedals by ACF due to left	brake
+sim/flightmodel/misc/act_frc_rbrk_lb	float	y	lbs Force feedback: total pounds on pedals by ACF due to right	brake
 sim/flightmodel/ground/surface_texture_type	int	y	enum tbd - writable only with	override_groundplane
 sim/flightmodel/ground/plugin_ground_center	float[3]	y	meters	Location of a pt on the ground in local corods
 sim/flightmodel/ground/plugin_ground_slope_normal	float[3]	y	vector	Normal vector of the terrain (must be normalized)
@@ -1599,8 +1608,8 @@ sim/flightmodel/position/beta	float	n	degrees	The heading relative to the flown 
 sim/flightmodel/position/vpath	float	n	degrees	The pitch the aircraft actually flies.  (vpath+alpha=theta)
 sim/flightmodel/position/hpath	float	n	degrees	The heading the aircraft actually flies.  (hpath+beta=psi)
 sim/flightmodel/position/groundspeed	float	n	meters/sec	The ground speed of the aircraft
-sim/flightmodel/position/indicated_airspeed	float	n	kias	Air speed indicated - this takes into account air density and wind direction
-sim/flightmodel/position/indicated_airspeed2	float	n	kias	Air speed indicated - this takes into account air density and wind direction
+sim/flightmodel/position/indicated_airspeed	float	y	kias	Air speed indicated - this takes into account air density and wind direction
+sim/flightmodel/position/indicated_airspeed2	float	y	kias	Air speed indicated - this takes into account air density and wind direction
 sim/flightmodel/position/true_airspeed	float	n	meters/sec	Air speed true - this does not take into account air density at altitude!
 sim/flightmodel/position/magnetic_variation	float	n	degrees	The local magnetic variation [PROBABLY NEEDS TO GO SOMEWHER ELSE!]
 sim/flightmodel/position/M	float	n	NM	The angular momentum of the aircraft (relative to flight axis)
@@ -1617,8 +1626,8 @@ sim/flightmodel/position/Qrad	float	y	rad/sec	The pitch rotation rates (relative
 sim/flightmodel/position/Rrad	float	y	rad/sec	The yaw rotation rates (relative to the flight)
 sim/flightmodel/position/q	float[4]	y	quaternion	A quaternion representing the rotation from local OpenGL coordinates to the aircraft's coordinates.
 sim/flightmodel/position/vh_ind	float	n	m/s	VVI (vertical velocity in meters per second)
-sim/flightmodel/position/vh_ind_fpm	float	n	fpm	VVI (vertical velocity in meters per second)
-sim/flightmodel/position/vh_ind_fpm2	float	n	fpm	VVI (vertical velocity in meters per second)
+sim/flightmodel/position/vh_ind_fpm	float	y	fpm	VVI (vertical velocity in feet per second)
+sim/flightmodel/position/vh_ind_fpm2	float	y	fpm	VVI (vertical velocity in feet per second)
 sim/flightmodel/position/y_agl	float	n	meters	AGL
 sim/flightmodel/transmissions/xmsn_press	float	n	???	transmission pressure
 sim/flightmodel/transmissions/xmsn_temp	float	n	???	transmission temperature
@@ -2444,6 +2453,9 @@ sim/operation/failures/rel_vasi	int	y	failure_enum	VASIs Inoperative
 sim/operation/failures/rel_app_lites	int	y	failure_enum	Approach lites inop - in 850 rwy lights fail ALL airport lights
 sim/operation/failures/rel_rwy_lites	int	y	failure_enum	Runway lites Inoperative
 sim/operation/failures/rel_conlock	int	y	failure_enum	Controls locked
+sim/operation/failures/rel_door_open	int	y	failure_enum	Door Open
+sim/operation/failures/rel_ex_power_on	int	y	failure_enum	External power is on
+sim/operation/failures/rel_pass_o2_on	int	y	failure_enum	Passenger oxygen on
 sim/operation/failures/rel_fuelcap	int	y	failure_enum	Fuel Cap left off
 sim/operation/failures/rel_fuel_water	int	y	failure_enum	Water in fuel
 sim/operation/failures/rel_fuel_type	int	y	failure_enum	Wrong fuel type - JetA for props or Avgas for jets!
@@ -2456,6 +2468,9 @@ sim/operation/failures/rel_fuel_block5	int	y	failure_enum	Fuel tank filter is bl
 sim/operation/failures/rel_fuel_block6	int	y	failure_enum	Fuel tank filter is blocked - tank 7
 sim/operation/failures/rel_fuel_block7	int	y	failure_enum	Fuel tank filter is blocked - tank 8
 sim/operation/failures/rel_fuel_block8	int	y	failure_enum	Fuel tank filter is blocked - tank 9
+sim/operation/failures/rel_bird_strike	int	y	failure_enum	Bird has hit the plane
+sim/operation/failures/rel_wind_shear	int	y	failure_enum	Wind shear warning
+sim/operation/failures/rel_make_vertigo	int	y	failure_enum	Pilot has vertigo
 sim/operation/failures/rel_vacuum	int	y	failure_enum	Vaccum System 1 - Pump Failure
 sim/operation/failures/rel_vacuum2	int	y	failure_enum	Vaccum System 2 - Pump Failure
 sim/operation/failures/rel_pitot	int	y	failure_enum	Pitot 1 - Blockage
@@ -2518,7 +2533,10 @@ sim/operation/failures/rel_fc_L_flp	int	y	failure_enum	Left flap activate
 sim/operation/failures/rel_fc_R_flp	int	y	failure_enum	Right Flap activate
 sim/operation/failures/rel_L_flp_off	int	y	failure_enum	Left flap remove
 sim/operation/failures/rel_R_flp_off	int	y	failure_enum	Right flap remove
+sim/operation/failures/rel_lbrakes	int	y	failure_enum	Left Brakes
+sim/operation/failures/rel_rbrakes	int	y	failure_enum	Right Brakes
 sim/operation/failures/rel_gear_act	int	y	failure_enum	Landing Gear actuator
+sim/operation/failures/rel_gear_ind	int	y	failure_enum	Landing Gear indicator
 sim/operation/failures/rel_lagear1	int	y	failure_enum	Landing Gear 1 retract
 sim/operation/failures/rel_lagear2	int	y	failure_enum	Landing Gear 2 retract
 sim/operation/failures/rel_lagear3	int	y	failure_enum	Landing Gear 3 retract
@@ -2539,19 +2557,23 @@ sim/operation/failures/rel_tire7	int	y	failure_enum	Landing gear 7 tire blowout
 sim/operation/failures/rel_tire8	int	y	failure_enum	Landing gear 8 tire blowout
 sim/operation/failures/rel_tire9	int	y	failure_enum	Landing gear 9 tire blowout
 sim/operation/failures/rel_tire10	int	y	failure_enum	Landing gear 10 tire blowout
-sim/operation/failures/rel_lbrakes	int	y	failure_enum	Left Brakes
-sim/operation/failures/rel_rbrakes	int	y	failure_enum	Right Brakes
 sim/operation/failures/rel_fdir	int	y	failure_enum	flight director
-sim/operation/failures/rel_auto_runaway	int	y	failure_enum	AutoPilot (Runaway!!!)
 sim/operation/failures/rel_otto	int	y	failure_enum	AutoPilot (Computer)
+sim/operation/failures/rel_auto_runaway	int	y	failure_enum	AutoPilot (Runaway!!!)
 sim/operation/failures/rel_auto_servos	int	y	failure_enum	AutoPilot (Servos)
+sim/operation/failures/rel_servo_ailn	int	y	failure_enum	autopilot ervos failed - ailerons
+sim/operation/failures/rel_servo_elev	int	y	failure_enum	autopilot ervos failed - elevators
+sim/operation/failures/rel_servo_rudd	int	y	failure_enum	autopilot ervos failed - rudder
+sim/operation/failures/rel_servo_thro	int	y	failure_enum	autopilot ervos failed - throttles
 sim/operation/failures/rel_stbaug	int	y	failure_enum	Stability Augmentation
 sim/operation/failures/rel_trotor	int	y	failure_enum	Tail rotor transmission
 sim/operation/failures/rel_feather	int	y	failure_enum	Autofeather system inop
 sim/operation/failures/rel_prop_sync	int	y	failure_enum	Prop sync
 sim/operation/failures/rel_throt_lo	int	y	failure_enum	Throttle inop giving min thrust
-sim/operation/failures/rel_fc_thr	int	y	failure_enum	Throttle failure - LEGACY - now mapped to rel_throt_now.
 sim/operation/failures/rel_throt_hi	int	y	failure_enum	Throttle inop giving max thrust
+sim/operation/failures/rel_fc_thr	int	y	failure_enum	Throttle failure - LEGACY - now mapped to rel_throt_now.
+sim/operation/failures/rel_bleed_air_lft	int	y	failure_enum	The left engine is not providing enough pressure
+sim/operation/failures/rel_bleed_air_rgt	int	y	failure_enum	The right engine is not providing enough pressure
 sim/operation/failures/rel_APU_press	int	y	failure_enum	APU is not providing bleed air for engine start or pressurization
 sim/operation/failures/rel_depres_slow	int	y	failure_enum	Slow cabin leak - descend or black out
 sim/operation/failures/rel_depres_fast	int	y	failure_enum	catastrophic decompression - yer dead
@@ -2564,13 +2586,19 @@ sim/operation/failures/rel_lites_ins	int	y	failure_enum	Instrument Lighting
 sim/operation/failures/rel_clights	int	y	failure_enum	Cockpit Lights
 sim/operation/failures/rel_lites_hud	int	y	failure_enum	HUD lights
 sim/operation/failures/rel_antice	int	y	failure_enum	Anti-ice
-sim/operation/failures/rel_ice_inlet_heat	int	y	failure_enum	Inlet heat
-sim/operation/failures/rel_ice_prop_heat	int	y	failure_enum	Prop Heat
 sim/operation/failures/rel_ice_window_heat	int	y	failure_enum	Window Heat
+sim/operation/failures/rel_ice_inlet_heat	int	y	failure_enum	Inlet heat
+sim/operation/failures/rel_ice_inlet_heat2	int	y	failure_enum	Inlet heat
+sim/operation/failures/rel_ice_prop_heat	int	y	failure_enum	Prop Heat
+sim/operation/failures/rel_ice_prop_heat2	int	y	failure_enum	Prop Heat
 sim/operation/failures/rel_ice_pitot_heat1	int	y	failure_enum	Pitot heat 1
 sim/operation/failures/rel_ice_pitot_heat2	int	y	failure_enum	Pitot heat 2
+sim/operation/failures/rel_ice_static_heat	int	y	failure_enum	Static heat 1
+sim/operation/failures/rel_ice_static_heat2	int	y	failure_enum	Static heat 2
 sim/operation/failures/rel_ice_AOA_heat	int	y	failure_enum	AOA indicator heat
+sim/operation/failures/rel_ice_AOA_heat2	int	y	failure_enum	AOA indicator heat
 sim/operation/failures/rel_ice_surf_heat	int	y	failure_enum	Surface Heat
+sim/operation/failures/rel_ice_surf_heat2	int	y	failure_enum	Surface Heat
 sim/operation/failures/rel_ice_surf_boot	int	y	failure_enum	Surface Boot
 sim/operation/failures/rel_ice_alt_air1	int	y	failure_enum	Alternate Air
 sim/operation/failures/rel_ice_alt_air2	int	y	failure_enum	Alternate Air
@@ -3180,7 +3208,7 @@ sim/cockpit2/annunciators/engine_fire	int	n	bitfield	The engine is on FIRE! this
 sim/cockpit2/annunciators/auto_ignition	int	n	bitfield	The jet or turbine engine has the igniter CONSTANTLY ON, being sure to keep the fire burning even if rain gets in there or something.    // x8
 sim/cockpit2/annunciators/reverser_deployed	int	n	bitfield	Thrust-reverse deployed!    // x8
 sim/cockpit2/annunciators/afterburner	int	n	bitfield	Afterburners on!    // x8
-sim/cockpit2/annunciators/inverter	int	n	bitfield	The inverter has failed! the plane cannot convert ac from the generators to dc for the instruments.     // x8
+sim/cockpit2/annunciators/inverter	int	n	bitfield	The inverter has failed! the plane cannot convert ac from the generators to dc for the instruments.     // x2
 sim/cockpit2/annunciators/stall_warning	int	n	boolean	Stall warning going off, yes or no.
 sim/cockpit2/annunciators/gear_warning	int	n	boolean	Gear warning going off, yes or no.
 sim/cockpit2/annunciators/no_smoking	int	n	boolean	No smoking alert on, yes or no.
@@ -3228,6 +3256,8 @@ sim/cockpit2/controls/aileron_trim	float	y	ratio	Aileron trim, in part of MAX FL
 sim/cockpit2/controls/elevator_trim	float	y	ratio	Elevator trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the elevator trim is deflected enough to move the elevators through 30% of their travel, then that is an elevator trim of 0.3.
 sim/cockpit2/controls/rudder_trim	float	y	ratio	Rudder trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rudder trim is deflected enough to move the rudders through 30% of their travel, then that is an rudder trim of 0.3.
 sim/cockpit2/controls/rotor_trim	float	y	ratio	Rotor trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rotor trim is deflected enough to move the rotor through 30% of its travel, then that is a rotor trim of 0.3.
+sim/cockpit2/controls/water_rudder_handle_ratio	float	y	ratio	Deployment of the water rudder, 0 is none, 1 is max
+sim/cockpit2/controls/flap_handle_deploy_ratio	float	n	ratio	This is how far the indicator of flap deployment has moved in the cockpit.
 sim/cockpit2/EFIS/map_mode	int	y	enum	Map mode. 0=approach, 1=vor,2=map,3=nav,4=plan
 sim/cockpit2/EFIS/map_mode_is_HSI	int	y	boolean	Map is in HSI mode, 0 or 1.
 sim/cockpit2/EFIS/map_range	int	y	enum	Map range, 1->6, where 6 is the longest range.
@@ -3256,7 +3286,10 @@ sim/cockpit2/electrical/APU_generator_amps	float	y	amps	APU generator amperage.
 sim/cockpit2/electrical/APU_starter_switch	int	y	boolean	APU power switch, 0 is off, 1 is on, 2 is start-er-up!
 sim/cockpit2/electrical/APU_N1_percent	float	n	percent	N1 of the APU
 sim/cockpit2/electrical/APU_running	int	n	boolean	APU actually running, 0 or 1.
-sim/cockpit2/electrical/dc_voltmeter	float	y	1-6	Volt-Meter
+sim/cockpit2/electrical/dc_voltmeter	float	y	1-6	Volt-meter selection (enums were strange)
+sim/cockpit2/electrical/cross_tie	int	y	boolean	Switch to connect the two busses together - power from one feeds the other.  0 or 1.
+sim/cockpit2/electrical/dc_voltmeter_selection	int	n	enum	Volt-meter selection (0=external,1=ctr,2=lft,3=rgt,4=tpl,5=bat - use cmnds to set!
+sim/cockpit2/electrical/dc_voltmeter_value	float	n	voltage	volt-meter value
 sim/cockpit2/engine/actuators/cyclic_elevator_deg	float[8]	y	degrees          	This is the longitudnal cyclic COMMAND, in degrees. Positive forwards cyclic.
 sim/cockpit2/engine/actuators/cyclic_aileron_deg	float[8]	y	degrees	This is the lateral cyclic COMMAND, in degrees. Positive right cyclic.
 sim/cockpit2/engine/actuators/throttle_ratio	float[8]	y	ratio             	Throttle position of the handle itself, from 0.0 (idle) to 1.0 (max normal).
@@ -3267,10 +3300,11 @@ sim/cockpit2/engine/actuators/cowl_flap_ratio	float[8]	y	ratio             	Cowl
 sim/cockpit2/engine/actuators/primer_ratio	float[8]	y	ratio             	Primer handle position, 0.0 (none) to 1.0 (on).
 sim/cockpit2/engine/actuators/afterburner_enabled	int[8]	y	boolean             	Afterburner enabled, on or off.
 sim/cockpit2/engine/actuators/igniter_on	int[8]	y	boolean         	Igniter, on or off.
+sim/cockpit2/engine/actuators/auto_ignite_on	int[8]	y	boolean	De-ice switch, 0 or 1.  De-ice - auto-ignition. This switch turns on a continuous ignition source in the engine to automatically relight it if there is a flameout.
 sim/cockpit2/engine/actuators/ignition_on	int[8]	y	boolean             	Ignition, on or off.
 sim/cockpit2/engine/actuators/fadec_on	int[8]	y	boolean             	Fadec, ok or off.
 sim/cockpit2/engine/actuators/primer_on	int[8]	y	boolean             	Primer button, on or off.
-sim/cockpit2/engine/actuators/fuel_pump_on	int[8]	y	boolean             	Fuel pump, on or off.
+sim/cockpit2/engine/actuators/fuel_pump_on	int[8]	y	boolean             	Fuel pump, on or off.  This is the electric per-engine fuel pump!
 sim/cockpit2/engine/actuators/idle_speed	int[8]	y	boolean             	Idle speed, hi=1 or lo=0.
 sim/cockpit2/engine/actuators/prop_mode	int[8]	y	enum             	This is the propeller and engine operation mode. It is used for props and jets. Mode 0 is feathered, 1 is normal, 2 is in beta, and reverse (prop or jet) is mode 3.
 sim/cockpit2/engine/actuators/prop_pitch_deg	float[8]	y	degrees             	This is the REQUESTED pitch of the prop in degrees from its flat-pitch setting.
@@ -3288,6 +3322,8 @@ sim/cockpit2/engine/indicators/oil_pressure_psi	float[8]	n	pounds/square_inch	Oi
 sim/cockpit2/engine/indicators/oil_temperature_deg_C	float[8]	n	degrees_C	Oil temp, deg.
 sim/cockpit2/engine/indicators/oil_quantity_ratio	float[8]	n	ratio	Oil quantity, 0.0 to 1.0.
 sim/cockpit2/engine/indicators/power_watts	float[8]	n	watts	Actual engine power output.
+sim/cockpit2/fuel/fuel_tank_selector_left	int	y	enum	This is the left-engine fuel-tnak selector.
+sim/cockpit2/fuel/fuel_tank_selector_right	int	y	enum	This is the right-engine fuel-tnak selector.
 sim/cockpit2/fuel/fuel_tank_selector	int	y	enum	0=none,1=left,2=center,3=right,4=all
 sim/cockpit2/fuel/fuel_tank_transfer_to	int	y	enum	0=none,1=left,2=center,3=right
 sim/cockpit2/fuel/fuel_tank_transfer_from	int	y	enum	0=none,1=left,2=center,3=right
@@ -3344,6 +3380,7 @@ sim/cockpit2/ice/ice_AOA_heat_on	int	y	boolean	De-ice switch, 0 or 1.  AOA senso
 sim/cockpit2/ice/ice_surfce_heat_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - bleed air. This switch directs warm air from the engines into the wing leading edges to keep them free of ice.
 sim/cockpit2/ice/ice_surface_boot_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - peneumatic. This switch inflates flexible bladders on the wing leading edges to pop off accumulated ice.
 sim/cockpit2/ice/anti_ice_engine_air	float[8]	y	ratio	De-Ice ratio.  (Description needed)
+sim/cockpit2/ice/anti_ice_engine_air_b	float[8]	y	ratio	De-Ice ratio.  (Description needed)
 sim/cockpit2/ice/ice_auto_ignite_on	int	y	boolean	De-ice switch, 0 or 1.  De-ice - auto-ignition. This switch turns on a continuous ignition source in the engine to automatically relight it if there is a flameout.
 sim/cockpit2/ice/ice_detect_on	int	y	boolean	De-ice switch, 0 or 1.  Ice-detection: Turn this switch on to enable ice-detection... if the system detects ice, it will light up the ICE annunciator.
 sim/cockpit2/pressurization/actuators/bleed_air_mode	int	y	enum	Bleed air mode, 0=of, 1=left,2=both,3=right,4=apu,5=auto
@@ -3497,6 +3534,9 @@ sim/cockpit2/switches/burner_level	int	y	enum	This can be 0 (half-power afterbur
 sim/cockpit2/switches/alternate_static_air_ratio	float	y	ratio	Alternate static air ratio, 0.0 is off, 1,.0 is on.
 sim/cockpit2/switches/wiper_speed	int	y	enum	0=off,1=25%speed,2=50%speed,3=100%speed.
 sim/cockpit2/switches/custom_slider_on	int[24]	y	boolean	custom sliders.  When flipped, slider moves based on timing in planemaker.
+sim/cockpit2/switches/panel_brightness_ratio	float[4]	y	ratio	Brightness of panel lights.  0 = flood, 1-3 = spot lights.
+sim/cockpit2/switches/instrument_brightness_ratio	float[16]	y	ratio	Ratio of instruments.  0 = default pilot, 1 = default copilot, 2-15 = custom
+sim/cockpit2/switches/HUD_brightness_ratio	float	y	ratio	HUD brightness.
 sim/cockpit2/weapons/weapon_select_console_index	int	y	index	Weapon index selected on the weapon console.
 sim/cockpit2/weapons/fire_mode	int	y	enum	Weapon fire-mode, 0=single, 1=pair, 2=ripple, 3=salvo.
 sim/cockpit2/weapons/fire_rate	int	y	enum	Weapon fire-rate, 0, 1, 2, 3 depending on fire rate.
@@ -3520,6 +3560,7 @@ sim/flightmodel2/controls/aileron_trim	float	y	ratio	Aileron trim, in part of MA
 sim/flightmodel2/controls/elevator_trim	float	y	ratio	Elevator trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the elevator trim is deflected enough to move the elevators through 30% of their travel, then that is an elevator trim of 0.3.
 sim/flightmodel2/controls/rudder_trim	float	y	ratio	Rudder trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rudder trim is deflected enough to move the rudders through 30% of their travel, then that is an rudder trim of 0.3.
 sim/flightmodel2/controls/rotor_trim	float	y	ratio	Rotor trim, in part of MAX FLIGHT CONTROL DEFLECTION. So, if the rotor trim is deflected enough to move the rotor through 30% of its travel, then that is a rotor trim of 0.3.
+sim/flightmodel2/controls/water_rudder_deploy_ratio	float	n	ratio	Deployment of the water rudder, 0 is none, 1 is max
 sim/flightmodel2/doors/type	int[20]	n	enumeration	0=unused (plane does not use this door) 1=standard (opens before gear goes down) 2=attached to strut (cycles with door), 3=closed (opens before gear goes down, then closes again)
 sim/flightmodel2/doors/location_x_mtr	int[20]	n	meters	Gear door location, in meters, x, y z.
 sim/flightmodel2/doors/location_y_mtr	int[20]	n	meters	Gear door location, in meters, x, y z.
