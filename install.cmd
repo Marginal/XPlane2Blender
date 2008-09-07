@@ -38,7 +38,7 @@ set EMPTY=1
 for %%I in ("%DESTDIR%\*") do set EMPTY=0
 if exist "%DESTDIR%\" if %EMPTY%==1 rd "%DESTDIR%"
 
-set DESTDIR=%USERPROFILE%\Application Data\Blender Foundation\Blender\.blender\scripts
+set DESTDIR=%APPDATA%\Blender Foundation\Blender\.blender\scripts
 set EMPTY=1
 for %%I in ("%DESTDIR%\*") do set EMPTY=0
 if exist "%DESTDIR%\" if %EMPTY%==1 rd "%DESTDIR%"
