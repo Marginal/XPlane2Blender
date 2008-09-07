@@ -1,10 +1,13 @@
-!
-CVS
 *.bak
+*.pyc
+*.pyo
+*.zip
 
 *.blend1
 *.blend2
 *.blend3
 *.blend4
 *.blend5
+
+.DS_Store
 Thumbs.db
