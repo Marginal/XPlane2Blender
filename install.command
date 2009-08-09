@@ -37,6 +37,7 @@ XPlaneExportCSL.py
 XPlaneExportBodies.py
 XPlaneImport.py
 XPlaneImport.pyc
+XPlaneImportMDL.py
 XPlaneImportPlane.py
 XPlaneImportBodies.py
 XPlanePanelRegions.py
@@ -68,6 +69,7 @@ XPlaneExport7.py
 XPlaneExport8.py
 XPlaneExportCSL.py
 XPlaneImport.py
+XPlaneImportMDL.py
 XPlaneImportPlane.py
 XPlanePanelRegions.py
 XPlaneUtils.py
