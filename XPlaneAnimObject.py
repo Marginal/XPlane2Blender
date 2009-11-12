@@ -69,7 +69,7 @@ Edit X-Plane animation properties.
 import Blender
 from Blender import BGL, Draw, Object, Scene, Window
 
-from XPlaneUtils import Vertex, getDatarefs
+from XPlaneUtils import Vertex, getDatarefs, make_short_name
 
 theobject=None
 
@@ -77,6 +77,7 @@ theobject=None
 lookup={}
 hierarchy={}
 firstlevel=[]
+has_sim=False
 armature=None
 bonecount=0	# number of parent bones 
 bones=[]	# all bones in armature
@@ -151,7 +152,7 @@ EVENTMAX=256
 
 
 def getparents():
-    global lookup, hierarchy, firstlevel, armature, bones, theobject
+    global lookup, hierarchy, firstlevel, has_sim, armature, bones, theobject
 
     if Window.EditMode():
         objects=[Scene.GetCurrent().objects.active]
@@ -186,8 +187,18 @@ def getparents():
         bone=bone.parent
 
     try:
+        has_sim=False
         (lookup, hierarchy)=getDatarefs()
-        firstlevel=hierarchy['sim'].keys()
+        firstlevel=[]
+        for key in lookup:
+            if lookup[key]:
+                (path,n)=lookup[key]
+                ref=path.split('/')
+                if not ref[0] in firstlevel:
+                   firstlevel.append(ref[0])
+        if len(firstlevel) == 1:
+            firstlevel=hierarchy['sim'].keys()
+            has_sim=True
         firstlevel.sort(lambda x,y: -cmp(x.lower(), y.lower()))
 
     except IOError, e:
@@ -199,14 +210,23 @@ def getparents():
 
 # populate vals array and loop value
 def getvals(bonename, dataref, index):
+
+    props=armature.getAllProperties()
+
+    fullref=""
     if dataref in lookup and lookup[dataref]:
         (path, n)=lookup[dataref]
-        fullref=path+dataref
+        fullref=path
     else:
-        fullref=dataref        
+        for prop in props:
+            if prop.name.strip()==dataref and prop.type=='STRING' and prop.data:
+                if prop.data.endswith('/'):
+                    fullref=prop.data+dataref
+                else:
+                    fullref=prop.data+'/'+dataref
 
     # find last frame
-    framecount=2	# zero based
+    framecount=2    # zero based
     action=armature.getAction()
     if action and bonename in action.getChannelNames():
         ipo=action.getChannelIpo(bonename)
@@ -214,7 +234,7 @@ def getvals(bonename, dataref, index):
             for bez in icu.bezierPoints:
                 f=bez.pt[0]
                 if f>100:
-                    pass	# silently stop
+                    pass    # silently stop
                 elif f>int(f):
                     framecount=max(framecount,int(f)+1) # like math.ceil()
                 else:
@@ -222,9 +242,11 @@ def getvals(bonename, dataref, index):
     vals=[0.0]+[1.0 for i in range(framecount-1)]
     loop=0.0
 
-    props=armature.getAllProperties()
+    sname=make_short_name(fullref)
     seq=[dataref]
+    seq.append(sname)
     if index: seq.append('%s[%d]' % (dataref, index))
+    if index: seq.append('%s[%d]' % (sname, index))
 
     for tmpref in seq:
         for val in range(framecount):
@@ -242,11 +264,6 @@ def getvals(bonename, dataref, index):
                     loop=float(prop.data)
                 elif prop.type=='FLOAT':
                     loop=round(prop.data, Vertex.ROUND)
-            if prop.name.strip()==dataref and prop.type=='STRING' and prop.data:
-                if prop.data.endswith('/'):
-                    fullref=prop.data+dataref
-                else:
-                    fullref=prop.data+'/'+dataref
             
     return (fullref,vals,loop)
 
@@ -295,7 +312,7 @@ def gethideshow():
 
             if dataref in lookup and lookup[dataref]:
                 (path, n)=lookup[dataref]
-                fullref=path+dataref
+                fullref=path
             else:
                 # look for full name
                 fullref=dataref
@@ -371,6 +388,9 @@ def doapply(evt,val):
     for boneno in range(bonecount-1,-1,-1):
         # do in reverse order in case of duplicate names
         name=datarefs[boneno].split('/')[-1]
+		# bone name getting up toward trouble?  use PT name.  We'd rather be ambiguous - and readable.
+        if len(name) > 26: 
+            name=make_short_name(datarefs[boneno])
         if indices[boneno]!=None: name='%s[%d]' % (name, indices[boneno])
         # Have to manually avoid duplicate names
         i=0
@@ -403,7 +423,7 @@ def doapply(evt,val):
                 action.renameChannel(oldchannel, name)
         # Update any other Actions' channels?
 
-    armobj.update()	# apply new bone names
+    armobj.update()    # apply new bone names
 
     # Reparent children - have to do this after new bone names are applied
     for obj in Scene.GetCurrent().objects:
@@ -423,7 +443,8 @@ def doapply(evt,val):
     # datarefs values
     for boneno in range(len(datarefs)):
         ref=datarefs[boneno].split('/')
-        name=ref[-1]
+        name=make_short_name(datarefs[boneno])
+        #name=ref[-1]
         if indices[boneno]!=None: name='%s[%d]' % (name, indices[boneno])
         if len(ref)>1 or name in lookup:
             # write vals for ambiguous and unusable datarefs, but not invalid
@@ -458,7 +479,7 @@ def doapply(evt,val):
 
     Draw.Exit()
     if editmode: Window.EditMode(1)
-    Window.RedrawAll()	# in case bone names have changed
+    Window.RedrawAll()    # in case bone names have changed
     return
 
 
@@ -486,7 +507,7 @@ def event (evt, val):
     elif evt == Draw.MIDDLEMOUSE and not val:
         anchor=None
     elif anchor:
-        pass	# suppress other activity while panning
+        pass    # suppress other activity while panning
     elif evt == Draw.RIGHTMOUSE and val:
         r=Draw.PupMenu('Panel Alignment%t|Horizontal|Vertical')
         if r==1:
@@ -513,7 +534,7 @@ def bevent (evt):
                 # lookup
                 if hideshow[hs] in lookup and lookup[hideshow[hs]]:
                     (path, n)=lookup[hideshow[hs]]
-                    hideshow[hs]=path+hideshow[hs]
+                    hideshow[hs]=path
         elif event==INDICES_B:
             hideshowindices[hs]=indices_b[boneno].val
         elif event==INDICES_T:
@@ -555,7 +576,7 @@ def bevent (evt):
                 # lookup
                 if datarefs[boneno] in lookup and lookup[datarefs[boneno]]:
                     (path, n)=lookup[datarefs[boneno]]
-                    datarefs[boneno]=path+datarefs[boneno]
+                    datarefs[boneno]=path
         elif event==INDICES_B:
             indices[boneno]=indices_b[boneno].val
         elif event==INDICES_T:
@@ -586,8 +607,12 @@ def datarefmenucallback(event, val):
     if val==-1: return
     rows=Window.GetScreenSize()[1]/20-1		# 16 point plus space
     boneno=event/EVENTMAX
-    ref=['sim',firstlevel[val-1]]
-    this=hierarchy['sim'][firstlevel[val-1]]
+    if has_sim:
+        ref=['sim',firstlevel[val-1]]
+        this=hierarchy['sim'][firstlevel[val-1]]
+    else:
+        ref=[firstlevel[val-1]]
+        this=hierarchy[firstlevel[val-1]]
     while True:
         keys=this.keys()
         keys.sort(lambda x,y: cmp(x.lower(), y.lower()))

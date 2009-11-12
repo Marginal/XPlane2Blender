@@ -471,6 +471,27 @@ def MatrixrotationOnly(mm, object):
         # Normals are screwed by zero scale - just return anything
         return Matrix().identity().resize4x4()
 
+def remove_vowels(s):
+    for eachLetter in s:
+        if eachLetter in ['a','e','i','o','u','A','E','I','O','U','_']:
+            s = s.replace(eachLetter, '')
+    return s
+
+def make_short_name(full_path):
+    ref=full_path.split('/')
+    short=""
+    for comp in ref:
+        if comp == ref[-1]:
+            short=short+"_"
+            if len(comp) > 15:
+                short=short+remove_vowels(comp)
+            else:
+                short=short+comp
+        else:
+            short=short+comp[0]
+            if comp[-1] == '2':
+                short=short+"2"
+    return short
 
 # Read in datarefs
 def getDatarefs():
@@ -486,24 +507,41 @@ def getDatarefs():
             exists(join(Blender.Get(sdir), 'DataRefs.txt'))):
             f=file(join(Blender.Get(sdir), 'DataRefs.txt'), 'rU')
             d=f.readline().split()
-            if len(d)!=7 or d[0]!='2': raise err	# wtf?
+            if len(d)!=7 or d[0]!='2': raise err    # wtf?
             for line in f:
                 d=line.split()
                 if not d: continue
                 if len(d)<3: raise err
+                sname=make_short_name(d[0])
                 ref=d[0].split('/')
                 
                 if ref[1] in ['test', 'version']:
-                    continue			# hack: no usable datarefs
+                    continue            # hack: no usable datarefs
 
-                n=1					# scalar by default
+                n=1                    # scalar by default
                 for c in ['int', 'float', 'double']:
                     if d[1].lower().startswith(c):
-                        if len(d[1])>len(c):		# is array
+                        if len(d[1])>len(c):        # is array
                             n=int(d[1][len(c)+1:-1])
                         break
                 else:
-                    n=0					# not a usable dataref
+                    n=0                    # not a usable dataref
+
+                if n>99:
+                    if len(sname) > 23:
+                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+                if n>9:
+                    if len(sname) > 24:
+                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+                elif n > 1:
+                    if len(sname) > 25:
+                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+                else:
+                    if len(sname) > 28:
+                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+#                elif len(sname) > 17:
+#                   print 'WARNING - dataref ' + d[0] + ' is too long for show/hide'
+
 
                 this=hierarchy
                 for i in range(len(ref)-1):
@@ -512,11 +550,15 @@ def getDatarefs():
                     this=this[ref[i]]
                 this[ref[-1]]=n
                     
-                if ref[1]!=('multiplayer'):	# too many ambiguous datarefs
-                    if ref[-1] in datarefs:
-                        datarefs[ref[-1]]=None		# ambiguous
+                if ref[1]!=('multiplayer'):    # too many ambiguous datarefs
+                    if sname in datarefs:
+                        print 'WARNING - ambiguous short name '+ sname + ' for dataref ' + d[0]
                     else:
-                        datarefs[ref[-1]]=('/'.join(ref[:-1])+'/', n)
+                        datarefs[sname]=(d[0], n)
+                    if ref[-1] in datarefs:
+                        datarefs[ref[-1]]=None        # ambiguous
+                    else:
+                        datarefs[ref[-1]]=(d[0], n)
             break
     else:
         raise IOError(0, "Missing DataRefs.txt file. Please re-install.")
