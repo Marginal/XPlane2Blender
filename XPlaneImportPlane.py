@@ -8,7 +8,7 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.09"
+__version__ = "3.10"
 __bpydoc__ = """\
 This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
@@ -151,6 +151,9 @@ Limitations:<br>
 # 2008-01-20 v3.07
 #  - Support for 9b18 planes.
 #
+# 2012-07-09 v3.10
+#  - Support for v10 planes.
+#
 
 import sys
 import Blender
@@ -221,6 +224,9 @@ class ACFimport:
             if relocate:
                 self.offset+=Vertex(0, -self.acf.cgY, -self.acf.cgZ, self.mm)
             return	# Texture handled elsewhere
+        elif self.acf.HEADER_version>=1000:
+            if relocate:
+                self.offset+=Vertex(0, -self.acf.cgY, -self.acf.cgZ, self.mm)
         else:
             if relocate:
                 self.offset+=Vertex(0, -self.acf.WB_cgY, -self.acf.WB_cgZ, self.mm)
@@ -270,13 +276,15 @@ class ACFimport:
         # Hack! Just importing weapon
         if self.acf.HEADER_version in [1,800]:
             Window.DrawProgressBar(0.5, "Importing weapon ...")
-            self.doBody(basename(self.filename), 0)
+            self.doBody(basename(self.filename), 0, False)
             self.scene.layers=layers
             return
         
         if self.isscenery:
-            n=(DEFfmt.partDIM+DEFfmt.wattDIM+DEFfmt.gearDIM+DEFfmt.doorDIM+
-               DEFfmt.objsDIM+len(DEFfmt.lites)+1)
+            if self.acf.HEADER_version>=1000:
+                n=len(self.acf.part)+len(self.acf.wpna)+len(self.acf.gear)+len(self.acf.door)+len(self.acf.obja)+len(self.acf.lite)+1
+            else:
+                n=DEFfmt.partDIM+DEFfmt.wattDIM+DEFfmt.gearDIM+DEFfmt.doorDIM+DEFfmt.objsDIM+len(DEFfmt.lites)+1
         else:
             n=DEFfmt.partDIM
         i=0
@@ -284,7 +292,7 @@ class ACFimport:
         for (name, p) in DEFfmt.parts:
             i=i+1
             Window.DrawProgressBar(0.25+0.75*i/n, "Importing bodies ...")
-            self.doBody(name, p)
+            self.doBody(name, p, False)
 
         if not self.isscenery:
             self.scene.layers=layers
@@ -312,42 +320,48 @@ class ACFimport:
         for p in range(DEFfmt.wattDIM):
             i=i+1
             Window.DrawProgressBar(0.25+0.75*i/n, "Importing weapons ...")
-            self.doBody(None, p)
+            self.doBody(None, p, True)
 
         for p in range(DEFfmt.doorDIM):		# Skip speedbrakes
             i=i+1
             Window.DrawProgressBar(0.25+0.75*i/n, "Importing doors ...")
             self.doDoor(p)
 
-        if 'objs' in dir(self.acf):	# New in 8.40
+        if self.acf.HEADER_version>=1000:
+            for p in range(len(self.acf.obja)):
+                i=i+1
+                Window.DrawProgressBar(0.25+0.75*i/n, "Importing OBJs ...")
+                self.doObjs(p)
+        elif hasattr(self.acf,'objs'):		# New in 8.40
             for p in range(DEFfmt.objsDIM):
                 i=i+1
                 Window.DrawProgressBar(0.25+0.75*i/n, "Importing OBJs ...")
                 self.doObjs(p)
-                     
-        for p in range(len(DEFfmt.lites)):
-            i=i+1
-            Window.DrawProgressBar(0.25+0.75*i/n, "Importing lights ...")
-            self.doLight(p)
 
-        if self.acf.VIEW_has_navlites:
-            # uses values computed during wings
-            self.addLamp("airplane_nav_left",  1.0, 0.0, 0.0, # was Nav Left
-                         self.offset+Vertex(-(self.navloc.x+0.05),
-                                            self.navloc.y, self.navloc.z))
-            self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # was Strobe Left
-                         self.offset+Vertex(-(self.navloc.x+0.05),
-                                            self.navloc.y-0.1, self.navloc.z))
-            self.addLamp("airplane_nav_right", 0.0, 1.0, 0.0, # was Nav Right
-                         self.offset+Vertex(self.navloc.x + 0.05,
-                                            self.navloc.y, self.navloc.z))
-            self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # wasStrobe Right
-                         self.offset+Vertex(self.navloc.x + 0.05,
-                                            self.navloc.y-0.1, self.navloc.z))
-            if self.acf.HEADER_version<800:    # v7
-                self.addLamp("airplane_beacon", 1.0, 0.0, 0.0,# was Tail pulse or Nav Pulse
-                             self.offset+Vertex(self.tailloc.x, self.tailloc.y,
-                                                self.tailloc.z + 0.05))
+        if self.acf.HEADER_version>=1000:
+            for p in range(len(self.acf.lite)):
+                i=i+1
+                Window.DrawProgressBar(0.25+0.75*i/n, "Importing lights ...")
+                self.doLight10(p)
+        else:
+            for p in range(len(DEFfmt.lites)):
+                i=i+1
+                Window.DrawProgressBar(0.25+0.75*i/n, "Importing lights ...")
+                self.doLight(p)
+
+            if self.acf.VIEW_has_navlites:
+                # uses values computed during wings
+                self.addLamp("airplane_nav_left",  1.0, 0.0, 0.0, # was Nav Left
+                             self.offset+Vertex(-(self.navloc.x+0.05), self.navloc.y, self.navloc.z))
+                self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # was Strobe Left
+                             self.offset+Vertex(-(self.navloc.x+0.05), self.navloc.y-0.1, self.navloc.z))
+                self.addLamp("airplane_nav_right", 0.0, 1.0, 0.0, # was Nav Right
+                             self.offset+Vertex(self.navloc.x + 0.05, self.navloc.y, self.navloc.z))
+                self.addLamp("airplane_strobe",  1.0, 1.0, 1.0,   # wasStrobe Right
+                             self.offset+Vertex(self.navloc.x + 0.05, self.navloc.y-0.1, self.navloc.z))
+                if self.acf.HEADER_version<800:    # v7
+                    self.addLamp("airplane_beacon", 1.0, 0.0, 0.0,# was Tail pulse or Nav Pulse
+                                 self.offset+Vertex(self.tailloc.x, self.tailloc.y, self.tailloc.z + 0.05))
 
         self.scene.layers=layers
                 
@@ -358,13 +372,18 @@ class ACFimport:
         twist=pi*(30.0/180.0)
         
         engn=self.acf.engn[p]
+        prop=self.acf.engn[p]	# Was here pre v10
         part=self.acf.part[p]
         wing=self.acf.wing[p]
-            
-        if (p>=self.acf.ENGINE_num_thrustpoints or
-            engn.engn_type not in [0,1,2,8] or
-            not engn.num_blades or
-            not wing.semilen_SEG):
+
+        if self.acf.HEADER_version>=1000:
+            if not getattr(self.acf.prop[p], 'num_blades', 0) or getattr(part, 'part_specs_invis', 0):
+                return
+            prop=self.acf.prop[p]
+        elif (p>=self.acf.ENGINE_num_thrustpoints or
+              engn.engn_type not in [0,1,2,8] or
+              not engn.num_blades or
+              not wing.semilen_SEG):
             return
             
         # texture
@@ -376,32 +395,42 @@ class ACFimport:
             image=self.image2
 
         mesh=NMesh.New("Prop %s%s" % ((p+1), imagemkr))
-        mm=TranslationMatrix((Vertex(part.part_x,
-                                     part.part_y+self.acf.VTOL_vectarmY,
-                                     part.part_z+self.acf.VTOL_vectarmZ,
-                                     self.mm)+self.offset).toVector(4))
-        mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
-        mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
-        if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
-            mm=RotationMatrix(self.acf.VTOL_vect_min_disc, 4, 'x')*mm
+        if self.acf.HEADER_version>=1000:
+            mm=TranslationMatrix((Vertex(part.part_x,
+                                         part.part_y+self.acf.vectarmY,
+                                         part.part_z+self.acf.vectarmZ,
+                                         self.mm)+self.offset).toVector(4))
+            mm=RotationMatrix(part.part_the, 4, 'x')*mm
+            mm=RotationMatrix(-part.part_psi, 4, 'z')*mm
+            if self.acf.vect_EQ and wing.inc_vect[0]:	# bizarre
+                mm=RotationMatrix(self.acf.vect_min_disc, 4, 'x')*mm
+        else:
+            mm=TranslationMatrix((Vertex(part.part_x,
+                                         part.part_y+self.acf.VTOL_vectarmY,
+                                         part.part_z+self.acf.VTOL_vectarmZ,
+                                         self.mm)+self.offset).toVector(4))
+            mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
+            mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
+            if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
+                mm=RotationMatrix(self.acf.VTOL_vect_min_disc, 4, 'x')*mm
 
         v=[Vertex(0,
                   sin(twist)*
                   wing.Croot*self.scale/4,
-                  -cos(twist)*engn.prop_dir*
+                  -cos(twist)*prop.prop_dir*
                   wing.Croot*self.scale/4),
            Vertex(0,
                   -sin(twist)*
                   wing.Croot*self.scale*3/4,
-                  cos(twist)*engn.prop_dir*
+                  cos(twist)*prop.prop_dir*
                   wing.Croot*self.scale*3/4),
            Vertex(wing.semilen_SEG*self.scale,
                   0,
-                  engn.prop_dir*
+                  prop.prop_dir*
                   wing.Ctip*self.scale*3/4),
            Vertex(wing.semilen_SEG*self.scale,
                   0,
-                  -engn.prop_dir*
+                  -prop.prop_dir*
                   wing.Ctip*self.scale/4)]
         
         ruv=[UV(part.top_s1,part.top_t1),
@@ -413,8 +442,8 @@ class ACFimport:
              UV(part.bot_s2,part.bot_t1),
              UV(part.bot_s1,part.bot_t1)]
         
-        for i in range(int(engn.num_blades)):
-            a=(1+i*2)*pi/engn.num_blades
+        for i in range(int(prop.num_blades)):
+            a=(1+i*2)*pi/prop.num_blades
             fv=[]
             for v1 in v:
                 fv.append(Vertex(cos(a)*v1.x - sin(a)*v1.z,
@@ -432,21 +461,25 @@ class ACFimport:
 
         part=self.acf.part[p]
         wing=self.acf.wing[p]
-        if not (part.part_eq and wing.semilen_SEG):
+        if not (getattr(part, 'part_eq', 0) or getattr(part, 'part_specs_eq', 0)) or not wing.semilen_SEG:
             return
         
         centre=Vertex(part.part_x, part.part_y, part.part_z, self.mm)
         
-        tip=centre+Vertex(RotationMatrix(wing.lat_sign*wing.dihed1, 3, 'y') *
-                          (RotationMatrix(wing.lat_sign*wing.sweep1, 3, 'z') *
-                           Vector([wing.lat_sign*wing.semilen_SEG*self.scale,0,0])))
-
-        # Maybe nav light location - at least in 8.40 only main wings count
-        if p in DEFfmt.partMainWings:
-            if tip.x>self.navloc.x:
-                self.navloc=tip
-            if tip.z>self.tailloc.z:
-                self.tailloc=tip
+        if self.acf.HEADER_version>=1000:
+            tip=centre+Vertex(RotationMatrix(wing.is_right_mult*wing.dihed_design, 3, 'y') *
+                              (RotationMatrix(wing.is_right_mult*wing.sweep_design, 3, 'z') *
+                               Vector([wing.is_right_mult*wing.semilen_SEG*self.scale,0,0])))
+        else:
+            tip=centre+Vertex(RotationMatrix(wing.lat_sign*wing.dihed1, 3, 'y') *
+                              (RotationMatrix(wing.lat_sign*wing.sweep1, 3, 'z') *
+                               Vector([wing.lat_sign*wing.semilen_SEG*self.scale,0,0])))
+            # Maybe nav light location - at least in 8.40 only main wings count
+            if p in DEFfmt.partMainWings:
+                if tip.x>self.navloc.x:
+                    self.navloc=tip
+                if tip.z>self.tailloc.z:
+                    self.tailloc=tip
 
         self.wingc[p]=((centre, tip))
         if self.debug:
@@ -457,8 +490,16 @@ class ACFimport:
 
         part=self.acf.part[p]
         wing=self.acf.wing[p]
-        if not (part.part_eq and wing.semilen_SEG):
+        if not (getattr(part, 'part_eq', 0) or getattr(part, 'part_specs_eq', 0)) or getattr(part, 'part_specs_invis', 0) or not wing.semilen_SEG:
             return
+        if self.acf.HEADER_version>=1000:
+            dihed=wing.dihed_design
+            sweep=wing.sweep_design
+            sign=wing.is_right_mult
+        else:
+            dihed=wing.dihed1
+            sweep=wing.sweep1
+            sign=wing.lat_sign
 
         # Arbitrary constants for symmetrical and lifting wings
         sym_width=0.09
@@ -478,7 +519,7 @@ class ACFimport:
             if (p2 != p and
                 tip.equals(c2, tip_fudge) and
                 abs(wing.Ctip-self.acf.wing[p2].Croot) < tip_fudge and
-                abs(wing.dihed1-self.acf.wing[p2].dihed1) < max_dihed):
+                abs(dihed-(getattr(self.acf.wing[p2],'dihed1',0) or getattr(self.acf.wing[p2],'dihed_design',0))) < max_dihed):
                 istip=False
                 child=p2
                 break
@@ -497,10 +538,9 @@ class ACFimport:
             for p2, (c2, t2) in self.wingc.iteritems():
                 if (p2 not in considered and
                     c.equals(t2, tip_fudge) and
-                    abs(self.acf.wing[p2].Ctip-
-                        self.acf.wing[rootp].Croot) < tip_fudge and
-                    abs(self.acf.wing[p2].dihed1-
-                        self.acf.wing[rootp].dihed1) < max_dihed):
+                    abs(self.acf.wing[p2].Ctip-self.acf.wing[rootp].Croot) < tip_fudge and
+                    abs((getattr(self.acf.wing[p2],'dihed1',0) or getattr(self.acf.wing[p2],'dihed_design',0)) -
+                        (getattr(self.acf.wing[rootp],'dihed1',0) or getattr(self.acf.wing[rootp],'dihed_design',0))) < max_dihed):
                     rootp=p2
                     c=c2
                     considered.append(rootp)
@@ -522,7 +562,7 @@ class ACFimport:
             image=self.image2
 
         mm=TranslationMatrix((self.offset+centre).toVector(4))
-        mm=RotationMatrix(-wing.lat_sign*wing.dihed1, 4, 'y')*mm
+        mm=RotationMatrix(-sign*dihed, 4, 'y')*mm
 
         # Re-use existing meshes
         crs=[DEFfmt.partMainWings,DEFfmt.partMiscWings,DEFfmt.partPylons]
@@ -531,7 +571,8 @@ class ACFimport:
             for p2 in cr:
                 part2=self.acf.part[p2]
                 wing2=self.acf.wing[p2]
-                if (p2>=p or not part2.part_eq or
+                if (p2>=p or 
+                    not (getattr(part2, 'part_eq', 0) or getattr(part2, 'part_specs_eq', 0)) or
                     part.part_tex!=part2.part_tex or
                     part.top_s1!=part2.top_s1 or
                     part.top_s2!=part2.top_s2 or
@@ -540,12 +581,17 @@ class ACFimport:
                     wing.semilen_SEG!=wing2.semilen_SEG or
                     wing.Ctip!=wing2.Ctip or
                     wing.Croot!=wing2.Croot or
-                    wing.dihed1!=wing2.dihed1 or
-                    wing.sweep1!=wing2.sweep1 or
-                    wing.Rafl0!=wing2.Rafl0 or
-                    wing.Tafl0!=wing2.Tafl0): continue
+                    getattr(wing,'dihed1',0)!=getattr(wing2,'dihed1',0) or
+                    getattr(wing,'dihed_design',0)!=getattr(wing2,'dihed_design',0) or
+                    getattr(wing,'sweep1',0)!=getattr(wing2,'sweep1',0) or
+                    getattr(wing,'sweep_design',0)!=getattr(wing2,'sweep_design',0) or
+                    getattr(wing,'Rafl0',None)!=getattr(wing2,'Rafl0',None) or
+                    getattr(wing,'afl_file_R0',None)!=getattr(wing2,'afl_file_R0',None) or
+                    getattr(wing,'Tafl0',None)!=getattr(wing2,'Tafl0',None) or
+                    getattr(wing,'afl_file_T0',None)!=getattr(wing2,'afl_file_T0',None)):
+                    continue
                 meshes=self.meshcache[p2]
-                if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
+                if sign*(getattr(self.acf.wing[p2],'lat_sign',0) or getattr(self.acf.wing[p2],'is_right_mult',0)) < 0:
                     mm=ScaleMatrix(-1, 4, Vector(1, 0, 0))*mm
                 for i in range(len(meshes)):
                     if i==2:	# layer 3
@@ -553,7 +599,7 @@ class ACFimport:
                         if p!=rootp:
                             (root, foo) = self.wingc[rootp]
                             mm=TranslationMatrix((self.offset + root).toVector(4))
-                            if wing.lat_sign*self.acf.wing[p2].lat_sign<0:
+                            if sign*(getattr(self.acf.wing[p2],'lat_sign',0) or getattr(self.acf.wing[p2],'is_right_mult',0)) < 0:
                                 mm=ScaleMatrix(-1, 4, Vector(1, 0, 0))*mm
                     ob=self.addMesh(name+ACFimport.MARKERS[i]+imagemkr,
                                     meshes[i], ACFimport.LAYERS[i], mm)
@@ -562,25 +608,24 @@ class ACFimport:
         self.meshcache[p]=[]
 
         # Find four points - leading root & tip, trailing tip & root
-        rootinc=RotationMatrix(wing.incidence[0]*wing.lat_sign, 3, 'x')
+        rootinc=RotationMatrix(wing.incidence[0]*sign, 3, 'x')
         if istip:
             # Don't want to rotate to find wing sweep. So find tip manually.
-            tip=Vertex(RotationMatrix(wing.lat_sign*wing.sweep1, 3, 'z') *
-                       Vector([wing.lat_sign*wing.semilen_SEG*self.scale,0,0]))
+            tip=Vertex(RotationMatrix(sign*sweep, 3, 'z') *
+                       Vector([sign*wing.semilen_SEG*self.scale,0,0]))
             tiplen=wing.Ctip
-            tipinc=RotationMatrix(wing.incidence[wing.els-1]*wing.lat_sign, 3, 'x')
+            tipinc=RotationMatrix(wing.incidence[int(wing.els)-1]*sign, 3, 'x')
             v=[Vertex(rootinc*Vector([0.0,  wing.Croot*self.scale/4,   0.0])),
                Vertex( tipinc*Vector([0.0,  wing.Ctip *self.scale/4,   0.0]))+tip,
                Vertex( tipinc*Vector([0.0, -wing.Ctip *self.scale*3/4, 0.0]))+tip,
                Vertex(rootinc*Vector([0.0, -wing.Croot*self.scale*3/4, 0.0]))]
         else:
             # Get tip from child's root so segments line-up exactly
-            # XXX Todo: Make mid-chord vertices line-up also
+            # Todo: Make mid-chord vertices line-up also
             (tip,t2)=self.wingc[child]
-            tip=(tip-centre).toVector(4) * RotationMatrix(wing.lat_sign*
-                                                          wing.dihed1, 4, 'y')
+            tip=(tip-centre).toVector(4) * RotationMatrix(sign*dihed, 4, 'y')
             tiplen=self.acf.wing[child].Croot
-            tipinc=RotationMatrix(self.acf.wing[child].incidence[0]*self.acf.wing[child].lat_sign, 3, 'x')
+            tipinc=RotationMatrix(self.acf.wing[child].incidence[0]*(getattr(self.acf.wing[child],'lat_sign',0) or getattr(self.acf.wing[child],'is_right_mult',0)), 3, 'x')
             v=[Vertex(rootinc*Vector([0.0,  wing.Croot*self.scale/4,                   0.0])),
                Vertex( tipinc*Vector([0.0,  self.acf.wing[child].Croot*self.scale/4,   0.0]))+tip,
                Vertex( tipinc*Vector([0.0, -self.acf.wing[child].Croot*self.scale*3/4, 0.0]))+tip,
@@ -597,7 +642,7 @@ class ACFimport:
         miny=max(v[0].y,v[1].y)	# leading edge
         maxy=min(v[2].y,v[3].y)	# trailing edge
         
-        if wing.is_left:
+        if getattr(wing, 'is_left', 0) or getattr(wing, 'is_right_mult', 0)<0:
             rys=(part.top_s2-part.top_s1)/(miny-maxy)
             ruv=[UV(part.top_s1+(miny-v[0].y)*rys, part.top_t1),
                  UV(part.top_s1+(miny-v[1].y)*rys, part.top_t2),
@@ -630,28 +675,28 @@ class ACFimport:
             iscrappy=False
                         
             # Orientation
-            if abs(wing.dihed1) >= max_dihed:
+            if abs(dihed) >= max_dihed:
                 orient=0	# Verticalish
                 rwidth=sym_width/2
                 twidth=sym_width/2
             else:
-                if ((wing.dihed1+90)*wing.lat_sign < 0):
+                if ((dihed+90)*sign < 0):
                     orient=-1	# Left side
                 else:
                     orient=1	# Right side
                 rwidth=lift_width/2
                 twidth=lift_width/2
 
-            w=self.afl(wing.Rafl0)
+            w=self.afl(getattr(wing,'Rafl0',None) or getattr(wing,'afl_file_R0',None))
             if w:
                 rwidth=w/2
                 twidth=w/2
-            w=self.afl(wing.Tafl0)
+            w=self.afl(getattr(wing,'Tafl0',None) or getattr(wing,'afl_file_T0',None))
             if w:
                 twidth=w/2
 
-            rwidth=wing.lat_sign*rwidth
-            twidth=wing.lat_sign*twidth
+            rwidth=sign*rwidth
+            twidth=sign*twidth
 
         # Layer 1
         mesh=NMesh.New(name+ACFimport.LAYER1MKR+imagemkr)
@@ -735,8 +780,8 @@ class ACFimport:
                 return
 
             rootwing=self.acf.wing[rootp]
-            rootinc=RotationMatrix(rootwing.incidence[0]*rootwing.lat_sign, 3, 'x')
-            tipinc=RotationMatrix(wing.incidence[wing.els-1]*wing.lat_sign, 3, 'x')
+            rootinc=RotationMatrix(rootwing.incidence[0]*(getattr(rootwing,'lat_sign',0) or getattr(rootwing,'is_right_mult',0)), 3, 'x')
+            tipinc=RotationMatrix(wing.incidence[int(wing.els)-1]*sign, 3, 'x')
             rv=[Vertex(rootinc*Vector([0.0,  rootwing.Croot*self.scale/4,   0.0])),
                 Vertex( tipinc*Vector([0.0,  wing.Ctip     *self.scale/4,   0.0]))+tip,
                 Vertex( tipinc*Vector([0.0, -wing.Ctip     *self.scale*3/4, 0.0]))+tip,
@@ -752,10 +797,8 @@ class ACFimport:
 
     
     #------------------------------------------------------------------------
-    def doBody(self, name, p):
+    def doBody(self, name, p, is_wpn):
         
-        is_wpn=(p<=DEFfmt.wattDIM)
-
         if is_wpn:
             # Weapon locations are special
             if name:	# Importing stand-alone weapon
@@ -763,6 +806,12 @@ class ACFimport:
                 wpnname=name
                 (obname,foo)=splitext(wpnname)
                 meshname=obname
+            elif self.acf.HEADER_version>=1000:	# Get weapon details from weapon attach structure
+                watt=self.acf.wpna[p]
+                wpnname=getattr(watt, 'v10_att_file_stl', None)
+                if not wpnname: return
+                (meshname,foo)=splitext(wpnname)
+                obname="W%02d %s" % (p+1, meshname)
             else:	# Get weapon details from weapon attach structure
                 watt=self.acf.watt[p]
                 wpnname=watt.watt_name
@@ -777,10 +826,12 @@ class ACFimport:
             imagemkr=''
 
             if watt:
-                mm=TranslationMatrix((Vertex(watt.watt_x, watt.watt_y, watt.watt_z, self.mm)+
-                                      self.offset).toVector(4))
-                mm=self.rotate(watt.watt_con, False,
-                               watt.watt_psi, watt.watt_the, watt.watt_phi)*mm
+                if self.acf.HEADER_version>=1000:
+                    mm=TranslationMatrix((Vertex(watt.v10_att_x_acf_prt_ref, watt.v10_att_y_acf_prt_ref, watt.v10_att_z_acf_prt_ref, self.mm)+self.offset).toVector(4))
+                    mm=self.rotate(int(watt.v10_att_part), False, watt.v10_att_psi_ref, watt.v10_att_the_ref, watt.v10_att_phi_ref)*mm
+                else:
+                    mm=TranslationMatrix((Vertex(watt.watt_x, watt.watt_y, watt.watt_z, self.mm)+self.offset).toVector(4))
+                    mm=self.rotate(watt.watt_con, False, watt.watt_psi, watt.watt_the, watt.watt_phi)*mm
             else:
                 mm=TranslationMatrix(self.offset.toVector(4))
             mm=TranslationMatrix(Vertex(-part.part_x, -part.part_y, -part.part_z, self.mm).toVector(4))*mm
@@ -798,7 +849,7 @@ class ACFimport:
             # Normal bodies
             obname=meshname=name
             part=self.acf.part[p]
-            if not part.part_eq:
+            if not (getattr(part, 'part_eq', 0) or getattr(part, 'part_specs_eq', 0)) or getattr(part, 'part_specs_invis', 0):
                 return
             if part.part_tex==0:
                 imagemkr=''
@@ -807,7 +858,7 @@ class ACFimport:
                 imagemkr=ACFimport.IMAGE2MKR
                 image=self.image2
             
-            if p in DEFfmt.partFairings:
+            if self.acf.HEADER_version<1000 and p in DEFfmt.partFairings:
                 # Fairings take location but not rotation from wheels
                 part.patt_con=0	# appears to be random in acf
                 gear=self.acf.gear[p-DEFfmt.partFair1]
@@ -824,17 +875,24 @@ class ACFimport:
                                              part.part_y,
                                              part.part_z,
                                              self.mm)+self.offset).toVector(4))
-            mm=self.rotate(part.patt_con, True,
+            mm=self.rotate(int(part.patt_con), True,
                            part.part_psi, part.part_the, part.part_phi)*mm
 
             if p in DEFfmt.partNacelles:
-                # Nacelles also affected by engine cant and vector
-                engn=self.acf.engn[p-DEFfmt.partNace1]
+                # Nacelles also affected by engine cant and vector.
                 wing=self.acf.wing[p-DEFfmt.partNace1]
-                mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
-                mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
-                if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
-                    mm=RotationMatrix(self.acf.VTOL_vect_min_nace, 4, 'x')*mm
+                if self.acf.HEADER_version>=1000:
+                    prop=self.acf.part[p-DEFfmt.partNace1]	# re-uses prop part
+                    mm=RotationMatrix(prop.part_the, 4, 'x')*mm
+                    mm=RotationMatrix(-prop.part_psi, 4, 'z')*mm
+                    if self.acf.vect_EQ and wing.inc_vect[0]:	# bizarre
+                        mm=RotationMatrix(self.acf.vect_min_disc, 4, 'x')*mm
+                else:
+                    engn=self.acf.engn[p-DEFfmt.partNace1]
+                    mm=RotationMatrix(engn.vert_init, 4, 'x')*mm
+                    mm=RotationMatrix(-engn.side_init, 4, 'z')*mm
+                    if self.acf.VTOL_vect_EQ and wing.inc_vect[0]:	# bizarre
+                        mm=RotationMatrix(self.acf.VTOL_vect_min_disc, 4, 'x')*mm
 
             # Re-use existing meshes
             crs=[DEFfmt.partMisc,DEFfmt.partNacelles,DEFfmt.partFairings]
@@ -842,7 +900,8 @@ class ACFimport:
                 if not p in cr: continue
                 for p2 in cr:
                     part2=self.acf.part[p2]
-                    if (p2>=p or not part2.part_eq or
+                    if (p2>=p or
+                        not (getattr(part2, 'part_eq', 0) or getattr(part2, 'part_specs_eq', 0)) or
                         part.s_dim!=part2.s_dim or
                         part.r_dim!=part2.r_dim or
                         part.part_tex!=part2.part_tex or
@@ -850,7 +909,7 @@ class ACFimport:
                         part.top_s2!=part2.top_s2 or
                         part.top_t1!=part2.top_t1 or
                         part.top_t2!=part2.top_t2): continue
-                    for i in range(part.s_dim):
+                    for i in range(int(part.s_dim)):
                         # Assume symmetrical
                         for j in range(int((1+part.r_dim)/2)):
                             if part.geo_xyz[i][j]!=part2.geo_xyz[i][j]:
@@ -879,7 +938,7 @@ class ACFimport:
         seq=range(rdim/2)
         seq.extend(range((rdim+2)/2,rdim+1))
 
-        for i in range(part.s_dim):
+        for i in range(int(part.s_dim)):
             if (i==12 and
                 Vertex(part.geo_xyz[i][0]).equals(Vertex(0.0, 0.0, 0.0))):
                 # Special case: Plane-Maker<7.30 leaves these parts as 0
@@ -984,8 +1043,9 @@ class ACFimport:
 
         if (is_wpn or
             ((p in DEFfmt.partNacelles) and
-             (self.acf.engn[p-DEFfmt.partNace1].engn_type in [4,5]))):
-            # do LINE-LENGTH for the nacelles and weapons
+             (getattr(self.acf.engn[p-DEFfmt.partNace1], 'engn_type', 0) in [4,5] or
+              getattr(self.acf.engn[p-DEFfmt.partNace1], 'type', '').startswith('JET')))):
+            # do LINE-LENGTH for jet nacelles and weapons
             line_length_now =0.0
             line_length_tot =0.0
             for s in range(sdim-1):
@@ -1091,6 +1151,8 @@ class ACFimport:
                     break	# Don't do small bodies
                 elif p in DEFfmt.partFairings:
                     break	# Don't do fairings since we don't do gear
+                elif (is_wpn and self.acf.HEADER_version>=1000):
+                    break	# In <8.40 weapons were used as misc bodies. We don't need this in v10
                 elif (is_wpn and watt and
                       watt.watt_con in DEFfmt.conGear+DEFfmt.conWheel):
                     break	# Don't do weapons attached to gear
@@ -1189,6 +1251,12 @@ class ACFimport:
     #------------------------------------------------------------------------
     def doGear(self, p):
 
+        if self.acf.HEADER_version>=1000:
+            # Gear visibility depends on corresponding fairing
+            part=gear=self.acf.part[p+DEFfmt.partFair1]
+            if getattr(part, 'part_specs_invis', 0):
+                return
+
         gear=self.acf.gear[p]
         if not gear.gear_type:
             return
@@ -1213,8 +1281,12 @@ class ACFimport:
         strutradius=strutratio*gear.tire_radius*self.scale
         strutlen=gear.leg_len*self.scale
 
-        if (self.acf.GEAR_strut_s1[p]==self.acf.GEAR_strut_t1[p]==
-            self.acf.GEAR_strut_s2[p]==self.acf.GEAR_strut_t2[p]==0.0):
+        if self.acf.HEADER_version>=1000:
+            s0=gear.strut_s1
+            t0=gear.strut_t1
+            sw=gear.strut_s2-gear.strut_s1
+            t1=gear.strut_t2
+        elif (self.acf.GEAR_strut_s1[p]==self.acf.GEAR_strut_t1[p]==self.acf.GEAR_strut_s2[p]==self.acf.GEAR_strut_t2[p]==0.0):
             (sps, spt, sptw, spth) = (1, 893, 14, 128)	# Hard-coded pre 8.3ish
             s0=sps/1024.0
             t0=(1023-spt)/1024.0
@@ -1393,60 +1465,74 @@ class ACFimport:
                                  [tread[1], tread[0], tread[3], tread[2]],
                                  self.image)
 
-        else:	# v8
-            hr=0.6*r	# radius of hub part (hub width is w)
-            tw=0.7*w	# width of tire (tread radius is r)
-            
-            hubc=UV((self.acf.GEAR_wheel_tire_s1[0]+
-                     self.acf.GEAR_wheel_tire_s2[0])/2,
-                    (self.acf.GEAR_wheel_tire_t1[0]+
-                     self.acf.GEAR_wheel_tire_t2[0])/2)
-            hubw=UV((self.acf.GEAR_wheel_tire_s2[0]-
-                     self.acf.GEAR_wheel_tire_s1[0])/2,
-                    (self.acf.GEAR_wheel_tire_t2[0]-
-                     self.acf.GEAR_wheel_tire_t1[0])/2)
-            treadw=(self.acf.GEAR_wheel_tire_s2[1]-
-                    self.acf.GEAR_wheel_tire_s1[1])/12.0
-            tread=[UV(self.acf.GEAR_wheel_tire_s1[1],
-                      self.acf.GEAR_wheel_tire_t1[1]+
-                      (self.acf.GEAR_wheel_tire_t2[1]-
-                       self.acf.GEAR_wheel_tire_t1[1])*0.9),
-                   UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
-                      self.acf.GEAR_wheel_tire_t1[1]+
-                      (self.acf.GEAR_wheel_tire_t2[1]-
-                       self.acf.GEAR_wheel_tire_t1[1])*0.9),
-                   UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
-                      self.acf.GEAR_wheel_tire_t1[1]+
-                      (self.acf.GEAR_wheel_tire_t2[1]-
-                       self.acf.GEAR_wheel_tire_t1[1])*0.1),
-                   UV(self.acf.GEAR_wheel_tire_s1[1],
-                      self.acf.GEAR_wheel_tire_t1[1]+
-                      (self.acf.GEAR_wheel_tire_t2[1]-
-                       self.acf.GEAR_wheel_tire_t1[1])*0.1)]
-            rim1=[UV(self.acf.GEAR_wheel_tire_s1[1],
-                     self.acf.GEAR_wheel_tire_t1[1]+
-                     (self.acf.GEAR_wheel_tire_t2[1]-
-                      self.acf.GEAR_wheel_tire_t1[1])*0.9),
-                  UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
-                     self.acf.GEAR_wheel_tire_t1[1]+
-                     (self.acf.GEAR_wheel_tire_t2[1]-
-                      self.acf.GEAR_wheel_tire_t1[1])*0.9),
-                  UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
-                     self.acf.GEAR_wheel_tire_t2[1]),
-                  UV(self.acf.GEAR_wheel_tire_s1[1],
-                     self.acf.GEAR_wheel_tire_t2[1])]
-            rim2=[UV(self.acf.GEAR_wheel_tire_s1[1],
-                     self.acf.GEAR_wheel_tire_t1[1]),
-                  UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
-                     self.acf.GEAR_wheel_tire_t1[1]),
-                  UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
-                     self.acf.GEAR_wheel_tire_t1[1]+
-                     (self.acf.GEAR_wheel_tire_t2[1]-
-                      self.acf.GEAR_wheel_tire_t1[1])*0.1),
-                  UV(self.acf.GEAR_wheel_tire_s1[1],
-                     self.acf.GEAR_wheel_tire_t1[1]+
-                     (self.acf.GEAR_wheel_tire_t2[1]-
-                      self.acf.GEAR_wheel_tire_t1[1])*0.1)]
+        else:
+            if self.acf.HEADER_version<1000:	# v8
+                hr=0.6*r	# radius of hub part (hub width is w)
+                tw=0.7*w	# width of tire (tread radius is r)
+
+                hubc=UV((self.acf.GEAR_wheel_tire_s1[0]+self.acf.GEAR_wheel_tire_s2[0])/2,
+                        (self.acf.GEAR_wheel_tire_t1[0]+self.acf.GEAR_wheel_tire_t2[0])/2)
+                hubw=UV((self.acf.GEAR_wheel_tire_s2[0]-self.acf.GEAR_wheel_tire_s1[0])/2,
+                        (self.acf.GEAR_wheel_tire_t2[0]-self.acf.GEAR_wheel_tire_t1[0])/2)
+                treadw=(self.acf.GEAR_wheel_tire_s2[1]-self.acf.GEAR_wheel_tire_s1[1])/12.0
+                tread=[UV(self.acf.GEAR_wheel_tire_s1[1],
+                          self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.9),
+                       UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
+                          self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.9),
+                       UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
+                          self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.1),
+                       UV(self.acf.GEAR_wheel_tire_s1[1],
+                          self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.1)]
+                rim1=[UV(self.acf.GEAR_wheel_tire_s1[1],
+                         self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.9),
+                      UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
+                         self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.9),
+                      UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
+                         self.acf.GEAR_wheel_tire_t2[1]),
+                      UV(self.acf.GEAR_wheel_tire_s1[1],
+                         self.acf.GEAR_wheel_tire_t2[1])]
+                rim2=[UV(self.acf.GEAR_wheel_tire_s1[1],
+                         self.acf.GEAR_wheel_tire_t1[1]),
+                      UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
+                         self.acf.GEAR_wheel_tire_t1[1]),
+                      UV(self.acf.GEAR_wheel_tire_s1[1]+treadw,
+                         self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.1),
+                      UV(self.acf.GEAR_wheel_tire_s1[1],
+                         self.acf.GEAR_wheel_tire_t1[1]+(self.acf.GEAR_wheel_tire_t2[1]-self.acf.GEAR_wheel_tire_t1[1])*0.1)]
+
+            else:	# v10
+                hr=0.6*r	# radius of hub part (hub width is w)
+                tw=0.7*w	# width of tire (tread radius is r)
+
+                hubc=UV((self.acf.wheel_tire_s1[0]+self.acf.wheel_tire_s2[0])/2,
+                        (self.acf.wheel_tire_t1[0]+self.acf.wheel_tire_t2[0])/2)
+                hubw=UV((self.acf.wheel_tire_s2[0]-self.acf.wheel_tire_s1[0])/2,
+                        (self.acf.wheel_tire_t2[0]-self.acf.wheel_tire_t1[0])/2)
+                treadw=(self.acf.wheel_tire_s2[1]-self.acf.wheel_tire_s1[1])/12.0
+                tread=[UV(self.acf.wheel_tire_s1[1],
+                          self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.9),
+                       UV(self.acf.wheel_tire_s1[1]+treadw,
+                          self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.9),
+                       UV(self.acf.wheel_tire_s1[1]+treadw,
+                          self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.1),
+                       UV(self.acf.wheel_tire_s1[1],
+                          self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.1)]
+                rim1=[UV(self.acf.wheel_tire_s1[1],
+                         self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.9),
+                      UV(self.acf.wheel_tire_s1[1]+treadw,
+                         self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.9),
+                      UV(self.acf.wheel_tire_s1[1]+treadw,
+                         self.acf.wheel_tire_t2[1]),
+                      UV(self.acf.wheel_tire_s1[1],
+                         self.acf.wheel_tire_t2[1])]
+                rim2=[UV(self.acf.wheel_tire_s1[1],
+                         self.acf.wheel_tire_t1[1]),
+                      UV(self.acf.wheel_tire_s1[1]+treadw,
+                         self.acf.wheel_tire_t1[1]),
+                      UV(self.acf.wheel_tire_s1[1]+treadw,
+                         self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.1),
+                      UV(self.acf.wheel_tire_s1[1],
+                         self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.1)]
             
             for o in seq:
                 for i in range(12):
@@ -1528,7 +1614,7 @@ class ACFimport:
         else:
             mm=RotationMatrix(door.ext_ang, 4, 'x')*mm
             
-        # just use 4 corners - XXX should adjust UVs for non-rectangular
+        # just use 4 corners - should adjust UVs for non-rectangular
         v=[]
         for j in [door.geo[0][0],door.geo[0][3],door.geo[3][3],door.geo[3][0]]:
             v.append(Vertex(j, self.mm))
@@ -1551,33 +1637,31 @@ class ACFimport:
     #------------------------------------------------------------------------
     def doObjs(self, p):
 
-        obj=self.acf.objs[p]
-        if not obj.obj_name: return
-        (name,ext)=splitext(basename(obj.obj_name))
-        obname="O%02d %s" % (p+1, name)
-
-        if obj.obj_con in DEFfmt.conWheel:
-            # Take location from wheels
-            gear=self.acf.gear[obj.obj_con-DEFfmt.conWheel1]
-            a=RotationMatrix(gear.latE, 3, 'y')
-            a=RotationMatrix(-gear.lonE, 3, 'x')*a
-            mm=TranslationMatrix((Vertex(obj.obj_x,
-                                         obj.obj_y,
-                                         obj.obj_z,
-                                         self.mm)+self.offset+
-                                  Vertex(a * Vector([0,0,-gear.leg_len*self.scale]))).toVector(4))
+        if self.acf.HEADER_version>=1000:
+            obj=self.acf.obja[p]
+            filename=getattr(obj,'v10_att_file_stl',None)
+            if not filename: return
+            mm=TranslationMatrix((Vertex(obj.v10_att_x_acf_prt_ref, obj.v10_att_y_acf_prt_ref, obj.v10_att_z_acf_prt_ref, self.mm)+self.offset).toVector(4))
+            mm=self.rotate(int(obj.v10_att_part), False, obj.v10_att_psi_ref, obj.v10_att_the_ref, obj.v10_att_phi_ref)*mm
         else:
-            mm=TranslationMatrix((Vertex(obj.obj_x,
-                                         obj.obj_y,
-                                         obj.obj_z,
-                                         self.mm)+self.offset).toVector(4))
-        mm=self.rotate(obj.obj_con, False,
-                       obj.obj_psi, obj.obj_the, obj.obj_phi)*mm
+            obj=self.acf.objs[p]
+            filename=obj.obj_name
+            if not filename: return
+            if obj.obj_con in DEFfmt.conWheel:
+                # Take location from wheels
+                gear=self.acf.gear[obj.obj_con-DEFfmt.conWheel1]
+                a=RotationMatrix(gear.latE, 3, 'y')
+                a=RotationMatrix(-gear.lonE, 3, 'x')*a
+                mm=TranslationMatrix((Vertex(obj.obj_x,obj.obj_y,obj.obj_z,self.mm)+self.offset+
+                                      Vertex(a * Vector([0,0,-gear.leg_len*self.scale]))).toVector(4))
+            else:
+                mm=TranslationMatrix((Vertex(obj.obj_x,obj.obj_y,obj.obj_z,self.mm)+self.offset).toVector(4))
+            mm=self.rotate(obj.obj_con, False,obj.obj_psi, obj.obj_the, obj.obj_phi)*mm
 
         try:
-            OBJimport(join(dirname(self.filename), 'objects', obj.obj_name), mm).doimport()
+            OBJimport(join(dirname(self.filename), 'objects', filename), mm).doimport()
         except:
-            print "Warn:\tCouldn't read object \"%s\"" % obj.obj_name
+            print "Warn:\tCouldn't read object \"%s\"" % filename
             return
         # Should create armature when linked to a control surface?
 
@@ -1610,10 +1694,57 @@ class ACFimport:
 
 
     #------------------------------------------------------------------------
+    def doLight10(self, p):
+        lite=self.acf.lite[p]
+        if not getattr(lite, 'lite_type', None): return
+        mm=TranslationMatrix((Vertex(lite.v10_att_x_acf_prt_ref, lite.v10_att_y_acf_prt_ref, lite.v10_att_z_acf_prt_ref, self.mm)+self.offset).toVector(4))
+        mm=self.rotate(int(lite.v10_att_part), False, lite.v10_att_psi_ref, lite.v10_att_the_ref, lite.v10_att_phi_ref)*mm
+
+        name='airplane_'+lite.lite_type
+        if lite.lite_type in ['landing', 'taxi', 'spot', 'generic']:
+            (r,g,b)=lite.rgb
+        elif lite.lite_type=='nav_left':
+            (r,g,b)=(1,0,0)
+        elif lite.lite_type=='nav_right':
+            (r,g,b)=(0,1,0)
+        elif lite.lite_type=='nav_tail':
+            (r,g,b)=(1,1,1)
+        elif lite.lite_type in ['strobe', 'beacon_rotate', 'beacon_strobe']:
+            (r,g,b)=(1,0,0)
+        else:
+            name="Lamp"
+            (r,g,b)=lite.rgb
+
+        lamp=Lamp.New("Lamp", name)
+        lamp.col=[r,g,b]
+        lamp.dist = 4.0	# arbitrary - stop colouring whole plane
+        ob = Object.New("Lamp", lamp.name)
+        ob.link(lamp)
+        self.scene.objects.link(ob)
+        ob.Layer=ACFimport.LAYER1|ACFimport.LAYER2|ACFimport.LAYER3
+        ob.setMatrix(mm)	# no longer sets rot/scale in 2.43
+        ob.setLocation(*mm.translationPart())
+        v=mm.toEuler()
+        ob.rot=((radians(v.x), radians(v.y), radians(v.z)))	# for 2.43
+        ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
+
+
+    #------------------------------------------------------------------------
     def rotate(self, con, pre, heading, pitch, roll):
         # Use quaternions to prevent gimbal lock
+        # For v10, location is relative to attach point, so also add translation
         # Sigh, Quaternion multiplication appears screwed in 2.41
 
+        if self.acf.HEADER_version>=1000:
+            h=Quaternion(-heading, [0,0,1])
+            p=Quaternion(pitch, [1,0,0])
+            r=Quaternion(roll, [0,1,0])
+            rot=quatmult(quatmult(h,p),r)    # Roll applies first
+            if con>0:
+                part=self.acf.part[con]
+                return rot.toMatrix().resize4x4()*TranslationMatrix(Vertex(part.part_x, part.part_y, part.part_z, self.mm).toVector(4))
+            else:
+                return rot.toMatrix().resize4x4()
         if con in DEFfmt.conGear:	# gear
             gear=self.acf.gear[con-DEFfmt.conGear1]
         elif con in DEFfmt.conWheel:	# wheel
@@ -3168,6 +3299,8 @@ xstruct, "objs[24]",	# Misc Objects
     acf900=acf840
     acf901=acf840	# v9b5?
     acf902=acf840	# v9b18
+    acf920=acf840
+    acf941=acf840
 
     engn8000 = [
 xint, "engn_type",
@@ -3201,6 +3334,8 @@ xflt, "bladesweep[10]",
     engn900=engn8000
     engn901=engn8000
     engn902=engn8000
+    engn920=engn8000
+    engn941=engn8000
 
     wing8000 = [
 xint, "is_left",
@@ -3302,6 +3437,8 @@ xflt, "overflow_dat[100]",
     wing900=wing810
     wing901=wing810
     wing902=wing810
+    wing920=wing810
+    wing941=wing810
 
     part8000 = [
 xint, "part_eq",
@@ -3349,6 +3486,8 @@ xchr, "locked[20][18]",
     part900=part8000
     part901=part8000
     part902=part8000
+    part920=part8000
+    part941=part8000
 
     gear8000=[
 xint, "gear_type",
@@ -3387,6 +3526,8 @@ xflt, "z_nodef",
     gear900=gear8000
     gear901=gear8000
     gear902=gear8000
+    gear920=gear8000
+    gear941=gear8000
 
     watt8000=[
 xchr, "watt_name[40]",
@@ -3407,6 +3548,8 @@ xflt, "watt_phi",
     watt900=watt8000
     watt901=watt8000
     watt902=watt8000
+    watt920=watt8000
+    watt941=watt8000
 
     door8000=[
 xint, "type",
@@ -3435,6 +3578,8 @@ xflt, "out_t2",
     door900=door8000
     door901=door8000
     door902=door8000
+    door920=door8000
+    door941=door8000
 
     objs840=[	# same as watt. variable names may not match Laminar's
 xchr, "obj_name[40]",
@@ -3451,6 +3596,8 @@ xflt, "obj_phi",
     objs900=objs840
     objs901=objs840
     objs902=objs840
+    objs920=objs840
+    objs941=objs840
     
 # Derived from WPN740.def by Stanislaw Pusep
 #   http://sysd.org/xplane/acftools/WPN740.def
@@ -3665,6 +3812,10 @@ xflt, "xflt_overflow[99]",	# Should be 100 !!!
 #------------------------------------------------------------------------
 class ACF:
 
+    class XStruct():
+        def __repr__(self):
+            return str(vars(self))
+
     # slurp the acf file
     def __init__(self, filename, debug,
                  defs=None, fmt=None, prefix='', prg=True):
@@ -3675,10 +3826,6 @@ class ACF:
             return
 
         acffile=open(filename, "rb")
-        if debug>1:
-            dmp=open(filename[:filename.rindex('.')]+'.txt', 'wt')
-        else:
-            dmp=None
 
         # HEADER_platform
         self.HEADER_platform=acffile.read(1)
@@ -3686,11 +3833,83 @@ class ACF:
             fmt='>'
         elif self.HEADER_platform=='i':
             fmt='<'
+        elif self.HEADER_platform in ['I','A']:
+            # >1000 style?
+            acffile.seek(0)
+            if not acffile.readline().strip()[0] in ['I','A']:
+                raise ParseError("This isn't a v7, v8, v9 or v10 X-Plane file!")
+            self.HEADER_version=int(acffile.readline().split()[0])
+            if self.HEADER_version<1000 or acffile.readline().split()[0]!='ACF':
+                raise ParseError("This isn't a v7, v8, v9 or v10 X-Plane file!")
+            lines=[]
+            lineno=3
+            # slurp whole file
+            for line in acffile:
+                lineno+=1
+                line=line.split('#')[0].strip()
+                if not line: continue
+                line=line.split(None,2)
+                if line[0]=='P':
+                    key=line[1].split('/')
+                    val=line[2].strip()
+                    try:
+                        val=float(val)
+                    except ValueError:
+                        pass
+                    lines.append((key,val))
+            acffile.close()
+            # iterate in reverse because array dimensions come after the array contents :(
+            j_count=k_count=0
+            newarray=ACF.XStruct()
+            for (keys,val) in reversed(lines):
+                if keys[0]=='acf': keys.pop(0)
+                if keys[-1]=='k_count':
+                    k_count=int(val)			# an array dimension
+                    continue				# more array dimensions to come
+                elif keys[-1]=='j_count':
+                    j_count=int(val)			# an array dimension
+                    continue				# more array dimensions to come
+                elif keys[-1] in ['count', 'i_count']:	# defines an array
+                    keys.pop()
+                    if k_count:
+                        val=[[[ACF.XStruct() for k in range(k_count)] for j in range(j_count)] for i in range(int(val))]
+                    elif j_count:
+                        val=[[ACF.XStruct() for j in range(j_count)] for i in range(int(val))]
+                    else:
+                        val=[ACF.XStruct() for i in range(int(val))]
+                    j_count=k_count=0			# reset
+
+                thing=self
+                while keys:
+                    key=keys.pop(0)
+                    if key.startswith('_'):		# structure or variable
+                        key=key[1:]			# strip leading underscore
+                        if not keys:			# tail
+                            setattr(thing,key,val)	# do the assignment
+                        elif not hasattr(thing,key):	# struct with substruct - in 1002 only lite_equip
+                            newthing=ACF.XStruct()
+                            setattr(thing,key,newthing)
+                            thing=newthing
+                        else:
+                            thing=getattr(thing,key)
+                    else:				# array index/indices
+                        inds=map(int,key.split(','))
+                        key=inds.pop()			# used below for assignment
+                        for i in inds: thing=thing[i]
+                        if not keys:			# tail
+                            thing[key]=val		# do the assignment
+                        else:
+                            thing=thing[key]
+            return
         else:
             acffile.close()
-            raise ParseError("This isn't a v7 or v8 X-Plane file!")
-        if dmp:
+            raise ParseError("This isn't a v7, v8, v9 or v10 X-Plane file!")
+
+        if debug>1:
+            dmp=open(filename[:filename.rindex('.')]+'.txt', 'wt')
             dmp.write("%6x:\tHEADER_platform:\t%s\n" %(0,self.HEADER_platform))
+        else:
+            dmp=None
 
         # HEADER_version
         (self.HEADER_version,)=unpack(fmt+'i', acffile.read(4))
@@ -3701,14 +3920,14 @@ class ACF:
         elif ((self.HEADER_version<700 or self.HEADER_version>=1000) and
               self.HEADER_version!=8000):
             acffile.close()
-            raise ParseError("This isn't a v7, v8 or v9 X-Plane file!")
+            raise ParseError("This isn't a v7, v8, v9 or v10 X-Plane file!")
         elif self.HEADER_version<800:
             if self.HEADER_version in [700, 740]:
                 defs=DEFfmt.acf740
             else:
                 acffile.close()
                 raise ParseError("This is a %4.2f format plane! Please re-save it in PlaneMaker 7.63." % (self.HEADER_version/100.0))
-        elif self.HEADER_version in [8000,810,815,830,840,860,900,901,902]:
+        elif self.HEADER_version in [8000,810,815,830,840,860,900,901,902,920,941]:
             defs=eval("DEFfmt.acf%s" % self.HEADER_version)
         else:
             acffile.close()
