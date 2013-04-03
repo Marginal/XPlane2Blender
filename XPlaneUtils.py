@@ -55,11 +55,21 @@
 #
 
 import sys
+import os
 from math import sqrt, sin, cos
 from os.path import exists, join
 import Blender
-from Blender import Registry, Types, Image, Mesh, Object, Scene, Text, Window
+from Blender import Registry, Types, Image, Mesh, Object, Scene, Text, Window, Material, Texture
 from Blender.Mathutils import Matrix, Vector, Euler
+
+class ExportError(Exception):
+    def __init__(self, msg, objs=None):
+        self.msg = msg
+        self.objs= objs
+
+def xform(v,x):
+	return x.rotationPart()*v.co+x.translationPart()
+	
 
 class Vertex:
     LIMIT=0.0001	# max distance between vertices for them to be merged
@@ -482,8 +492,8 @@ def make_short_name(full_path):
     short=""
     for comp in ref:
         if comp == ref[-1]:
-            short=short+"_"
-            if len(comp) > 15:
+            short=short+"_"			
+            if len(comp.split('[')[0]) > 15:
                 short=short+remove_vowels(comp)
             else:
                 short=short+comp
@@ -522,23 +532,25 @@ def getDatarefs():
                 for c in ['int', 'float', 'double']:
                     if d[1].lower().startswith(c):
                         if len(d[1])>len(c):        # is array
-                            n=int(d[1][len(c)+1:-1])
+                            suffix = d[1][len(c)+1:-1]
+                            for dd in suffix.split(']['):
+                                n = n * int(dd)
                         break
                 else:
                     n=0                    # not a usable dataref
-
+                
                 if n>99:
                     if len(sname) > 23:
-                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+                        print 'WARNING - dataref ' + line + ' is too long for key frame table' 
                 if n>9:
                     if len(sname) > 24:
-                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+                        print 'WARNING - dataref ' + line + ' is too long for key frame table' 
                 elif n > 1:
                     if len(sname) > 25:
-                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+                        print 'WARNING - dataref ' + line + ' is too long for key frame table' 
                 else:
                     if len(sname) > 28:
-                        print 'WARNING - dataref ' + d[0] + ' is too long for key frame table' 
+                        print 'WARNING - dataref ' + line + ' is too long for key frame table' 
 #                elif len(sname) > 17:
 #                   print 'WARNING - dataref ' + d[0] + ' is too long for show/hide'
 
@@ -554,7 +566,7 @@ def getDatarefs():
                     if sname in datarefs:
                         print 'WARNING - ambiguous short name '+ sname + ' for dataref ' + d[0]
                     else:
-                        datarefs[sname]=(d[0], n)
+                        datarefs[sname]=(d[0], n)                        
                     if ref[-1] in datarefs:
                         datarefs[ref[-1]]=None        # ambiguous
                     else:
@@ -563,3 +575,296 @@ def getDatarefs():
     else:
         raise IOError(0, "Missing DataRefs.txt file. Please re-install.")
     return (datarefs, hierarchy)
+
+#--------------------------------------------------------------------------------
+
+def isGrandParent(child, grandparent):
+	while child != None:
+		if child == grandparent:
+			return True
+		child = child.getParent()
+	return False
+
+def isParent(child, parent):
+	return child.getParent() == parent
+
+def isDepth(child, d):
+	while d > 0:
+		if child == None:
+			return False
+		child = child.getParent()
+		d = d-1
+	if child == None:
+		return False
+	return child.getParent() == None
+
+def getChildren(parent, all):
+	c=[]
+	for o in all:
+		if isParent(o,parent):
+			c.append(o)
+	return c
+
+def getGrandChildren(parent, all):
+	c=[]
+	for o in all:
+		if isGrandParent(o,parent):
+			c.append(o)
+	return c
+
+def getAllDepth(d, all):
+	c=[]
+	for o in all:
+		if isDepth(o,d):
+			c.append(o)
+	return c
+	
+#--------------------------------------------------------------------------------	
+	
+def sort_obj_by_name(a):
+	return a.name
+	
+def has_prefix(name, prefix):
+	return name[0:len(prefix)].lower() == prefix.lower()
+
+def strip_prefix(name, prefix):
+	s=len(prefix)
+	e=name.rfind('.')
+	if e==-1:
+		e=len(name)
+	return name[s:e]
+
+def strip_suffix(name):
+	e=name.rfind('.')
+	if e==-1:
+		return name
+	return name[:e]
+
+def filter_objects(objs, type, prefix):
+	c=[]
+	for o in objs:
+		if o.getType() == type:
+			if prefix=='' or has_prefix(o.name,prefix):
+				c.append(o)
+	return c
+
+
+
+#--------------------------------------------------------------------------------
+	
+
+def has_prop(o,n):
+	for p in o.getAllProperties():
+		if p.name.upper() == n.upper():
+			return True
+	if o.getParent() != None:
+		return has_prop(o.getParent(),n)
+	else:
+		return False
+
+def has_close_prop(o,l):
+	for p in o.getAllProperties():
+		for pname in l:
+			if pname.upper() == p.name.upper():
+				return pname
+	if o.getParent() != None:
+		return has_close_prop(o.getParent(),l)
+	else:
+		return None
+
+def get_prop(o,n,d):
+	for p in o.getAllProperties():
+		if p.name.upper() == n.upper():
+			return str(p.data)
+	if o.getParent() != None:
+		return get_prop(o.getParent(),n,d)
+	else:
+		return d
+
+def find_prop_list(l,n):
+	for o in l:
+		for p in o.getAllProperties():
+			if p.name.upper() == n.upper():
+				return o
+	rents=[]
+	for o in l:
+		if o.getParent() != None:
+			rents.append(o.getParent())
+	if len(rents) == 0:
+		return None
+	return find_prop_list(rents,n)
+	
+# accum_properties grabs all properties of a given key from a single obj.
+# the return is a list of strings, e.g. "CROP 0"
+def accum_properties(obj, wanted_keys, total):
+	for prop in obj.getAllProperties():
+		if strip_suffix(prop.name.upper()) in wanted_keys:
+			total.append(strip_suffix(prop.name.upper()) + " " + str(prop.data))
+
+
+def text_for_obj(name):
+	all_text = Text.Get()
+	for t in all_text:
+		if strip_suffix(t.getName()).upper() == strip_suffix(name).upper():
+			return t.asLines()
+	return []
+
+#--------------------------------------------------------------------------------
+
+def get_core_texture(fname):
+	if fname[-8:].upper() == '_ALB.PNG': return fname[:-8]
+	if fname[-8:].upper() == '_ALB.DDS': return fname[:-8]
+	if fname[-4:].upper() == '.PNG': return fname[:-4]
+	if fname[-4:].upper() == '.DDS': return fname[:-4]
+	return fname
+
+def tex_exists(rel_path):
+	baseFileName=Blender.Get('filename')
+	path=os.path.dirname(baseFileName)
+	test_path=path+'/'+rel_path
+	#print "checking for %s" % test_path
+	return os.path.exists(test_path)
+
+def blender_relative_path(resource):
+	if resource[0:2] == '//':
+		return resource[2:]
+	else:
+		raise ExportError("ERROR: texture path %s is not app-relative." % resource)
+		return resource
+
+
+
+
+
+
+
+class SHADER:
+	def __init__(self,name):
+		self.name=name
+		self.tex=None
+		self.poly_os=0
+		self.raw_image=None
+		self.variant=1
+		self.tile=[]
+		self.material=None
+		self.decal = None
+	def set_tex(self,tex,poly_os):
+		self.tex=tex
+		self.poly_os=int(poly_os)
+		self.raw_image=strip_suffix(tex.split('/')[-1])
+	def add_variant(self,v):
+		self.variant=v
+	def add_tile(self,tx,ty,bx,by,s):
+		self.tile.append(tx)
+		self.tile.append(ty)
+		self.tile.append(bx)
+		self.tile.append(by)
+		self.tile.append(s)
+	def add_decal(self,d):
+		self.decal = d
+	def get_decal(self):
+		if self.decal == None:
+			return 'none'
+		else:
+			return remove_vowels(self.decal.split('/')[-1].split('.')[-2])
+	def equals(self,rhs):
+		return str(self)==str(rhs)
+	def __cmp__(self,other):
+		return str(self)==str(other)
+	def __str__(self):
+		out = "#SHADER %s\n" % self.name
+		out += "TEXTURE %d %s\n" % (self.poly_os,self.tex)
+		if len(self.tile) > 0:
+			out += "TEXTURE_TILE %d %d %d %d %s\n" % (self.tile[0],self.tile[1],self.tile[2],self.tile[3], self.tile[4])
+		if self.variant > 1:
+			out += "VARIANTS %d\n" % self.variant
+		if self.decal != None:
+			out += "DECAL_LIB %s\n" % self.decal
+		return out
+	def matches_face(self,mesh,face):
+		mat=mesh.materials[face.mat]
+		return mat.name.lower() == self.name.lower()
+	def make_image(self,root):
+		fullpath=root+'/'+self.tex
+		if not os.path.exists(fullpath):
+			fullpath=fullpath[:-3]+'dds'
+		if not os.path.exists(fullpath):
+			fullpath=fullpath[:-3]+'png'
+		print "Will load image %s" % fullpath
+		img = Image.Load(fullpath)
+		mat = Material.New(self.name)
+		tex = Texture.New(self.name)
+		tex.setImage(img)
+		mat.setTexture(0,tex)
+		self.material=mat
+	
+class SHADER_SET:
+	def __init__(self):
+		self.shaders=[]
+	def is_shader_line(self,line):
+		tok = line.split(None,1)
+		if len(tok) == 0:
+			return False
+		return tok[0] in ['TEXTURE','TEXTURE_TILE','VARIANTS', 'DECAL_LIB', '#SHADER']
+	def handle_shader_line(self,line):
+		tok = line.split()
+		l = len(tok)
+		if l == 0:
+			return
+		if tok[0] == '#SHADER' and l >= 2:
+			self.shaders.append(SHADER(tok[1]))			
+		if tok[0] == 'TEXTURE' and l >= 3:
+			self.shaders[-1].set_tex(tok[2],tok[1])
+		if tok[0] == 'TEXTURE_TILE' and l >= 5:
+			s=''
+			if l > 5: s=tok[5]
+			self.shaders[-1].add_tile(int(tok[1]),int(tok[2]),int(tok[3]),int(tok[4]),s)
+		if tok[0] == 'VARIANTS' and l >= 2:
+			self.shaders[-1].add_variant(int(tok[1]))
+		if tok[0] == 'DECAL_LIB' and l >= 2:
+			self.shaders[-1].add_decal(tok[1])
+	def shader_idx(self,mesh,face):
+		for idx in range(len(self.shaders)):
+			s=self.shaders[idx]
+			if s.matches_face(mesh,face):
+				return idx
+		print "We never found a match for %s/%s" % (mesh.name, mesh.materials[face.mat].name)
+		return -1
+	def load_all_images(self,root):
+		for s in self.shaders:
+			if s.material==None:
+				s.make_image(root)
+	def material_for_idx(self,idx):
+		return self.shaders[idx].material
+	def poly_os_for_idx(self,idx):
+		return self.shaders[idx].poly_os
+
+def getManipulators():
+    """Returns data defining x-plane manipulators
+    This method currently hard-codes the data definitions for manipulators and
+    the associated cursors. Descriptions for manipulators can be found at:
+    http://wiki.x-plane.com/Manipulators
+    http://scenery.x-plane.com/library.php?doc=obj8spec.php
+
+    Return values:
+    manipulators -- A data dictionary defining all manipulators
+    cursors -- An array of strings of all possible cursors
+
+    """
+    manipulators={}
+    cursors=['four_arrows','hand','button','rotate_small','rotate_small_left','rotate_small_right','rotate_medium','rotate_medium_left','rotate_medium_right','rotate_large','rotate_large_left','rotate_large_right','up_down','down','up','left_right','right','left','arrow']
+
+    manipulators['ATTR_manip_none']= {'00@NULL':0}
+    manipulators['ATTR_manip_drag_xy'] = {'00@cursor': '', '01@dx':0.0, '02@dy':0.0, '03@v1min':0.0, '04@v1max':0.0, '05@v2min':0.0, '06@v2max':0.0, '07@dref1':'', '08@dref2':'', '09@tooltip':''}
+    manipulators['ATTR_manip_drag_axis'] = {'00@cursor': '', '01@dx':0.0, '02@dy':0.0, '03@dz':0.0, '04@v1':0.0, '05@v2':0.0, '06@dataref':'', '07@tooltip':''}
+    manipulators['ATTR_manip_command'] = {'00@cursor': '', '02@command':'', '03@tooltip':''}
+    manipulators['ATTR_manip_command_axis'] = {'00@cursor': '', '01@dx':0.0, '02@dy':0.0, '03@dz':0.0, '04@pos-command':'', '05@neg-command':'', '06@tooltip':''}
+    manipulators['ATTR_manip_noop']= {'00@NULL':0}
+    manipulators['ATTR_manip_push'] = {'00@cursor': '', '01@v-down':0.0, '02@v-up':0.0, '03@dataref':'', '04@tooltip':''}
+    manipulators['ATTR_manip_radio'] = {'00@cursor': '', '01@v-down':0.0, '02@dataref':'', '03@tooltip':''}
+    manipulators['ATTR_manip_toggle'] = {'00@cursor': '', '01@v-on':0.0, '02@v-off':0.0, '03@dataref':'', '04@tooltip':''}
+    manipulators['ATTR_manip_delta'] = {'00@cursor': '', '01@v-down':0.0, '02@v-hold':0.0, '03@v-min':0.0, '04@v-max':0.0, '05@dataref':'', '06@tooltip':''}
+    manipulators['ATTR_manip_wrap'] = {'00@cursor': '', '01@v-down':0.0, '02@v-hold':0.0, '03@v-min':0.0, '04@v-max':0.0, '05@dataref':'', '06@tooltip':''}
+
+    return (manipulators, cursors)
+

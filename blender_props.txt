@@ -1,0 +1,145 @@
+PROPERTY MASTER LIST:
+
+* Indicates a recursive property - if not found on an OB, it can be taken from its parent.
+
+------------------------------------------------------------------------------------------------
+GLOBAL PROPERTIES
+------------------------------------------------------------------------------------------------
+
+Global properties apply to the entire OBJ and can be anywhere in the OBJ cluster.
+
+These properties are recursive and simply write the contents of the prop after the command name.
+Syntax is thus defined by the OBJ8 spec.
+
+GLOBAL_specular*
+SLOPE_LIMIT*
+TILTED*
+ATTR_LOD_draped*
+GLOBAL_tint*
+ATTR_layer_group*
+ATTR_layer_group_draped*
+REQUIRE_WET*
+REQUIRE_DRY*
+
+These properties define the default blending behavior, are recursive, and take a ratio for the cutoff.
+They may be overridden by ATTR_blend/ATTR_no_blend and ATTR_shadow_blend.
+
+GLOBAL_no_blend* (takes a ratio)
+GLOBAL_shadow_blend* (takes a ratio)
+
+These properties affect the way export works and are recursive.
+
+additive_lod*
+
+When set to 1, LOD is additive - that is, the second LOD and first LOD are visible at the same time when close.
+This case is often faster for x-plane if you are just adding detail.
+
+When set to 0 (default) LOD is selective - when the near LOD is drawn, the far disappears.
+
+instanced*
+
+When set to 1, the exporter will export an instancing-friendly object, or fail if there is an attribute that cannot
+be used.  When set to 0, any OBJ can be exported.  
+- Use instancing ONLY for scenery and only when the OBJ will be used more than once in your scenery pack.  
+- For one-off scenery OBJs (e.g. one big terminal used once in the DSF) instancing is NOT a win - it may be a loss.
+
+panel_ok*
+
+This makes it legal to use panel texture on any OBJ; use this for airplane obis but not scenery.
+
+Layer-group properties (non-recursive):
+
+group_Terrain
+group_beaches
+group_shoulders
+group_taxiways
+group_runways
+group_markings
+group_airports
+group_footprints
+group_roads
+group_objects
+group_light_objects
+group_cars	
+
+This sets the layer group for this OBJ.
+
+------------------------------------------------------------------------------------------------
+CUSTOM LAMPS (as meshes)
+------------------------------------------------------------------------------------------------
+For custom lamps built as a mesh (with a material marked as "halo") the RGBA color comes from
+four float properties:
+R,G,B,A
+A custom dataref, if present, is named via
+name
+
+------------------------------------------------------------------------------------------------
+REAL LAMPS
+------------------------------------------------------------------------------------------------
+For real lamps being used as named lights, two non-recursive properties are used:
+name = string name of the light
+params = if, present, a string that is the entire param list for the named light
+
+------------------------------------------------------------------------------------------------
+REAL MESHES
+------------------------------------------------------------------------------------------------
+
+These properties are applied to a mesh OB - recursive ones also affect child meshes.
+
+lit_level, ATTR_light_level* - provides lighting level.  Data is the string with the rest of the OBJ8 command.
+	ATTR_light_level - if no levels are provided, they come from
+	ATTR_light_level_v1 or 0
+	ATTR_light_level_v2 or 1
+ATTR_draw_disable* - if present, mesh is not drawn, ever.  Useful for hidden meshes for collisions, etc.
+ATTR_solid_camera* - if present, mesh is solid to the camera
+surface* - string is the hard surface name
+deck* - int/bool: if 1 puts the hard surface into deck mode.
+up_norm* - int/bool: up-normals; if 1, normals of mesh point straight up - useful for billboard vegetation
+ATTR_shadow_blend* (float ratio) - defines the cut-of for shadow-blending mode
+ATTR_no_blend* (float ratio) - defines the cut-off for alpha-clipping mode
+ATTR_draped* - if present, the polygon offset (TILES button) will instead make ATTR_draped based geometry.
+	This only works for scenery, and ATTR_draped geometry cannot have animation or any other dynamic 'stuff'.
+
+ALPHA HANDLING: (do not use the "ADD" alpha button!)
+Button		Property		Meaning
+OPAQUE		n/a			You promise there is no alpha in the texture; Blender will output optimal OBJ code.
+ALPHA		-			Mesh is alpha blended
+ALPHA		ATTR_shadow_blend or	Mesh is alpha blended, but shadows are alpha-tested; properties specify at what
+		GLOBAL_shadow_blend	alpha level the shadow becomes transparent.
+CLIP		-			Mesh (and shadows) are alpha-tested at a cut-off of 0.5
+CLIP		ATTR_no_blend or	Mesh (and shadows) are alpha-tested at a cut-off specified by 
+		GLOBAL_no_blend		the property.
+
+BUTTONS:
+INVISIBLE - hides the object from export (e.g. blender's meaning)
+TILES - turns on polygon offset (or draped geometry if ATTR_draped is present)
+COLLISION - opposite of hard surface - that is, pressing this disables hard surface testing.
+TWOSIDE - enables two-sided geometry; highly not recommended.  double your meshes!
+SHADOW - opposite of shadow casting - that is, pressing this disables shadow casting.
+
+------------------------------------------------------------------------------------------------
+ANIMATION
+------------------------------------------------------------------------------------------------
+
+on Bones:
+	show_v, hide_v
+
+
+------------------------------------------------------------------------------------------------
+MULTI-OBJECT SPECIAL PROPERTIES
+------------------------------------------------------------------------------------------------
+For a multi-object export, these extra properties can be used (all are recursive)
+path* (string) - defines a sub-directory relative to the blender file to put the exported file into.
+	if path is not present, OBJs are exported into the same directory as the .blend file.
+rname (string) - specifies the name of the OBJ file (minus suffix) to write.  Do not include a relative path;
+	that comes from the path property.  If rname is not present, the name of the empty (minus the .001 suffix
+	and minus the OBJ 3-letter prefix) is the export name
+vname (string)
+vname1 (string)
+vname2 (string)
+	Only legal for exports into scenery packs; if present, this adds an EXPORT line into the OBJ with vane being the
+	virtual path for the library system.  
+
+	X-Plane does _not_ read EXPORT directives from OBJs!  The intention here is that a post-processing tool copies 
+	the EXPORT directives from the OBJs to a library.txt file; the EXPORT directive in the OBJ file is ignored by the 
+	sim.

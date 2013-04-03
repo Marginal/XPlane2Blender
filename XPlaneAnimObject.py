@@ -69,7 +69,7 @@ Edit X-Plane animation properties.
 import Blender
 from Blender import BGL, Draw, Object, Scene, Window
 
-from XPlaneUtils import Vertex, getDatarefs, make_short_name
+from XPlaneUtils import Vertex, getDatarefs, getManipulators, make_short_name
 
 theobject=None
 
@@ -90,6 +90,13 @@ hideorshow=[]
 hideshowindices=[]
 hideshowfrom=[]
 hideshowto=[]
+
+manipulator_dict={}
+manipulatorList=[]
+cursorList=[]
+manipulators=[]
+manipulatorVals={}
+cursors=[]
 
 # Layout
 vertical=False
@@ -115,6 +122,8 @@ dataref_m=[]
 dataref_b=[]
 indices_b=[]
 indices_t=[]
+manipulator_m=[]
+manipulator_b=[]
 
 # Value buttons
 vals_b=[]
@@ -195,7 +204,7 @@ def getparents():
                 (path,n)=lookup[key]
                 ref=path.split('/')
                 if not ref[0] in firstlevel:
-                   firstlevel.append(ref[0])
+                   firstlevel.append(ref[0])    
         if len(firstlevel) == 1:
             firstlevel=hierarchy['sim'].keys()
             has_sim=True
@@ -224,6 +233,9 @@ def getvals(bonename, dataref, index):
                     fullref=prop.data+dataref
                 else:
                     fullref=prop.data+'/'+dataref
+                
+
+
 
     # find last frame
     framecount=2    # zero based
@@ -266,6 +278,38 @@ def getvals(bonename, dataref, index):
                     loop=round(prop.data, Vertex.ROUND)
             
     return (fullref,vals,loop)
+
+# Scan the armature properties for manipulator entries
+def getmanipulatorvals():
+
+    # Default manipulator values
+    manipulator = 'ATTR_manip_none'
+    cursor = 'hand'
+
+    props = armature.getAllProperties()
+    for prop in props:
+        if prop.name == 'manipulator_type':
+            manipulator = prop.data
+
+        if prop.name.startswith(manipulator) and prop.name.endswith('cursor'):
+            cursor = prop.data
+
+    # This is butt-ugly. Used a dictionary for the mainpulator data
+    # this should get changed to a 2D array
+    keys = sorted(manipulator_dict[manipulator].keys())
+    for prop in props:
+        if prop.name.startswith(manipulator) and not prop.name.endswith('cursor'):
+            tmp = prop.name.split('_')
+            key = tmp[len(tmp)-1]
+
+            for dict_key in keys:
+                if dict_key.find(key) > 0:
+                    key = dict_key
+                    break
+
+            manipulator_dict[manipulator][key] = prop.data
+
+    return (manipulator, cursor)
 
 
 def gethideshow():
@@ -462,6 +506,20 @@ def doapply(evt,val):
     for key in keys:
         armature.addProperty(key, props[key])
 
+    # Create properties for the manipulators
+    manipulator = manipulators[0]
+    sub_dict = sorted(manipulator_dict[manipulator].keys())
+    armature.addProperty('manipulator_type', manipulator )
+
+    for field_id in sub_dict:
+        field_name = field_id.split('@')[1]
+        field_val = manipulator_dict[manipulator][field_id]
+        property_name = manipulator + '_' + field_name
+        if field_name == 'cursor':
+            armature.addProperty(property_name, cursors[0])
+        else:
+            armature.addProperty(property_name, field_val)
+
     # Hide/Show - order is significant
     h=1
     s=1
@@ -640,12 +698,37 @@ def datarefmenucallback(event, val):
             Draw.Redraw()
             return
 
+# User changed manipulator drop down. Update manipulator GUI
+def manipulatormenucallback(event, val):
+    if val==-1: return
+    boneno=event/EVENTMAX
+    manipulators[boneno] = manipulatorList[val-1]
+    Draw.Redraw()
+    return
+
+# User changed cursor drop down. Update GUI
+def cursormenucallback(event, val):
+    if val==-1: return
+    boneno=event/EVENTMAX
+    cursors[boneno] = cursorList[val-1]
+    Draw.Redraw()
+    return
+
+def manipulatordatacallback(event, val):
+    event -= 1000
+
+    # This is a bug. Manipulator only works on the parent bone
+    manipulator = manipulators[0]
+    key = sorted(manipulator_dict[manipulator].keys())[event]
+    manipulator_dict[manipulator][key] = val
+    return
 
 # the function to draw the screen
 def gui():
     global dataref_m, dataref_b, indices_b, indices_t, vals_b, clear_b, loops_b
     global hideshow_m, from_b, to_b, up_b, down_b, delete_b, addhs_b
     global cancel_b, apply_b
+    global manipulator_m, manipulator_b, cursor_m, cursor_b
 
     dataref_m=[]
     dataref_b=[]
@@ -663,6 +746,7 @@ def gui():
     addhs_b=None
     cancel_b=None
     apply_b=None
+
 
     # Default theme
     text   =[  0,   0,   0, 255]
@@ -749,6 +833,13 @@ def gui():
 
         if vertical:
             yoff-=(170+(CONTROLSIZE-1)*framecount)
+
+        #Draw Manipulator GUI
+        if valid:
+            Draw.Label("Manipulator:", xoff-4, yoff-220-(CONTROLSIZE-1)*i, 100, CONTROLSIZE)
+            drawmanipulator(manipulators, indices, eventbase, boneno, xoff-4, yoff-250-(CONTROLSIZE-1)*i)
+
+
 
     if not vertical:
         xoff=PANELPAD+bonecount*(PANELWIDTH+PANELPAD)+PANELINDENT-offset[0]
@@ -855,8 +946,67 @@ def drawdataref(datarefs, indices, eventbase, boneno, x, y):
     return (valid, mbutton,bbutton,ibutton,tbutton)
 
 
+# Draw the GUI for the manipulator entry area.
+# Selection of the manipulator will determine that fields that are displayed
+# See XPlaneUtils.py::getManipulators() for the manipluator definitions
+#
+# The data gets stored utilizing the manipulatordatacallback function
+# The event_id (starting at 1000 to not interfere with Marginal's events)
+# is an ugly hack to determine which field is being modified.
+def drawmanipulator(manipulators, indices, eventbase, boneno, x, y):
+
+    # See Blender Python Docs
+    # http://www.blender.org/documentation/248PythonDoc/Draw-module.html
+
+    manipulator = manipulators[boneno]
+    cursor = cursors[boneno]
+    valid = True
+
+    Draw.Menu('|'.join(manipulatorList), DONTCARE+eventbase, x+4, y, CONTROLSIZE, CONTROLSIZE, -1, 'Pick the manipulator from a list', manipulatormenucallback)
+    Draw.String('', DATAREF_B+eventbase, x+4+CONTROLSIZE, y, PANELWIDTH-2*PANELINDENT-CONTROLSIZE, CONTROLSIZE, manipulator, 100, 'Full name of the manipulator used to control this animation')
+    y -= 30
+    event_id = 1000
+    sub_dict = sorted(manipulator_dict[manipulator].keys())
+
+    for field_id in sub_dict:
+        field_name = field_id.split('@')[1]
+        field_val = manipulator_dict[manipulator][field_id]
+
+        if field_name == 'cursor':
+            Draw.Label("Cursor Type:", x, y, 100, CONTROLSIZE)
+            Draw.Menu('|'.join(cursorList), DONTCARE+eventbase, x+4, y, CONTROLSIZE, CONTROLSIZE, -1, 'Pick the cursor type from a list', cursormenucallback)
+            Draw.String('', DATAREF_B+eventbase, x+4+CONTROLSIZE, y, PANELWIDTH-2*PANELINDENT-CONTROLSIZE, CONTROLSIZE, cursor, 100, 'Full name of the manipulator used to control this animation')
+            y -= 30
+            event_id += 1
+        elif field_name != 'NULL':
+            Draw.Label(field_name + ':', x, y, 120, CONTROLSIZE)
+
+            if type(field_val).__name__ == 'str':
+                Draw.String('', event_id, x+100, y, 180, CONTROLSIZE, field_val, 100, '', manipulatordatacallback)
+
+            if type(field_val).__name__ == 'float':
+                Draw.Number('', event_id, x+100, y, 80, CONTROLSIZE, field_val, -50000.0,50000.0, '', manipulatordatacallback)
+
+            if type(field_val).__name__ == 'int':
+                Draw.Number('', event_id, x+100, y, 80, CONTROLSIZE, int(field_val), -50000,50000, '', manipulatordatacallback)
+
+            y -= 20
+            event_id += 1
+
+    return valid
+
 
 if __name__=='__main__' and getparents():
+
+    # Init manipulator data
+    manipulator_dict,cursorList = getManipulators()
+    for ii in manipulator_dict.keys():
+        manipulatorList.append(ii)
+
+    (manipulator, cursor) = getmanipulatorvals()
+    manipulators.append(manipulator)
+    cursors.append(cursor)
+
     bonecount=len(bones)
     # Get values for other bones in armature too
     for bone in armature.getData().bones.values():
