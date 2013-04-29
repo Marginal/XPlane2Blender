@@ -60,31 +60,30 @@ import Blender
 from Blender import Draw, Image, Scene, Window, Material, Texture, Object, NMesh
 
 try:
-	for ob in Scene.GetCurrent().objects:
-		if ob.getType() == "Mesh":
-			#print "Mesh %s " % ob.name
-			mesh = ob.getData()
-			changed = False
-			for face in mesh.faces:
-				#print "face with"
-				if face.mode & NMesh.FaceModes.TEX and face.image:
-					#print "   %s" % face.image.name
-					wanted = mesh.materials[face.mat].textures[0].tex.image
-					has = face.image
-					#print "  but wanted %s %s" % (mesh.materials[face.mat].name, wanted.name)
-					if has != wanted:
-						print "Using %s but should have had (%s) %s" % (has.name, wanted.name, mesh.materials[face.mat].name)
-						face.image = wanted
-						changed = True
-			if changed:
-				mesh.update()
+    for ob in Scene.GetCurrent().objects:
+        if ob.getType() == "Mesh":
+            #print "Mesh %s " % ob.name
+            mesh = ob.getData()
+            changed = False
+            for face in mesh.faces:
+                #print "face with"
+                if face.mode & NMesh.FaceModes.TEX and face.image:
+                    #print "   %s" % face.image.name
+                    wanted = mesh.materials[face.mat].textures[0].tex.image
+                    has = face.image
+                    #print "  but wanted %s %s" % (mesh.materials[face.mat].name, wanted.name)
+                    if has != wanted:
+                        print "Using %s but should have had (%s) %s" % (has.name, wanted.name, mesh.materials[face.mat].name)
+                        face.image = wanted
+                        changed = True
+            if changed:
+                mesh.update()
 
 
-	Window.RedrawAll()
+    Window.RedrawAll()
 
 except (RuntimeError, IOError):
-	print "ERROR"
+    print "ERROR"
 #    msg='Can\'t load texture file %s.png or .bmp' % newfile
 ##   print "ERROR:\t%s\n" % msg
 #    Draw.PupMenu("ERROR: %s" % msg)
-

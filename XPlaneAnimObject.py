@@ -16,7 +16,7 @@ Edit X-Plane animation properties.
 #------------------------------------------------------------------------
 #
 # Copyright (c) 2007 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
@@ -79,7 +79,7 @@ hierarchy={}
 firstlevel=[]
 has_sim=False
 armature=None
-bonecount=0	# number of parent bones 
+bonecount=0	# number of parent bones
 bones=[]	# all bones in armature
 datarefs=[]
 indices=[]
@@ -204,7 +204,7 @@ def getparents():
                 (path,n)=lookup[key]
                 ref=path.split('/')
                 if not ref[0] in firstlevel:
-                   firstlevel.append(ref[0])    
+                   firstlevel.append(ref[0])
         if len(firstlevel) == 1:
             firstlevel=hierarchy['sim'].keys()
             has_sim=True
@@ -213,7 +213,7 @@ def getparents():
     except IOError, e:
         Draw.PupMenu(str(e))
         return None
-        
+
     return True
 
 
@@ -233,7 +233,7 @@ def getvals(bonename, dataref, index):
                     fullref=prop.data+dataref
                 else:
                     fullref=prop.data+'/'+dataref
-                
+
 
 
 
@@ -276,7 +276,7 @@ def getvals(bonename, dataref, index):
                     loop=float(prop.data)
                 elif prop.type=='FLOAT':
                     loop=round(prop.data, Vertex.ROUND)
-            
+
     return (fullref,vals,loop)
 
 # Scan the armature properties for manipulator entries
@@ -415,7 +415,7 @@ def doapply(evt,val):
         editbones.append(bone.parent)
         bone=bone.parent
     bonecount=min(bonecount, len(editbones))	# in case user has reparented
-    
+
     # Rename bones - see armature_bone_rename in editarmature.c
     oldnames=[bone.name for bone in editbones]
     othernames=armbones.keys()
@@ -428,12 +428,12 @@ def doapply(evt,val):
             # rename this Action's channels to prevent error on dupes
             if oldnames[boneno] in action.getChannelNames():
                 action.renameChannel(oldnames[boneno], 'TmpChannel%d' % boneno)
-    
+
     for boneno in range(bonecount-1,-1,-1):
         # do in reverse order in case of duplicate names
         name=datarefs[boneno].split('/')[-1]
-		# bone name getting up toward trouble?  use PT name.  We'd rather be ambiguous - and readable.
-        if len(name) > 26: 
+        # bone name getting up toward trouble?  use PT name.  We'd rather be ambiguous - and readable.
+        if len(name) > 26:
             name=make_short_name(datarefs[boneno])
         if indices[boneno]!=None: name='%s[%d]' % (name, indices[boneno])
         # Have to manually avoid duplicate names
@@ -473,7 +473,7 @@ def doapply(evt,val):
     for obj in Scene.GetCurrent().objects:
         if obj.parent==armature and obj.parentbonename in oldnames:
             obj.parentbonename=newnames[oldnames.index(obj.parentbonename)]
-        
+
     # Now do properties
     props={}
 
@@ -687,7 +687,7 @@ def datarefmenucallback(event, val):
         this=this[keys[val-1]]
         if not isinstance(this, dict):
             if boneno>=bonecount:
-                hideshow[boneno-bonecount]='/'.join(ref)                
+                hideshow[boneno-bonecount]='/'.join(ref)
             else:
                 datarefs[boneno]='/'.join(ref)
             # disambiguate all similar bones/hideshow in armature
@@ -786,7 +786,7 @@ def gui():
     yoff=y-offset[1]
     if vertical:
         xoff=PANELPAD+PANELINDENT-offset[0]
-        
+
     for boneno in range(bonecount):
         eventbase=boneno*EVENTMAX
         framecount=len(vals[boneno])
@@ -904,7 +904,7 @@ def drawdataref(datarefs, indices, eventbase, boneno, x, y):
 
     mbutton=Draw.Menu('sim/%t|'+'/...|'.join(firstlevel)+'/...', DONTCARE+eventbase, x+4, y, CONTROLSIZE, CONTROLSIZE, -1, 'Pick the dataref from a list', datarefmenucallback)
     bbutton=Draw.String('', DATAREF_B+eventbase, x+4+CONTROLSIZE, y, PANELWIDTH-2*PANELINDENT-CONTROLSIZE, CONTROLSIZE, dataref, 100, 'Full name of the dataref used to animate this object')
-    
+
     ibutton=None
     tbutton=None
     ref=dataref.split('/')
@@ -1012,7 +1012,7 @@ if __name__=='__main__' and getparents():
     for bone in armature.getData().bones.values():
         if bone not in bones:
             bones.append(bone)
-    
+
     for bone in bones:
         dataref=bone.name.split('.')[0]
 

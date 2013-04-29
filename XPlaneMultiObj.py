@@ -20,77 +20,76 @@ from XPlaneExport import ExportError
 from XPlaneLib import *
 
 def export_hier(parent, all,root,depth):
-	total = 0
-	kids=getChildren(parent, all)
-	objs = filter_objects(kids,'Empty','OBJ')
-	objs += filter_objects(kids,'Empty','VRT')
-	objs += filter_objects(kids,'Empty','END')
-	objs += filter_objects(kids,'Empty','BGN')
+    total = 0
+    kids=getChildren(parent, all)
+    objs = filter_objects(kids,'Empty','OBJ')
+    objs += filter_objects(kids,'Empty','VRT')
+    objs += filter_objects(kids,'Empty','END')
+    objs += filter_objects(kids,'Empty','BGN')
 
-	grps = filter_objects(kids,'Empty','GRP')
-	for g in grps:
-		total = total + export_hier(g, all,root,depth+1)
+    grps = filter_objects(kids,'Empty','GRP')
+    for g in grps:
+        total = total + export_hier(g, all,root,depth+1)
 
-	# Alex does NOT want the outer-most OBJs to be exported.  His projects
-	# apparently contain lots of random objects floating around.
-	# This if statement could be nuked to restore the old behavior.
-	# The current impl lets free objects out if there simply are no groups.
+    # Alex does NOT want the outer-most OBJs to be exported.  His projects
+    # apparently contain lots of random objects floating around.
+    # This if statement could be nuked to restore the old behavior.
+    # The current impl lets free objects out if there simply are no groups.
 
-
-	#if depth > 0:							#This would STRICTLY skip free objs.
-	if depth > 0 or len(grps) == 0:			#This takes free objs if there are no groups.
-		for o in objs:
-			n = strip_suffix(o.name)[3:]
-			n = get_prop(o,'rname',n)
-			n += '.obj'
-			partial = get_prop(o,'path','.')
-			export_path=os.path.join(partial,n)
-			export_path=os.path.join(root,export_path)
-			if not os.path.exists(os.path.dirname(export_path)):
-				os.makedirs(os.path.dirname(export_path))
-			try:
-				(sim,pack)=locate_root(export_path)			
-			except ExportError, e:
-				pack=None
-			exporter=OBJexport8(export_path)
-			exporter.additive_lod=1
-			my_parts=getGrandChildren(o,all)
-			#if self.debug:
-			#	for p in my_parts:
-			#		print " object export %s will export DB %s" % (oname, p.name)
-			prefix = ''
-			parts = partial.count('/') + 1
-			if partial == '.': parts = 0
-			for n in range(parts):
-				prefix += '../'
-			exporter.openFile(my_parts,o,prefix)
-			exporter.writeHeader()
-			if has_prop(o,'vname'):
-				if pack == None:
-					raise ExportError("Illegal vname directive on %s - blender file is not in a scenery pack." % o.name)
-				exporter.file.write("EXPORT %s.obj %s\n" % (strip_suffix(get_prop(o,'vname',o.name)),os.path.normpath(export_path[len(pack)+1:])))
-			if has_prop(o,'vname1'):
-				exporter.file.write("EXPORT %s.obj %s\n" % (strip_suffix(get_prop(o,'vname1',o.name)),os.path.normpath(export_path[len(pack)+1:])))
-			if has_prop(o,'vname2'):
-				exporter.file.write("EXPORT %s.obj %s\n" % (strip_suffix(get_prop(o,'vname2',o.name)),os.path.normpath(export_path[len(pack)+1:])))
-			exporter.writeObjects(my_parts)
-			total = total + 1
-	return total
+    #if depth > 0:					#This would STRICTLY skip free objs.
+    if depth > 0 or len(grps) == 0:			#This takes free objs if there are no groups.
+        for o in objs:
+            n = strip_suffix(o.name)[3:]
+            n = get_prop(o,'rname',n)
+            n += '.obj'
+            partial = get_prop(o,'path','.')
+            export_path=os.path.join(partial,n)
+            export_path=os.path.join(root,export_path)
+            if not os.path.exists(os.path.dirname(export_path)):
+                os.makedirs(os.path.dirname(export_path))
+            try:
+                (sim,pack)=locate_root(export_path)
+            except ExportError, e:
+                pack=None
+            exporter=OBJexport8(export_path)
+            exporter.additive_lod=1
+            my_parts=getGrandChildren(o,all)
+            #if self.debug:
+            #	for p in my_parts:
+            #		print " object export %s will export DB %s" % (oname, p.name)
+            prefix = ''
+            parts = partial.count('/') + 1
+            if partial == '.': parts = 0
+            for n in range(parts):
+                prefix += '../'
+            exporter.openFile(my_parts,o,prefix)
+            exporter.writeHeader()
+            if has_prop(o,'vname'):
+                if pack == None:
+                    raise ExportError("Illegal vname directive on %s - blender file is not in a scenery pack." % o.name)
+                exporter.file.write("EXPORT %s.obj %s\n" % (strip_suffix(get_prop(o,'vname',o.name)),os.path.normpath(export_path[len(pack)+1:])))
+            if has_prop(o,'vname1'):
+                exporter.file.write("EXPORT %s.obj %s\n" % (strip_suffix(get_prop(o,'vname1',o.name)),os.path.normpath(export_path[len(pack)+1:])))
+            if has_prop(o,'vname2'):
+                exporter.file.write("EXPORT %s.obj %s\n" % (strip_suffix(get_prop(o,'vname2',o.name)),os.path.normpath(export_path[len(pack)+1:])))
+            exporter.writeObjects(my_parts)
+            total = total + 1
+    return total
 #------------------------------------------------------------------------
 if Window.EditMode(): Window.EditMode(0)
 try:
-	obj=None
-	sl = Blender.Scene.Get()
+    obj=None
+    sl = Blender.Scene.Get()
 
-	scene = Blender.Scene.GetCurrent()
+    scene = Blender.Scene.GetCurrent()
 
-	baseFileName=Blender.Get('filename')
-	l = baseFileName.lower().rfind('.blend')
-	if l==-1: raise ExportError('Save this .blend file first')
-	path=os.path.dirname(baseFileName)
+    baseFileName=Blender.Get('filename')
+    l = baseFileName.lower().rfind('.blend')
+    if l==-1: raise ExportError('Save this .blend file first')
+    path=os.path.dirname(baseFileName)
 
-	count = export_hier(None, scene.objects,path,0)
-	Draw.PupMenu("Export complete: %d objects." % count)
+    count = export_hier(None, scene.objects,path,0)
+    Draw.PupMenu("Export complete: %d objects." % count)
 
 except ExportError, e:
     for o in scene.objects: o.select(0)

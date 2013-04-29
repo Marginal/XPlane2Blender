@@ -105,4 +105,3 @@ else:
     msg='Can\'t load texture file %s.png or .bmp' % newfile
     print "ERROR:\t%s\n" % msg
     Draw.PupMenu("ERROR: %s" % msg)
-

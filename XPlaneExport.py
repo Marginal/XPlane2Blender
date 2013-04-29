@@ -275,10 +275,10 @@ def getTexture (expobj, theObjects, iscsl, fileformat,want_draped=0):
     nobj=len(theObjects)
     texlist=[]
     layers=0
-	
+
     if find_prop_list(theObjects,'panel_ok') != None:
         expobj.ispanelok=True
-	
+
     if iscsl:
         expobj.lod=[0,1000,4000,100000]	# list of lod limits
     else:

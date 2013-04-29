@@ -27,7 +27,7 @@ Usage:<br>
 # UV Resize for blender 2.43 or above
 #
 # Copyright (c) 2005,2007 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #

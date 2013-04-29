@@ -18,7 +18,7 @@ for editing and export as an X-Plane object.
 # MDL importer for blender 2.45 or above
 #
 # Copyright (c) 2008, 2009 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
@@ -211,7 +211,7 @@ def adddata(scene, layer, material, vert, inde, matrix, plat=None):
                     face.mode |= Mesh.FaceModes.DYNAMIC
             else:
                 face.mode |= Mesh.FaceModes.DYNAMIC
-                
+
             i+=3
 
         ob = Object.New('Mesh')
@@ -229,7 +229,7 @@ def adddata(scene, layer, material, vert, inde, matrix, plat=None):
         mesh.calcNormals()	# calculate vertex normals
         mesh.sel=False
 
-         
+
 #------------------------------------------------------------------------
 def gettexture(name, dirname, filename):
     (filename,ext)=splitext(basename(filename).lower())
@@ -255,7 +255,7 @@ def gettexture(name, dirname, filename):
     if img: tex.image=img
 
     return tex
-    
+
 
 #------------------------------------------------------------------------
 def getmaterial9(bgldir, m, matlist, t, texnames):
@@ -403,7 +403,7 @@ def getmaterialx(data, bgldir, texnames):
             try:
                 tex=Texture.Get('DefaultEnvMap')
             except:
-                tex=Texture.New('DefaultEnvMap')                
+                tex=Texture.New('DefaultEnvMap')
         tex.type=Texture.Types.ENVMAP
         tex.stype=Texture.STypes.ENV_LOAD
         mat.setTexture(texcount, tex)
@@ -456,7 +456,7 @@ def file_callback (filename):
     tran=[]
     amap=[]	# fsx map
     scen=[]	# (child, peer, matrix, parent)
-    
+
     data={}	# (material, vert, inde, scene) by LOD
     plat={}	# (surface, vertices) by scene
     atta=[]	# (name, scene)
@@ -553,7 +553,7 @@ def file_callback (filename):
                             (c,size,end3)=container(bgl,3)
                             if c=='REFP':
                                 (sceneg,size)=unpack('<II', bgl.read(8))
-                                
+
                                 atta.append((bgl.read(size).strip('\0').strip(),sceneg))
                             else:
                                 bgl.seek(size,1)
@@ -670,7 +670,7 @@ def file_callback (filename):
                         for i in range(len(lods)-1,0,-1):
                             data[lods[i]]=data[lods[i-1]]
                         data[lods[0]].pop()
-        
+
                     elif c=='TRAN':
                         for i in range(0,size,64):
                             tran.append(Matrix(*[unpack('<4f',bgl.read(16)) for j in range(4)]))
@@ -694,7 +694,7 @@ def file_callback (filename):
                             else:	# Animation
                                 (x,y,z,dst)=unpack('<3fh', amap[offset+size-14:offset+size])
                                 thismatrix=TranslationMatrix(Vector(x,y,z,0))
-                            
+
                             scen[n]=(child,peer,thismatrix,-1)
                     elif c=='PLAT':
                         (count,)=unpack('<I', bgl.read(4))
@@ -810,7 +810,7 @@ def file_callback (filename):
 
 
         addprops(scene, lods)
-        
+
         Window.DrawProgressBar(1, "Finished")
         Window.WaitCursor(0)
 

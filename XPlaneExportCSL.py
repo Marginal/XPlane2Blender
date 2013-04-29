@@ -25,7 +25,7 @@ Limitations:<br>
 # X-Plane exporter for blender 2.43 or above
 #
 # Copyright (c) 2004,2005 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #

@@ -30,21 +30,21 @@ if Window.EditMode(): Window.EditMode(0)
 try:
     obj=None
     sl = Blender.Scene.Get()
-    
+
     scene = Blender.Scene.GetCurrent()
 
     baseFileName=Blender.Get('filename')
     l = baseFileName.lower().rfind('.blend')
     if l==-1: raise ExportError('Save this .blend file first')
     baseFileName=baseFileName[:l]
-    
+
     if len(sl) > 1 and scene.getName() != 'Scene':
         scene_name = scene.getName()
         if scene_name[-4:].lower() == '.obj':
             scene_name = scene_name[:-4]
         baseFileName = os.path.dirname(baseFileName)
         baseFileName = os.path.join(baseFileName,scene_name)
-    
+
     obj=OBJexport8(baseFileName+'.obj')
     obj.export(scene)
 except ExportError, e:

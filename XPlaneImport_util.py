@@ -2,7 +2,7 @@
 # X-Plane importer for blender 2.43 or above
 #
 # Copyright (c) 2004-2007 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
@@ -264,7 +264,7 @@ class Mat:
                 self.blenderMat.emit=1
             self.blenderMat.spec=self.s
         return self.blenderMat
-    
+
 class MyMesh:
     # Flags
     LAYERMASK=7
@@ -308,14 +308,14 @@ class MyMesh:
 
     #------------------------------------------------------------------------
     def doimport(self,objimport,scene):
-        
+
         mesh=Mesh.New(objimport.meshname)
         mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
         mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
 
         mat=self.mat.getBlenderMat()
         if mat: mesh.materials+=[mat]
-            
+
         centre=Vertex(0,0,0)
         if self.anim:
             #print self.anim[0], self.anim[1], self.anim[2]
@@ -335,7 +335,7 @@ class MyMesh:
         #    centre.x=round(centre.x/n,2)
         #    centre.y=round(centre.y/n,2)
         #    centre.z=round(centre.z/n,2)
-        
+
         faces=[]
         verts=[]
         for f in self.faces:
@@ -361,7 +361,7 @@ class MyMesh:
                     face.image = objimport.regions[f.region]
             else:
                 face.image = objimport.image
-                            
+
             face.uv=[Vector(uv.s, uv.t) for uv in f.uv]
             face.mat=0
             face.mode &= ~(Mesh.FaceModes.TWOSIDE|Mesh.FaceModes.TILES|
@@ -380,9 +380,9 @@ class MyMesh:
                 face.transp=Mesh.FaceTranspModes.ALPHA
             else:
                 face.transp=Mesh.FaceTranspModes.SOLID
-                
+
             #assert len(face.v)==len(f.v) and len(face.uv)==len(f.uv)
-        
+
         ob = Object.New('Mesh', objimport.meshname)
         ob.link(mesh)
         scene.objects.link(ob)
@@ -408,7 +408,7 @@ class MyMesh:
         if self.layers&MyMesh.LAYERMASK:
             ob.Layer=(self.layers&MyMesh.LAYERMASK)
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
-        
+
         # following must be after object linked to scene
         mesh.sel=True
         mesh.remDoubles(Vertex.LIMIT)
@@ -434,7 +434,7 @@ class OBJimport:
         #                v8: every TRIS statement is a new object
         # self.merge=2 - merge all triangles into one object
 
-	# verbose - level of verbosity in console: 1-normal,2-chat,3-debug
+        # verbose - level of verbosity in console: 1-normal,2-chat,3-debug
 
         self.merge=1
         self.subroutine=subroutine	# object matrix
@@ -446,7 +446,7 @@ class OBJimport:
             self.verbose=1
             self.meshname='Mesh'
             self.globalmatrix=TranslationMatrix(Vector(Window.GetCursorPos())).resize4x4()
-        
+
         if filename[0:2] in ['//', '\\\\']:
             # relative to .blend file
             self.filename=normpath(join(dirname(Blender.Get('filename')),
@@ -475,7 +475,7 @@ class OBJimport:
         self.curmesh=[]		# unoutputted meshes
         self.nprim=0		# Number of X-Plane objects imported
         self.log=[]
-        
+
         # flags controlling import
         self.layer=0
         self.lod=None		# list of lod limits
@@ -486,7 +486,7 @@ class OBJimport:
         self.vline=[]
         self.vlight=[]
         self.idx=[]
-        
+
         # attributes
         self.hard=False
         self.deck=None
@@ -515,7 +515,7 @@ class OBJimport:
         if self.verbose:
             print "Starting OBJ import from " + self.filename
         Window.WaitCursor(1)
-    
+
         self.file = open(self.filename, 'rU')
         self.file.seek(0,2)
         self.filelen=self.file.tell()
@@ -560,7 +560,7 @@ class OBJimport:
             raise ParseError(ParseError.INTEGER)
         except ValueError:
             raise ParseError(ParseError.INTEGER, c)
-    
+
     #------------------------------------------------------------------------
     def getFloat(self):
         try:
@@ -569,7 +569,7 @@ class OBJimport:
             raise ParseError(ParseError.FLOAT)
         except ValueError:
             raise ParseError(ParseError.FLOAT, c)
-    
+
     #------------------------------------------------------------------------
     def getCol(self):
         if self.fileformat<8:
@@ -588,7 +588,7 @@ class OBJimport:
         return Vertex(round( v[0],Vertex.ROUND),
                       round(-v[2],Vertex.ROUND),
                       round( v[1],Vertex.ROUND))
-    
+
     #------------------------------------------------------------------------
     def getUV(self):
         u=self.getFloat()
@@ -623,7 +623,7 @@ class OBJimport:
         if self.verbose>2: print 'Input:\t"%s"' % c
         if not c in ['A', 'I']:
             raise ParseError(ParseError.HEADER)
-        
+
         c = self.file.readline().split()
         self.lineno=2
         if not c: raise ParseError(ParseError.HEADER)
@@ -654,7 +654,7 @@ class OBJimport:
             if tex[:7] == 'GLOBAL_': continue
             if tex == 'TILTED': continue
             if tex: break
-        
+
         # read texture
         if self.fileformat>=8:
             if not tex.startswith("TEXTURE"):
@@ -704,11 +704,11 @@ class OBJimport:
                         self.log.append('Cannot read texture file "%s"' % texname)
                         self.image=Image.New(basename(texname),1024,1024,24)
                     return
-            
+
         self.image=Image.New(basename(base),1024,1024,24)
         print 'Warn:\tTexture file "%s" not found' % base
         self.log.append('Texture file "%s" not found' % base)
-            
+
     #------------------------------------------------------------------------
     def readObjects (self, scene):
 
@@ -723,7 +723,7 @@ class OBJimport:
                     self.progress=progress
 
             if not self.getCR(True): break
-            
+
             t=self.line.pop(0)
             if self.fileformat==6:
                 try:
@@ -734,9 +734,9 @@ class OBJimport:
 
             if t in ['end', 99]:
                 break
-            
+
             # v8
-            
+
             elif t=='COCKPIT_REGION':
                 if not self.panelimage:
                     # first region
@@ -749,7 +749,7 @@ class OBJimport:
                 width=self.getInt()-xoff
                 height=self.getInt()-xoff
                 self.regions.append(h.addRegion(xoff, yoff, width, height))
-                
+
             elif t=='VT':
                 v=self.getVertex()
                 n=self.getVertex()	# normal
@@ -835,7 +835,7 @@ class OBJimport:
                     self.addpendingbone()
                     self.off.append(self.off[-1])
                     self.bones.append(None)
-                    
+
             elif t=='ANIM_end':
                 if not len(self.off):
                     raise ParseError(ParseError.MISC,
@@ -854,7 +854,7 @@ class OBJimport:
                     self.arm=None
                     self.armob=None
                     self.action=None
-                    
+
             elif t=='ANIM_trans':
                 p1=self.getVertex()
                 p2=self.getVertex()
@@ -909,7 +909,7 @@ class OBJimport:
                     self.off[-1]=self.off[-1]+p
                     m.append(Matrix().identity().resize4x4())
                     if v: self.addArmProperty('%s_v1' % dataref, v)
-                
+
             elif t=='ANIM_trans_end':
                 if len(self.bones)==1:
                     # first bone in Armature - move armature location
@@ -1093,7 +1093,7 @@ class OBJimport:
                 self.addStrip(scene,t,v,uv,[3,2,1,0])
                 self.hard=False
                 self.panel=False
-                                     
+
             elif t=='polygon':
                 # add centre point, duplicate first point, use Tri_Fan
                 v = []
@@ -1137,7 +1137,7 @@ class OBJimport:
                     else:
                         n-=1
                 self.addStrip(scene,t,v,uv,[1,0,2,3])
-                    
+
             elif t=='tri_strip':
                 v = []
                 uv = []
@@ -1157,7 +1157,7 @@ class OBJimport:
                     v.append(self.getVertex())
                     uv.append(self.getUV())
                 self.addFan(scene,t,v,uv)
-                    
+
             # v6
 
             elif t==1:	# light
@@ -1165,7 +1165,7 @@ class OBJimport:
                 self.getCR()
                 v=self.getVertex()
                 self.addLamp(scene,v,c)
-            
+
             elif t==2:	# line
                 v = []
                 c=self.getCol()
@@ -1218,7 +1218,7 @@ class OBJimport:
                 self.addStrip(scene,'quad_strip',v,uv,[1,0,2,3])
 
             # generic state
-            
+
             elif t=='slung_load_weight':
                 self.slung=self.getFloat()
 
@@ -1226,7 +1226,7 @@ class OBJimport:
                 self.flat = True
             elif t=='ATTR_shade_smooth':
                 self.flat = False
-            
+
             elif t=='ATTR_poly_os':
                 n = self.getFloat()
                 self.poly = (n!=0)
@@ -1251,7 +1251,7 @@ class OBJimport:
 
             elif t=='ATTR_layer_group':
                 self.drawgroup=(self.getInput(), self.getInt())
-                
+
             elif t=='ATTR_LOD':
                 x=int(self.getFloat())
                 y=int(self.getFloat())
@@ -1274,7 +1274,7 @@ class OBJimport:
                 self.curregion=None
                 self.poly=False
                 self.mat=self.mats[0]
-            
+
             elif t=='ATTR_reset':
                 self.hard=False
                 self.twoside=False
@@ -1338,7 +1338,7 @@ class OBJimport:
             scene.objects.link(ob)
             cur=Window.GetCursorPos()
             ob.setLocation(cur[0], cur[1], cur[2])
-        
+
         # write meshes
         obs=[]
         for i in range(len(self.curmesh)):
@@ -1348,7 +1348,7 @@ class OBJimport:
                     90+(i*10.0)/len(self.curmesh)))
             obs.append(self.curmesh[i].doimport(self,scene))
         return obs
-		
+
     #------------------------------------------------------------------------
     def addLamp(self, scene, v, c, name=None):
         propname=None
@@ -1433,7 +1433,7 @@ class OBJimport:
             ob.rot=((radians(r.x), radians(r.y), radians(r.z)))	# for 2.43
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         self.nprim+=1
-        
+
     #------------------------------------------------------------------------
     def addCustomLight(self,scene,v,rgba,size,uv,dataref):
         if dataref in ['none', 'NULL']:
@@ -1471,14 +1471,14 @@ class OBJimport:
             tex.imageFlags|=Texture.ImageFlags.USEALPHA
             tex.setExtend('Clip')
             tex.crop=uv
-            
+
             mat=Material.New(name)
             mat.mode|=(Material.Modes.HALO|Material.Modes.HALOTEX)
             mat.rgbCol=clampedrgba[:3]
             mat.alpha=clampedrgba[3]
             mat.haloSize=size
             mat.setTexture(0, tex)
-        
+
         mesh=Mesh.New(name)
         mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
         mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
@@ -1524,7 +1524,7 @@ class OBJimport:
         if rgba[1]!=clampedrgba[1]: ob.addProperty('G', rgba[1])
         if rgba[2]!=clampedrgba[2]: ob.addProperty('B', rgba[2])
         if rgba[3]!=clampedrgba[3]: ob.addProperty('A', rgba[3])
-            
+
         ob.getMatrix()		# force recalc in 2.43 - see Blender bug #5111
         self.nprim+=1
 
@@ -1553,7 +1553,7 @@ class OBJimport:
         else:	# d.x>max(d.y,d.z):
             e=Vertex(0,self.linesemi,-self.linesemi)
 
-        # 'Line's shouldn't be merged, so add immediately 
+        # 'Line's shouldn't be merged, so add immediately
         mesh=NMesh.New(name)
         mesh.mode &= ~(NMesh.Modes.AUTOSMOOTH|NMesh.Modes.NOVNORMALSFLIP)
 
@@ -1707,7 +1707,7 @@ class OBJimport:
             # vertex twice. So manually remove extra vertices
             if face.removeDuplicateVertices() < 3:
                 continue
-            
+
             faces.append(face)
 
         if faces:
@@ -1896,5 +1896,3 @@ class OBJimport:
                 break
         if not self.panelimage:
             raise ParseError(ParseError.PANEL)
-            
-

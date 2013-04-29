@@ -25,7 +25,7 @@ Usage:<br>
 # UV Copy & Paste for blender 2.35 or above
 #
 # Copyright (c) 2004 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
@@ -120,7 +120,7 @@ def mapstrip (oldface, faces):
 # the function to handle Draw Button events
 def bevent (evt):
     global face, meshname, copynorm, copystrp
-    
+
     if evt == 1:
         Draw.Exit()
 
@@ -128,12 +128,12 @@ def bevent (evt):
         copynorm.val = 1
         copystrp.val = 0
         Draw.Redraw()
-        
+
     elif evt == 4:
         copynorm.val = 0
         copystrp.val = 1
         Draw.Redraw()
-        
+
     elif evt == 2:
         if copystrp.val:	# Strip
             objects = Blender.Object.GetSelected()
@@ -143,7 +143,7 @@ def bevent (evt):
                 print len(objects)
                 Draw.PupMenu("Please select faces only in the same mesh - %s." % meshname)
                 return
-    
+
             mesh = objects[0].getData()
             faces = mesh.getSelectedFaces()
             if len(faces) > 1024:
@@ -151,7 +151,7 @@ def bevent (evt):
                 # algorithm and doesn't overflow Python's recursion limit
                 Draw.PupMenu("Please select at most 1024 faces.")
                 return
-    
+
             Blender.Window.WaitCursor(1)
             mapstrip (face, faces)
             mesh.update()
@@ -170,7 +170,7 @@ def bevent (evt):
                             for k in range (n):
                                 newface.uv[k] = face.uv[k]
                 mesh.update()
-                
+
         Draw.Exit()
         Blender.Window.Redraw(-1)
 
@@ -184,7 +184,7 @@ def event (evt, val):
 # the function to draw the screen
 def gui():
     global copynorm, copystrp
-    
+
     size=BGL.Buffer(BGL.GL_FLOAT, 4)
     BGL.glGetFloatv(BGL.GL_SCISSOR_BOX, size)
     size=size.list
@@ -236,7 +236,7 @@ def gui():
                            "Reverse copied texture as necessary to make a strip in the same mesh")
     Draw.Button("Paste", 2, 14, y-120, 100, 26)
     Draw.Button("Cancel", 1, 187, y-120, 100, 26)
-  
+
 
 #------------------------------------------------------------------------
 # main routine
@@ -248,13 +248,13 @@ class StripError(Exception):
 try:
     if Blender.Window.EditMode():
         raise StripError("Please enter UV Face Select mode first")
-    
+
     objects = Blender.Object.GetSelected ()
     if len(objects) == 0:
         raise StripError("Please select a mesh in Object mode first")
     elif len(objects) != 1:
         raise StripError("Please select only one mesh in Object mode first")
-                     
+
     ob = objects[0]
     if ob.getType() != "Mesh":
         raise StripError("Selected object is not a Mesh")

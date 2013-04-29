@@ -31,7 +31,7 @@ Limitations:<br>
 # X-Plane importer for blender 2.43 or above
 #
 # Copyright (c) 2004,2005,2006,2007 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
@@ -265,21 +265,21 @@ class ACFimport:
                 self.image = Image.Load(texfilename+extension)
                 return
         print "Warn:\tNo texture file found"
-        
+
 
     #------------------------------------------------------------------------
     def doImport(self):
 
         layers=self.scene.layers
         self.scene.layers=[1,2,3]	# otherwise object centres not updated
-        
+
         # Hack! Just importing weapon
         if self.acf.HEADER_version in [1,800]:
             Window.DrawProgressBar(0.5, "Importing weapon ...")
             self.doBody(basename(self.filename), 0, False)
             self.scene.layers=layers
             return
-        
+
         if self.isscenery:
             if self.acf.HEADER_version>=1000:
                 n=len(self.acf.part)+len(self.acf.wpna)+len(self.acf.gear)+len(self.acf.door)+len(self.acf.obja)+len(self.acf.lite)+1
@@ -311,7 +311,7 @@ class ACFimport:
             i=i+1
             Window.DrawProgressBar(0.25+0.75*i/n, "Importing wings ...")
             self.doWing2(name, p)
-                
+
         for p in range(DEFfmt.gearDIM):
             i=i+1
             Window.DrawProgressBar(0.25+0.75*i/n, "Importing gear ...")
@@ -364,13 +364,13 @@ class ACFimport:
                                  self.offset+Vertex(self.tailloc.x, self.tailloc.y, self.tailloc.z + 0.05))
 
         self.scene.layers=layers
-                
+
     #------------------------------------------------------------------------
     def doProp(self, p):
 
         # Arbitrary constant
         twist=pi*(30.0/180.0)
-        
+
         engn=self.acf.engn[p]
         prop=self.acf.engn[p]	# Was here pre v10
         part=self.acf.part[p]
@@ -385,7 +385,7 @@ class ACFimport:
               not engn.num_blades or
               not wing.semilen_SEG):
             return
-            
+
         # texture
         if part.part_tex==0:
             imagemkr=ACFimport.LAYER1MKR
@@ -432,7 +432,7 @@ class ACFimport:
                   0,
                   -prop.prop_dir*
                   wing.Ctip*self.scale/4)]
-        
+
         ruv=[UV(part.top_s1,part.top_t1),
              UV(part.top_s2,part.top_t1),
              UV(part.top_s2,part.top_t2),
@@ -441,7 +441,7 @@ class ACFimport:
              UV(part.bot_s2,part.bot_t2),
              UV(part.bot_s2,part.bot_t1),
              UV(part.bot_s1,part.bot_t1)]
-        
+
         for i in range(int(prop.num_blades)):
             a=(1+i*2)*pi/prop.num_blades
             fv=[]
@@ -463,9 +463,9 @@ class ACFimport:
         wing=self.acf.wing[p]
         if not (getattr(part, 'part_eq', 0) or getattr(part, 'part_specs_eq', 0)) or not wing.semilen_SEG:
             return
-        
+
         centre=Vertex(part.part_x, part.part_y, part.part_z, self.mm)
-        
+
         if self.acf.HEADER_version>=1000:
             tip=centre+Vertex(RotationMatrix(wing.is_right_mult*wing.dihed_design, 3, 'y') *
                               (RotationMatrix(wing.is_right_mult*wing.sweep_design, 3, 'z') *
@@ -484,7 +484,7 @@ class ACFimport:
         self.wingc[p]=((centre, tip))
         if self.debug:
             print "%s \t[%s] [%s]" % (name, centre, tip)
-        
+
     #------------------------------------------------------------------------
     def doWing2(self, name, p):
 
@@ -571,7 +571,7 @@ class ACFimport:
             for p2 in cr:
                 part2=self.acf.part[p2]
                 wing2=self.acf.wing[p2]
-                if (p2>=p or 
+                if (p2>=p or
                     not (getattr(part2, 'part_eq', 0) or getattr(part2, 'part_specs_eq', 0)) or
                     part.part_tex!=part2.part_tex or
                     part.top_s1!=part2.top_s1 or
@@ -633,7 +633,7 @@ class ACFimport:
 
         rv=v
         lv=[v[3], v[2], v[1], v[0]]
-        
+
         if self.debug:
             for q in v:
                 print "[%5.1f %5.1f %5.1f]" % (q.x, q.y, q.z),
@@ -641,7 +641,7 @@ class ACFimport:
         # Corresponding texture points
         miny=max(v[0].y,v[1].y)	# leading edge
         maxy=min(v[2].y,v[3].y)	# trailing edge
-        
+
         if getattr(wing, 'is_left', 0) or getattr(wing, 'is_right_mult', 0)<0:
             rys=(part.top_s2-part.top_s1)/(miny-maxy)
             ruv=[UV(part.top_s1+(miny-v[0].y)*rys, part.top_t1),
@@ -673,7 +673,7 @@ class ACFimport:
             iscrappy=True
         else:
             iscrappy=False
-                        
+
             # Orientation
             if abs(dihed) >= max_dihed:
                 orient=0	# Verticalish
@@ -755,7 +755,7 @@ class ACFimport:
         # Layer 2
         if iscrappy:
             return
-        
+
         mesh=NMesh.New(name+ACFimport.LAYER2MKR+imagemkr)
         self.addFace(mesh, rv, ruv, image, False)
         self.addFace(mesh, lv, luv, image, False)
@@ -775,7 +775,7 @@ class ACFimport:
             (root, foo) = self.wingc[rootp]
             tip=tip-root	# tip relative to root
 
-            if (tip.x*tip.x + tip.y*tip.y + tip.z*tip.z < 
+            if (tip.x*tip.x + tip.y*tip.y + tip.z*tip.z <
                 ACFimport.THRESH3 * ACFimport.THRESH3):
                 return
 
@@ -795,10 +795,10 @@ class ACFimport:
         self.meshcache[p].append(mesh)
         self.addMesh(mesh.name, mesh, ACFimport.LAYER3, mm)
 
-    
+
     #------------------------------------------------------------------------
     def doBody(self, name, p, is_wpn):
-        
+
         if is_wpn:
             # Weapon locations are special
             if name:	# Importing stand-alone weapon
@@ -844,7 +844,7 @@ class ACFimport:
                 return
             else:
                 self.meshcache[wpnname]=[]
-                
+
         else:
             # Normal bodies
             obname=meshname=name
@@ -857,7 +857,7 @@ class ACFimport:
             else:
                 imagemkr=ACFimport.IMAGE2MKR
                 image=self.image2
-            
+
             if self.acf.HEADER_version<1000 and p in DEFfmt.partFairings:
                 # Fairings take location but not rotation from wheels
                 part.patt_con=0	# appears to be random in acf
@@ -865,7 +865,7 @@ class ACFimport:
                 a=RotationMatrix(gear.latE, 3, 'y')
                 a=RotationMatrix(-gear.lonE, 3, 'x')*a
                 mm=TranslationMatrix((Vertex(gear.gear_x,
-                                             gear.gear_y, 
+                                             gear.gear_y,
                                              gear.gear_z,
                                              self.mm)+
                                       Vertex(a * Vector([0,0,-gear.leg_len*self.scale]))+
@@ -926,8 +926,8 @@ class ACFimport:
                         return
             # No matching part
             self.meshcache[p]=[]
-                            
-        
+
+
         if self.debug: print obname
 
         # Get vertex data in 2D array
@@ -944,7 +944,7 @@ class ACFimport:
                 # Special case: Plane-Maker<7.30 leaves these parts as 0
                 if self.debug: print "Stopping at 12"
                 break
-                
+
             # Special case: Plane-Maker>=7.30 replicates part 11 offset 0.001'
             if i==12:	# was >11
                 for j in seq:
@@ -962,10 +962,10 @@ class ACFimport:
                 w.append(q)
                 if self.debug: print "[%5.1f %5.1f %5.1f]" % (q.x, q.y, q.z),
             if self.debug: print
-            
+
             v.append(w)
 
-        
+
         sdim=len(v)	# We now have up to 20 segments (maybe 12 or 8 or less)
         rdim=len(v[0])	# with 16 or fewer (but even) vertices/segment
 
@@ -1028,14 +1028,14 @@ class ACFimport:
         for s in range(sdim):
             for r in range(rsem):
                 if uv[s][r].t>hi_y:
-                    hi_y=uv[s][r].t			
+                    hi_y=uv[s][r].t
                 if uv[s][r].t<lo_y:
-                    lo_y=uv[s][r].t			
+                    lo_y=uv[s][r].t
                 if v[s][r].y>hi_z:
                     hi_z=v[s][r].y
                 if v[s][r].y<lo_z:
                     lo_z=v[s][r].y
-                
+
         # scale all data 0-1
         for s in range(sdim):
             for r in range(rsem):
@@ -1086,7 +1086,7 @@ class ACFimport:
 
         # offsets less than this (or neg) make body blunt
         blunt_front=0.1
-        
+
         isblunt=0
         point1=0
         miny=99999
@@ -1110,7 +1110,7 @@ class ACFimport:
             if self.debug: print "Sharp front,",
             body_pt2=0.30
             body_pt3=0.67
-            
+
         # Find front of cabin
         point2=point1+1
         for i in range(point1,sdim-1):
@@ -1172,7 +1172,7 @@ class ACFimport:
                 else:
                     seq=[0,point2,point3,sdim-1]
                 mkr=ACFimport.LAYER2MKR+imagemkr
-                
+
             else:     # ACFimport.LAYER3
                 # Don't do small bodies
                 if length<ACFimport.THRESH3:
@@ -1267,7 +1267,7 @@ class ACFimport:
 
         name="Gear %s" % (p+1)
         if self.debug: print name
-        
+
         mm=TranslationMatrix((Vertex(gear.gear_x,
                                      gear.gear_y,
                                      gear.gear_z,
@@ -1275,7 +1275,7 @@ class ACFimport:
         mm=RotationMatrix(-gear.latE, 4, 'y')*mm
         mm=RotationMatrix(gear.lonE, 4, 'x')*mm
 
-        
+
         # Strut
         mesh=NMesh.New("%s strut%s" % (name, ACFimport.LAYER1MKR))
         strutradius=strutratio*gear.tire_radius*self.scale
@@ -1297,7 +1297,7 @@ class ACFimport:
             t0=self.acf.GEAR_strut_t1[p]
             sw=self.acf.GEAR_strut_s2[p]-self.acf.GEAR_strut_s1[p]
             t1=self.acf.GEAR_strut_t2[p]
-        
+
         for i in range(0,8,2):
             a=RotationMatrix(90+i*45, 3, 'z')
             b=RotationMatrix((90+(i+1)*45)%360, 3, 'z')
@@ -1320,7 +1320,7 @@ class ACFimport:
                          [UV(s0+(i+1)*sw/8.0,t0), UV(s0+(i+2)*sw/8.0, t0),
                           UV(s0+(i+2)*sw/8.0,t1), UV(s0+(i+1)*sw/8.0, t1)],
                          self.image)
-            
+
         self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
 
@@ -1329,7 +1329,7 @@ class ACFimport:
             return
 
         # Tire layout - layer 1
-        
+
         w=gear.tire_swidth*self.scale
         r=gear.tire_radius*self.scale
         xsep=1.5*w
@@ -1440,7 +1440,7 @@ class ACFimport:
                     v.append(o+Vertex(b*Vector([-w,0.0,r])))
                     v.append(o+Vertex(a*Vector([-w,0.0,r])))
                     self.addFace(mesh, v, tread, self.image)
-                    
+
                     # 2nd step
                     v=[]
                     v.append(o+Vertex(w,0.0,0.0))	# centre
@@ -1533,7 +1533,7 @@ class ACFimport:
                          self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.1),
                       UV(self.acf.wheel_tire_s1[1],
                          self.acf.wheel_tire_t1[1]+(self.acf.wheel_tire_t2[1]-self.acf.wheel_tire_t1[1])*0.1)]
-            
+
             for o in seq:
                 for i in range(12):
                     a=RotationMatrix( i   *30 - 180, 3, 'x')
@@ -1590,7 +1590,7 @@ class ACFimport:
                                  [rim2[0]+treadi, rim2[1]+treadi,
                                   rim2[2]+treadi, rim2[3]+treadi],
                                  self.image)
-            
+
         self.addMesh(mesh.name, mesh, ACFimport.LAYER1, mm)
 
 
@@ -1613,7 +1613,7 @@ class ACFimport:
             mm=RotationMatrix(-door.ext_ang, 4, 'y')*mm
         else:
             mm=RotationMatrix(door.ext_ang, 4, 'x')*mm
-            
+
         # just use 4 corners - should adjust UVs for non-rectangular
         v=[]
         for j in [door.geo[0][0],door.geo[0][3],door.geo[3][3],door.geo[3][0]]:
@@ -1689,7 +1689,7 @@ class ACFimport:
         else:
             centre=(self.offset +
                     Vertex(eval("self.acf.VIEW_%s_xyz" % part), self.mm))
-            
+
         self.addLamp(name, r, g, b, centre)
 
 
@@ -1783,7 +1783,7 @@ class ACFimport:
 
         return mm
 
-    
+
     #------------------------------------------------------------------------
     def addLamp(self, name, r, g, b, centre):
         lamp=Lamp.New("Lamp", name)
@@ -1829,7 +1829,7 @@ class ACFimport:
                 uv.append(fuv[i])
         if len(v)<3:
             return
-    
+
         face=NMesh.Face()
         face.mode |= NMesh.FaceModes.TEX|NMesh.FaceModes.DYNAMIC
         face.mode &= ~(NMesh.FaceModes.TWOSIDE|NMesh.FaceModes.TILES)
@@ -1837,7 +1837,7 @@ class ACFimport:
             face.smooth=1
         else:
             face.smooth=0
-        
+
         for rv in v:
             for nmv in mesh.verts:
                 if remdbl and rv.equals(Vertex(nmv.co[0],nmv.co[1],nmv.co[2])):
@@ -1850,16 +1850,16 @@ class ACFimport:
                 nmv=NMesh.Vert(rv.x,rv.y,rv.z)
                 mesh.verts.append(nmv)
                 face.v.append(nmv)
-                            
+
         # Have to add them even if no texture
         for rv in uv:
             face.uv.append((rv.s, rv.t))
 
         if image:
             face.image = image
-    
+
         mesh.faces.append(face)
-    
+
 
     #------------------------------------------------------------------------
     def addFacePart(self, mesh, v, uv, c1, c2, rw, tw, image, remdbl=True):
@@ -1882,7 +1882,7 @@ class ACFimport:
         vt=v[2]-v[1]
         croot=v[3].y-v[0].y
         ctip=v[2].y-v[1].y
-        
+
         # assumes normal is up (ie no incidence) for simplicity
         nv=[v[0] + vr*c1 + Vertex(0, 0, croot*nr1),
             v[1] + vt*c1 + Vertex(0, 0, ctip *nt1),
@@ -1893,7 +1893,7 @@ class ACFimport:
              UV(uv[1].s+(uv[2].s-uv[1].s)*c1, uv[1].t),
              UV(uv[1].s+(uv[2].s-uv[1].s)*c2, uv[1].t),
              UV(uv[0].s+(uv[3].s-uv[0].s)*c2, uv[0].t)]
-            
+
         self.addFace(mesh, nv, nuv, image, remdbl)
 
 
@@ -1948,7 +1948,7 @@ class ACFimport:
 
         print "Warn:\tCouldn't read weapon \"%s\"" % wpnname
         return None
-        
+
 
 #------------------------------------------------------------------------
 #-- DEFfmt --
@@ -1958,7 +1958,7 @@ class DEFfmt:
     xint=1
     xflt=2
     xstruct=3
-    
+
     engnDIM=8		# number of Engines
     wingDIM=56		# number of Wings (incl props)
     partDIM=95		# number of Parts (incl wings)
@@ -1989,7 +1989,7 @@ class DEFfmt:
     conGear=range(14,24)
     conWheel1=25
     conWheel=range(25,35)
-    
+
     # gear
     GR_none  =0
     GR_skid  =1
@@ -2087,7 +2087,7 @@ class DEFfmt:
 88: (64,  8, 10, 0,   0,   0, 393, 393,  16,  16, 520, 520),	# Fairing 4
 89: (65,  8, 10, 0,   0,   0, 393, 393,  16,  16, 520, 520),	# Fairing 5
 90: (66,  8, 10, 0,   0,   0, 393, 393,  16,  16, 520, 520),	# Fairing 6
-	}
+    }
 
     wings=[
         # name			p
@@ -2142,7 +2142,7 @@ class DEFfmt:
         ]
 
     parts=[
-        # name 			p
+        # name          p
         ("Fuselage",		56),
         ("Misc Body 1",		57),
         ("Misc Body 2",		58),
@@ -2927,7 +2927,7 @@ xflt, "CONTROLS_ail2_up",
 xflt, "CONTROLS_ail2_dn",
 xflt, "CONTROLS_ail2_cratR",
 xflt, "CONTROLS_ail2_cratT",
-xflt, "CONTROLS_spo1_up", 
+xflt, "CONTROLS_spo1_up",
 xflt, "CONTROLS_spo1_cratR",
 xflt, "CONTROLS_spo1_cratT",
 xflt, "CONTROLS_roll_to_eng_spo1",
@@ -2942,10 +2942,10 @@ xflt, "CONTROLS_elv1_up",
 xflt, "CONTROLS_elv1_dn",
 xflt, "CONTROLS_elv1_cratR",
 xflt, "CONTROLS_elv1_cratT",
-xflt, "CONTROLS_rud1_lft", 
+xflt, "CONTROLS_rud1_lft",
 xflt, "CONTROLS_rud1_cratR",
 xflt, "CONTROLS_rud1_cratT",
-xflt, "CONTROLS_rud2_lft", 
+xflt, "CONTROLS_rud2_lft",
 xflt, "CONTROLS_rud2_cratR",
 xflt, "CONTROLS_rud2_cratT",
 xflt, "CONTROLS_fla1_cratR",
@@ -3248,7 +3248,7 @@ xflt, "CONTROLS_elv2_cratR",
 xflt, "CONTROLS_elv2_cratT",
 xflt, "OVERFLOW_cgZ_ref_ft",
 # v8.15+
-xflt, "OVERFLOW_total_S",	
+xflt, "OVERFLOW_total_S",
 xflt, "OVERFLOW_total_elements",
 xint, "OVERFLOW_randy_temp",
 xflt, "OVERFLOW_elev_def_time",
@@ -3598,7 +3598,7 @@ xflt, "obj_phi",
     objs902=objs840
     objs920=objs840
     objs941=objs840
-    
+
 # Derived from WPN740.def by Stanislaw Pusep
 #   http://sysd.org/xplane/acftools/WPN740.def
 # and from X-Plane v7 docs
@@ -3964,7 +3964,7 @@ class ACF:
                 self.wing.append(v7wing(self, v7))
             else:
                 self.wing.append(v7wing(None))
-        
+
         # parts
         self.part=[]
         for n in range(DEFfmt.partDIM):
@@ -3984,7 +3984,7 @@ class ACF:
             self.gear.append(v7gear(self, n))
         for n in range(4):
             self.gear.append(v7gear(None))
-            			#    wheel,     tread
+                        #    wheel,     tread
         self.GEAR_wheel_tire_s1=[ 1/1024.0,  1/1024.0]
         self.GEAR_wheel_tire_t1=[      0.0, 50/1024.0]
         self.GEAR_wheel_tire_s2=[15/1024.0, 15/1024.0]
@@ -3993,7 +3993,7 @@ class ACF:
         self.GEAR_strut_t1=[0 for i in range(10)]
         self.GEAR_strut_s2=[0 for i in range(10)]
         self.GEAR_strut_t2=[0 for i in range(10)]
-        
+
         # weapons
         self.watt=[]
         for n in range(DEFfmt.wattDIM):
@@ -4064,7 +4064,7 @@ class ACF:
                 Window.DrawProgressBar(i/(4.0*n), "Reading data ...")
             off=acffile.tell()
             t=defs[i]	# Data type
-            
+
             size=4	# ints and floats
             k=defs[i+1].split("[")
             var=k.pop(0)
@@ -4088,7 +4088,7 @@ class ACF:
                                 vo.append(self.data(acffile, dmp, number,
                                                     size, t, fmt, var))
                             v.append(vo)
-                        else:    
+                        else:
                             v.append(self.data(acffile, dmp, number,
                                                size, t, fmt, var))
                 else:
@@ -4099,8 +4099,8 @@ class ACF:
             if dmp and t!=DEFfmt.xstruct:
                 dmp.write("%6x:\t%s%s:\t%s\n" % (off, prefix, var, v))
             exec("self.%s=v" % var)
-        
-        
+
+
 #------------------------------------------------------------------------
 class v7engn:
     def __init__(self, acf, v7):
@@ -4229,7 +4229,7 @@ class v7wpn:
         self.mis_fin_conrat=acf.mis_fin_conrat
         self.mis_fin_steer=acf.mis_fin_steer
         self.mis_fin_dihed=acf.mis_fin_dihed
-    
+
 class v7door:
     def __init__(self, acf, v7=None):
         if not acf:
@@ -4262,7 +4262,7 @@ def quatmult(q1,q2):
                        q1[0]*q2[2] + q1[2]*q2[0] + q1[3]*q2[1] - q1[1]*q2[3],
                        q1[0]*q2[3] + q1[3]*q2[0] + q1[1]*q2[2] - q1[2]*q2[1]])
 
-        
+
 #------------------------------------------------------------------------
 relocate=False
 

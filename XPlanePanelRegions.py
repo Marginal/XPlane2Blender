@@ -14,7 +14,7 @@ __version__ = "3.09"
 # XPlanePanelRegions for blender 2.43 or above
 #
 # Copyright (c) 2007 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
@@ -88,7 +88,7 @@ else:
         block.append(('Bottom:', yoff,   0, image.size[1]))
         block.append(('Width:',  width,  0, maxx))
         block.append(('Height:', height, 0, maxy))
-        
+
         while Draw.PupBlock('Create new region', block):
             if not width.val or not height.val or 2**int(log(width.val,2))!=width.val or 2**int(log(height.val,2))!=height.val:
                 if isinstance(block[-1], tuple): block.extend(['',''])

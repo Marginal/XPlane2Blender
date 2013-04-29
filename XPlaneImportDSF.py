@@ -17,7 +17,7 @@ This script imports X-Plane DSF terrain into Blender.
 # X-Plane importer for blender 2.44 or above
 #
 # Copyright (c) 2006,2007 Jonathan Harris
-# 
+#
 # Mail: <x-plane@marginal.org.uk>
 # Web:  http://marginal.org.uk/x-planescenery/
 #
@@ -71,7 +71,7 @@ def readDSF(path):
     h=file(path, 'rb')
     h.seek(0, 2)
     hlen=h.tell()
-    h.seek(0, 0)    
+    h.seek(0, 0)
     if h.read(8)!='XPLNEDSF' or unpack('<I',h.read(4))!=(1,) or h.read(4)!='DAEH':
         raise IOError, baddsf
     (l,)=unpack('<I', h.read(4))
@@ -164,7 +164,7 @@ def readDSF(path):
                                 last=d
                 else:
                     raise IOError, baddsf
-                thispool.append(thisplane)  
+                thispool.append(thisplane)
             pool.append(thispool)
         elif c=='LACS':
             thisscal=[]
@@ -174,7 +174,7 @@ def readDSF(path):
             scal.append(thisscal)
         else:
             h.seek(l-8, 1)
-    
+
     # Rescale pool and transform to one list per entry
     if len(scal)!=len(pool): raise(IOError)
     newpool=[]
@@ -209,67 +209,67 @@ def readDSF(path):
         if progress!=now:
             progress=now
             Window.DrawProgressBar(progress/100.0, "Importing %2d%%"%progress)
-            
+
         (c,)=unpack('<B', h.read(1))
         if c==1:	# Coordinate Pool Select
             (curpool,)=unpack('<H', h.read(2))
-            
+
         elif c==2:	# Junction Offset Select
             h.read(4)	# not implemented
-            
+
         elif c==3:	# Set Definition
             (idx,)=unpack('<B', h.read(1))
-            
+
         elif c==4:	# Set Definition
             (idx,)=unpack('<H', h.read(2))
-            
+
         elif c==5:	# Set Definition
             (idx,)=unpack('<I', h.read(4))
-            
+
         elif c==6:	# Set Road Subtype
             h.read(1)	# not implemented
-            
+
         elif c==7:	# Object
             h.read(2)	# not implemented
-                
+
         elif c==8:	# Object Range
             h.read(4)	# not implemented
-                    
+
         elif c==9:	# Network Chain
             (l,)=unpack('<B', h.read(1))
             h.read(l*2)	# not implemented
-            
+
         elif c==10:	# Network Chain Range
             h.read(4)	# not implemented
-            
+
         elif c==11:	# Network Chain
             (l,)=unpack('<B', h.read(1))
             h.read(l*4)	# not implemented
-            
+
         elif c==12:	# Polygon
             (param,l)=unpack('<HB', h.read(3))
             h.read(l*2)	# not implemented
-            
+
         elif c==13:	# Polygon Range (DSF2Text uses this one)
             (param,first,last)=unpack('<HHH', h.read(6))	# not implemented
-            
+
         elif c==14:	# Nested Polygon
             (param,n)=unpack('<HB', h.read(3))
             for i in range(n):
                 (l,)=unpack('<B', h.read(1))
                 h.read(l*2)	# not implemented
-                
+
         elif c==15:	# Nested Polygon Range (DSF2Text uses this one too)
             (param,n)=unpack('<HB', h.read(3))
             h.read((n+1)*2)	# not implemented
-            
+
         elif c==16:	# Terrain Patch
             pass
-        
+
         elif c==17:	# Terrain Patch w/ flags
             (flags,)=unpack('<B', h.read(1))
             flags-=1
-            
+
         elif c==18:	# Terrain Patch w/ flags & LOD
             (flags,near,far)=unpack('<Bff', h.read(9))
             flags-=1
@@ -286,8 +286,8 @@ def readDSF(path):
                                       (p[1]-lat)*hscale, p[2]*vscale])
                 if len(p)>=7:
                     t[idx][flags].append([p[5],p[6]])
-                    
-            
+
+
         elif c==24:	# Patch Triangle - cross-pool
             (l,)=unpack('<B', h.read(1))
             n=len(v[idx][flags])
@@ -312,11 +312,11 @@ def readDSF(path):
                                       (p[1]-lat)*hscale, p[2]*vscale])
                 if len(p)>=7:
                     t[idx][flags].append([p[5],p[6]])
-            
+
         #elif c==26:	# Patch Triangle Strip (not used by DSF2Text)
         #elif c==27:
         #elif c==28:
-        
+
         elif c==29:	# Patch Triangle Fan
             (l,)=unpack('<B', h.read(1))
             n=len(v[idx][flags])
@@ -329,7 +329,7 @@ def readDSF(path):
                                       (p[1]-lat)*hscale, p[2]*vscale])
                 if len(p)>=7:
                     t[idx][flags].append([p[5],p[6]])
-            
+
         elif c==30:	# Patch Triangle Fan - cross-pool
             (l,)=unpack('<B', h.read(1))
             n=len(v[idx][flags])
@@ -358,15 +358,15 @@ def readDSF(path):
         elif c==32:	# Comment
             (l,)=unpack('<B', h.read(1))
             h.read(l)
-            
+
         elif c==33:	# Comment
             (l,)=unpack('<H', h.read(2))
             h.read(l)
-            
+
         elif c==34:	# Comment
             (l,)=unpack('<I', h.read(4))
             h.read(l)
-            
+
         else:
             raise IOError, (c, "Unrecognised command (%d)" % c, c)
 
@@ -418,7 +418,7 @@ def readDSF(path):
                 mat=Material.New(terrain[idx])
                 mat.rgbCol=[0.1, 0.1, 0.2]
                 mat.spec=0
-            
+
             mesh=Mesh.New(name)
             mesh.mode &= ~(Mesh.Modes.TWOSIDED|Mesh.Modes.AUTOSMOOTH)
             mesh.mode |= Mesh.Modes.NOVNORMALSFLIP
@@ -450,7 +450,7 @@ def readDSF(path):
                         break
                 else:
                     face.mat=1	# water
-                    
+
     lamp=Lamp.New("Lamp", "Sun")
     ob = Object.New("Lamp", "Sun")
     ob.link(lamp)
@@ -518,7 +518,7 @@ def readLIBs(libpath, libterrain):
             h.close()
             break
 
-        
+
 #------------------------------------------------------------------------
 def file_callback (filename):
     print "Starting DSF import from " + filename
@@ -543,7 +543,7 @@ def file_callback (filename):
                         readLIBs(join(xppath,d,d2), libterrain)
                         break
                 break
-        
+
         Window.DrawProgressBar(0, "Importing")
         readDSF(filename)
     elif 0:#except IOError, e:
