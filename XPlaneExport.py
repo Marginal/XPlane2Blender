@@ -331,7 +331,7 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
             elif mesh.faceUV:
                 #print object.getName()
                 for face in mesh.faces:
-                    if (face.mode&Mesh.FaceModes.TEX) and face.image:
+                    if (face.mode&Mesh.FaceModes.TEX) and face.image and len(face.v) in [3,4]:
                         if expobj.iscockpit:
                             isregion=h.isRegion(face.image)
                             if isregion: expobj.regions[face.image]=isregion
@@ -466,7 +466,7 @@ def checkdup(filename, thisdir, texture, texlist, multierr, object):
             multierr.append(object)
         if not str.lower(fixedfile) in texlist:
             texlist.append(str.lower(fixedfile))
-            print fixedfile
+            print '%s in object %s, ...' % (fixedfile, object.name)
     return texture
 
 
