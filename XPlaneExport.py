@@ -228,14 +228,9 @@ from math import log
 from os.path import abspath, basename, dirname, join, normpath, sep, splitdrive
 import Blender
 from Blender import Material, Mesh, Lamp, Image, Draw, Window
-from XPlaneUtils import Vertex, UV, Face, PanelRegionHandler
+from XPlaneUtils import Vertex, UV, Face, PanelRegionHandler, has_prop, get_prop, find_prop_list, ExportError
 #import time
 
-
-class ExportError(Exception):
-    def __init__(self, msg, objs=None):
-        self.msg = msg
-        self.objs= objs
 
 
 #------------------------------------------------------------------------
@@ -271,7 +266,7 @@ def checkLayers (expobj, theObjects):
 #------------------------------------------------------------------------
 # Returns main texture
 # Also sets LODs, layermask, regions
-def getTexture (expobj, theObjects, iscsl, fileformat):
+def getTexture (expobj, theObjects, iscsl, fileformat,want_draped=0):
     texture=None
     multierr=[]
     panelerr=(fileformat==7 and expobj.iscockpit)
@@ -280,12 +275,31 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     nobj=len(theObjects)
     texlist=[]
     layers=0
+	
+    if find_prop_list(theObjects,'panel_ok') != None:
+        expobj.ispanelok=True
+	
     if iscsl:
         expobj.lod=[0,1000,4000,100000]	# list of lod limits
     else:
         expobj.lod=[0,1000,4000,10000]		# list of lod limits
     thisdir=normpath(dirname(Blender.Get('filename')))
     h=PanelRegionHandler()
+
+    lod_keys = [['lod_0', 0], ['lod_1',1], ['lod_2',2],['lod_3',3]];
+    for l in lod_keys:
+        src_o=find_prop_list(theObjects,l[0])
+        if src_o != None:
+            layer=l[1]
+            #print "object %s layer %d found LOD %s" % (object.name,layer,get_prop(object,l[0],0))
+            expobj.lod[layer] = float(get_prop(src_o,l[0],0))
+            if layer<3 and expobj.lod[layer+1]<=expobj.lod[layer]:
+                expobj.lod[layer+1]=expobj.lod[layer]+1
+            if expobj.layermask!=7:
+                expobj.layermask=7
+                #print "Info:\tMultiple Levels Of Detail found"
+                expobj.log.append(("Multiple Levels Of Detail found",[]))
+            
 
     for o in range (nobj-1,-1,-1):
         object=theObjects[o]
@@ -297,21 +311,9 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
                 layers = object.Layer&7
             elif object.Layer&7 and layers^(object.Layer&7):
                 expobj.layermask=7
-                print "Info:\tMultiple Levels Of Detail found"
+                #print "Info:\tMultiple Levels Of Detail found"
                 expobj.log.append(("Multiple Levels Of Detail found", []))
 
-        if objType == 'Empty' and not expobj.iscockpit:
-            for prop in object.getAllProperties():
-                if prop.type in ['INT', 'FLOAT'] and prop.name.lower() in ['lod_0', 'lod_1', 'lod_2', 'lod_3']:
-                    layer=int(prop.name[4])
-                    expobj.lod[layer] = int(prop.data)
-                    if layer<3 and expobj.lod[layer+1]<=expobj.lod[layer]:
-                        expobj.lod[layer+1]=expobj.lod[layer]+1
-                    if expobj.layermask!=7:
-                        expobj.layermask=7
-                        print "Info:\tMultiple Levels Of Detail found"
-                        expobj.log.append(("Multiple Levels Of Detail found",[]))
-                
         if not object.Layer&expobj.layermask:
             continue
             
@@ -329,10 +331,13 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
                 expobj.log.append(('Ignoring custom light "%s" with no texture' % object.name, [object]))
                     
             elif mesh.faceUV:
-                #print object.getName()
+                #print '%s (%d)' % (object.getName(), len(mesh.faces))
                 for face in mesh.faces:
-                    if (face.mode&Mesh.FaceModes.TEX) and face.image and len(face.v) in [3,4]:
-                        if expobj.iscockpit:
+                    has_draped = (face.mode&Mesh.FaceModes.TILES) and has_prop(object,'ATTR_draped')
+
+                    if (face.mode&Mesh.FaceModes.TEX) and face.image and len(face.v) in [3,4] and has_draped == want_draped:
+                        #print '   this is face, image is %s.\n' % face.image.filename
+                        if expobj.ispanelok:
                             isregion=h.isRegion(face.image)
                             if isregion: expobj.regions[face.image]=isregion
                             if fileformat>7 and isregion:
@@ -350,7 +355,7 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
                                     # Check that at least one panel texture is OK
                                     if isregion:
                                         #(n,xoff,yoff,width,height)=isregion
-                                        panelerr=0	# Should check
+                                        panelerr=0    # Should check
                                     else:
                                         xoff=yoff=0
                                         try:
@@ -383,13 +388,13 @@ def getTexture (expobj, theObjects, iscsl, fileformat):
     if not texture:
         return None
 
-    try:
-        img=Image.Load(texture)
-        (width,height)=img.getSize()
-    except:
-    	raise ExportError("Can't load texture file \"%s\"" % texture)
-    if 2**int(log(width,2))!=width or 2**int(log(height,2))!=height:
-        raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace and fixup UV mapping\n\tto load the new file")
+#    try:
+#        img=Image.Load(texture)
+#        (width,height)=img.getSize()
+#    except:
+#    	raise ExportError("Can't load texture file \"%s\"" % texture)
+#    if 2**int(log(width,2))!=width or 2**int(log(height,2))!=height:
+#        raise ExportError("Texture file height and width must be powers of two.\n\tPlease resize the file. Use Image->Replace and fixup UV mapping\n\tto load the new file")
 
     l=texture.rfind(sep)
     if l!=-1:

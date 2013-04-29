@@ -165,7 +165,7 @@ from os import listdir
 from os.path import basename, dirname, join, splitext
 
 from XPlaneUtils import Vertex, UV, findTex
-from XPlaneImport import OBJimport
+from XPlaneImport_util import OBJimport
 
 class ParseError(Exception):
     def __init__(self, msg):
