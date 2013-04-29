@@ -60,8 +60,7 @@ for I in "$HOME/.blender/scripts" $DIRS; do
 done
 
 # Files to install
-FILES="uvCopyPaste.py
-uvFixupACF.py
+FILES="uvFixupACF.py
 uvResize.py
 XPlaneAnimObject.py
 XPlaneExport.py

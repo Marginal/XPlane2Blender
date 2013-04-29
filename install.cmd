@@ -52,7 +52,7 @@ echo Failed to find the correct location for the scripts !!!
 goto end
 
 :copy
-set FILES=uvCopyPaste.py uvFixupACF.py uvResize.py XPlaneAnimObject.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneExportCSL.py XPlaneImport.py XPlaneImportMDL.py XPlaneImportPlane.py XPlanePanelRegions.py XPlaneUtils.py XPlaneHelp.py XPlane2Blender.html DataRefs.txt
+set FILES=uvFixupACF.py uvResize.py XPlaneAnimObject.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneExportCSL.py XPlaneImport.py XPlaneImportMDL.py XPlaneImportPlane.py XPlanePanelRegions.py XPlaneUtils.py XPlaneHelp.py XPlane2Blender.html DataRefs.txt
 for %%I in (%FILES%) do copy /v /y %%I "%DESTDIR%\" >nul:
 for %%I in (%FILES%) do if not exist "%DESTDIR%\%%I" goto copyfail
 echo.
