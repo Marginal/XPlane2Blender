@@ -1068,7 +1068,7 @@ class OBJimport:
                 c=self.getFloat()
                 self.addLamp(scene,v,c,t)
 
-            elif t in ['POINT_COUNTS', 'TEXTURE_LIT']:
+            elif t in ['EXPORT', 'POINT_COUNTS', 'TEXTURE_LIT', 'TEXTURE_NORMAL']:
                 pass	# Silently ignore
 
             # v7
@@ -1329,7 +1329,7 @@ class OBJimport:
                 else:
                     self.mats.append(self.mat)
 
-            elif self.fileformat>6 and t.startswith('ATTR_'):
+            elif self.fileformat>6 and (t.startswith('ATTR_') or t.startswith('GLOBAL_')):
                 print 'Warn:\tIgnoring unsupported "%s"' % t
                 self.log.append('Ignoring unsupported "%s"' % t)
 
