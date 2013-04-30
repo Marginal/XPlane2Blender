@@ -19,7 +19,7 @@ for location in ['uscriptsdir', 'scriptsdir']:
     path=Blender.Get(location)
     if not path:
         continue
-    filename=Blender.sys.join(path, 'XPlane2Blender.html')
+    filename=Blender.sys.join(path, 'ReadMe-XPlane2Blender.html')
     try:
         file=open(filename, 'rb')
         file.close()
