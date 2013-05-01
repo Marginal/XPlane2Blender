@@ -1,17 +1,26 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane Annotation...'
+Name: 'X-Plane Annotation'
 Blender: 249
 Group: 'Import'
 Tooltip: 'Import an OBJ annotation.'
 """
 __author__ = "Ben Supnik"
-__email__ = "Ben Supnik, bsupnik at xsquawkbox dot net"
-__url__ = "X-Plane, wiki.x-plane.com"
-__version__ = "1.00"
+__email__ = "Ben Supnik, Ben Supnik <bsupnik:xsquawkbox*net>"
+__url__ = "developer.x-plane.com"
+__version__ = "3.11"
 __bpydoc__ = """\
-This script is a derivative work of Jonathan Harris' X-Plane blender scripts, and is covered under the terms of the GPL.
+This script imports X-Plane object annotations.
 """
+
+#
+# Copyright (c) 2012-2013 Ben Supnik
+#
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
 
 import sys
 import os

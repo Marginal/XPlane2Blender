@@ -8,15 +8,19 @@ Tooltip: 'Import an X-Plane scenery or cockpit object (.obj)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.09"
+__version__ = "3.11"
 __bpydoc__ = """\
-This script imports X-Plane v6, v7 and v8 .obj scenery files into Blender.
-
-Limitations:<br>
-  * smoke_black and smoke_white X-Plane primitives are ignored.<br>
-  * ambient, blend and specular attributes are ignored.<br>
-  * Can't work out which faces are partially or wholly transparent.<br>
+This script imports X-Plane v6-v10 object files.
 """
+
+#
+# Copyright (c) 2004-2007 Jonathan Harris
+#
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
 
 from XPlaneImport_util import *
 

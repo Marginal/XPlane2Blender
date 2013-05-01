@@ -8,151 +8,19 @@ Tooltip: 'Import an X-Plane airplane (.acf) or weapon (.wpn)'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.10"
+__version__ = "3.11"
 __bpydoc__ = """\
-This script imports X-Plane v7 and v8 airplanes and weapons into Blender,
+This script imports X-Plane v7-v10 airplanes and weapons into Blender,
 so that they can be exported as X-Plane scenery objects.
-
-Planes are imported with three levels of detail to maximise rendering
-speed in X-Plane.
-
-Limitations:<br>
-  * Planes made with PlaneMaker 7.30 or earlier are not supported.<br>
-  * Wings are simplified to reduce polygon count.<br>
-    Any wing curvature is ignored.<br>
-  * Adjacent wing segments may not be exactly joined-up.<br>
-  * Cockpit objects are ignored.<br>
-  * Imported planes usually use two or more textures.<br>
-    All faces must be made to share a single texture before export.<br>
-  * Can't work out which faces are partially or wholly transparent.<br>
 """
 
-#------------------------------------------------------------------------
-# X-Plane importer for blender 2.43 or above
 #
-# Copyright (c) 2004,2005,2006,2007 Jonathan Harris
+# Copyright (c) 2004-2013 Jonathan Harris
 #
-# Mail: <x-plane@marginal.org.uk>
-# Web:  http://marginal.org.uk/x-planescenery/
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
 #
-# See XPlane2Blender.html for usage.
-#
-# This software is licensed under a Creative Commons License
-#   Attribution-Noncommercial-Share Alike 3.0:
-#
-#   You are free:
-#    * to Share - to copy, distribute and transmit the work
-#    * to Remix - to adapt the work
-#
-#   Under the following conditions:
-#    * Attribution. You must attribute the work in the manner specified
-#      by the author or licensor (but not in any way that suggests that
-#      they endorse you or your use of the work).
-#    * Noncommercial. You may not use this work for commercial purposes.
-#    * Share Alike. If you alter, transform, or build upon this work,
-#      you may distribute the resulting work only under the same or
-#      similar license to this one.
-#
-#   For any reuse or distribution, you must make clear to others the
-#   license terms of this work.
-#
-# This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-nc-sa/3.0/
-#
-#
-# 2004-02-01 v1.00
-#  - First public version
-#
-# 2004-08-22 v1.10
-#  - Requires XPlane2Blender 1.50 since DYNAMIC flag has been reversed
-#  - Support for 7.40 format planes
-#  - Improved texture placement (thanks to Austin for sharing his code).
-#  - Fixed bug where VTOL vector was ignored on engines
-#  - Misc Bodies 3-8 now imported, but using texture from Misc Bodies 1&2
-#
-# 2004-08-28 v1.11
-#  - Fix for changed layer semantics in Blender 234 (fix to Blender bug #1212)
-#  - Add single-letter suffix to mesh names to denote layer
-#
-# 2004-08-28 v1.12
-#  - Requires Blender 234 due to changed layer semantics of Blender fix #1212
-#
-# 2004-08-28 v1.13
-#
-# 2004-12-31 v1.14
-#  - Fixed bug with zero length bodies
-#  - Truncate pre-730 planes at fuselage location 12 - improves smoothing.
-#
-# 2005-03-01 v1.15
-#  - Fixed parsing bug with non-zero values of is_hm or is_ga.
-#
-# 2005-04-24 v2.00
-#  - Added support for v8 planes and weapons.
-#  - All bodies and weapons imported using correct texture.
-#  - Airfoil width read from .afl file.
-#
-# 2005-05-10 v2.02
-#  - Add '*' to mesh names for parts that use secondary texture.
-#
-# 2005-05-14 v2.05
-#  - Add support for v8.15 format planes.
-#
-# 2006-02-01 v2.17
-#  - Add support for v8.30 format planes.
-#
-# 2006-02-28 v2.18
-#  - Add support for v8.40 format planes (Misc Objects).
-#  - Add thrust vectoring to props and nacelles.
-#  - PNG takes precedence over BMP.
-#
-# 2006-04-18 v2.20
-#  - Add light attachment to gear.
-#  - Add wingtip strobe lights. All lights now present in all layers.
-#  - Fixes for misc objs, wpns and objs attached to gear and wheels
-#
-# 2006-04-22 v2.21
-#  - Re-use meshes for duplicate wings, bodies, weapons and objects
-#
-# 2006-05-02 v2.22
-#  - Fix for fairing rotation.
-#
-# 2006-06-12 v2.24
-#  - Fix for zero-length bodies.
-#
-# 2006-07-19 v2.25
-#  - Use v8.50 named lights. Lights back to shared between layers.
-#  - Fix for wings in layer 3 (broken in 2.21).
-#  - Fix for adjoining wings small enough to be root and tip.
-#
-# 2006-09-29 v2.31
-#  - Hack for v8 weapons.
-#
-# 2006-10-16 v2.33
-#  - Support for importing planes centred at the plane's centre of
-#    gravity (for making CSLs for use with recent versions of X-IvAp).
-#
-# 2006-12-21 v2.34
-#  - Add support for v8.60 format planes (no visible changes).
-#  - Handle wing incidence.
-#
-# 2006-03-16 v2.35
-#  - Fix for weapon fins.
-#
-# 2006-03-18 v2.36
-#  - Fixes for importing planes on Mac & Linux.
-#
-# 2006-09-17 v2.42
-#  - Landing gear and flat wings imported as flat.
-#
-# 2007-12-02 v3.00
-#  - Support for v9.00 planes.
-#  - Support for DDS textures.
-#
-# 2008-01-20 v3.07
-#  - Support for 9b18 planes.
-#
-# 2012-07-09 v3.10
-#  - Support for v10 planes.
+# See ReadMe-XPlane2Blender.html for usage.
 #
 
 import sys

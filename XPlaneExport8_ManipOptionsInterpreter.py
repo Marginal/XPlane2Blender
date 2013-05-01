@@ -1,3 +1,9 @@
+#
+# Copyright (c) 2010 Ben Russell
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
+
 import sys
 import time
 import Blender

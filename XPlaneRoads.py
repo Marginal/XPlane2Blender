@@ -1,18 +1,26 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane Roads'
+Name: 'X-Plane Road network (.net)'
 Blender: 245
 Group: 'Export'
-Tooltip: 'Export to X-Plane Road (.net)
+Tooltip: 'Export an X-Plane road network'
 """
 __author__ = "Ben Supnik"
-__email__ = "bsupnik at xsquawkbox dot net"
-__url__ = "http://scenery.x-plane.com/"
-__version__ = "1.0"
+__email__ = "Ben Supnik, Ben Supnik <bsupnik:xsquawkbox*net>"
+__url__ = "developer.x-plane.com"
+__version__ = "3.11"
 __bpydoc__ = """\
-This script makes X-Plane road files.  A lot of the routines are based on Jonathan Harris' X-Plane 8 OBJ export script; this
-should be considered a derived work (and thus GPL).
+This script makes X-Plane road files.
 """
+
+#
+# Copyright (c) 2012-2013 Ben Supnik
+#
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
 
 import sys
 import Blender

@@ -1,3 +1,12 @@
+#
+# Copyright (c) 2012-2013 Ben Supnik
+#
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
+
 import sys
 import os
 import Blender

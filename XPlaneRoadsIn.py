@@ -1,16 +1,16 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane Road (.net)...'
+Name: 'X-Plane Road network (.net)'
 Blender: 249
 Group: 'Import'
-Tooltip: 'Import an X-Plane road network (.net)'
+Tooltip: 'Import an X-Plane road network'
 """
 __author__ = "Ben Supnik"
-__email__ = "Ben Supnik, bsupnik at xsquawkbox dot net"
-__url__ = "X-Plane, wiki.x-plane.com"
-__version__ = "1.00"
+__email__ = "Ben Supnik, Ben Supnik <bsupnik:xsquawkbox*net>"
+__url__ = "developer.x-plane.com"
+__version__ = "3.11"
 __bpydoc__ = """\
-This script is a derivative work of Jonathan Harris' X-Plane blender scripts, and is covered under the terms of the GPL.
+This script imports X-Plane road files.
 """
 
 import sys

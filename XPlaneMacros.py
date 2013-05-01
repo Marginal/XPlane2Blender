@@ -1,3 +1,12 @@
+#
+# Copyright (c) 2012-2013 Ben Supnik
+#
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
+
 road_matches = [
     ['local_cores', "io 50 io 51 io 52 io 53 io 54 io 55 io 56 io 57 io 58 io 60 io 61 io 62 io 63 io 64 io 66 io 66 io 67 io 68"],
 

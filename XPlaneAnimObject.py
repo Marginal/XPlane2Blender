@@ -8,62 +8,18 @@ Tooltip: 'Edit X-Plane animation'
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.09"
+__version__ = "3.11"
 __bpydoc__ = """\
-Edit X-Plane animation properties.
+This script edits X-Plane animation properties.
 """
 
-#------------------------------------------------------------------------
 #
 # Copyright (c) 2007 Jonathan Harris
 #
-# Mail: <x-plane@marginal.org.uk>
-# Web:  http://marginal.org.uk/x-planescenery/
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
 #
-# See XPlane2Blender.html for usage.
-#
-# This software is licensed under a Creative Commons License
-#   Attribution-Noncommercial-Share Alike 3.0:
-#
-#   You are free:
-#    * to Share - to copy, distribute and transmit the work
-#    * to Remix - to adapt the work
-#
-#   Under the following conditions:
-#    * Attribution. You must attribute the work in the manner specified
-#      by the author or licensor (but not in any way that suggests that
-#      they endorse you or your use of the work).
-#    * Noncommercial. You may not use this work for commercial purposes.
-#    * Share Alike. If you alter, transform, or build upon this work,
-#      you may distribute the resulting work only under the same or
-#      similar license to this one.
-#
-#   For any reuse or distribution, you must make clear to others the
-#   license terms of this work.
-#
-# This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-nc-sa/3.0/
-#
-#
-# 2007-12-03 v3.01
-#  - New file
-#
-# 2007-12-05 v3.01
-#  - Fix for when no action associated with armature
-#  - Fix for setting multiple "hide" entries
-#
-# 2007-12-05 v3.02
-#  - Bones in the same armature can have different frame counts
-#  - Middle button pans
-#
-# 2007-12-06 v3.03
-#  - Fix for missing first dataref menu entries
-#
-# 2007-12-11 v3.04
-#  - Disambiguate all similar bones/hideshow in armature when editing one
-#
-# 2008-01-20 v3.07
-#  - Limit data input to +/-10000 - this is the limit in the properties panel.
+# See ReadMe-XPlane2Blender.html for usage.
 #
 
 import Blender

@@ -1,57 +1,10 @@
-#------------------------------------------------------------------------
-# X-Plane import/output utility classes for blender 2.43 or above
 #
 # Copyright (c) 2005,2006,2007 Jonathan Harris
 #
-# Mail: <x-plane@marginal.org.uk>
-# Web:  http://marginal.org.uk/x-planescenery/
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
 #
-# See XPlane2Blender.html for usage.
-#
-# This software is licensed under a Creative Commons License
-#   Attribution-Noncommercial-Share Alike 3.0:
-#
-#   You are free:
-#    * to Share - to copy, distribute and transmit the work
-#    * to Remix - to adapt the work
-#
-#   Under the following conditions:
-#    * Attribution. You must attribute the work in the manner specified
-#      by the author or licensor (but not in any way that suggests that
-#      they endorse you or your use of the work).
-#    * Noncommercial. You may not use this work for commercial purposes.
-#    * Share Alike. If you alter, transform, or build upon this work,
-#      you may distribute the resulting work only under the same or
-#      similar license to this one.
-#
-#   For any reuse or distribution, you must make clear to others the
-#   license terms of this work.
-#
-# This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-nc-sa/3.0/
-#
-#
-# 2005-03-01 v2.00
-#  - New file split out from other XPlane*.py scripts.
-#
-# 2006-07-11 v2.25
-#  - Fix for comparing lines and lights.
-#  - Increased output precision to 4 decimals for really small objects.
-#  - Reduced duplicate vertex limit to 0.0001 for really small objects.
-#  - Reduced duplicate UV limit to 4 pixels in 1024.
-#
-# 2007-12-02 v3.00
-#  - Support for DDS textures.
-#  - Support for v9 datarefs
-#  - Ignore muliplayer to reduce number of ambiguous datarefs.
-#  - Fix for zero-scaled objects.
-#
-# 2007-12-21 v3.05
-#  - Support for cockpit panel regions.
-#  - Reduced duplicate UV limit to 0.0004 = 1 pixel in 2048.
-#
-# 2008-04-08 v3.09
-#  - Don't regenerate panel region images on load, pack them instead.
+# See ReadMe-XPlane2Blender.html for usage.
 #
 
 import sys

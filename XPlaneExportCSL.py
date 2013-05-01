@@ -1,58 +1,27 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane CSL Object (.obj)'
+Name: 'X-Plane CSL (.obj)'
 Blender: 243
 Group: 'Export'
-Tooltip: 'Export to X-Plane CSL format object (.obj)'
+Tooltip: 'Export to X-Plane CSL (.obj)'
 """
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = ["XPlane2Blender, http://marginal.org.uk/x-planescenery/",
+           "XSquawkBox, http://www.xsquawkbox.net/xsb/",
            "X-IvAp, http://www.ivao.aero/softdev/X-IvAp/"]
-__version__ = "3.09"
+__version__ = "3.11"
 __bpydoc__ = """\
-This script exports scenery created in Blender to X-Plane CSL .obj
-format for use with XSquawkbox and X-IvAp.
-
-Limitations:<br>
-  * Only Lamps and Meshes are exported.<br>
-  * All faces must share a single texture (this is a limitation of<br>
-    the X-Plane .obj file format). Multiple textures are not<br>
-    automagically merged into one file during the export.
+This script exports X-Plane CSL objects for use with XSquawkbox and X-IvAp.
 """
 
-#------------------------------------------------------------------------
-# X-Plane exporter for blender 2.43 or above
 #
 # Copyright (c) 2004,2005 Jonathan Harris
 #
-# Mail: <x-plane@marginal.org.uk>
-# Web:  http://marginal.org.uk/x-planescenery/
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
 #
-# See XPlane2Blender.html for usage.
-#
-# This software is licensed under a Creative Commons License
-#   Attribution-Noncommercial-Share Alike 3.0:
-#
-#   You are free:
-#    * to Share - to copy, distribute and transmit the work
-#    * to Remix - to adapt the work
-#
-#   Under the following conditions:
-#    * Attribution. You must attribute the work in the manner specified
-#      by the author or licensor (but not in any way that suggests that
-#      they endorse you or your use of the work).
-#    * Noncommercial. You may not use this work for commercial purposes.
-#    * Share Alike. If you alter, transform, or build upon this work,
-#      you may distribute the resulting work only under the same or
-#      similar license to this one.
-#
-#   For any reuse or distribution, you must make clear to others the
-#   license terms of this work.
-#
-# This is a human-readable summary of the Legal Code (the full license):
-#   http://creativecommons.org/licenses/by-nc-sa/3.0/
-#
+# See ReadMe-XPlane2Blender.html for usage.
 #
 
 import Blender

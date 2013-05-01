@@ -6,13 +6,21 @@ Group: 'Export'
 Tooltip: 'Export a scene to multiple objects.'
 """
 __author__ = "Ben Supnik"
-__email__ = "bsupnik at xsquawkbox dot net"
-__url__ = "www.x-plane.com"
-__version__ = "1.0"
+__email__ = "Ben Supnik, Ben Supnik <bsupnik:xsquawkbox*net>"
+__url__ = "developer.x-plane.com"
+__version__ = "3.11"
 __bpydoc__ = """\
 This script exports multiple OBJs from a Blender scene.
-It is a derived work from Jonathn Harris' original exporter!!
 """
+
+#
+# Copyright (c) 2012-2013 Ben Supnik
+#
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
 
 from XPlaneExport8_util import *
 from XPlaneUtils import *

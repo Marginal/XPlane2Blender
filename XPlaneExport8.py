@@ -1,26 +1,26 @@
 #!BPY
 """ Registration info for Blender menus:
-Name: 'X-Plane v8/v9 Object (.obj)'
+Name: 'X-Plane Object (.obj)'
 Blender: 245
 Group: 'Export'
-Tooltip: 'Export to X-Plane v8 or v9 format object (.obj)'
+Tooltip: 'Export to X-Plane object'
 """
 __author__ = "Jonathan Harris"
 __email__ = "Jonathan Harris, Jonathan Harris <x-plane:marginal*org*uk>"
 __url__ = "XPlane2Blender, http://marginal.org.uk/x-planescenery/"
-__version__ = "3.09"
+__version__ = "3.11"
 __bpydoc__ = """\
-This script exports scenery created in Blender to X-Plane v8 or v9
-.obj format for placement with World-Maker.
-
-Limitations:<br>
-  * Only Lamps and Mesh Faces (including "lines") are exported.<br>
-  * All faces must share a single texture (this is a limitation of<br>
-    the X-Plane .obj file format) apart from cockpit panel faces<br>
-    which can additionally use the cockpit panel texture. Multiple<br>
-    textures are not automagically merged into one file during the<br>
-    export.
+This script exports to X-Plane v8, v9 or v10 object format.
 """
+
+#
+# Copyright (c) 2007 Jonathan Harris
+#
+# This code is licensed under version 2 of the GNU General Public License.
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# See ReadMe-XPlane2Blender.html for usage.
+#
 
 from XPlaneExport8_util import *
 from XPlaneUtils import *
