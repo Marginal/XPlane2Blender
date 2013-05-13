@@ -166,7 +166,13 @@ em { font-style:normal; color:FireBrick; }
   <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel <kbd>F5</kbd>.</dd>
   <dd><code>Traffic</code> - Traffic (legacy) light; cycles red, orange, green. (R,G,B settings are ignored).</dd>
   <dd><code>smoke_black</code> or <code>smoke_white</code> - Not really a light; emits smoke. The size of the smoke puffs is determined by the Energy slider on the <samp>Lamp</samp> panel <kbd>F5</kbd> (R,G,B settings are ignored).</dd>
-  <dd><i>other</i> - X-Plane pre-defined &ldquo;named&rdquo; light. The name of the X-Plane light is taken from the value of a <a href="#properties">property</a> named <code>name</code> if this exists, otherwise from the name of the lamp object. (R,G,B settings are ignored).</dd>
+  <dd><i>other</i> - X-Plane pre-defined &ldquo;named&rdquo; or &ldquo;parameterized&rdquo; light:
+    <ul>
+      <li>The name of the X-Plane light is taken from the value of a <a href="#properties">property</a> named <code>name</code> if this exists, otherwise from the name of the lamp object.</li>
+      <li>Additional parameters are taken from the value of a <a href="#properties">property</a> named <code>params</code>.</li>
+      <li>R,G,B settings are ignored.</li>
+    </ul>
+  </dd>
 </dl>
 <p>Custom lights are created using the vertices from a rectangular &ldquo;Plane&rdquo; Mesh object:</p>
 <ul>
