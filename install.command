@@ -73,19 +73,21 @@ done
 # Files to install
 FILES="DataRefs.txt
 ReadMe-XPlane2Blender.html
+XPlane3DCockpits.html
 XPlaneAG.py
 XPlaneAnimObject.py
 XPlaneAnnotate.py
 XPlaneExport.py
-XPlaneExport7.py
 XPlaneExport8.py
 XPlaneExport8_ManipOptionsInterpreter.py
 XPlaneExport8_util.py
+XPlaneExportCSL.html
 XPlaneExportCSL.py
 XPlaneFacade.py
 XPlaneHelp.py
 XPlaneImport.py
 XPlaneImportMDL.py
+XPlaneImportPlane.html
 XPlaneImportPlane.py
 XPlaneImport_util.py
 XPlaneLib.py

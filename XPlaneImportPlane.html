@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <meta name="description" content="X-Plane import/export scripts for Blender 3D">
+  <meta name="keywords" content="X-Plane, simulator, scenery, Blender, Blender3D">
+  <title>XPlane2Blender</title>
+  <meta name="author" content="Jonathan Harris">
+  <style type="text/css">
+.banner { font-family: Arial,Helvetica,sans-serif; background-color: lightskyblue; text-align: left; height: 32px; }
+.dnl { font-family: Arial,Helvetica,sans-serif; font-size: small; background-color: lightskyblue; }
+samp { font-family: Arial,Helvetica,sans-serif; }
+h2 { font-family: Arial,Helvetica,sans-serif; }
+h3 { font-family: Arial,Helvetica,sans-serif; }
+h4 { font-family: Arial,Helvetica,sans-serif; }
+h5 { font-family: Arial,Helvetica,sans-serif; }
+ul { margin: 0; }
+kbd {font-family: sans-serif; color: black; background-color: white; border: 1px solid black; -webkit-border-radius:5px; -moz-border-radius:5px; border-radius: 5px; padding: 1px 1px 0px; }
+pre { border: 1px solid; padding: 8px; width: 75%; }
+blockquote { font-family: monospace; }
+em { font-style:normal; color:FireBrick; }
+  </style>
+</head>
+<body>
+<table style="width: 100%;" border="0" cellpadding="2">
+  <tbody>
+    <tr>
+      <td class="banner">Marginal&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/">X-Plane&nbsp;Scenery</a>&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/tools.html">Tools</a>&nbsp;&rarr; <a href="./ReadMe-XPlane2Blender.html">XPlane2Blender</a>&nbsp;&rarr; Tweaking Planes</td>
+    </tr>
+  </tbody>
+</table>
+<hr>
+
+<h2>Tweaking Planes</h2>
+
+<h3>Positioning the plane</h3>
+<p>Imported planes need to be positioned correctly on the ground for use as static scenery (don't do this if you're making a CSL or cockpit object):</p>
+<ul>
+  <li>Select layers 1-3, select all objects and position the plane so that its undercarriage is sitting directly on the ground (represented by the <i>x</i>/y axes).</li>
+  <li>You may also need to rotate the plane slightly so that all wheels are level; press <kbd>r</kbd> and move the mouse to <u>r</u>otate the plane so that its undercarriage is sitting directly on the ground. Click to set the plane's position.</li>
+</ul>
+
+<h3>Consolidating textures</h3>
+<p>The primary file for textures is named <code><i>airplane</i>_paint</code>. Most planes also use textures from a secondary file named <code><i>airplane</i>_paint2</code>. Objects that use textures from the secondary file are imported with "<code>*</code>" after their name to make them easier to identify in Blender's <samp>Outliner</samp> window.</p>
+<p>The X-Plane <code>.obj</code> scenery file format only supports the use of a single file for textures. If your plane only has a few simple objects that use textures from <code><i>airplane</i>_paint2</code> then you should re-texture these objects to use <code><i>airplane</i>_paint</code>, following the same procedure described below for weapons and misc objects. If that is not feasible you can use this procedure to make the plane use textures from a single file:</p>
+<ul>
+  <li>Save your Blender model.</li>
+  <li>In an image editor application, resize <code><i>airplane</i>_paint</code> and <code><i>airplane</i>_paint2</code> to <i>e.g.</i> 2048x1024. <small>(You don't need to save these resized versions)</small>.</li>
+  <li>Create a new bitmap file 2048 pixels wide and 1024 pixels high.</li>
+  <li>Paste the resized <code><i>airplane</i>_paint</code> into the left half of this bitmap.</li>
+  <li>Paste the resized <code><i>airplane</i>_paint2</code> into the right half of this bitmap.</li>
+  <li>Save the bitmap file in the same folder and with the same name as your <code>.blend</code> file. If you're making a CSL object then you must save in PNG format.</li>
+  <li>If your plane uses night-time textures then repeat this procedure for the <code>_LIT</code> bitmap files.</li>
+  <li>In a Blender <samp>UV/Image Editor</samp> window choose <samp>Image&nbsp;&rarr; Merge&nbsp;_paint&nbsp;and&nbsp;_paint2</samp>.
+</ul>
+<p>If your imported plane uses weapons or misc objects then each of these will use an additional bitmap file. Weapons are imported with their names starting with <code>W<i>nn</i></code> and objects with their names starting with <code>O<i>nn</i></code>. Also note that reduced-LOD versions of weapons and misc objects may be present in layers 2 and 3.</p>
+<p>Open an <samp>Outliner</samp> window and choose <samp>View&nbsp;&rarr; Show&nbsp;Outliner</samp>. For each mesh that has a name starting with <code>W<i>nn</i></code> or <code>O<i>nn</i></code> or ending with <code>*</code>, either:</p>
+<ul>
+  <li>Delete the mesh, or</li>
+  <li>Copy the required textures to an unused area in the primary bitmap file and use the <samp>UV/Image Editor</samp> window to map the new copy of the textures to the mesh's faces.</li>
+</ul>
+
+<h3>Performance</h3>
+<p>If you're making a CSL or static scenery, consider performance issues when the plane is rendered in X-Plane. Ask yourself the following questions:</p>
+<ul>
+  <li>Most important: Do you really need fully detailed textures for your plane? Consider resizing the texture file in an image editor program to half or even quarter size. Use <samp>Image&nbsp;&rarr; Replace</samp> to use the new texture file.</li>
+  <li>Does the model have hidden faces? Look for things like wings or misc bodies that are partially or wholly buried in the fuselage and delete any wholly hidden faces before exporting.</li>
+  <li>Do you really need all that detail? Consider deleting details like flap tracks, antennae etc before exporting. This
+especially goes for the lower <a href="./ReadMe-XPlane2Blender.html#Level_Of_Detail">Level of Detail</a> versions of the plane in layers 2 and 3 which are only viewed in X-Plane from &gt;1000m and &gt;4000m respectively.</li>
+</ul>
+<br>
+
+<hr>
+<table style="width: 100%;" border="0" cellpadding="2">
+  <tbody>
+    <tr>
+      <td class="banner">Version 3.11 &copy; 2004-2013 <a href="mailto:Jonathan Harris <x-plane@marginal.org.uk>">Jonathan Harris</a>
+        <a rel="license" target="_blank" href="http://www.gnu.org/licenses/gpl-2.0-standalone.html"><img style="border: 0px solid ; width: 88px; height: 62px; vertical-align: middle;" src="http://i.creativecommons.org/l/GPL/2.0/88x62.png" alt="GPLv2.0"></a></td>
+    </tr>
+  </tbody>
+</table>
+
+  </body>
+</html>

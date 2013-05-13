@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <meta name="description" content="X-Plane import/export scripts for Blender 3D">
+  <meta name="keywords" content="X-Plane, simulator, scenery, Blender, Blender3D">
+  <title>XPlane2Blender</title>
+  <meta name="author" content="Jonathan Harris">
+  <style type="text/css">
+.banner { font-family: Arial,Helvetica,sans-serif; background-color: lightskyblue; text-align: left; height: 32px; }
+.dnl { font-family: Arial,Helvetica,sans-serif; font-size: small; background-color: lightskyblue; }
+samp { font-family: Arial,Helvetica,sans-serif; }
+h2 { font-family: Arial,Helvetica,sans-serif; }
+h3 { font-family: Arial,Helvetica,sans-serif; }
+h4 { font-family: Arial,Helvetica,sans-serif; }
+h5 { font-family: Arial,Helvetica,sans-serif; }
+ul { margin: 0; }
+kbd {font-family: sans-serif; color: black; background-color: white; border: 1px solid black; -webkit-border-radius:5px; -moz-border-radius:5px; border-radius: 5px; padding: 1px 1px 0px; }
+pre { border: 1px solid; padding: 8px; width: 75%; }
+blockquote { font-family: monospace; }
+em { font-style:normal; color:FireBrick; }
+  </style>
+</head>
+<body>
+<table style="width: 100%;" border="0" cellpadding="2">
+  <tbody>
+    <tr>
+      <td class="banner">Marginal&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/">X-Plane&nbsp;Scenery</a>&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/tools.html">Tools</a>&nbsp;&rarr; <a href="./ReadMe-XPlane2Blender.html">XPlane2Blender</a>&nbsp;&rarr; CSL objects</td>
+    </tr>
+  </tbody>
+</table>
+<hr>
+
+<h2>CSL objects</h2>
+<p>&ldquo;CSL&rdquo; objects are intended for use with multi-user plugins such as <a href="http://www.xsquawkbox.net/xsb/">XSquawkBox</a> or <a href="http://www.ivao.aero/softdev/X-IvAp/">X-IvAp</a>. They support a limited subset of the features of &ldquo;normal&rdquo; X-Plane objects.</p>
+
+<h3>Exporting CSL objects</h3>
+<p>First, choose <samp>File&nbsp;&rarr; Save As&#8230;</samp> and save the <code>.blend</code> file in the aircraft or scenery folder where you want the <code>.obj</code> file to end up.</p>
+<p>Then choose <samp>File&nbsp;&rarr; Export&nbsp;&rarr; X-Plane&nbsp;CSL</samp></p>
+<p>The object is exported in the same folder and with the same name as the current Blender file, but with a <code>.obj</code> extension. Blender may display some informational messages - click on one of these messages to see which object(s) the message refers to.</p>
+<p>If there is an error then the scripts will attempt to identify and highlight the offending Blender object(s).</p>
+
+<h3>Lamps</h3>
+<p>Only Lamp objects of type &ldquo;Lamp&rdquo; are exported to X-Plane. Lamp objects of types &ldquo;Area&rdquo;, &ldquo;Spot&rdquo;, &ldquo;Semi&rdquo; and &ldquo;Hemi&rdquo; are ignored (and so can be used to illuminate your model in Blender). Custom lights are not supported.</p>
+<p>The XSquawkBox documentation strongly recommends that you use the following special lights:</p>
+<dl>
+  <dd><code>airplane_landing</code> - White landing light. (R,G,B settings are ignored).</dd>
+  <dd><code>airplane_taxi</code> - White taxi light. (R,G,B settings are ignored).</dd>
+  <dd><code>airplane_nav_left</code> - Red navigation/position light. (R,G,B settings are ignored).</dd>
+  <dd><code>airplane_nav_right</code> - Green navigation/position light. (R,G,B settings are ignored).</dd>
+  <dd><code>airplane_beacon</code> - Red pulsing anti-collision light, on when engines are running. (R,G,B settings are ignored).</dd>
+  <dd><code>airplane_strobe</code> - White strobe light. (R,G,B settings are ignored).</dd>
+  <dd><i>other</i> - Normal light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel <kbd>F5</kbd>.</dd>
+</dl>
+
+<h3>Meshes</h3>
+<p>Meshes are exported as for normal X-Plane objects, with the following limitations:<p>
+<ul>
+  <li>Textures must be in 32bit or 24bit PNG format - CSL objects do not support DDS format textures.</li>
+  <li>Smoothing is not supported; the <samp>Set Smooth</samp> and <samp>Set Solid</samp> in the <samp>Link and Materials</samp> Editing panel have no effect.</li>
+  <li><samp>Tiles</samp> button (polygon offsetting) and <samp>Collision</samp> button (&ldquo;hard&rdquo; faces) in the <samp>Texture Face</samp> Editing panel have no effect.</li>
+  <li>Animation and Level Of Detail are not supported.</li>
+  <li>Propertes are not supported; including drawing group, slung load weight etc.</li>
+</ul>
+<br>
+
+<hr>
+<table style="width: 100%;" border="0" cellpadding="2">
+  <tbody>
+    <tr>
+      <td class="banner">Version 3.11 &copy; 2004-2013 <a href="mailto:Jonathan Harris <x-plane@marginal.org.uk>">Jonathan Harris</a>
+        <a rel="license" target="_blank" href="http://www.gnu.org/licenses/gpl-2.0-standalone.html"><img style="border: 0px solid ; width: 88px; height: 62px; vertical-align: middle;" src="http://i.creativecommons.org/l/GPL/2.0/88x62.png" alt="GPLv2.0"></a></td>
+    </tr>
+  </tbody>
+</table>
+
+  </body>
+</html>

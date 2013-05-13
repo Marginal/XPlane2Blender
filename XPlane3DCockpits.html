@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <meta name="description" content="X-Plane import/export scripts for Blender 3D">
+  <meta name="keywords" content="X-Plane, simulator, scenery, Blender, Blender3D">
+  <title>XPlane2Blender</title>
+  <meta name="author" content="Jonathan Harris">
+  <style type="text/css">
+.banner { font-family: Arial,Helvetica,sans-serif; background-color: lightskyblue; text-align: left; height: 32px; }
+.dnl { font-family: Arial,Helvetica,sans-serif; font-size: small; background-color: lightskyblue; }
+samp { font-family: Arial,Helvetica,sans-serif; }
+h2 { font-family: Arial,Helvetica,sans-serif; }
+h3 { font-family: Arial,Helvetica,sans-serif; }
+h4 { font-family: Arial,Helvetica,sans-serif; }
+h5 { font-family: Arial,Helvetica,sans-serif; }
+ul { margin: 0; }
+kbd {font-family: sans-serif; color: black; background-color: white; border: 1px solid black; -webkit-border-radius:5px; -moz-border-radius:5px; border-radius: 5px; padding: 1px 1px 0px; }
+pre { border: 1px solid; padding: 8px; width: 75%; }
+blockquote { font-family: monospace; }
+em { font-style:normal; color:FireBrick; }
+  </style>
+</head>
+<body>
+<table style="width: 100%;" border="0" cellpadding="2">
+  <tbody>
+    <tr>
+      <td class="banner">Marginal&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/">X-Plane&nbsp;Scenery</a>&nbsp;&rarr; <a href="http://marginal.org.uk/x-planescenery/tools.html">Tools</a>&nbsp;&rarr; <a href="./ReadMe-XPlane2Blender.html">XPlane2Blender</a>&nbsp;&rarr; 3D cockpits</td>
+    </tr>
+  </tbody>
+</table>
+<hr>
+
+<h2>3D Cockpits</h2>
+<p>X-Plane 3D cockpits are just normal scenery objects except that cockpits can contain some additional features, but can't contain multiple <a href="./ReadMe-XPlane2Blender.html##Level_Of_Detail">Levels of Detail</a> so only objects in Blender layer 1 are exported. If you want to keep objects in your Blender scene for reference but which you don't want to export - <i>e.g.</i> the plane fuselage - then put them in layer 4 or greater before exporting.</p>
+<p>Choose <samp>File&nbsp;&rarr; Save As</samp> and save the blender file in the same folder as your plane's <code>.acf</code> file with the name <code><i>airplane</i>_cockpit.blend</code>, <code><i>airplane</i>_cockpit_INN.blend</code> or <code><i>airplane</i>_cockpit_OUT.blend</code> (where <code><i>airplane</i></code> is the name of your plane's <code>.acf</code> file):</p>
+<ul>
+  <li>X-Plane displays <code><i>airplane</i>_cockpit.obj</code> in both internal and external views.</li>
+  <li>X-Plane displays <code><i>airplane</i>_cockpit_INN.obj</code> only in internal views.</li>
+  <li>X-Plane displays <code><i>airplane</i>_cockpit_OUT.obj</code> only in external views.<br>
+If you create an <code><i>airplane</i>_cockpit_INN.obj</code> and/or <code><i>airplane</i>_cockpit_OUT.obj</code> then you should not create <code><i>airplane</i>_cockpit.obj</code>.</li>
+</ul>
+<p>You will usually want to import your plane into Blender to act as a reference and/or starting point for your cockpit. Delete any plane parts that you don't need in creating your cockpit - you only need to keep the fuselage itself plus any relevant Misc Bodies. After import, your cockpit uses the same texture file as your plane, ie <code><i>airplane</i>_paint</code>. Choose <samp>Image&nbsp;&rarr; Replace</samp> in a <samp>UV/Image Editor</samp> window to use a different texture file, which can be named anything you like (but no spaces) and which should live in the same folder as your plane's <code>.acf</code> file.</p>
+<p>To make your 3D cockpit appear in X-Plane, on the <samp>Standard&nbsp;&rarr; Viewpoint&nbsp;&rarr; View</samp> screen in PlaneMaker, check the <small><samp>show cockpit object in: INSIDE views, exact forwards</samp></small> option. To hide the 2D cockpit altogether, also check the <small><samp>show cockpit object in: PANEL views, exact forwards</samp></small> option; hiding the 2D cockpit means that you no longer have to leave a large part of the Panel Texture transparent to represent the windscreen, which gives you more room on the Panel Texture for instruments.</p>
+
+<h3>Cockpit instruments</h3>
+<p>To construct moving cockpit instruments paint the <code>&#8230;/cockpit/-PANELS-/Panel.png</code> texture in an image editor application and place instuments in PlaneMaker as as you would for a 2D panel <small>(but bear in mind that only the top 768 lines of the Panel Texture can be used in the 3D cockpit in X-Plane versions prior to 8.20)</small>.
+The Panel Texture can by 1024&times;<i>any size</i> in X-Plane v8, and any size up to 2048&times;2048 in X-Plane v9. Normally you can only use a single file to texture your X-Plane objects. But when constructing a 3D cockpit you can additionally use this <code>&#8230;/cockpit/-PANELS-/Panel.png</code> file - the instruments that X-Plane draws on the 2D panel will also appear in your 3D model.</p>
+<p>The <code>&#8230;/cockpit/-PANELS-/Panel.png</code> texture doesn't contain any instruments when you load it into Blender (unless you've painted them on yourself). This makes it hard to tell in Blender where X-Plane will draw the instruments. So it's easier if you use a screenshot of the panel with the instruments drawn on it, instead of the real Panel Texture. If your display is larger than your Panel Texture, then this is simple:</p>
+<ul>
+  <li>Run PlaneMaker.</li>
+  <li>Choose <samp>Background&nbsp;&rarr; Rendering Options</samp> and set the size to be equal to the size of your Panel Texture.
+  <li>Restart PlaneMaker</li>
+  <li>Choose <samp>Standard&nbsp;&rarr; Panel</samp></li>
+  <li>Take a screenshot: Press <kbd>Alt</kbd>&nbsp;<kbd>PrintScreen</kbd> (PC) or <kbd>Shift</kbd>&nbsp;<kbd>cmd</kbd>&nbsp;<kbd>3</kbd> (Mac).</li>
+  <li>Paste (PC) or load (Mac) the screenshot into an image editor application.</li>
+  <li>Crop the window borders etc from the screenshot so that the image is
+exactly the same size as your Panel Texture.</li>
+  <li>Save the screenshot as <code>ScreenshotPanel.png</code> (or any
+filename ending in <code>*panel.*</code>) in the same folder as your
+plane's <code>.acf</code> file.</li>
+  <li>Use the <code>ScreenshotPanel.png</code> texture on those faces
+that you want to display moving cockpit instruments in X-Plane.</li>
+  <li>The screenshot file does not need to be distributed with your
+finished plane.</li>
+</ul>
+<p>If your Panel Texture is larger than your display then you cannot take a screenshot of the whole panel. In this case you'll need to take multiple screenshots of the panel in PlaneMaker and stich them together in an image editing application.</p>
+<p>If you later want to resize your Panel Texture then use the procedure described <a href="./ReadMe-XPlane2Blender.html#resize">here</a>.</p>
+<p>Note that X-Plane versions prior to 8.20 only display the 3D cockpit when running at the default 1024x768 resolution. You may want to mention this in the Readme with your plane if your plane is intended to work in X-Plane versions prior to 8.20.</p>
+
+<h3><font size="+1">v9: </font>Cockpit Panel Regions</h3>
+<p>The cockpit Panel Texture uses a lot of video memory, much of which is wasted when the 3D cockpit is being displayed:</p>
+<ul>
+  <li>X-Plane has to round up the height and width of your Panel Texture to be powers of two. <i>eg</i> if your Panel Texture is 1600&times;1200 pixels then X-Plane rounds this up to 2048&times;2048 pixels, which requires 16MB of video memory. More if you also supply a LIT Panel Texture.</li>
+  <li>Typically up to half of your Panel Texture represents your plane's windscreen, which is fully transparent. You can't make use of this part of the texture in any useful way in a 3D cockpit, so the memory that it consumes is wasted. <small>(Note: You can construct a tinted windscreen in your 3D cockpit quite cheaply by using a small semi-transparent part of the non-panel texture).</small></li>
+  <li>The Panel Texture contains an alpha channel for transparency. The alpha channel accounts for &frac14; of the memory that the texture consumes. But often your only need for transparency in the Panel Texture is to represent the 2D windscreen, which is of no use in a 3D cockpit, so the memory that the alpha channel consumes is wasted.</li>
+</ul>
+<p>A "Panel Region" is a new texture which is cut out from your Panel Texture:</p>
+<ul>
+  <li>You can create up to 4 Panel Regions (which can overlap).</li>
+  <li>The height and width of a Panel Region texture must be a power of two
+<i>eg</i> 128, 256, 512, 1024 or 2048, but it doesn't have to be square.</li>
+  <li>Panel Region textures are opaque - they don't contain an alpha channel.</li>
+</ul>
+<p>When you use Panel Regions instead of the Panel Texture to texture your 3D cockpit, X-Plane discards the Panel Texture's alpha channel and also discards all areas of the Panel Texture other than the pieces that you cut out to make the Panel Regions. This reduces video memory requirements and improves performance.</p>
+
+<h4>Creating a Panel Region</h4>
+<ul>
+  <li>In the <samp>UV/Image Editor</samp> window, select your Panel Texture from the pop-up menu.</li>
+  <li>Choose <samp>Image&nbsp;&rarr; X-Plane&nbsp;panel&nbsp;regions&nbsp;&rarr; Create&nbsp;new&nbsp;region</samp></li>
+  <li>Enter the co-ordinates in your Panel Texture where you want the bottom-left pixel of the new Panel Region to start, and the width and height of the new Panel Region.</li>
+</ul>
+<p>Any faces that you've textured using the Panel Texture which are contained inside the new Panel Region are transferred over to use the new Panel Region.</p>
+<p>Any areas that are fully transparent in the Panel Texture are coloured sky blue in the new Panel Region. You'll get undefined (<i>i.e.</i> weird) results in X-Plane if you use these sky blue areas to texture your faces.</p>
+<p><small>(Note: When you create a Panel Region, Blender also creates a hidden object named "PanellRegionHandler" to store accounting information. Don't mess with this object).</small></p>
+
+<h4>Deleting a Panel Region</h4>
+<ul>
+  <li>In the <samp>UV/Image Editor</samp> window, select your Panel Region from the pop-up menu.</li>
+  <li>Choose <samp>Image&nbsp;&rarr; X-Plane&nbsp;panel&nbsp;regions&nbsp;&rarr; Delete&nbsp;this&nbsp;region</samp></li>
+</ul>
+<p>Any faces that you've textured using this Panel Region are transferred back to using the Panel Texture.</p>
+<p>The deleted Panel Region will remain in the <samp>UV/Image Editor</samp>
+window's pop-up menu for a while until Blender figures out that it can remove it. But the deleted Panel Region won't count towards your maximum of four Panel Regions.</p>
+
+<h4>Re-loading the Panel Regions</h4>
+<p>The Panel Regions aren't automatically updated when you edit your Panel Texture in an image editor application and then reload it in Blender, or when you reload your <code>.blend</code> file.</p>
+<ul>
+  <li>In the <samp>UV/Image Editor</samp> window, select your Panel Texture from the pop-up menu.</li>
+  <li>Choose <samp>Image&nbsp;&rarr; X-Plane&nbsp;panel&nbsp;regions&nbsp;&rarr; Reload&nbsp;all&nbsp;regions</samp></li>
+</ul>
+<br>
+
+<hr>
+<table style="width: 100%;" border="0" cellpadding="2">
+  <tbody>
+    <tr>
+      <td class="banner">Version 3.11 &copy; 2004-2013 <a href="mailto:Jonathan Harris <x-plane@marginal.org.uk>">Jonathan Harris</a>
+        <a rel="license" target="_blank" href="http://www.gnu.org/licenses/gpl-2.0-standalone.html"><img style="border: 0px solid ; width: 88px; height: 62px; vertical-align: middle;" src="http://i.creativecommons.org/l/GPL/2.0/88x62.png" alt="GPLv2.0"></a></td>
+    </tr>
+  </tbody>
+</table>
+
+  </body>
+</html>

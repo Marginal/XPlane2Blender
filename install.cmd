@@ -33,7 +33,7 @@ set FILES=..\Bpymenus helpXPlane.py uvCopyPaste.py uvFixupACF.py uvResize.py XPl
 for %%I in (%FILES%) do if exist "%DESTDIR%\%%I" del "%DESTDIR%\%%I" >nul: 2>&1
 
 :copy
-set FILES=DataRefs.txt ReadMe-XPlane2Blender.html XPlaneAG.py XPlaneAnimObject.py XPlaneAnnotate.py XPlaneExport.py XPlaneExport7.py XPlaneExport8.py XPlaneExport8_ManipOptionsInterpreter.py XPlaneExport8_util.py XPlaneExportCSL.py XPlaneFacade.py XPlaneHelp.py XPlaneImport.py XPlaneImportMDL.py XPlaneImportPlane.py XPlaneImport_util.py XPlaneLib.py XPlaneMacros.py XPlaneMultiObj.py XPlanePanelRegions.py XPlaneUtils.py uvFixupACF.py uvResize.py
+set FILES=DataRefs.txt ReadMe-XPlane2Blender.html XPlane3DCockpits.html XPlaneAG.py XPlaneAnimObject.py XPlaneAnnotate.py XPlaneExport.py XPlaneExport8.py XPlaneExport8_ManipOptionsInterpreter.py XPlaneExport8_util.py XPlaneExportCSL.html XPlaneExportCSL.py XPlaneFacade.py XPlaneHelp.py XPlaneImport.py XPlaneImportMDL.py XPlaneImportPlane.html XPlaneImportPlane.py XPlaneImport_util.py XPlaneLib.py XPlaneMacros.py XPlaneMultiObj.py XPlanePanelRegions.py XPlaneUtils.py uvFixupACF.py uvResize.py
 for %%I in (%FILES%) do if not exist "%%I" goto srcfail
 for %%I in (%FILES%) do copy /v /y %%I "%DESTDIR%\" >nul:
 for %%I in (%FILES%) do if not exist "%DESTDIR%\%%I" goto copyfail
