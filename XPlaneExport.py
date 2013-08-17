@@ -345,6 +345,7 @@ class OBJexport7:
             filename.lower().endswith("_cockpit.obj") or
             filename.lower().endswith("_cockpit_inn.obj") or
             filename.lower().endswith("_cockpit_out.obj")))
+        self.ispanelok=self.iscockpit	# Flag to allow ATTR_cockpit - allowed in ACF-attached objs in v10
         self.layermask=1
         self.texture=None
         self.regions={}		# (xoff,yoff,xscale,yscale) by image

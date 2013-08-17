@@ -3728,7 +3728,6 @@ class ACF:
             acffile.close()
             # iterate in reverse because array dimensions come after the array contents :(
             j_count=k_count=0
-            newarray=ACF.XStruct()
             for (keys,val) in reversed(lines):
                 if keys[0]=='acf': keys.pop(0)
                 if keys[-1]=='k_count':
@@ -3750,8 +3749,8 @@ class ACF:
                 thing=self
                 while keys:
                     key=keys.pop(0)
-                    if key.startswith('_'):		# structure or variable
-                        key=key[1:]			# strip leading underscore
+                    if key.startswith('_'): key=key[1:]	# strip leading underscore
+                    if not isinstance(thing, list):	# structure or variable
                         if not keys:			# tail
                             setattr(thing,key,val)	# do the assignment
                         elif not hasattr(thing,key):	# struct with substruct - in 1002 only lite_equip

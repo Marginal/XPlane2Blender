@@ -11,7 +11,7 @@ import sys
 import Blender
 from Blender import Armature, Object, Mesh, NMesh, Lamp, Image, Material, Texture, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, Vector
-from XPlaneUtils import Vertex, UV, Face, PanelRegionHandler, getDatarefs
+from XPlaneUtils import Vertex, UV, Face, PanelRegionHandler, getDatarefs, make_short_name
 
 from math import radians
 from os import listdir
@@ -413,6 +413,7 @@ class OBJimport:
     #------------------------------------------------------------------------
     def readHeader(self):
         c=self.file.readline().strip()
+        if c.startswith("\xef\xbb\xbf"): c=c[3:]	# skip UTF-8 BOM
         if self.verbose>2: print 'Input:\t"%s"' % c
         if not c in ['A', 'I']:
             raise ParseError(ParseError.HEADER)
@@ -653,7 +654,8 @@ class OBJimport:
                 p2=self.getVertex()
                 v1=self.getFloat()
                 v2=self.getFloat()
-                dataref=self.getInput().split('/')
+                dataref=self.getInput(True)
+                dataref=dataref and dataref.split('/') or 'none'	# can be omitted if just a shift
                 name=dataref[-1]
                 self.off[-1]=self.off[-1]+p1
                 if not self.pendingbone:
@@ -724,7 +726,8 @@ class OBJimport:
                 r2=self.getFloat()
                 v1=self.getFloat()
                 v2=self.getFloat()
-                dataref=self.getInput().split('/')
+                dataref=self.getInput(True)
+                dataref=dataref and dataref.split('/') or 'none'	# 3DSMax exporter sometimes emits a static rotation with no DataRef!
                 while r2>=360 or r2<=-360:
                     # hack!
                     r2/=2
@@ -1629,11 +1632,11 @@ class OBJimport:
                 return None
         else:
             (origname, head, tail, m)=self.pendingbone
-        name=origname
+        name=make_short_name(origname)
         i=0
         while name in self.arm.bones.keys():
             i+=1
-            name="%s.%03d" % (origname, i)
+            name=make_short_name("%s.%03d" % (origname, i))
         bone=Armature.Editbone()
         bone.name=name
         i=len(self.bones)-2
