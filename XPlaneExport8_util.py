@@ -29,6 +29,7 @@
 
 
 import sys
+from math import cos, radians
 import Blender
 from Blender import Armature, Mesh, Lamp, Image, Draw, Window
 from Blender.Mathutils import Matrix, RotationMatrix, TranslationMatrix, MatMultVec, Vector, Quaternion, Euler, TriangleNormal
@@ -115,7 +116,23 @@ class NLIGHT:
             return "LIGHT_NAMED\t%s\t%s%s" % (self.n, '\t'*(2-len(self.n)/8), self.v)
 
     def equals (self, b):
-        return (isinstance(b,NLIGHT) and self.v.equals(b.v) and self.n==b.n)
+        return (isinstance(b,NLIGHT) and self.v.equals(b.v) and self.p==b.p and self.n==b.n)
+
+# Custom Spill light
+class SLIGHT:
+    def __init__(self, v, rgba, s, d, semi, dataref):
+        self.v=v    # Light Location
+        self.rgba=rgba      # Light Color
+        self.s=s        # Cone length
+        self.d=d	# Cone direction vector
+        self.semi=semi	# cos(Cone angle)
+        self.dataref=dataref    # DataRef or None
+
+    def __str__ (self):
+        return "LIGHT_SPILL_CUSTOM\t%s\t%.3f %.3f %.3f %.3f %.3f\t%s\t%.3f %s" % (self.v, self.rgba[0], self.rgba[1], self.rgba[2], self.rgba[3], self.s, self.d, self.semi, self.dataref or 'no_ref')
+
+    def equals (self, b):
+        return (isinstance(b,SLIGHT) and self.v.equals(b.v) and self.rgba==b.rgba and self.s==b.s and self.d.equals(b.d) and self.semi==b.semi and self.dataref==b.dataref)
 
 class CLIGHT:
     def __init__(self, v, rgba, s, uv1, uv2, d):
@@ -443,6 +460,7 @@ class OBJexport8:
         self.nprim=0		# Number of X-Plane primitives exported
         self.log=[]
         self.v9=False		# Used v9 features
+        self.v10=False		# Used v10 features
         self.additive_lod=0
         self.instanced=0
         self.global_alpha=[Prim.BLEND,0.0]
@@ -544,7 +562,10 @@ class OBJexport8:
         self.writeHeader ()
         self.writeObjects (theObjects)
         checkLayers (self, theObjects)
-        if self.regions or self.v9:
+        if self.v10:
+            print 'Warn:\tThis object requires X-Plane v10'
+            self.log.append(('This object requires X-Plane v10', None))
+        elif self.regions or self.v9:
             print 'Warn:\tThis object requires X-Plane v9'
             self.log.append(('This object requires X-Plane v9', None))
 
@@ -928,9 +949,9 @@ class OBJexport8:
         name=object.name
         special=0
 
-        if lamp.getType() != Lamp.Types.Lamp:
-            print 'Info:\tIgnoring Area, Spot, Sun or Hemi lamp "%s"' % name
-            self.log.append(('Ignoring Area, Spot, Sun or Hemi lamp "%s"' % name, [object]))
+        if lamp.getType() != Lamp.Types.Lamp and lamp.getType() != Lamp.Types.Spot:
+            print 'Info:\tIgnoring Area, Sun or Hemi lamp "%s"' % name
+            self.log.append(('Ignoring Area, Sun or Hemi lamp "%s"' % name, [object]))
             return
 
         if self.verbose:
@@ -939,7 +960,16 @@ class OBJexport8:
         if '.' in name: name=name[:name.index('.')]
         lname=name.lower().split()
         c=[0,0,0]
-        if 'pulse' in lname:
+        if lamp.getType() == Lamp.Types.Spot:	# custom spill
+            dataref = None
+            for prop in object.getAllProperties():
+                if prop.name.lower()=='dataref': dataref=str(prop.data).strip()
+            light.i=SLIGHT(Vertex(0,0,0, mm), [lamp.R, lamp.G, lamp.B, lamp.energy/10], lamp.dist, Vertex(0,0,-1, MatrixrotationOnly(mm, object)), cos(radians(lamp.spotSize)), dataref)
+            light.style='NLight'
+            self.prims.append(light)
+            self.v10=True
+            return
+        elif 'pulse' in lname:
             c[0]=c[1]=c[2]=9.9
             special=1
         elif 'strobe' in lname:

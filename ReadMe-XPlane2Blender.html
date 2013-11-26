@@ -160,7 +160,7 @@ em { font-style:normal; color:FireBrick; }
 </dl>
 
 <h3><a name="lamps">Lamps</a></h3>
-<p>Only Lamp objects of type &ldquo;Lamp&rdquo; are exported to X-Plane. Lamp objects of types &ldquo;Area&rdquo;, &ldquo;Spot&rdquo;, &ldquo;Semi&rdquo; and &ldquo;Hemi&rdquo; are ignored (and so can be used to illuminate your model in Blender). Lamp objects with certain words in their names have special behaviours when exported to an X-Plane object:</p>
+<p>Only Lamp objects of type &ldquo;Lamp&rdquo; and &ldquo;Spot&rdquo; are exported to X-Plane. Lamp objects of types &ldquo;Area&rdquo;, &ldquo;Semi&rdquo; and &ldquo;Hemi&rdquo; are ignored (and so can be used to illuminate your model in Blender). Lamp objects with certain words in their names have special behaviours when exported to an X-Plane object:</p>
 <dl>
   <dd><code>Lamp</code> - Normal (legacy) light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel <kbd>F5</kbd>.</dd>
   <dd><code>Flash</code> - Flashing (legacy) light. The colour is determined by the <samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders on the <samp>Lamp</samp> panel <kbd>F5</kbd>.</dd>
@@ -174,6 +174,7 @@ em { font-style:normal; color:FireBrick; }
     </ul>
   </dd>
 </dl>
+
 <p>Custom lights are created using the vertices from a rectangular &ldquo;Plane&rdquo; Mesh object:</p>
 <ul>
   <li>In the <samp>Material buttons</samp> panels <kbd>F5</kbd>:
@@ -196,6 +197,19 @@ em { font-style:normal; color:FireBrick; }
     </ul>
   </li>
   <li>To drive the custom light using a dataref add a String <a href="#properties">property</a> named <code>name</code>.</li>
+</ul>
+
+<p>Spill lights (X-Plane v10 only) are created using Lamp objects of type &ldquo;Spot&rdquo;:</p>
+<ul>
+  <li>In the <samp>Lamp buttons</samp> panels <kbd>F5</kbd>:
+    <ul>
+      <li>On the <samp>Preview</samp> panel press the <samp>Spot</samp> button.</li>
+      <li>On the <samp>Lamp</samp> panel the <samp>Energy</samp>,<samp>R</samp>,<samp>G</samp>,<samp>B</samp> sliders control the light's intensity and R,G,B values, and the <samp>Dist</samp> slider controls the light cone's length.</li>
+      <li>On the <samp>Shadow and Spot</samp> panel the <samp>SpotSi</samp> slider controls the light cone's width.</li>
+    </ul>
+  </li>
+  <li>Rotate the Lamp object to change the light cone's direction.</li>
+  <li>To drive the spill light using a dataref add a String <a href="#properties">property</a> named <code>dataref</code>.</li>
 </ul>
 
 <h3><a name="Meshes"></a>Meshes</h3>
