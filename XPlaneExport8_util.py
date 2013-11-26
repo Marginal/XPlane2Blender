@@ -592,18 +592,18 @@ class OBJexport8:
         if self.texture:
             self.file.write("TEXTURE\t\t%s%s\n" % (self.prefix,self.texture))
             core = get_core_texture(self.texture)
-            if tex_exists(core+"_NML.png"): self.file.write("TEXTURE_NORMAL %s%s_NML.png\nGLOBAL_specular 1.0\n" % (self.prefix,core))
-            elif tex_exists(core+"_NML.dds"): self.file.write("TEXTURE_NORMAL %s%s_NML.dds\nGLOBAL_specular 1.0\n" % (self.prefix,core))
-            if tex_exists(core+"_LIT.png"): self.file.write("TEXTURE_LIT %s%s_LIT.png\n" % (self.prefix,core))
-            elif tex_exists(core+"_LIT.dds"): self.file.write("TEXTURE_LIT %s%s_LIT.dds\n" % (self.prefix,core))
+            if tex_exists(core+"_NML.png"): self.file.write("TEXTURE_NORMAL\t%s%s_NML.png\nGLOBAL_specular\t1.0\n" % (self.prefix,core))
+            elif tex_exists(core+"_NML.dds"): self.file.write("TEXTURE_NORMAL\t%s%s_NML.dds\nGLOBAL_specular\t1.0\n" % (self.prefix,core))
+            if tex_exists(core+"_LIT.png"): self.file.write("TEXTURE_LIT\t%s%s_LIT.png\n" % (self.prefix,core))
+            elif tex_exists(core+"_LIT.dds"): self.file.write("TEXTURE_LIT\t%s%s_LIT.dds\n" % (self.prefix,core))
 
         else:	# X-Plane barfs if no texture specified
             self.file.write("TEXTURE\t\n")
         if self.texture_draped:
             self.file.write("TEXTURE_DRAPED\t\t%s%s\n" % (self.prefix,self.texture_draped))
             core = get_core_texture(self.texture_draped)
-            if tex_exists(core+"_NML.png"): self.file.write("TEXTURE_DRAPED_NORMAL 1.0 %s%s_NML.png\n" % (self.prefix,core))
-            elif tex_exists(core+"_NML.dds"): self.file.write("TEXTURE_DRAPED_NORMAL %s%s_NML.dds\n" % (self.prefix,core))
+            if tex_exists(core+"_NML.png"): self.file.write("TEXTURE_DRAPED_NORMAL\t%s%s_NML.png\n" % (self.prefix,core))
+            elif tex_exists(core+"_NML.dds"): self.file.write("TEXTURE_DRAPED_NORMAL\t%s%s_NML.dds\n" % (self.prefix,core))
         for img in self.regions.keys():
             (n,x,y,width,height)=self.regions[img]
             self.file.write("COCKPIT_REGION\t%4d %4d %4d %4d\n" % (x,y,x+width,y+height))
@@ -1815,10 +1815,10 @@ class OBJexport8:
             self.nshadow = nshadow
         if image != self.image:
             self.flush_prim()
-            if image != None:
-                self.file.write("# Image: %s\n" % image.filename)
-            else:
-                self.file.write("# Image: None\n")
+            # if image != None:
+            #     self.file.write("# Image: %s\n" % image.filename)
+            # else:
+            #     self.file.write("# Image: None\n")
             self.image=image
         if lit_level != self.lit_level:
             self.flush_prim()
