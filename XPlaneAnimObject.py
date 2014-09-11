@@ -791,9 +791,10 @@ def gui():
             yoff-=(170+(CONTROLSIZE-1)*framecount)
 
         #Draw Manipulator GUI
-        if valid:
-            Draw.Label("Manipulator:", xoff-4, yoff-220-(CONTROLSIZE-1)*i, 100, CONTROLSIZE)
-            drawmanipulator(manipulators, indices, eventbase, boneno, xoff-4, yoff-250-(CONTROLSIZE-1)*i)
+        #This is broken
+        #if valid:
+        #    Draw.Label("Manipulator:", xoff-4, yoff-220-(CONTROLSIZE-1)*i, 100, CONTROLSIZE)
+        #    drawmanipulator(manipulators, indices, eventbase, boneno, xoff-4, yoff-250-(CONTROLSIZE-1)*i)
 
 
 
