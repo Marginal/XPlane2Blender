@@ -189,9 +189,9 @@ def getvals(bonename, dataref, index):
                     fullref=prop.data+dataref
                 else:
                     fullref=prop.data+'/'+dataref
-
-
-
+                break
+        else:
+            fullref=dataref
 
     # find last frame
     framecount=2    # zero based
