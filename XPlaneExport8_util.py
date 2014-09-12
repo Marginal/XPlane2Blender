@@ -1939,6 +1939,7 @@ class Anim:
                 self.t=foo.t
                 self.v=foo.v
                 self.loop=foo.loop
+                self.showhide=foo.showhide
                 self.anim=foo.anim
             else:
                 self.dataref=None	# is null
